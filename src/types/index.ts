@@ -1,6 +1,24 @@
+export type UserRole = 'super_admin' | 'admin' | 'vendor' | 'support' | 'customer';
+
+export interface User {
+  id: string;
+  name: string;
+  email: string;
+  phone: string;
+  role: UserRole;
+  avatar?: string;
+  status: 'active' | 'suspended' | 'pending';
+  joinedDate: string;
+  lastLogin?: string;
+  ordersCount?: number;
+  assignedTickets?: number;
+  vendorId?: string;
+}
+
 export interface Seller {
   id: string;
   name: string;
+  businessName?: string;
   slug: string;
   type: 'SHG' | 'Artisan' | 'Farmer' | 'Cottage Industry';
   avatar: string;
@@ -8,13 +26,23 @@ export interface Seller {
   location: string;
   district: string;
   state: string;
+  coordinates: {
+    lat: number;
+    lng: number;
+  };
+  phone: string;
+  email: string;
   story: string;
   yearEstablished: number;
   memberCount: number;
   verified: boolean;
+  kycStatus: 'Verified' | 'Pending Review' | 'Rejected';
   rating: number;
   reviewsTotal: number;
   categories: string[];
+  totalProducts: number;
+  totalRevenue: number;
+  commissionRate: number; // percentage, e.g. 5
 }
 
 export interface Product {
@@ -43,6 +71,7 @@ export interface Product {
     rating: number;
     memberCount?: number;
     avatar: string;
+    phone?: string;
   };
   description: string;
   story: string;
@@ -50,10 +79,11 @@ export interface Product {
   stockStatus: 'In Stock' | 'Only Few Left' | 'Out of Stock';
   isBestSeller?: boolean;
   isRuralWomenMade?: boolean;
-  isTraditionalFood?: boolean;
   isTool?: boolean;
+  isHardware?: boolean;
+  isCraft?: boolean;
   tags: string[];
-  isDemoData: boolean;
+  isDemoData?: boolean;
 }
 
 export interface Category {
@@ -69,6 +99,33 @@ export interface Category {
 export interface CartItem {
   product: Product;
   quantity: number;
+}
+
+export interface TicketMessage {
+  id: string;
+  senderId: string;
+  senderName: string;
+  senderRole: UserRole;
+  message: string;
+  timestamp: string;
+  attachments?: string[];
+}
+
+export interface SupportTicket {
+  id: string;
+  ticketNumber: string;
+  userId: string;
+  userName: string;
+  userEmail: string;
+  userPhone: string;
+  subject: string;
+  department: 'Order Issue' | 'Vendor Verification' | 'Payment & Payout' | 'Product Inquiry' | 'General Support';
+  priority: 'Urgent' | 'High' | 'Medium' | 'Low';
+  status: 'Open' | 'In Progress' | 'Resolved' | 'Closed';
+  createdAt: string;
+  updatedAt: string;
+  assignedAgent?: string;
+  messages: TicketMessage[];
 }
 
 export interface BlogPost {
@@ -99,6 +156,21 @@ export interface BlogPost {
   };
 }
 
+export interface SocialLinksConfig {
+  facebook: string;
+  instagram: string;
+  twitter: string;
+  youtube: string;
+  whatsapp: string;
+  linkedin: string;
+  showFacebook: boolean;
+  showInstagram: boolean;
+  showTwitter: boolean;
+  showYoutube: boolean;
+  showWhatsapp: boolean;
+  showLinkedin: boolean;
+}
+
 export interface HeaderConfig {
   logoUrl: string;
   brandName: string;
@@ -109,22 +181,21 @@ export interface HeaderConfig {
   defaultLocation: string;
   showSearch: boolean;
   showIcons: boolean;
-  navItems: Array<{ label: string; href: string }>;
+  navItems: Array<{ id: string; label: string; href: string; enabled: boolean }>;
   ctaLabel: string;
   ctaHref: string;
 }
 
 export interface FooterConfig {
+  companyName: string;
   description: string;
   contactPhone: string;
+  altPhone1?: string;
+  altPhone2?: string;
   contactEmail: string;
   contactAddress: string;
-  socialLinks: {
-    facebook: string;
-    instagram: string;
-    twitter: string;
-    youtube: string;
-  };
+  headOfficeAddress: string;
+  socialLinks: SocialLinksConfig;
   copyrightText: string;
   showNewsletter: boolean;
   columns: Array<{
@@ -139,11 +210,63 @@ export interface SEOConfig {
   canonicalUrl: string;
   sitemapUrl: string;
   robotsTxt: string;
+  googleSearchConsoleVerification: string;
+  googleAnalyticsId: string;
+  googleTagManagerId: string;
+  metaPixelId: string;
   blogSeoDefaults: {
     titleTemplate: string;
     defaultOgImage: string;
   };
   indexSearchEngines: boolean;
+}
+
+export interface FirebaseSettings {
+  apiKey: string;
+  authDomain: string;
+  projectId: string;
+  storageBucket: string;
+  messagingSenderId: string;
+  appId: string;
+  measurementId: string;
+  enableSocialLogin: boolean;
+  enablePhoneAuth: boolean;
+}
+
+export interface MapSettings {
+  provider: 'leaflet' | 'google';
+  googleMapsApiKey: string;
+  defaultCenter: {
+    lat: number;
+    lng: number;
+  };
+  defaultZoom: number;
+  searchRadiusKm: number;
+}
+
+export interface EmailCampaign {
+  id: string;
+  subject: string;
+  senderName: string;
+  senderEmail: string;
+  recipientAudience: 'All Users' | 'All Vendors' | 'All Customers' | 'Unverified Vendors';
+  recipientCount: number;
+  template: 'Promotion / Offer' | 'System Announcement' | 'Artisan Spotlight' | 'Account Security Alert';
+  body: string;
+  sentDate: string;
+  status: 'Sent' | 'Scheduled' | 'Draft';
+  openRate: string;
+}
+
+export interface SmsMessage {
+  id: string;
+  recipientPhone: string;
+  audience: 'Individual Number' | 'All Customers' | 'All Vendors';
+  dltTemplateId: string;
+  messageText: string;
+  sentDate: string;
+  status: 'Delivered' | 'Pending Gateway' | 'Failed';
+  type: 'Transactional OTP' | 'Dispatch Notification' | 'Promotional SMS' | 'WhatsApp Direct';
 }
 
 export interface SecurityChecklist {

@@ -10,7 +10,8 @@ import {
   Wrench,
   Heart,
   Grid,
-  Flame
+  Flame,
+  MapPin
 } from 'lucide-react';
 import { mockCategories } from '../../data/mockCategories';
 
@@ -71,6 +72,19 @@ export const CategoryNav: React.FC = () => {
               </Link>
             );
           })}
+
+          {/* Nearby Artisans link */}
+          <Link
+            to="/nearby-artisans"
+            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full transition-all shrink-0 ${
+              location.pathname === '/nearby-artisans'
+                ? 'bg-brand-green text-white font-semibold shadow-xs'
+                : 'hover:bg-emerald-100/70 text-brand-green font-semibold border border-emerald-300/60'
+            }`}
+          >
+            <MapPin className="w-3.5 h-3.5 text-brand-orange" />
+            <span>Nearby Artisans (Map)</span>
+          </Link>
 
           {/* Blog stories link */}
           <Link

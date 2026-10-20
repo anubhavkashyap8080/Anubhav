@@ -1,6 +1,8 @@
 import React from 'react';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { Layout } from './components/layout/Layout';
+import { AuthProvider } from './context/AuthContext';
+import { PlatformProvider } from './context/PlatformContext';
 import { DemoModalProvider } from './context/DemoModalContext';
 import { CartWishlistProvider } from './context/CartWishlistContext';
 import { SiteConfigProvider } from './context/SiteConfigContext';
@@ -27,6 +29,7 @@ import { ReturnsPolicy } from './pages/ReturnsPolicy';
 import { PrivacyPolicy } from './pages/PrivacyPolicy';
 import { TermsConditions } from './pages/TermsConditions';
 import { NotFound } from './pages/NotFound';
+import { NearbyArtisans } from './pages/NearbyArtisans';
 
 // Admin Pages
 import { AdminDashboard } from './pages/admin/AdminDashboard';
@@ -37,19 +40,22 @@ import { SecuritySettings } from './pages/admin/SecuritySettings';
 
 export function App() {
   return (
-    <DemoModalProvider>
-      <SiteConfigProvider>
-        <CartWishlistProvider>
-          <BrowserRouter>
-            <Routes>
-              <Route path="/" element={<Layout />}>
-                <Route index element={<Home />} />
-                
-                {/* Product Catalog & Discovery */}
-                <Route path="products" element={<Products />} />
-                <Route path="category/:categorySlug" element={<Products />} />
-                <Route path="search" element={<Products />} />
-                <Route path="product/:slug" element={<ProductDetail />} />
+    <AuthProvider>
+      <PlatformProvider>
+        <SiteConfigProvider>
+          <CartWishlistProvider>
+            <DemoModalProvider>
+              <BrowserRouter>
+                <Routes>
+                  <Route path="/" element={<Layout />}>
+                    <Route index element={<Home />} />
+                    
+                    {/* Product Catalog & Discovery */}
+                    <Route path="products" element={<Products />} />
+                    <Route path="category/:categorySlug" element={<Products />} />
+                    <Route path="search" element={<Products />} />
+                    <Route path="product/:slug" element={<ProductDetail />} />
+                    <Route path="nearby-artisans" element={<NearbyArtisans />} />
 
                 {/* Shopping Experience */}
                 <Route path="wishlist" element={<Wishlist />} />
@@ -90,9 +96,11 @@ export function App() {
               </Route>
             </Routes>
           </BrowserRouter>
-        </CartWishlistProvider>
-      </SiteConfigProvider>
-    </DemoModalProvider>
+        </DemoModalProvider>
+      </CartWishlistProvider>
+    </SiteConfigProvider>
+  </PlatformProvider>
+</AuthProvider>
   );
 }
 

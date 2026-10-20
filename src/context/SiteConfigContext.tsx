@@ -1,5 +1,5 @@
-import React, { createContext, useContext, useState, ReactNode } from 'react';
-import { HeaderConfig, FooterConfig, SEOConfig, SecurityChecklist } from '../types';
+import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
+import { HeaderConfig, FooterConfig, SEOConfig, SecurityChecklist, SocialLinksConfig } from '../types';
 import {
   initialHeaderConfig,
   initialFooterConfig,
@@ -10,8 +10,11 @@ import {
 interface SiteConfigContextType {
   headerConfig: HeaderConfig;
   setHeaderConfig: React.Dispatch<React.SetStateAction<HeaderConfig>>;
+  updateHeaderConfig: (updates: Partial<HeaderConfig>) => void;
   footerConfig: FooterConfig;
   setFooterConfig: React.Dispatch<React.SetStateAction<FooterConfig>>;
+  updateFooterConfig: (updates: Partial<FooterConfig>) => void;
+  updateSocialLinks: (updates: Partial<SocialLinksConfig>) => void;
   seoConfig: SEOConfig;
   setSeoConfig: React.Dispatch<React.SetStateAction<SEOConfig>>;
   securityChecklist: SecurityChecklist;
@@ -21,17 +24,81 @@ interface SiteConfigContextType {
 
 const SiteConfigContext = createContext<SiteConfigContextType | undefined>(undefined);
 
+const HEADER_STORAGE = 'ggh_site_header_config';
+const FOOTER_STORAGE = 'ggh_site_footer_config';
+const SEO_STORAGE = 'ggh_site_seo_config';
+const SEC_STORAGE = 'ggh_site_sec_config';
+
 export const SiteConfigProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
-  const [headerConfig, setHeaderConfig] = useState<HeaderConfig>(initialHeaderConfig);
-  const [footerConfig, setFooterConfig] = useState<FooterConfig>(initialFooterConfig);
-  const [seoConfig, setSeoConfig] = useState<SEOConfig>(initialSEOConfig);
-  const [securityChecklist, setSecurityChecklist] = useState<SecurityChecklist>(initialSecurityChecklist);
+  const [headerConfig, setHeaderConfig] = useState<HeaderConfig>(() => {
+    try {
+      const saved = localStorage.getItem(HEADER_STORAGE);
+      return saved ? JSON.parse(saved) : initialHeaderConfig;
+    } catch {
+      return initialHeaderConfig;
+    }
+  });
+
+  const [footerConfig, setFooterConfig] = useState<FooterConfig>(() => {
+    try {
+      const saved = localStorage.getItem(FOOTER_STORAGE);
+      return saved ? JSON.parse(saved) : initialFooterConfig;
+    } catch {
+      return initialFooterConfig;
+    }
+  });
+
+  const [seoConfig, setSeoConfig] = useState<SEOConfig>(() => {
+    try {
+      const saved = localStorage.getItem(SEO_STORAGE);
+      return saved ? JSON.parse(saved) : initialSEOConfig;
+    } catch {
+      return initialSEOConfig;
+    }
+  });
+
+  const [securityChecklist, setSecurityChecklist] = useState<SecurityChecklist>(() => {
+    try {
+      const saved = localStorage.getItem(SEC_STORAGE);
+      return saved ? JSON.parse(saved) : initialSecurityChecklist;
+    } catch {
+      return initialSecurityChecklist;
+    }
+  });
+
+  // Sync to local storage
+  useEffect(() => { localStorage.setItem(HEADER_STORAGE, JSON.stringify(headerConfig)); }, [headerConfig]);
+  useEffect(() => { localStorage.setItem(FOOTER_STORAGE, JSON.stringify(footerConfig)); }, [footerConfig]);
+  useEffect(() => { localStorage.setItem(SEO_STORAGE, JSON.stringify(seoConfig)); }, [seoConfig]);
+  useEffect(() => { localStorage.setItem(SEC_STORAGE, JSON.stringify(securityChecklist)); }, [securityChecklist]);
+
+  const updateHeaderConfig = (updates: Partial<HeaderConfig>) => {
+    setHeaderConfig(prev => ({ ...prev, ...updates }));
+  };
+
+  const updateFooterConfig = (updates: Partial<FooterConfig>) => {
+    setFooterConfig(prev => ({ ...prev, ...updates }));
+  };
+
+  const updateSocialLinks = (updates: Partial<SocialLinksConfig>) => {
+    setFooterConfig(prev => ({
+      ...prev,
+      socialLinks: {
+        ...prev.socialLinks,
+        ...updates
+      }
+    }));
+  };
 
   const resetConfigs = () => {
     setHeaderConfig(initialHeaderConfig);
     setFooterConfig(initialFooterConfig);
     setSeoConfig(initialSEOConfig);
     setSecurityChecklist(initialSecurityChecklist);
+    localStorage.removeItem(HEADER_STORAGE);
+    localStorage.removeItem(FOOTER_STORAGE);
+    localStorage.removeItem(SEO_STORAGE);
+    localStorage.removeItem(SEC_STORAGE);
   };
 
   return (
@@ -39,8 +106,11 @@ export const SiteConfigProvider: React.FC<{ children: ReactNode }> = ({ children
       value={{
         headerConfig,
         setHeaderConfig,
+        updateHeaderConfig,
         footerConfig,
         setFooterConfig,
+        updateFooterConfig,
+        updateSocialLinks,
         seoConfig,
         setSeoConfig,
         securityChecklist,

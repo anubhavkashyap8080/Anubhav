@@ -15,8 +15,8 @@ export const FAQ: React.FC = () => {
 
   const faqs = [
     {
-      q: 'How does GanvGaliHut verify that products are truly 100% authentic and pure?',
-      a: 'We work directly with registered Self-Help Groups (SHGs), Gaushalas, and hereditary blacksmiths. We visit the villages, test sample batches for zero chemical adulteration or palm oil, and inspect production methods like wooden bilonas and stone chakkis firsthand before onboarding.'
+      q: 'How does GanvGaliHut verify that products are truly 100% authentic and durable?',
+      a: 'We work directly with registered Self-Help Groups (SHGs), foundries, and hereditary blacksmiths. We visit the workshops, test sample batches for leaf-spring steel grade hardness, inspect natural golden jute fibers and wood GI marks firsthand before onboarding.'
     },
     {
       q: 'How does my purchase directly benefit rural women and artisans?',
@@ -58,7 +58,7 @@ export const FAQ: React.FC = () => {
           Everything You Need to Know
         </h1>
         <p className="text-xs sm:text-sm text-gray-600 max-w-xl mx-auto">
-          Clear answers regarding rural sourcing, bilona ghee purity, delivery logistics, and artisan compensation.
+          Clear answers regarding rural sourcing, tool metallurgy, delivery logistics, and artisan compensation.
         </p>
 
         <div className="max-w-md mx-auto relative pt-2">

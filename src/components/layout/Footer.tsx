@@ -53,7 +53,7 @@ export const Footer: React.FC = () => {
             </div>
             <div>
               <h4 className="font-semibold text-sm text-emerald-100">Desi Authenticity & Purity</h4>
-              <p className="text-xs text-emerald-300/80 mt-1">Vedic Bilona ghee, stone-milled flours, sun-dried heirloom recipes.</p>
+              <p className="text-xs text-emerald-300/80 mt-1">Hand-forged agricultural tools, golden jute bags, handloom textiles & artisan toys.</p>
             </div>
           </div>
 

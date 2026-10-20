@@ -76,9 +76,9 @@ export const About: React.FC = () => {
 
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
             <div className="bg-white p-6 rounded-2xl border border-gray-100 shadow-xs space-y-2">
-              <div className="font-bold text-brand-green text-sm">1. Zero Adulteration</div>
+              <div className="font-bold text-brand-green text-sm">1. High-Carbon Tool Durability</div>
               <p className="text-xs text-gray-600 leading-relaxed">
-                No palm oil, synthetic chemical bleaching, or artificial coloring. Real food from real village soil.
+                Zero cheap scrap steel, brittle pot metals, or toxic plastic fillers. Real hand-forged tools and eco jute crafts from generational artisans.
               </p>
             </div>
 
@@ -92,7 +92,7 @@ export const About: React.FC = () => {
             <div className="bg-white p-6 rounded-2xl border border-gray-100 shadow-xs space-y-2">
               <div className="font-bold text-brand-green text-sm">3. Heritage Preservation</div>
               <p className="text-xs text-gray-600 leading-relaxed">
-                Protecting GI-tagged crafts, Channapatna wood toys, leaf-spring blacksmithing, and Vedic Bilona churning.
+                Protecting GI-tagged crafts, Channapatna wood toys, leaf-spring blacksmithing, and traditional handloom weaving.
               </p>
             </div>
 

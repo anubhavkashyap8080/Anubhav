@@ -10,26 +10,45 @@ import {
   Info
 } from 'lucide-react';
 import { useDemoModal } from '../context/DemoModalContext';
+import { usePlatform } from '../context/PlatformContext';
 
 export const Contact: React.FC = () => {
   const { showDemoNotice } = useDemoModal();
+  const { createTicket } = usePlatform();
+  const [submittedTicketId, setSubmittedTicketId] = useState<string | null>(null);
 
   const [formData, setFormData] = useState({
     name: '',
     email: '',
     phone: '',
-    subject: 'Artisan Inquiry / Order Support',
+    subject: 'Artisan Inquiry / Tool Customization',
     message: ''
   });
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    // Section 12 requirement: Form submission must trigger demo popup!
+    if (!formData.name || !formData.email || !formData.message) {
+      showDemoNotice('Form Incomplete', 'Please fill in your name, email, and message inquiry.');
+      return;
+    }
+
+    // Creates an actual live ticket inside PlatformContext!
+    const newTicket = createTicket({
+      subject: formData.subject,
+      userName: formData.name,
+      userEmail: formData.email,
+      userPhone: formData.phone || '+91 7897492100',
+      priority: 'Medium',
+      department: 'Product Inquiry',
+      message: formData.message
+    });
+
+    setSubmittedTicketId(newTicket.id);
     showDemoNotice(
-      'Contact Form Submission',
-      'This feature is currently available for preview only. Backend functionality and email ticket dispatch will be implemented in a future phase.'
+      `Support Ticket Generated: ${newTicket.id}`,
+      `Namaste ${formData.name}! Your inquiry has been routed to our Support Operations Center. Ticket #${newTicket.id} is now live and can be viewed or triaged in the Admin Ticket Manager.`
     );
-    setFormData({ name: '', email: '', phone: '', subject: 'Artisan Inquiry / Order Support', message: '' });
+    setFormData({ name: '', email: '', phone: '', subject: 'Artisan Inquiry / Tool Customization', message: '' });
   };
 
   return (
@@ -45,7 +64,7 @@ export const Contact: React.FC = () => {
           Contact GanvGaliHut
         </h1>
         <p className="text-xs sm:text-sm text-gray-600">
-          Have a question about an artisan collective, our Vedic bilona ghee, or bulk wedding orders? Reach out anytime.
+          Have a question about an artisan collective, our hand-forged tools, eco jute bags, or bulk order customization? Reach out anytime.
         </p>
       </div>
 

@@ -20,12 +20,14 @@ import {
 import { useSiteConfig } from '../../context/SiteConfigContext';
 import { useCartWishlist } from '../../context/CartWishlistContext';
 import { useDemoModal } from '../../context/DemoModalContext';
+import { useAuth } from '../../context/AuthContext';
 import { mockProducts } from '../../data/mockProducts';
 
 export const Header: React.FC = () => {
   const { headerConfig } = useSiteConfig();
   const { cartCount, wishlistCount, cartTotal } = useCartWishlist();
   const { showDemoNotice } = useDemoModal();
+  const { currentUser, currentRole, openAuthModal, logout, switchRole } = useAuth();
   const navigate = useNavigate();
 
   const [searchQuery, setSearchQuery] = useState('');
@@ -143,7 +145,7 @@ export const Header: React.FC = () => {
               <form onSubmit={handleSearchSubmit} className="relative">
                 <input
                   type="text"
-                  placeholder="Search village honey, bilona ghee, papad, hand-forged tools..."
+                  placeholder="Search hand-forged tools, sickles, khurpi, jute bags, wooden toys..."
                   value={searchQuery}
                   onChange={(e) => {
                     setQueryAndShow(e.target.value);
@@ -199,7 +201,7 @@ export const Header: React.FC = () => {
                     </ul>
                   ) : (
                     <div className="p-4 text-center text-sm text-gray-500">
-                      No matching rural products found. Try searching for "ghee", "papad", "jute", or "sickle".
+                      No matching rural products found. Try searching for "sickle", "khurpi", "jute", or "hammer".
                     </div>
                   )}
 
@@ -217,10 +219,20 @@ export const Header: React.FC = () => {
             </div>
           )}
 
-          {/* Action Icons: Become Seller, Account, Wishlist, Cart */}
+          {/* Action Icons: Nearby Artisans, Become Seller, Account, Wishlist, Cart */}
           {headerConfig.showIcons && (
-            <div className="flex items-center gap-2 sm:gap-4 shrink-0">
+            <div className="flex items-center gap-2 sm:gap-3 shrink-0">
               
+              {/* Nearby Artisans Map CTA */}
+              <Link
+                to="/nearby-artisans"
+                className="hidden md:inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-emerald-600/30 text-brand-green bg-emerald-50 hover:bg-brand-green hover:text-white transition-all text-xs font-semibold"
+                title="Locate rural artisans & foundries"
+              >
+                <MapPin className="w-3.5 h-3.5 text-brand-orange" />
+                <span>Nearby Artisans</span>
+              </Link>
+
               {/* Become a Seller CTA (Desktop) */}
               <Link
                 to={headerConfig.ctaHref || '/become-seller'}
@@ -270,27 +282,108 @@ export const Header: React.FC = () => {
               <div ref={accountRef} className="relative">
                 <button
                   onClick={() => setAccountMenuOpen(!accountMenuOpen)}
-                  className="flex items-center gap-1.5 p-2 rounded-full hover:bg-gray-100 text-gray-700 transition-colors focus:outline-none focus:ring-2 focus:ring-brand-green"
+                  className="flex items-center gap-1.5 p-1.5 sm:p-2 rounded-full hover:bg-gray-100 text-gray-700 transition-colors focus:outline-none focus:ring-2 focus:ring-brand-green"
                   aria-label="Account Menu"
                 >
-                  <div className="w-8 h-8 rounded-full bg-emerald-100 text-brand-green flex items-center justify-center font-bold text-xs">
-                    <User className="w-4 h-4" />
+                  <div className="w-8 h-8 rounded-full bg-emerald-100 text-brand-green flex items-center justify-center font-bold text-xs ring-2 ring-emerald-600/30 overflow-hidden">
+                    {currentUser?.avatar ? (
+                      <img src={currentUser.avatar} alt={currentUser.name} className="w-full h-full object-cover" />
+                    ) : (
+                      <User className="w-4 h-4" />
+                    )}
+                  </div>
+                  <div className="hidden md:flex flex-col text-left">
+                    <span className="text-xs font-semibold text-gray-800 leading-tight truncate max-w-[90px]">
+                      {currentUser ? currentUser.name.split(' ')[0] : 'Sign In'}
+                    </span>
+                    <span className="text-[10px] text-brand-orange font-bold uppercase leading-none">
+                      {currentUser ? currentUser.role.replace('_', ' ') : 'OTP / Login'}
+                    </span>
                   </div>
                   <ChevronDown className="w-3.5 h-3.5 text-gray-400 hidden sm:block" />
                 </button>
 
                 {/* Account Dropdown Menu */}
                 {accountMenuOpen && (
-                  <div className="absolute right-0 top-full mt-2 w-56 bg-white rounded-xl shadow-xl border border-gray-100 py-2 z-50 animate-in fade-in zoom-in-95 duration-150">
+                  <div className="absolute right-0 top-full mt-2 w-64 bg-white rounded-2xl shadow-2xl border border-gray-100 py-2.5 z-50 animate-in fade-in zoom-in-95 duration-150">
                     <div className="px-4 py-2 border-b border-gray-100">
-                      <p className="text-xs text-gray-500">Welcome to GanvGaliHut</p>
-                      <p className="text-sm font-semibold text-gray-800">Namaste, Guest Buyer</p>
-                      <span className="inline-block mt-1 px-2 py-0.5 bg-amber-50 text-[10px] font-medium text-amber-800 rounded">
-                        Demo Account Preview
-                      </span>
+                      <p className="text-[11px] text-gray-500">Welcome to GanvGaliHut</p>
+                      <p className="text-sm font-bold text-gray-900 truncate">
+                        {currentUser ? currentUser.name : 'Namaste, Guest'}
+                      </p>
+                      <div className="flex items-center gap-1.5 mt-1">
+                        <span className="inline-block px-2 py-0.5 bg-emerald-100 text-emerald-800 text-[10px] font-bold rounded uppercase">
+                          Role: {currentUser ? currentUser.role.replace('_', ' ') : 'Visitor'}
+                        </span>
+                        {currentUser?.status === 'active' && (
+                          <span className="text-[10px] text-emerald-600 font-semibold flex items-center gap-0.5">
+                            ● Active
+                          </span>
+                        )}
+                      </div>
+                    </div>
+
+                    {/* Quick Role Switcher (Multi-level user access demonstration) */}
+                    <div className="px-3 py-2 bg-gray-50/80 border-b border-gray-100 text-[11px]">
+                      <span className="text-gray-500 font-semibold block mb-1.5">Switch Access Role:</span>
+                      <div className="grid grid-cols-3 gap-1">
+                        <button
+                          onClick={() => switchRole('super_admin')}
+                          className={`px-1.5 py-1 rounded text-[10px] font-bold transition-all ${
+                            currentRole === 'super_admin'
+                              ? 'bg-red-600 text-white shadow-xs'
+                              : 'bg-white text-gray-700 hover:bg-gray-100 border border-gray-200'
+                          }`}
+                        >
+                          Super Admin
+                        </button>
+                        <button
+                          onClick={() => switchRole('vendor')}
+                          className={`px-1.5 py-1 rounded text-[10px] font-bold transition-all ${
+                            currentRole === 'vendor'
+                              ? 'bg-brand-orange text-white shadow-xs'
+                              : 'bg-white text-gray-700 hover:bg-gray-100 border border-gray-200'
+                          }`}
+                        >
+                          Vendor
+                        </button>
+                        <button
+                          onClick={() => switchRole('customer')}
+                          className={`px-1.5 py-1 rounded text-[10px] font-bold transition-all ${
+                            currentRole === 'customer'
+                              ? 'bg-brand-green text-white shadow-xs'
+                              : 'bg-white text-gray-700 hover:bg-gray-100 border border-gray-200'
+                          }`}
+                        >
+                          Customer
+                        </button>
+                      </div>
                     </div>
 
                     <div className="py-1">
+                      <Link
+                        to="/admin"
+                        onClick={() => setAccountMenuOpen(false)}
+                        className="flex items-center justify-between px-4 py-2 text-xs font-bold text-brand-green hover:bg-emerald-50"
+                      >
+                        <span className="flex items-center gap-2">
+                          <Settings className="w-4 h-4 text-brand-green" />
+                          Admin Operations Center
+                        </span>
+                        <span className="px-1.5 py-0.5 bg-emerald-100 text-[9px] font-bold rounded">
+                          10 Modules
+                        </span>
+                      </Link>
+
+                      <Link
+                        to="/nearby-artisans"
+                        onClick={() => setAccountMenuOpen(false)}
+                        className="flex items-center gap-2 px-4 py-2 text-xs font-medium text-gray-700 hover:bg-emerald-50 hover:text-brand-green"
+                      >
+                        <MapPin className="w-4 h-4 text-brand-orange" />
+                        Nearby Artisan Map Directory
+                      </Link>
+
                       <Link
                         to="/account"
                         onClick={() => setAccountMenuOpen(false)}
@@ -299,45 +392,41 @@ export const Header: React.FC = () => {
                         <User className="w-4 h-4 text-gray-400" />
                         Buyer Profile & Addresses
                       </Link>
-                      <button
-                        onClick={() => {
-                          setAccountMenuOpen(false);
-                          showDemoNotice('Order History', 'Simulated order history is accessible on your profile preview.');
-                        }}
-                        className="w-full flex items-center gap-2 px-4 py-2 text-xs font-medium text-gray-700 hover:bg-emerald-50 hover:text-brand-green text-left"
-                      >
-                        <Package className="w-4 h-4 text-gray-400" />
-                        My Orders & Tracking
-                      </button>
+
                       <Link
                         to="/seller/dashboard"
                         onClick={() => setAccountMenuOpen(false)}
                         className="flex items-center gap-2 px-4 py-2 text-xs font-medium text-gray-700 hover:bg-emerald-50 hover:text-brand-green"
                       >
                         <Store className="w-4 h-4 text-brand-orange" />
-                        Seller Dashboard Preview
-                      </Link>
-                      <Link
-                        to="/admin"
-                        onClick={() => setAccountMenuOpen(false)}
-                        className="flex items-center gap-2 px-4 py-2 text-xs font-medium text-gray-700 hover:bg-emerald-50 hover:text-brand-green"
-                      >
-                        <Settings className="w-4 h-4 text-brand-green" />
-                        Admin & Settings Preview
+                        Seller Dashboard
                       </Link>
                     </div>
 
-                    <div className="border-t border-gray-100 pt-1">
-                      <button
-                        onClick={() => {
-                          setAccountMenuOpen(false);
-                          showDemoNotice('Sign Out', 'Session management will be implemented when backend auth is connected.');
-                        }}
-                        className="w-full flex items-center gap-2 px-4 py-2 text-xs font-medium text-red-600 hover:bg-red-50 text-left"
-                      >
-                        <LogOut className="w-4 h-4" />
-                        Sign Out (Demo)
-                      </button>
+                    <div className="border-t border-gray-100 pt-1.5 px-3">
+                      {!currentUser ? (
+                        <button
+                          onClick={() => {
+                            setAccountMenuOpen(false);
+                            openAuthModal();
+                          }}
+                          className="w-full flex items-center justify-center gap-2 px-3 py-2 text-xs font-bold bg-brand-green text-white rounded-lg hover:bg-brand-green-dark shadow-sm transition-all"
+                        >
+                          <ShieldCheck className="w-4 h-4" />
+                          Sign In / Mobile OTP
+                        </button>
+                      ) : (
+                        <button
+                          onClick={() => {
+                            setAccountMenuOpen(false);
+                            logout();
+                          }}
+                          className="w-full flex items-center gap-2 px-3 py-1.5 text-xs font-semibold text-red-600 hover:bg-red-50 rounded-lg text-left"
+                        >
+                          <LogOut className="w-4 h-4" />
+                          Sign Out ({currentUser.name.split(' ')[0]})
+                        </button>
+                      )}
                     </div>
                   </div>
                 )}
@@ -410,8 +499,15 @@ export const Header: React.FC = () => {
 
               <div className="border-t border-gray-100 my-4 pt-3 space-y-1">
                 <p className="text-[11px] font-bold text-gray-400 uppercase tracking-wider px-2 mb-1">
-                  Artisans & Sellers
+                  Artisans & Interactive Map
                 </p>
+                <Link
+                  to="/nearby-artisans"
+                  onClick={() => setMobileMenuOpen(false)}
+                  className="block px-3 py-2 text-sm font-bold text-brand-green bg-emerald-50 hover:bg-emerald-100 rounded-lg"
+                >
+                  📍 Nearby Artisans (OpenStreetMap)
+                </Link>
                 <Link
                   to="/become-seller"
                   onClick={() => setMobileMenuOpen(false)}
@@ -431,7 +527,7 @@ export const Header: React.FC = () => {
                   onClick={() => setMobileMenuOpen(false)}
                   className="block px-3 py-2 text-sm font-medium text-gray-700 hover:bg-emerald-50 rounded-lg"
                 >
-                  Seller Dashboard Preview
+                  Seller Dashboard
                 </Link>
               </div>
 
@@ -475,10 +571,44 @@ export const Header: React.FC = () => {
                   Security & Privacy
                 </Link>
               </div>
+
+              {/* User / Sign In Button in Mobile Drawer */}
+              <div className="border-t border-gray-100 my-4 pt-3">
+                {!currentUser ? (
+                  <button
+                    onClick={() => {
+                      setMobileMenuOpen(false);
+                      openAuthModal();
+                    }}
+                    className="w-full flex items-center justify-center gap-2 px-4 py-2.5 bg-brand-green text-white font-bold text-xs rounded-xl shadow-sm hover:bg-brand-green-dark"
+                  >
+                    <ShieldCheck className="w-4 h-4" />
+                    Sign In with Google / Phone OTP
+                  </button>
+                ) : (
+                  <div className="p-3 bg-gray-50 rounded-xl space-y-2">
+                    <div className="flex items-center justify-between">
+                      <span className="text-xs font-bold text-gray-800">{currentUser.name}</span>
+                      <span className="text-[10px] bg-emerald-100 text-brand-green px-2 py-0.5 rounded font-bold uppercase">
+                        {currentUser.role.replace('_', ' ')}
+                      </span>
+                    </div>
+                    <button
+                      onClick={() => {
+                        setMobileMenuOpen(false);
+                        logout();
+                      }}
+                      className="w-full text-center text-xs text-red-600 font-semibold hover:underline"
+                    >
+                      Sign Out
+                    </button>
+                  </div>
+                )}
+              </div>
             </div>
 
             <div className="p-4 bg-gray-50 border-t border-gray-100 text-xs text-gray-500 text-center">
-              GanvGaliHut • Demo Prototype
+              GanvGaliHut • S S Industries Enterprise
             </div>
           </div>
           <div className="flex-1" onClick={() => setMobileMenuOpen(false)} />

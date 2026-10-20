@@ -29,9 +29,9 @@ import { useDemoModal } from '../context/DemoModalContext';
 export const Home: React.FC = () => {
   const { showDemoNotice } = useDemoModal();
 
-  // Filter specific product sets
+  // Filter specific product sets (100% Non-food catalog)
   const bestsellers = mockProducts.filter(p => p.isBestSeller).slice(0, 8);
-  const homemadeFoods = mockProducts.filter(p => p.categorySlug === 'papad-pickles-snacks' || p.categorySlug === 'dairy-ghee-grains').slice(0, 4);
+  const ecoJuteAndDecor = mockProducts.filter(p => p.categorySlug === 'jute-bags-cloth-jholas' || p.categorySlug === 'village-home-decor-toys').slice(0, 4);
   const womenHandmade = mockProducts.filter(p => p.isRuralWomenMade).slice(0, 4);
   const farmingTools = mockProducts.filter(p => p.categorySlug === 'farming-traditional-tools').slice(0, 4);
   const recentArticles = mockBlogPosts.slice(0, 3);
@@ -53,7 +53,7 @@ export const Home: React.FC = () => {
             <div className="lg:col-span-7 space-y-6 text-center lg:text-left min-w-0">
               <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-emerald-800/80 border border-emerald-600/60 text-amber-300 text-xs font-semibold shadow-xs max-w-full">
                 <Sparkles className="w-3.5 h-3.5 shrink-0" />
-                <span className="truncate">Empowering 5,000+ Rural Women Artisans & Farmers</span>
+                <span className="truncate">S S Industries Enterprise • Empowering 5,000+ Rural Artisans & Smiths</span>
               </div>
 
               <h1 className="text-3xl sm:text-5xl lg:text-6xl font-extrabold tracking-tight font-display leading-tight sm:leading-none break-words">
@@ -62,9 +62,9 @@ export const Home: React.FC = () => {
               </h1>
 
               <p className="text-sm sm:text-lg text-emerald-100/90 max-w-2xl leading-relaxed mx-auto lg:mx-0">
-                Taste the untamed purity of Vedic Bilona A2 ghee, heirloom sun-dried pickles, 
-                and stone-pounded spices. Discover hand-forged tools and artisanal craft 
-                created by rural women self-help groups across Bharat.
+                Discover high-durability hand-forged agricultural tools, high-carbon steel sickles, 
+                heavy garden khurpis, eco golden jute bags, GI Channapatna wooden toys, and handloom 
+                textiles manufactured by rural foundries and women self-help groups across Bharat.
               </p>
 
               {/* Action Buttons */}
@@ -73,23 +73,23 @@ export const Home: React.FC = () => {
                   to="/products"
                   className="px-5 sm:px-6 py-3 sm:py-3.5 rounded-xl bg-brand-orange hover:bg-brand-orange-dark text-white font-semibold text-xs sm:text-sm shadow-lg hover:shadow-orange-600/30 transition-all flex items-center gap-2 active:scale-95"
                 >
-                  <span>Explore Village Marketplace</span>
+                  <span>Explore Marketplace</span>
                   <ArrowRight className="w-4 h-4" />
                 </Link>
 
                 <Link
-                  to="/category/papad-pickles-snacks"
+                  to="/category/farming-traditional-tools"
                   className="px-5 sm:px-6 py-3 sm:py-3.5 rounded-xl bg-emerald-800/80 hover:bg-emerald-700/80 border border-emerald-600/80 text-white font-semibold text-xs sm:text-sm transition-all flex items-center gap-2"
                 >
-                  <span>Shop Desi Foods</span>
+                  <span>Farming & Garden Tools</span>
                 </Link>
 
                 <Link
-                  to="/become-seller"
-                  className="px-4 py-3 text-xs text-amber-200 hover:text-white font-medium underline underline-offset-4 flex items-center gap-1"
+                  to="/nearby-artisans"
+                  className="px-5 sm:px-6 py-3 sm:py-3.5 rounded-xl bg-amber-500 hover:bg-amber-600 text-gray-900 font-bold text-xs sm:text-sm transition-all flex items-center gap-1.5 shadow-md"
                 >
-                  <span>Join as an Artisan</span>
-                  <ArrowUpRight className="w-3.5 h-3.5" />
+                  <MapPin className="w-4 h-4 text-emerald-950" />
+                  <span>Nearby Artisans (Map)</span>
                 </Link>
               </div>
 
@@ -97,15 +97,15 @@ export const Home: React.FC = () => {
               <div className="grid grid-cols-3 gap-2 sm:gap-4 pt-6 border-t border-emerald-800/60 text-left">
                 <div>
                   <div className="text-lg sm:text-2xl font-bold text-amber-300 font-display">100%</div>
-                  <div className="text-[10px] sm:text-[11px] text-emerald-200/80">Authentic & Pure Desi</div>
+                  <div className="text-[10px] sm:text-[11px] text-emerald-200/80">Forged Iron & Eco Jute</div>
                 </div>
                 <div>
                   <div className="text-lg sm:text-2xl font-bold text-amber-300 font-display">40+</div>
-                  <div className="text-[10px] sm:text-[11px] text-emerald-200/80">Rural Clusters</div>
+                  <div className="text-[10px] sm:text-[11px] text-emerald-200/80">Artisan & Foundry Hubs</div>
                 </div>
                 <div>
                   <div className="text-lg sm:text-2xl font-bold text-amber-300 font-display">0%</div>
-                  <div className="text-[10px] sm:text-[11px] text-emerald-200/80">Middleman Margin</div>
+                  <div className="text-[10px] sm:text-[11px] text-emerald-200/80">Middleman Exploitation</div>
                 </div>
               </div>
             </div>
@@ -114,30 +114,30 @@ export const Home: React.FC = () => {
             <div className="lg:col-span-5 relative mt-6 lg:mt-0 px-2 sm:px-0">
               <div className="relative mx-auto max-w-sm rounded-3xl bg-white/10 backdrop-blur-md p-3 sm:p-4 border border-white/20 shadow-2xl">
                 <img
-                  src="https://images.unsplash.com/photo-1594744803329-e58b31de8bf5?auto=format&fit=crop&w=800&q=80"
-                  alt="Rural Indian women artisan"
+                  src="https://images.unsplash.com/photo-1504148455328-c376907d081c?auto=format&fit=crop&w=800&q=80"
+                  alt="Rural Indian blacksmith forging agriculture tools"
                   className="w-full h-72 sm:h-80 object-cover rounded-2xl shadow-md"
                 />
 
                 {/* Floating pill 1 */}
                 <div className="absolute -top-3 left-2 sm:-top-4 sm:-left-4 bg-white text-gray-900 rounded-xl p-2.5 sm:p-3 shadow-xl border border-gray-100 flex items-center gap-2.5 animate-soft-pulse max-w-[90%] sm:max-w-none">
                   <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-lg bg-orange-100 text-brand-orange flex items-center justify-center font-bold text-sm shrink-0">
-                    🌾
+                    ⚒️
                   </div>
                   <div className="min-w-0">
-                    <p className="text-[9px] sm:text-[10px] text-gray-500 font-medium truncate">Grandmother's Recipe</p>
-                    <p className="text-xs font-bold text-gray-800 truncate">Moong Dal Papad</p>
+                    <p className="text-[9px] sm:text-[10px] text-gray-500 font-medium truncate">High-Carbon Steel</p>
+                    <p className="text-xs font-bold text-gray-800 truncate">Forged Desi Hansiya (Sickle)</p>
                   </div>
                 </div>
 
                 {/* Floating pill 2 */}
                 <div className="absolute -bottom-3 right-2 sm:-bottom-4 sm:-right-4 bg-brand-green text-white rounded-xl p-2.5 sm:p-3 shadow-xl border border-emerald-500 flex items-center gap-2.5 max-w-[90%] sm:max-w-none">
                   <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-lg bg-emerald-800 flex items-center justify-center text-amber-300 font-bold text-xs sm:text-sm shrink-0">
-                    ★ 4.98
+                    ★ 4.96
                   </div>
                   <div className="min-w-0">
-                    <p className="text-[9px] sm:text-[10px] text-emerald-200 font-medium truncate">Gir Cow Vedic Bilona</p>
-                    <p className="text-xs font-bold text-white truncate">Pure Desi Ghee</p>
+                    <p className="text-[9px] sm:text-[10px] text-emerald-200 font-medium truncate">100% Eco Biodegradable</p>
+                    <p className="text-xs font-bold text-white truncate">Golden Jute Shopping Jhola</p>
                   </div>
                 </div>
               </div>
@@ -231,56 +231,62 @@ export const Home: React.FC = () => {
         </div>
       </section>
 
-      {/* PROMO BANNER: Women SHG & Bilona Ghee Special */}
+      {/* PROMO BANNER: S S Industries Heavy Farming & Workshop Implements */}
       <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="rounded-3xl bg-gradient-to-r from-amber-700 via-brand-orange to-amber-800 text-white p-8 sm:p-12 relative overflow-hidden shadow-xl">
+        <div className="rounded-3xl bg-gradient-to-r from-emerald-900 via-brand-green to-emerald-950 text-white p-8 sm:p-12 relative overflow-hidden shadow-xl border-2 border-amber-400/40">
           <div className="max-w-xl relative z-10 space-y-4">
-            <span className="px-3 py-1 rounded-full bg-white/20 backdrop-blur-xs text-xs font-semibold uppercase tracking-wider">
-              Special Artisan Direct Initiative
+            <span className="px-3 py-1 rounded-full bg-white/20 backdrop-blur-xs text-xs font-semibold uppercase tracking-wider text-amber-300">
+              S S Industries • Hardoi & Sandila Foundry
             </span>
             <h3 className="text-2xl sm:text-4xl font-extrabold font-display leading-tight">
-              100% Sun-Dried Pickles & Authentic Wood-Pressed Oils
+              High-Carbon Forged Tools Engineered to Last Decades
             </h3>
-            <p className="text-sm text-amber-100 leading-relaxed">
-              Every jar bought directly finances daughters' education and healthcare in Barabanki and Malwa villages. Experience the unadulterated taste of grandfather’s era.
+            <p className="text-sm text-emerald-100 leading-relaxed">
+              Precision-forged agricultural sickles (Desi Hansiya), hardened carbon steel garden khurpis, heavy fawdas, and chaff cutter toka blades. No brittle scrap metal. Pure generational smith metallurgy.
             </p>
-            <div className="pt-2">
+            <div className="pt-2 flex flex-wrap gap-3">
               <Link
-                to="/category/papad-pickles-snacks"
-                className="inline-flex items-center gap-2 px-6 py-3 rounded-xl bg-white text-gray-900 font-bold text-xs hover:bg-amber-50 shadow-md transition-all active:scale-95"
+                to="/category/farming-traditional-tools"
+                className="inline-flex items-center gap-2 px-6 py-3 rounded-xl bg-brand-orange hover:bg-brand-orange-dark text-white font-bold text-xs shadow-md transition-all active:scale-95"
               >
-                <span>Shop Traditional Harvest</span>
+                <span>Shop Farming Tools</span>
                 <ArrowRight className="w-4 h-4" />
+              </Link>
+              <Link
+                to="/nearby-artisans"
+                className="inline-flex items-center gap-2 px-5 py-3 rounded-xl bg-white/10 hover:bg-white/20 border border-white/30 text-white font-semibold text-xs transition-all"
+              >
+                <span>View Foundry on Map</span>
               </Link>
             </div>
           </div>
         </div>
       </section>
 
-      {/* 10. HOMEMADE & TRADITIONAL FOODS */}
+      {/* 10. ECO JUTE BAGS & VILLAGE HANDCRAFTS */}
       <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex flex-col sm:flex-row sm:items-end justify-between mb-8">
           <div>
             <div className="flex items-center gap-1.5 text-xs font-bold text-brand-green uppercase tracking-wider mb-1">
               <Leaf className="w-4 h-4" />
-              <span>Pure & Organic Country Pantry</span>
+              <span>100% Biodegradable & Heritage Crafts</span>
             </div>
             <h2 className="text-2xl sm:text-3xl font-bold text-gray-900 font-display">
-              Homemade & Traditional Foods
+              Eco Jute Bags & Village Handcrafts
             </h2>
-            <p className="text-xs text-gray-500 mt-1">Sun-dried papad, slow-matured pickles, stone-ground flours, and pure gur.</p>
+            <p className="text-xs text-gray-500 mt-1">Heavy golden jute totes, Sabai grass organizers, Channapatna wooden toys, and brass handicrafts.</p>
           </div>
           <Link
-            to="/category/papad-pickles-snacks"
+            to="/category/jute-bags-cloth-jholas"
             className="mt-2 sm:mt-0 text-xs font-semibold text-brand-green hover:text-brand-green-dark flex items-center gap-1 group"
           >
-            <span>Explore Foods</span>
+            <span>Explore Jute & Crafts</span>
             <ChevronRight className="w-4 h-4 transition-transform group-hover:translate-x-1" />
           </Link>
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-          {homemadeFoods.map(product => (
+          {ecoJuteAndDecor.map(product => (
             <ProductCard key={product.id} product={product} />
           ))}
         </div>
@@ -424,7 +430,7 @@ export const Home: React.FC = () => {
               Why Shop on GanvGaliHut?
             </h2>
             <p className="text-xs sm:text-sm text-gray-600 mt-2">
-              We bridge the gap between rural craftsmanship and modern urban kitchens with complete honesty.
+              We bridge the gap between rural blacksmiths, women weavers, SHG artisans, and modern Indian households with complete honesty.
             </p>
           </div>
 
@@ -437,7 +443,7 @@ export const Home: React.FC = () => {
                 100% Direct Village Sourcing
               </h3>
               <p className="text-xs text-gray-600 leading-relaxed">
-                No corporate wholesalers. Every item is packed at the artisan or SHG village unit, ensuring maximum profits stay in rural pockets.
+                No corporate wholesalers. Every tool and craft item is dispatched from the artisan or SHG village unit, ensuring maximum earnings stay in rural pockets.
               </p>
             </div>
 
@@ -446,10 +452,10 @@ export const Home: React.FC = () => {
                 <Leaf className="w-6 h-6" />
               </div>
               <h3 className="font-bold text-base text-gray-900 font-display">
-                Traditional Heirloom Purity
+                Pure Natural & Forged Materials
               </h3>
               <p className="text-xs text-gray-600 leading-relaxed">
-                Zero artificial coloring, chemical bleaching, or industrial adulteration. Cold-pressed oils, unpolished pulses, and sun-dried spices.
+                Zero cheap scrap steel, brittle castings, or toxic plastics. 100% natural golden jute, leaf-spring forged tool steel, and GI Channapatna organic lac wood.
               </p>
             </div>
 
@@ -463,6 +469,55 @@ export const Home: React.FC = () => {
               <p className="text-xs text-gray-600 leading-relaxed">
                 Over 70% of our marketplace catalog is produced by women-led self-help groups, driving dignified financial independence.
               </p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* INTERACTIVE MAP TEASER: Nearby Artisans & Foundries */}
+      <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="bg-gradient-to-br from-amber-50 to-orange-50 rounded-3xl p-8 sm:p-12 border border-amber-200/80 shadow-md">
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-center">
+            <div className="lg:col-span-7 space-y-4">
+              <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-amber-100 text-brand-orange text-xs font-bold">
+                <MapPin className="w-3.5 h-3.5" />
+                <span>Live OpenStreetMap Integration</span>
+              </div>
+              <h2 className="text-2xl sm:text-4xl font-extrabold text-gray-900 font-display">
+                Locate Artisans, Foundries & SHGs Near You
+              </h2>
+              <p className="text-xs sm:text-sm text-gray-700 leading-relaxed">
+                Use our interactive village directory map to discover blacksmith workshops in Hardoi, brass craft foundries in Moradabad, and women jute cooperatives in the Terai belt. Directly call artisans, check workshop addresses, and arrange bulk farm tool pickups.
+              </p>
+              <div className="pt-2 flex flex-wrap gap-3">
+                <Link
+                  to="/nearby-artisans"
+                  className="px-6 py-3 bg-brand-green hover:bg-brand-green-dark text-white text-xs font-bold rounded-xl shadow-md transition-all flex items-center gap-2"
+                >
+                  <MapPin className="w-4 h-4 text-amber-300" />
+                  <span>Open Interactive Map Directory</span>
+                  <ArrowRight className="w-4 h-4" />
+                </Link>
+                <a
+                  href="tel:+917897492100"
+                  className="px-5 py-3 bg-white border border-gray-300 text-gray-800 text-xs font-semibold rounded-xl hover:bg-gray-50 transition-all flex items-center gap-1.5"
+                >
+                  <span>📞 Call S S Industries Works</span>
+                </a>
+              </div>
+            </div>
+
+            <div className="lg:col-span-5 bg-white p-5 rounded-2xl border border-amber-200 shadow-sm space-y-3">
+              <div className="flex items-center justify-between pb-2 border-b border-gray-100">
+                <span className="text-xs font-bold text-gray-900">Foundry & Works Coordinates</span>
+                <span className="text-[10px] bg-emerald-100 text-brand-green px-2 py-0.5 rounded font-bold">Active Geolocation</span>
+              </div>
+              <div className="text-xs space-y-2 text-gray-600">
+                <p><strong>Works:</strong> Madhoganj Baghauli Road, Newada, Hardoi 241126</p>
+                <p><strong>Head Office:</strong> G145 Phase 2 Industrial Area, UPSIDA Sandila</p>
+                <p><strong>GPS Reference:</strong> 27.3986° N, 80.1319° E</p>
+                <p><strong>Dispatch Scope:</strong> Pan-Bharat (India Post & Cargo)</p>
+              </div>
             </div>
           </div>
         </div>
@@ -489,7 +544,7 @@ export const Home: React.FC = () => {
             </div>
             <h3 className="font-bold text-sm text-gray-900 font-display mb-2">Artisan Handcrafts</h3>
             <p className="text-xs text-gray-600 leading-relaxed">
-              Rural women, ironsmiths, and organic farmers harvest and handcraft goods using generations-old wisdom.
+              Rural women, ironsmiths, and craft collectives forge tools and stitch bags using generational wisdom.
             </p>
           </div>
 
@@ -500,9 +555,9 @@ export const Home: React.FC = () => {
             <div className="w-10 h-10 rounded-full bg-orange-100 text-brand-orange font-bold flex items-center justify-center text-sm mb-4">
               2
             </div>
-            <h3 className="font-bold text-sm text-gray-900 font-display mb-2">Purity Verification</h3>
+            <h3 className="font-bold text-sm text-gray-900 font-display mb-2">Quality & Metal Verification</h3>
             <p className="text-xs text-gray-600 leading-relaxed">
-              Batches are tested for zero adulteration and sustainably packaged in eco-friendly burlap and cardboard.
+              Tool blades and fibers are tested for steel hardness, stitch tensile strength, and zero synthetic shortcuts.
             </p>
           </div>
 
@@ -554,11 +609,11 @@ export const Home: React.FC = () => {
                 ))}
               </div>
               <p className="text-xs text-emerald-100 leading-relaxed italic">
-                "The Vedic A2 Gir Cow Ghee brought tears to my mother’s eyes. It smelled exactly like the ghee her grandmother used to churn in our ancestral village 40 years ago."
+                "The S S Industries garden khurpi and fawda are built like tanks. The hand-forged high-carbon steel edge cuts clean through heavy soil and keeps sharp month after month without bending."
               </p>
               <div className="pt-2 border-t border-emerald-800">
-                <p className="font-bold text-xs text-white">Ananya Mukherjee</p>
-                <p className="text-[10px] text-emerald-300">Bangalore, Verified Buyer</p>
+                <p className="font-bold text-xs text-white">Rameshwar Tripathi</p>
+                <p className="text-[10px] text-emerald-300">Kanpur, Orchard Grower</p>
               </div>
             </div>
 
