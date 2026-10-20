@@ -29,16 +29,16 @@ export const ReturnsPolicy: React.FC = () => {
         </section>
 
         <section className="space-y-2">
-          <h2 className="text-base font-bold text-gray-900 font-display">2. Perishable Foods & Dairy Products</h2>
+          <h2 className="text-base font-bold text-gray-900 font-display">2. Clay Pottery & Fragile Handcrafted Items</h2>
           <p>
-            Due to strict hygiene standards, open jars of ghee, pickles, flours, and spices cannot be physically returned once the tamper-evident foil is broken. However, if any food item arrives spoiled, broken in transit, or rancid, we issue a <strong>100% full refund or free replacement</strong> immediately without requiring return shipping.
+            Due to the delicate nature of handmade terracotta and clay pottery, we pack each item with multi-layer recycled honeycomb cushioning. In the rare event of transit breakage or damage, simply upload a quick photo within 48 hours of delivery for an <strong>instant 100% refund or free priority replacement</strong> without requiring reverse pickup.
           </p>
         </section>
 
         <section className="space-y-2">
           <h2 className="text-base font-bold text-gray-900 font-display">3. Handicrafts, Jute & Farming Tools</h2>
           <p>
-            Non-perishable items such as hand-forged tools, wooden toys, jute bags, and lac bangles are eligible for return if unused, in original condition, and with original tags intact.
+            Hardware items such as hand-forged sickles, tools, wooden toys, jute bags, and lac bangles are eligible for return if unused, in original condition, and with original tags intact.
           </p>
         </section>
 

@@ -26,9 +26,9 @@ export const SellerDashboard: React.FC = () => {
   };
 
   const sampleOrders = [
-    { id: 'ORD-9821', item: 'Handmade Moong Dal Papad (Heeng Jeera)', customer: 'Vikram Joshi (Bengaluru)', date: 'Today, 10:30 AM', amount: 360, status: 'Ready for Dispatch' },
-    { id: 'ORD-9818', item: 'Banarasi Stuffed Red Chilli Pickle 500g', customer: 'Pooja Kashyap (Mumbai)', date: 'Yesterday', amount: 520, status: 'In Transit (India Post)' },
-    { id: 'ORD-9804', item: 'Desi Masala Mathri 450g', customer: 'Deepak Sharma (Delhi)', date: 'Oct 18, 2026', amount: 195, status: 'Delivered' },
+    { id: 'ORD-9821', item: 'Forged Carbon Steel Hansiya Sickle (Hardwood Handle)', customer: 'Vikram Joshi (Bengaluru)', date: 'Today, 10:30 AM', amount: 360, status: 'Ready for Dispatch' },
+    { id: 'ORD-9818', item: 'Hand-Embroidered Jute Market Bag (Pack of 2)', customer: 'Pooja Kashyap (Mumbai)', date: 'Yesterday', amount: 520, status: 'In Transit (India Post)' },
+    { id: 'ORD-9804', item: 'Handmade Wooden Village Puppet Toy Set', customer: 'Deepak Sharma (Delhi)', date: 'Oct 18, 2026', amount: 450, status: 'Delivered' },
   ];
 
   return (

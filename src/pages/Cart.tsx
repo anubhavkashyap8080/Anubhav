@@ -231,7 +231,7 @@ export const Cart: React.FC = () => {
           </div>
           <h2 className="text-xl font-bold text-gray-900 font-display">Your Cart is Empty</h2>
           <p className="text-xs text-gray-600 mt-2 leading-relaxed">
-            Fill your basket with sun-dried pickles, Gir cow ghee, organic flours, or handcrafted tools.
+            Fill your basket with hand-forged agricultural tools, eco golden jute bags, Channapatna wooden toys, or handlooms.
           </p>
           <Link
             to="/products"

@@ -145,13 +145,12 @@ export const SellerRegister: React.FC = () => {
                 onChange={(e) => setFormData({ ...formData, category: e.target.value })}
                 className="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-lg text-xs"
               >
-                <option value="Papad, Pickles & Desi Snacks">Papad, Pickles & Desi Snacks</option>
-                <option value="Pure Dairy, Ghee & Grains">Pure Dairy, Ghee & Grains</option>
-                <option value="Traditional Spices & Tea">Traditional Spices & Tea</option>
+                <option value="Farming & Traditional Tools">Farming & Traditional Tools</option>
                 <option value="Jute Bags & Cloth Jholas">Jute Bags & Cloth Jholas</option>
                 <option value="Handmade Apparel & Bangles">Handmade Apparel & Bangles</option>
                 <option value="Village Home Decor & Toys">Village Home Decor & Toys</option>
-                <option value="Farming & Traditional Tools">Farming & Traditional Tools</option>
+                <option value="Clay Pottery & Terracotta">Clay Pottery & Terracotta</option>
+                <option value="Handloom & Dhurrie Weaving">Handloom & Dhurrie Weaving</option>
               </select>
             </div>
           </div>

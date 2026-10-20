@@ -264,7 +264,7 @@ export const SeoSettings: React.FC = () => {
 
             <div className="bg-white p-4 rounded-xl border border-gray-100 shadow-xs text-xs space-y-1">
               <span className="font-bold text-gray-900 block font-mono text-[11px]">/sitemap-categories.xml</span>
-              <p className="text-gray-500">Taxonomy pages for Papad, Ghee, Spices, Jute, Tools.</p>
+              <p className="text-gray-500">Taxonomy pages for Forged Tools, Jute Bags, Apparel, Pottery, Decor.</p>
               <span className="text-brand-green font-semibold block text-[10px]">8 URLs listed</span>
             </div>
 

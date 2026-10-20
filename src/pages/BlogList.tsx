@@ -62,14 +62,14 @@ export const BlogList: React.FC = () => {
           The GanvGaliHut Journal
         </h1>
         <p className="text-sm sm:text-base text-gray-600 leading-relaxed">
-          Stories of women self-help group breakthroughs, heirloom culinary recipes, traditional blacksmith metallurgy, and sustainable rural living.
+          Stories of women self-help group breakthroughs, handloom traditions, traditional blacksmith metallurgy, and sustainable rural living.
         </p>
 
         {/* Search Bar */}
         <div className="max-w-md mx-auto relative pt-2">
           <input
             type="text"
-            placeholder="Search articles on ghee, sickles, turmeric, SHGs..."
+            placeholder="Search articles on sickles, jute crafts, handloom, SHGs..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             className="w-full pl-10 pr-4 py-2.5 text-xs bg-white border border-gray-300 rounded-full shadow-xs focus:ring-2 focus:ring-brand-green"

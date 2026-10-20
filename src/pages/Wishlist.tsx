@@ -21,7 +21,7 @@ export const Wishlist: React.FC = () => {
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 space-y-8">
       <div>
         <h1 className="text-2xl sm:text-3xl font-extrabold text-gray-900 font-display">
-          My Saved Village Crafts & Harvest ({wishlist.length})
+          My Saved Village Crafts & Tools ({wishlist.length})
         </h1>
         <p className="text-xs text-gray-600 mt-1">
           Items you've bookmarked to support rural self-help groups and artisans.
@@ -96,7 +96,7 @@ export const Wishlist: React.FC = () => {
           </div>
           <h2 className="text-xl font-bold text-gray-900 font-display">Your Wishlist is Empty</h2>
           <p className="text-xs text-gray-600 mt-2 leading-relaxed">
-            Discover artisanal pickles, pure Gir cow ghee, and handloom handicrafts and save your favorites here.
+            Discover forged farming tools, durable jute sacks, pottery, and handloom handicrafts and save your favorites here.
           </p>
           <Link
             to="/products"

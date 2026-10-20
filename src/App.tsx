@@ -37,70 +37,77 @@ import { SiteCustomization } from './pages/admin/SiteCustomization';
 import { BlogManagement } from './pages/admin/BlogManagement';
 import { SeoSettings } from './pages/admin/SeoSettings';
 import { SecuritySettings } from './pages/admin/SecuritySettings';
+import { AdminLayout } from './components/admin/AdminLayout';
+import { ErrorBoundary } from './components/common/ErrorBoundary';
 
 export function App() {
   return (
-    <AuthProvider>
-      <PlatformProvider>
-        <SiteConfigProvider>
-          <CartWishlistProvider>
-            <DemoModalProvider>
-              <BrowserRouter>
-                <Routes>
-                  <Route path="/" element={<Layout />}>
-                    <Route index element={<Home />} />
-                    
-                    {/* Product Catalog & Discovery */}
-                    <Route path="products" element={<Products />} />
-                    <Route path="category/:categorySlug" element={<Products />} />
-                    <Route path="search" element={<Products />} />
-                    <Route path="product/:slug" element={<ProductDetail />} />
-                    <Route path="nearby-artisans" element={<NearbyArtisans />} />
+    <ErrorBoundary>
+      <AuthProvider>
+        <PlatformProvider>
+          <SiteConfigProvider>
+            <CartWishlistProvider>
+              <DemoModalProvider>
+                <BrowserRouter>
+                  <Routes>
+                    {/* Public Customer Storefront Routes (Customer Header, Navigation & Footer) */}
+                    <Route path="/" element={<Layout />}>
+                      <Route index element={<Home />} />
+                      
+                      {/* Product Catalog & Discovery */}
+                      <Route path="products" element={<Products />} />
+                      <Route path="category/:categorySlug" element={<Products />} />
+                      <Route path="search" element={<Products />} />
+                      <Route path="product/:slug" element={<ProductDetail />} />
+                      <Route path="nearby-artisans" element={<NearbyArtisans />} />
 
-                {/* Shopping Experience */}
-                <Route path="wishlist" element={<Wishlist />} />
-                <Route path="cart" element={<Cart />} />
-                <Route path="checkout" element={<Checkout />} />
-                <Route path="account" element={<Account />} />
+                      {/* Shopping Experience */}
+                      <Route path="wishlist" element={<Wishlist />} />
+                      <Route path="cart" element={<Cart />} />
+                      <Route path="checkout" element={<Checkout />} />
+                      <Route path="account" element={<Account />} />
 
-                {/* Seller & Artisan Experience */}
-                <Route path="become-seller" element={<BecomeSeller />} />
-                <Route path="seller-register" element={<SellerRegister />} />
-                <Route path="seller/:sellerSlug" element={<SellerProfile />} />
-                <Route path="seller/dashboard" element={<SellerDashboard />} />
+                      {/* Seller & Artisan Experience */}
+                      <Route path="become-seller" element={<BecomeSeller />} />
+                      <Route path="seller-register" element={<SellerRegister />} />
+                      <Route path="seller/:sellerSlug" element={<SellerProfile />} />
+                      <Route path="seller/dashboard" element={<SellerDashboard />} />
 
-                {/* Village Journal & Blog */}
-                <Route path="blog" element={<BlogList />} />
-                <Route path="blog/category/:slug" element={<BlogList />} />
-                <Route path="blog/:slug" element={<BlogDetail />} />
+                      {/* Village Journal & Blog */}
+                      <Route path="blog" element={<BlogList />} />
+                      <Route path="blog/category/:slug" element={<BlogList />} />
+                      <Route path="blog/:slug" element={<BlogDetail />} />
 
-                {/* Information & Policies */}
-                <Route path="about" element={<About />} />
-                <Route path="contact" element={<Contact />} />
-                <Route path="faq" element={<FAQ />} />
-                <Route path="shipping-policy" element={<ShippingPolicy />} />
-                <Route path="returns-policy" element={<ReturnsPolicy />} />
-                <Route path="privacy-policy" element={<PrivacyPolicy />} />
-                <Route path="terms-conditions" element={<TermsConditions />} />
+                      {/* Information & Policies */}
+                      <Route path="about" element={<About />} />
+                      <Route path="contact" element={<Contact />} />
+                      <Route path="faq" element={<FAQ />} />
+                      <Route path="shipping-policy" element={<ShippingPolicy />} />
+                      <Route path="returns-policy" element={<ReturnsPolicy />} />
+                      <Route path="privacy-policy" element={<PrivacyPolicy />} />
+                      <Route path="terms-conditions" element={<TermsConditions />} />
 
-                {/* Admin Management Previews */}
-                <Route path="admin" element={<AdminDashboard />} />
-                <Route path="admin/site-customization" element={<SiteCustomization />} />
-                <Route path="admin/blog" element={<BlogManagement />} />
-                <Route path="admin/seo-settings" element={<SeoSettings />} />
-                <Route path="admin/security-settings" element={<SecuritySettings />} />
+                      {/* Catch-all 404 for storefront */}
+                      <Route path="404" element={<NotFound />} />
+                      <Route path="*" element={<NotFound />} />
+                    </Route>
 
-                {/* Catch-all 404 */}
-                <Route path="404" element={<NotFound />} />
-                <Route path="*" element={<NotFound />} />
-              </Route>
-            </Routes>
-          </BrowserRouter>
-        </DemoModalProvider>
-      </CartWishlistProvider>
-    </SiteConfigProvider>
-  </PlatformProvider>
-</AuthProvider>
+                    {/* Dedicated Enterprise Admin Console (NO Marketplace Header or Footer!) */}
+                    <Route path="/admin" element={<AdminLayout />}>
+                      <Route index element={<AdminDashboard />} />
+                      <Route path="site-customization" element={<SiteCustomization />} />
+                      <Route path="blog" element={<BlogManagement />} />
+                      <Route path="seo-settings" element={<SeoSettings />} />
+                      <Route path="security-settings" element={<SecuritySettings />} />
+                    </Route>
+                  </Routes>
+                </BrowserRouter>
+              </DemoModalProvider>
+            </CartWishlistProvider>
+          </SiteConfigProvider>
+        </PlatformProvider>
+      </AuthProvider>
+    </ErrorBoundary>
   );
 }
 

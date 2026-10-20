@@ -30,23 +30,23 @@ export const Account: React.FC = () => {
     {
       id: 'GGH-2026-8812',
       date: 'October 14, 2026',
-      total: 1450,
+      total: 1250,
       status: 'Delivered',
       items: [
-        { name: 'Vedic A2 Gir Cow Bilona Ghee (500ml)', qty: 1, price: 1450, seller: 'Radha Rani Gir Gaushala' }
+        { name: 'S S Industries Forged Desi Hansiya (Sickle)', qty: 2, price: 590, seller: 'S S Industries Hardoi Works' }
       ],
-      trackingNo: 'INPOST-8812904-BOM'
+      trackingNo: 'INPOST-8812904-HRD'
     },
     {
       id: 'GGH-2026-7910',
       date: 'September 28, 2026',
-      total: 500,
+      total: 620,
       status: 'Delivered',
       items: [
-        { name: 'Handmade Sun-Dried Moong Dal Papad', qty: 1, price: 180, seller: 'Saraswati Mahila SHG' },
-        { name: 'Traditional Banarasi Stuffed Red Chilli Pickle', qty: 1, price: 260, seller: 'Saraswati Mahila SHG' }
+        { name: 'Heavy Agricultural Steel Fawda / Kudal', qty: 1, price: 340, seller: 'Hardoi Blacksmith Foundry' },
+        { name: '100% Biodegradable Golden Jute Jhola', qty: 1, price: 280, seller: 'Saraswati Mahila SHG' }
       ],
-      trackingNo: 'INPOST-7910442-BOM'
+      trackingNo: 'INPOST-7910442-HRD'
     }
   ];
 

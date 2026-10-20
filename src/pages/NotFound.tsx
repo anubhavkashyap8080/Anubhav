@@ -36,7 +36,7 @@ export const NotFound: React.FC = () => {
       <form onSubmit={handleSearch} className="max-w-md mx-auto relative">
         <input
           type="text"
-          placeholder="Search for desi ghee, papad, jute bags, tools..."
+          placeholder="Search for hand-forged tools, sickles, jute bags, pottery..."
           value={query}
           onChange={(e) => setQuery(e.target.value)}
           className="w-full pl-10 pr-24 py-3 bg-white border border-gray-300 rounded-full text-xs shadow-xs focus:ring-2 focus:ring-brand-green"
@@ -54,17 +54,17 @@ export const NotFound: React.FC = () => {
       <div className="pt-4 space-y-3">
         <p className="text-xs font-bold text-gray-500 uppercase tracking-wider">Popular Village Categories</p>
         <div className="flex flex-wrap justify-center gap-2 text-xs">
-          <Link to="/category/papad-pickles-snacks" className="px-3 py-1.5 bg-white border border-gray-200 rounded-lg hover:border-brand-green">
-            Papad & Pickles
-          </Link>
-          <Link to="/category/dairy-ghee-grains" className="px-3 py-1.5 bg-white border border-gray-200 rounded-lg hover:border-brand-green">
-            Pure Desi Ghee
+          <Link to="/category/farming-traditional-tools" className="px-3 py-1.5 bg-white border border-gray-200 rounded-lg hover:border-brand-green">
+            Farming & Sickles
           </Link>
           <Link to="/category/jute-bags-cloth-jholas" className="px-3 py-1.5 bg-white border border-gray-200 rounded-lg hover:border-brand-green">
-            Jute Bags
+            Jute Bags & Sacks
           </Link>
-          <Link to="/category/farming-traditional-tools" className="px-3 py-1.5 bg-white border border-gray-200 rounded-lg hover:border-brand-green">
-            Hand-Forged Sickles
+          <Link to="/category/handmade-apparel-bangles" className="px-3 py-1.5 bg-white border border-gray-200 rounded-lg hover:border-brand-green">
+            Lac Bangles & Apparel
+          </Link>
+          <Link to="/category/village-home-decor-toys" className="px-3 py-1.5 bg-white border border-gray-200 rounded-lg hover:border-brand-green">
+            Home Decor & Toys
           </Link>
         </div>
       </div>

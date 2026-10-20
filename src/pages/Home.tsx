@@ -25,9 +25,27 @@ import { mockSellers } from '../data/mockSellers';
 import { mockBlogPosts } from '../data/mockBlogPosts';
 import { ProductCard } from '../components/common/ProductCard';
 import { useDemoModal } from '../context/DemoModalContext';
+import { useSiteConfig } from '../context/SiteConfigContext';
 
 export const Home: React.FC = () => {
   const { showDemoNotice } = useDemoModal();
+  const { heroFestivalConfig } = useSiteConfig();
+
+  // Helper to pick festival background gradient
+  const getFestivalGradient = (preset?: string) => {
+    switch (preset) {
+      case 'diwali-gold':
+        return 'from-amber-950 via-rose-950 to-amber-900';
+      case 'holi-vibrant':
+        return 'from-purple-950 via-pink-900 to-amber-900';
+      case 'makar-sankranti':
+        return 'from-amber-900 via-yellow-900 to-emerald-950';
+      case 'patriotic':
+        return 'from-orange-950 via-slate-900 to-emerald-950';
+      default:
+        return 'from-emerald-900 via-brand-green to-emerald-950';
+    }
+  };
 
   // Filter specific product sets (100% Non-food catalog)
   const bestsellers = mockProducts.filter(p => p.isBestSeller).slice(0, 8);
@@ -39,8 +57,8 @@ export const Home: React.FC = () => {
   return (
     <div className="space-y-16 pb-16 w-full max-w-full overflow-x-hidden min-w-0">
       
-      {/* 7. HERO BANNER */}
-      <section className="relative overflow-hidden bg-gradient-to-br from-emerald-900 via-brand-green to-emerald-950 text-white w-full max-w-full">
+      {/* 7. HERO BANNER (DURABLE & FESTIVAL CUSTOMISABLE) */}
+      <section className={`relative overflow-hidden bg-gradient-to-br ${getFestivalGradient(heroFestivalConfig?.gradientPreset)} text-white w-full max-w-full transition-colors duration-500`}>
         {/* Decorative background elements */}
         <div className="absolute inset-0 opacity-10 bg-[radial-gradient(#ffffff_1px,transparent_1px)] [background-size:16px_16px] pointer-events-none" />
         <div className="absolute -top-24 -right-24 w-72 sm:w-96 h-72 sm:h-96 rounded-full bg-brand-orange/20 blur-3xl pointer-events-none" />
@@ -51,20 +69,29 @@ export const Home: React.FC = () => {
             
             {/* Text & CTAs */}
             <div className="lg:col-span-7 space-y-6 text-center lg:text-left min-w-0">
+              
+              {/* Festival Promo Code Banner if active */}
+              {heroFestivalConfig?.promoCode && (
+                <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-amber-400 text-slate-950 font-bold text-xs shadow-md">
+                  <span>🎁 {heroFestivalConfig.festivalName || 'Special'} Offer: {heroFestivalConfig.promoDiscountPercent}% OFF</span>
+                  <span className="font-mono bg-slate-950 text-amber-300 px-2 py-0.5 rounded text-[10px]">
+                    Use: {heroFestivalConfig.promoCode}
+                  </span>
+                </div>
+              )}
+
               <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-emerald-800/80 border border-emerald-600/60 text-amber-300 text-xs font-semibold shadow-xs max-w-full">
                 <Sparkles className="w-3.5 h-3.5 shrink-0" />
-                <span className="truncate">S S Industries Enterprise • Empowering 5,000+ Rural Artisans & Smiths</span>
+                <span className="truncate">{heroFestivalConfig?.badgeText || 'S S Industries Enterprise • Empowering 5,000+ Rural Artisans & Smiths'}</span>
               </div>
 
               <h1 className="text-3xl sm:text-5xl lg:text-6xl font-extrabold tracking-tight font-display leading-tight sm:leading-none break-words">
-                Gaon ke hunar, <br />
-                <span className="text-amber-300 drop-shadow-sm">ab har ghar tak</span>
+                {heroFestivalConfig?.mainHeading || 'Gaon ke hunar,'} <br />
+                <span className="text-amber-300 drop-shadow-sm">{heroFestivalConfig?.highlightHeading || 'ab har ghar tak'}</span>
               </h1>
 
               <p className="text-sm sm:text-lg text-emerald-100/90 max-w-2xl leading-relaxed mx-auto lg:mx-0">
-                Discover high-durability hand-forged agricultural tools, high-carbon steel sickles, 
-                heavy garden khurpis, eco golden jute bags, GI Channapatna wooden toys, and handloom 
-                textiles manufactured by rural foundries and women self-help groups across Bharat.
+                {heroFestivalConfig?.subheading || 'Discover high-durability hand-forged agricultural tools, high-carbon steel sickles, heavy garden khurpis, eco golden jute bags, GI Channapatna wooden toys, and handlooms.'}
               </p>
 
               {/* Action Buttons */}
@@ -122,11 +149,11 @@ export const Home: React.FC = () => {
                 {/* Floating pill 1 */}
                 <div className="absolute -top-3 left-2 sm:-top-4 sm:-left-4 bg-white text-gray-900 rounded-xl p-2.5 sm:p-3 shadow-xl border border-gray-100 flex items-center gap-2.5 animate-soft-pulse max-w-[90%] sm:max-w-none">
                   <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-lg bg-orange-100 text-brand-orange flex items-center justify-center font-bold text-sm shrink-0">
-                    ⚒️
+                    {heroFestivalConfig?.floatingPill1Icon || '⚒️'}
                   </div>
                   <div className="min-w-0">
-                    <p className="text-[9px] sm:text-[10px] text-gray-500 font-medium truncate">High-Carbon Steel</p>
-                    <p className="text-xs font-bold text-gray-800 truncate">Forged Desi Hansiya (Sickle)</p>
+                    <p className="text-[9px] sm:text-[10px] text-gray-500 font-medium truncate">{heroFestivalConfig?.floatingPill1Subtitle || 'High-Carbon Steel'}</p>
+                    <p className="text-xs font-bold text-gray-800 truncate">{heroFestivalConfig?.floatingPill1Title || 'Forged Desi Hansiya'}</p>
                   </div>
                 </div>
 

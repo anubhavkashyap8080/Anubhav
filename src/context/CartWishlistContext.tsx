@@ -21,14 +21,14 @@ const CartWishlistContext = createContext<CartWishlistContextType | undefined>(u
 export const CartWishlistProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
   // Pre-seed with 2 realistic items to show active cart state preview
   const [cart, setCart] = useState<CartItem[]>([
-    { product: mockProducts[0], quantity: 2 }, // Papad
-    { product: mockProducts[8], quantity: 1 }, // A2 Gir Cow Ghee
+    { product: mockProducts[0], quantity: 2 }, // Desi Hansiya
+    { product: mockProducts[1], quantity: 1 }, // Garden Khurpi
   ]);
 
   // Pre-seed with 2 wishlist items
   const [wishlist, setWishlist] = useState<Product[]>([
-    mockProducts[1], // Banarasi Pickle
-    mockProducts[33], // Channapatna Rocking Horse
+    mockProducts[2], // Heavy Fawda
+    mockProducts[3], // Chaff Cutter Toka Blade
   ]);
 
   const addToCart = (product: Product, quantity = 1) => {

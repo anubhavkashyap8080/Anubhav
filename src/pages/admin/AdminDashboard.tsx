@@ -1,8 +1,10 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { usePlatform } from '../../context/PlatformContext';
 import { useSiteConfig } from '../../context/SiteConfigContext';
 import { UserRole, SupportTicket, BlogPost } from '../../types';
+import { FESTIVAL_PRESETS, initialAuditLogs } from '../../data/mockConfig';
 import {
   Users,
   Building2,
@@ -31,7 +33,10 @@ import {
   MapPin,
   RefreshCw,
   Lock,
-  UserCheck
+  UserCheck,
+  Palette,
+  Zap,
+  Activity
 } from 'lucide-react';
 
 export const AdminDashboard: React.FC = () => {
@@ -70,13 +75,52 @@ export const AdminDashboard: React.FC = () => {
     footerConfig,
     updateFooterConfig,
     updateSocialLinks,
-    resetConfigs
+    resetConfigs,
+    heroFestivalConfig,
+    updateHeroFestivalConfig,
+    applyFestivalPreset
   } = useSiteConfig();
+
+  const [searchParams, setSearchParams] = useSearchParams();
+  const urlTab = searchParams.get('tab');
 
   // Active Tab
   const [activeTab, setActiveTab] = useState<
-    'overview' | 'users' | 'vendors' | 'tickets' | 'customizer' | 'blogs' | 'map' | 'firebase' | 'seo' | 'communications'
-  >('overview');
+    'overview' | 'users' | 'vendors' | 'tickets' | 'hero_festival' | 'customizer' | 'blogs' | 'map' | 'firebase' | 'seo' | 'communications' | 'security'
+  >((urlTab as any) || 'overview');
+
+  useEffect(() => {
+    if (urlTab) {
+      setActiveTab(urlTab as any);
+    }
+  }, [urlTab]);
+
+  // Festival Customizer Form State
+  const [festivalForm, setFestivalForm] = useState(heroFestivalConfig);
+
+  useEffect(() => {
+    if (heroFestivalConfig) {
+      setFestivalForm(heroFestivalConfig);
+    }
+  }, [heroFestivalConfig]);
+
+  const handleSelectPreset = (presetKey: string) => {
+    applyFestivalPreset(presetKey);
+    const preset = FESTIVAL_PRESETS[presetKey];
+    if (preset) {
+      setFestivalForm({
+        ...heroFestivalConfig,
+        ...preset
+      });
+    }
+    notifySave();
+  };
+
+  const handleSaveFestival = (e: React.FormEvent) => {
+    e.preventDefault();
+    updateHeroFestivalConfig(festivalForm);
+    notifySave();
+  };
 
   // Search & Filter States
   const [userSearch, setUserSearch] = useState('');
@@ -215,10 +259,10 @@ export const AdminDashboard: React.FC = () => {
         {/* Live Role Switcher (Required for testing multiple user level access) */}
         <div className="bg-white/10 backdrop-blur-md p-2.5 rounded-2xl border border-white/20 text-xs">
           <span className="text-[10px] text-emerald-200 font-semibold block mb-1.5">
-            Switch View Role:
+            Switch View Role (Test RBAC Access):
           </span>
           <div className="flex flex-wrap gap-1.5">
-            {(['super_admin', 'admin', 'vendor', 'support', 'customer'] as UserRole[]).map((role) => (
+            {(['super_admin', 'admin', 'marketer', 'content_writer', 'vendor', 'support', 'customer'] as UserRole[]).map((role) => (
               <button
                 key={role}
                 onClick={() => switchRole(role)}
@@ -239,30 +283,43 @@ export const AdminDashboard: React.FC = () => {
       <div className="flex border-b border-gray-200 overflow-x-auto pb-1 scrollbar-none gap-2 text-xs font-semibold text-gray-600">
         {[
           { id: 'overview', label: 'Overview', icon: TrendingUp },
-          { id: 'users', label: `Users (${users.length})`, icon: Users },
-          { id: 'vendors', label: `Vendors (${vendors.length})`, icon: Building2 },
-          { id: 'tickets', label: `Support Tickets (${tickets.length})`, icon: Ticket },
-          { id: 'customizer', label: 'Header & Footer Customizer', icon: Sliders },
-          { id: 'blogs', label: `Blogs Manager (${posts.length})`, icon: FileText },
-          { id: 'map', label: 'Nearby Map Settings', icon: Compass },
-          { id: 'firebase', label: 'Firebase & OTP Auth', icon: Flame },
-          { id: 'seo', label: 'SEO & Search Console', icon: Globe },
-          { id: 'communications', label: 'Bulk Email & SMS', icon: Mail }
+          { id: 'users', label: `Users (${users.length})`, icon: Users, permRoles: ['super_admin', 'admin', 'support'] },
+          { id: 'vendors', label: `Vendors (${vendors.length})`, icon: Building2, permRoles: ['super_admin', 'admin', 'vendor'] },
+          { id: 'tickets', label: `Support Tickets (${tickets.length})`, icon: Ticket, permRoles: ['super_admin', 'admin', 'support'] },
+          { id: 'hero_festival', label: 'Hero & Festival Customizer', icon: Sparkles, badge: 'New', permRoles: ['super_admin', 'admin', 'marketer', 'content_writer'] },
+          { id: 'customizer', label: 'Header & Footer Customizer', icon: Sliders, permRoles: ['super_admin', 'admin', 'marketer'] },
+          { id: 'blogs', label: `Blogs Manager (${posts.length})`, icon: FileText, permRoles: ['super_admin', 'admin', 'content_writer', 'marketer'] },
+          { id: 'communications', label: 'Bulk Email & SMS', icon: Mail, permRoles: ['super_admin', 'admin', 'marketer'] },
+          { id: 'map', label: 'Nearby Map Settings', icon: Compass, permRoles: ['super_admin', 'admin'] },
+          { id: 'firebase', label: 'Firebase & OTP Auth', icon: Flame, permRoles: ['super_admin'] },
+          { id: 'seo', label: 'SEO & Search Console', icon: Globe, permRoles: ['super_admin', 'admin', 'marketer', 'content_writer'] },
+          { id: 'security', label: 'Security & Audit Logs', icon: ShieldCheck, badge: 'Shield', permRoles: ['super_admin', 'admin'] }
         ].map(tab => {
           const Icon = tab.icon;
           const isActive = activeTab === tab.id;
+          const isPermitted = !tab.permRoles || tab.permRoles.includes(currentRole);
           return (
             <button
               key={tab.id}
-              onClick={() => setActiveTab(tab.id as any)}
-              className={`flex items-center gap-1.5 px-3.5 py-2.5 rounded-xl transition-all whitespace-nowrap cursor-pointer shrink-0 ${
+              onClick={() => {
+                setActiveTab(tab.id as any);
+                setSearchParams({ tab: tab.id });
+              }}
+              className={`flex items-center gap-1.5 px-3.5 py-2 rounded-xl transition-all whitespace-nowrap cursor-pointer shrink-0 ${
                 isActive
                   ? 'bg-brand-green text-white shadow-xs font-bold'
-                  : 'bg-white hover:bg-gray-100 text-gray-700 border border-gray-200/80'
+                  : isPermitted
+                  ? 'bg-white hover:bg-gray-100 text-gray-700 border border-gray-200/80'
+                  : 'bg-gray-100 text-gray-400 border border-gray-200/50 opacity-60'
               }`}
             >
               <Icon className="w-4 h-4" />
               <span>{tab.label}</span>
+              {tab.badge && (
+                <span className="px-1.5 py-0.5 rounded text-[9px] font-bold bg-amber-200 text-amber-900">
+                  {tab.badge}
+                </span>
+              )}
             </button>
           );
         })}
@@ -337,6 +394,8 @@ export const AdminDashboard: React.FC = () => {
                 <option value="all">All Roles</option>
                 <option value="super_admin">Super Admin</option>
                 <option value="admin">Admin</option>
+                <option value="marketer">Marketer</option>
+                <option value="content_writer">Content Writer</option>
                 <option value="vendor">Vendor</option>
                 <option value="support">Support</option>
                 <option value="customer">Customer</option>
@@ -370,9 +429,9 @@ export const AdminDashboard: React.FC = () => {
                     <td className="p-3">
                       <div className="flex items-center gap-2.5">
                         <img
-                          src={user.avatar || 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&w=100&q=80'}
+                          src={user.avatar || 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&w=150&q=80'}
                           alt={user.name}
-                          className="w-8 h-8 rounded-full object-cover"
+                          className="w-7 h-7 rounded-full object-cover"
                         />
                         <div>
                           <p className="font-bold text-gray-900">{user.name}</p>
@@ -389,6 +448,8 @@ export const AdminDashboard: React.FC = () => {
                       >
                         <option value="super_admin">Super Admin</option>
                         <option value="admin">Admin</option>
+                        <option value="marketer">Marketer</option>
+                        <option value="content_writer">Content Writer</option>
                         <option value="vendor">Vendor</option>
                         <option value="support">Support</option>
                         <option value="customer">Customer</option>
@@ -470,6 +531,8 @@ export const AdminDashboard: React.FC = () => {
                       <option value="customer">Customer / Buyer</option>
                       <option value="vendor">Vendor / Seller</option>
                       <option value="support">Support Agent</option>
+                      <option value="marketer">Marketing Manager</option>
+                      <option value="content_writer">Content Writer</option>
                       <option value="admin">Operations Admin</option>
                       <option value="super_admin">Super Admin</option>
                     </select>
@@ -1498,6 +1561,449 @@ export const AdminDashboard: React.FC = () => {
                   </span>
                 </div>
               ))}
+            </div>
+          </div>
+
+        </div>
+      )}
+
+      {/* TAB: HERO & FESTIVAL CUSTOMIZER */}
+      {activeTab === 'hero_festival' && (
+        <div className="space-y-6">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-2 border-b border-gray-200">
+            <div>
+              <div className="flex items-center gap-2">
+                <h2 className="text-xl font-extrabold text-gray-900 font-display">
+                  Hero & Festival Banner Customizer
+                </h2>
+                <span className="px-2.5 py-0.5 rounded-full bg-amber-100 text-amber-800 text-[10px] font-bold">
+                  Live Storefront Sync
+                </span>
+              </div>
+              <p className="text-xs text-gray-500 mt-1">
+                Customize homepage banners for Indian festivals (Diwali, Holi, Makar Sankranti, Independence Day) with custom greetings, glowing gradients, countdown timers, and discount promo codes.
+              </p>
+            </div>
+
+            <button
+              onClick={handleSaveFestival}
+              className="px-5 py-2.5 bg-brand-green hover:bg-brand-green-dark text-white text-xs font-bold rounded-xl shadow-md flex items-center gap-1.5 transition-all cursor-pointer self-start sm:self-auto"
+            >
+              <CheckCircle2 className="w-4 h-4" />
+              <span>Apply & Save to Live Storefront</span>
+            </button>
+          </div>
+
+          {/* Quick Festival Presets Selector */}
+          <div className="bg-white p-5 rounded-2xl border border-gray-100 shadow-xs space-y-3">
+            <div className="flex items-center justify-between">
+              <span className="font-bold text-xs text-gray-800 uppercase tracking-wider flex items-center gap-1.5">
+                <Sparkles className="w-4 h-4 text-amber-500" />
+                <span>1-Click Festival Presets:</span>
+              </span>
+              <span className="text-[11px] text-gray-400">Clicking any preset populates the copy and colors below</span>
+            </div>
+
+            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
+              {[
+                { key: 'diwali', label: 'Diwali Mahotsav', icon: '🪔', badge: 'Diwali Special' },
+                { key: 'holi', label: 'Holi Rangotsav', icon: '🎨', badge: 'Spring Colors' },
+                { key: 'makar_sankranti', label: 'Makar Sankranti', icon: '🌾', badge: 'Harvest Fair' },
+                { key: 'patriotic', label: 'Independence / Republic', icon: '🇮🇳', badge: 'Swadeshi Pride' },
+                { key: 'default', label: 'Evergreen Heritage', icon: '🌿', badge: 'Default' }
+              ].map(p => (
+                <button
+                  key={p.key}
+                  type="button"
+                  onClick={() => handleSelectPreset(p.key)}
+                  className="p-3 rounded-xl border border-gray-200 hover:border-brand-green hover:shadow-md transition-all text-left bg-white flex flex-col justify-between cursor-pointer group"
+                >
+                  <div className="flex items-center justify-between mb-2">
+                    <span className="text-2xl">{p.icon}</span>
+                    <span className="text-[9px] font-bold px-1.5 py-0.5 rounded bg-gray-100 text-gray-600 group-hover:bg-brand-green group-hover:text-white transition-colors">
+                      {p.badge}
+                    </span>
+                  </div>
+                  <div>
+                    <p className="font-bold text-xs text-gray-900 group-hover:text-brand-green">{p.label}</p>
+                    <p className="text-[10px] text-gray-500 mt-0.5">Instant Apply &rarr;</p>
+                  </div>
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* Form and Live Visual Preview */}
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+            
+            {/* Form Editor (7 cols) */}
+            <form onSubmit={handleSaveFestival} className="lg:col-span-7 bg-white p-6 rounded-2xl border border-gray-100 shadow-xs space-y-4 text-xs">
+              <h3 className="font-bold text-sm text-gray-900 font-display border-b border-gray-100 pb-2">
+                Banner Content & Typography
+              </h3>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                  <label className="block font-semibold text-gray-700 mb-1">Festival / Campaign Name</label>
+                  <input
+                    type="text"
+                    value={festivalForm.festivalName}
+                    onChange={(e) => setFestivalForm({ ...festivalForm, festivalName: e.target.value })}
+                    className="w-full p-2.5 bg-gray-50 border border-gray-200 rounded-lg text-xs"
+                    placeholder="e.g. Diwali Mahotsav 2026"
+                  />
+                </div>
+
+                <div>
+                  <label className="block font-semibold text-gray-700 mb-1">Gradient Color Preset</label>
+                  <select
+                    value={festivalForm.gradientPreset}
+                    onChange={(e) => setFestivalForm({ ...festivalForm, gradientPreset: e.target.value as any })}
+                    className="w-full p-2.5 bg-gray-50 border border-gray-200 rounded-lg text-xs"
+                  >
+                    <option value="diwali-gold">Diwali Gold & Deep Royal Red</option>
+                    <option value="holi-vibrant">Holi Vibrant Purple & Pink</option>
+                    <option value="makar-sankranti">Harvest Sun Gold & Forest</option>
+                    <option value="patriotic">Swadeshi Tricolor Accent</option>
+                    <option value="emerald-forest">Evergreen Village Emerald (Default)</option>
+                  </select>
+                </div>
+              </div>
+
+              <div>
+                <label className="block font-semibold text-gray-700 mb-1">Top Announcement Badge Text</label>
+                <input
+                  type="text"
+                  value={festivalForm.badgeText}
+                  onChange={(e) => setFestivalForm({ ...festivalForm, badgeText: e.target.value })}
+                  className="w-full p-2.5 bg-gray-50 border border-gray-200 rounded-lg text-xs"
+                  placeholder="e.g. 🪔 Shubh Deepawali Special • Empowering Rural Artisans"
+                />
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                  <label className="block font-semibold text-gray-700 mb-1">Main Heading (Line 1)</label>
+                  <input
+                    type="text"
+                    value={festivalForm.mainHeading}
+                    onChange={(e) => setFestivalForm({ ...festivalForm, mainHeading: e.target.value })}
+                    className="w-full p-2.5 bg-gray-50 border border-gray-200 rounded-lg text-xs"
+                  />
+                </div>
+                <div>
+                  <label className="block font-semibold text-gray-700 mb-1">Highlight Heading (Line 2)</label>
+                  <input
+                    type="text"
+                    value={festivalForm.highlightHeading}
+                    onChange={(e) => setFestivalForm({ ...festivalForm, highlightHeading: e.target.value })}
+                    className="w-full p-2.5 bg-gray-50 border border-gray-200 rounded-lg text-xs text-amber-600 font-bold"
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label className="block font-semibold text-gray-700 mb-1">Subheading Narrative</label>
+                <textarea
+                  rows={3}
+                  value={festivalForm.subheading}
+                  onChange={(e) => setFestivalForm({ ...festivalForm, subheading: e.target.value })}
+                  className="w-full p-2.5 bg-gray-50 border border-gray-200 rounded-lg text-xs"
+                />
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-2 border-t border-gray-100">
+                <div>
+                  <label className="block font-semibold text-gray-700 mb-1">Festival Promo Code</label>
+                  <input
+                    type="text"
+                    value={festivalForm.promoCode || ''}
+                    onChange={(e) => setFestivalForm({ ...festivalForm, promoCode: e.target.value })}
+                    className="w-full p-2.5 bg-gray-50 border border-gray-200 rounded-lg text-xs font-mono uppercase font-bold text-brand-green"
+                    placeholder="e.g. DIWALI20"
+                  />
+                </div>
+                <div>
+                  <label className="block font-semibold text-gray-700 mb-1">Promo Discount (%)</label>
+                  <input
+                    type="number"
+                    value={festivalForm.promoDiscountPercent || 15}
+                    onChange={(e) => setFestivalForm({ ...festivalForm, promoDiscountPercent: Number(e.target.value) })}
+                    className="w-full p-2.5 bg-gray-50 border border-gray-200 rounded-lg text-xs font-mono"
+                    min={0}
+                    max={80}
+                  />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-2 border-t border-gray-100">
+                <div>
+                  <label className="block font-semibold text-gray-700 mb-1">Floating Badge Icon</label>
+                  <input
+                    type="text"
+                    value={festivalForm.floatingPill1Icon || '⚒️'}
+                    onChange={(e) => setFestivalForm({ ...festivalForm, floatingPill1Icon: e.target.value })}
+                    className="w-full p-2.5 bg-gray-50 border border-gray-200 rounded-lg text-center text-lg"
+                  />
+                </div>
+                <div>
+                  <label className="block font-semibold text-gray-700 mb-1">Floating Badge Title</label>
+                  <input
+                    type="text"
+                    value={festivalForm.floatingPill1Title || ''}
+                    onChange={(e) => setFestivalForm({ ...festivalForm, floatingPill1Title: e.target.value })}
+                    className="w-full p-2.5 bg-gray-50 border border-gray-200 rounded-lg text-xs font-bold"
+                  />
+                </div>
+                <div>
+                  <label className="block font-semibold text-gray-700 mb-1">Floating Badge Subtitle</label>
+                  <input
+                    type="text"
+                    value={festivalForm.floatingPill1Subtitle || ''}
+                    onChange={(e) => setFestivalForm({ ...festivalForm, floatingPill1Subtitle: e.target.value })}
+                    className="w-full p-2.5 bg-gray-50 border border-gray-200 rounded-lg text-xs"
+                  />
+                </div>
+              </div>
+
+              <div className="pt-4 flex justify-end">
+                <button
+                  type="submit"
+                  className="px-6 py-2.5 bg-brand-green hover:bg-brand-green-dark text-white font-bold rounded-xl shadow-md transition-all flex items-center gap-1.5 cursor-pointer"
+                >
+                  <CheckCircle2 className="w-4 h-4" />
+                  <span>Update & Save Customizer</span>
+                </button>
+              </div>
+            </form>
+
+            {/* Live Interactive Preview Card (5 cols) */}
+            <div className="lg:col-span-5 space-y-4">
+              <div className="bg-white p-4 rounded-2xl border border-gray-100 shadow-xs flex items-center justify-between">
+                <span className="font-bold text-xs text-gray-900 flex items-center gap-1.5">
+                  <Activity className="w-4 h-4 text-emerald-500" />
+                  <span>Live Storefront Preview</span>
+                </span>
+                <span className="text-[10px] text-gray-500 font-mono">Synchronized</span>
+              </div>
+
+              {/* Miniature Hero Preview Container */}
+              <div className={`p-6 rounded-3xl text-white shadow-2xl relative overflow-hidden transition-all duration-500 ${
+                festivalForm.gradientPreset === 'diwali-gold'
+                  ? 'bg-gradient-to-br from-amber-950 via-rose-950 to-amber-900'
+                  : festivalForm.gradientPreset === 'holi-vibrant'
+                  ? 'bg-gradient-to-br from-purple-950 via-pink-900 to-amber-900'
+                  : festivalForm.gradientPreset === 'makar-sankranti'
+                  ? 'bg-gradient-to-br from-amber-900 via-yellow-900 to-emerald-950'
+                  : festivalForm.gradientPreset === 'patriotic'
+                  ? 'bg-gradient-to-br from-orange-950 via-slate-900 to-emerald-950'
+                  : 'bg-gradient-to-br from-emerald-900 via-brand-green to-emerald-950'
+              }`}>
+                {/* Promo Code Pill */}
+                {festivalForm.promoCode && (
+                  <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-amber-400 text-slate-950 font-bold text-[10px] shadow-sm mb-3">
+                    <span>🎁 {festivalForm.promoDiscountPercent}% OFF</span>
+                    <span className="bg-slate-950 text-amber-300 px-1.5 py-0.5 rounded font-mono">
+                      {festivalForm.promoCode}
+                    </span>
+                  </div>
+                )}
+
+                {/* Badge text */}
+                <div className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-black/30 border border-white/20 text-amber-300 text-[10px] font-semibold mb-3 block truncate">
+                  <Sparkles className="w-3 h-3 shrink-0" />
+                  <span className="truncate">{festivalForm.badgeText}</span>
+                </div>
+
+                {/* Headings */}
+                <h4 className="text-xl font-extrabold font-display leading-tight">
+                  {festivalForm.mainHeading} <br />
+                  <span className="text-amber-300 drop-shadow-sm">{festivalForm.highlightHeading}</span>
+                </h4>
+
+                <p className="text-xs text-white/80 line-clamp-3 mt-2 leading-relaxed">
+                  {festivalForm.subheading}
+                </p>
+
+                {/* Mock CTAs */}
+                <div className="flex gap-2 pt-4">
+                  <span className="px-3 py-1.5 bg-brand-orange text-white rounded-lg text-[10px] font-bold shadow-sm">
+                    Explore Marketplace &rarr;
+                  </span>
+                  <span className="px-3 py-1.5 bg-white/20 border border-white/30 text-white rounded-lg text-[10px] font-medium">
+                    Farming Tools
+                  </span>
+                </div>
+
+                {/* Floating pill preview */}
+                <div className="mt-4 p-2.5 rounded-xl bg-white/10 backdrop-blur-md border border-white/20 flex items-center gap-2">
+                  <span className="text-xl">{festivalForm.floatingPill1Icon}</span>
+                  <div>
+                    <p className="text-[10px] text-amber-200 font-medium">{festivalForm.floatingPill1Subtitle}</p>
+                    <p className="text-xs font-bold text-white">{festivalForm.floatingPill1Title}</p>
+                  </div>
+                </div>
+              </div>
+
+              <div className="p-3 bg-amber-50 rounded-xl border border-amber-200 text-xs text-amber-900 flex items-center gap-2">
+                <Sparkles className="w-4 h-4 text-brand-orange shrink-0" />
+                <span>Changes saved here are instantly visible to customer shoppers visiting the GanvGaliHut homepage.</span>
+              </div>
+            </div>
+
+          </div>
+        </div>
+      )}
+
+      {/* TAB: SECURITY & CONCURRENCY AUDIT LOGS */}
+      {activeTab === 'security' && (
+        <div className="space-y-6">
+          <div className="pb-2 border-b border-gray-200">
+            <h2 className="text-xl font-extrabold text-gray-900 font-display">
+              Multi-Million User Concurrency Shield & Security Audits
+            </h2>
+            <p className="text-xs text-gray-500 mt-1">
+              Cloudflare global edge network telemetry, high-scale traffic mitigation, RBAC permissions matrix, and tamper-evident audit logs.
+            </p>
+          </div>
+
+          {/* 4 KPI cards */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+            <div className="bg-white p-5 rounded-2xl border border-gray-100 shadow-xs space-y-1">
+              <span className="text-xs text-gray-500 font-medium">Cloudflare Edge PoPs</span>
+              <div className="text-2xl font-bold text-emerald-600 font-display">330+ Cities</div>
+              <p className="text-[11px] text-gray-500">Sub-millisecond global TTFB</p>
+            </div>
+            <div className="bg-white p-5 rounded-2xl border border-gray-100 shadow-xs space-y-1">
+              <span className="text-xs text-gray-500 font-medium">Edge Cache Hit Ratio</span>
+              <div className="text-2xl font-bold text-brand-green font-display">99.8%</div>
+              <p className="text-[11px] text-emerald-600 font-medium">Immutable static bundles</p>
+            </div>
+            <div className="bg-white p-5 rounded-2xl border border-gray-100 shadow-xs space-y-1">
+              <span className="text-xs text-gray-500 font-medium">Concurrency Shield</span>
+              <div className="text-2xl font-bold text-brand-orange font-display">10M+ Req/min</div>
+              <p className="text-[11px] text-gray-500">Zero-cold-start workers</p>
+            </div>
+            <div className="bg-white p-5 rounded-2xl border border-gray-100 shadow-xs space-y-1">
+              <span className="text-xs text-gray-500 font-medium">Client Crash Shield</span>
+              <div className="text-2xl font-bold text-blue-600 font-display">Active</div>
+              <p className="text-[11px] text-blue-600 font-medium">React ErrorBoundary guarded</p>
+            </div>
+          </div>
+
+          {/* RBAC Matrix Card */}
+          <div className="bg-white rounded-2xl border border-gray-100 shadow-xs p-6 space-y-4">
+            <h3 className="font-bold text-sm text-gray-900 font-display border-b border-gray-100 pb-2">
+              Role-Based Access Control (RBAC) Governance Matrix
+            </h3>
+
+            <div className="overflow-x-auto text-xs">
+              <table className="w-full text-left">
+                <thead className="bg-gray-50 text-gray-600 uppercase font-semibold">
+                  <tr>
+                    <th className="p-3">User Role</th>
+                    <th className="p-3">Hero & Festivals</th>
+                    <th className="p-3">Blogs & Stories</th>
+                    <th className="p-3">Bulk SMS / Email</th>
+                    <th className="p-3">Users & KYC</th>
+                    <th className="p-3">Technical SEO</th>
+                    <th className="p-3">Root Security</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-gray-100">
+                  <tr className="hover:bg-gray-50/60 font-medium">
+                    <td className="p-3 font-bold text-amber-600">Super Admin</td>
+                    <td className="p-3 text-emerald-600 font-bold">Full Access</td>
+                    <td className="p-3 text-emerald-600 font-bold">Full Access</td>
+                    <td className="p-3 text-emerald-600 font-bold">Full Access</td>
+                    <td className="p-3 text-emerald-600 font-bold">Full Access</td>
+                    <td className="p-3 text-emerald-600 font-bold">Full Access</td>
+                    <td className="p-3 text-emerald-600 font-bold">Full Access</td>
+                  </tr>
+                  <tr className="hover:bg-gray-50/60">
+                    <td className="p-3 font-bold text-brand-green">Admin (Operations)</td>
+                    <td className="p-3 text-emerald-600 font-bold">Full Access</td>
+                    <td className="p-3 text-emerald-600 font-bold">Full Access</td>
+                    <td className="p-3 text-emerald-600 font-bold">Full Access</td>
+                    <td className="p-3 text-emerald-600 font-bold">Manage Users</td>
+                    <td className="p-3 text-emerald-600 font-bold">Full Access</td>
+                    <td className="p-3 text-gray-400">View Only</td>
+                  </tr>
+                  <tr className="hover:bg-gray-50/60">
+                    <td className="p-3 font-bold text-purple-600">Marketer</td>
+                    <td className="p-3 text-emerald-600 font-bold">Full Access</td>
+                    <td className="p-3 text-emerald-600 font-bold">Editorial</td>
+                    <td className="p-3 text-emerald-600 font-bold">Campaign Dispatch</td>
+                    <td className="p-3 text-red-500 font-semibold">Restricted</td>
+                    <td className="p-3 text-emerald-600 font-bold">Meta & Sitemaps</td>
+                    <td className="p-3 text-red-500 font-semibold">Restricted</td>
+                  </tr>
+                  <tr className="hover:bg-gray-50/60">
+                    <td className="p-3 font-bold text-cyan-600">Content Writer</td>
+                    <td className="p-3 text-emerald-600 font-bold">Copywriting</td>
+                    <td className="p-3 text-emerald-600 font-bold">Author & Publish</td>
+                    <td className="p-3 text-gray-400">View Drafts</td>
+                    <td className="p-3 text-red-500 font-semibold">Restricted</td>
+                    <td className="p-3 text-emerald-600 font-bold">Blog SEO</td>
+                    <td className="p-3 text-red-500 font-semibold">Restricted</td>
+                  </tr>
+                  <tr className="hover:bg-gray-50/60">
+                    <td className="p-3 font-bold text-blue-600">Vendor / SHG</td>
+                    <td className="p-3 text-gray-400">View Only</td>
+                    <td className="p-3 text-gray-400">View Stories</td>
+                    <td className="p-3 text-red-500 font-semibold">Restricted</td>
+                    <td className="p-3 text-gray-400">Self Profile</td>
+                    <td className="p-3 text-red-500 font-semibold">Restricted</td>
+                    <td className="p-3 text-red-500 font-semibold">Restricted</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          {/* Audit Trail Table */}
+          <div className="bg-white rounded-2xl border border-gray-100 shadow-xs overflow-hidden">
+            <div className="p-5 border-b border-gray-100 flex items-center justify-between">
+              <div>
+                <h3 className="font-bold text-sm text-gray-900 font-display">Tamper-Evident System Audit Trail</h3>
+                <p className="text-[11px] text-gray-500">Security event logging with edge actor signatures</p>
+              </div>
+              <span className="px-2.5 py-1 rounded-full bg-emerald-100 text-emerald-800 text-[10px] font-bold">
+                Immutable Log Chain
+              </span>
+            </div>
+
+            <div className="overflow-x-auto text-xs">
+              <table className="w-full text-left">
+                <thead className="bg-gray-50 text-gray-600 uppercase font-semibold">
+                  <tr>
+                    <th className="p-3">Timestamp</th>
+                    <th className="p-3">Actor</th>
+                    <th className="p-3">Role</th>
+                    <th className="p-3">Action</th>
+                    <th className="p-3">Module</th>
+                    <th className="p-3">Details</th>
+                    <th className="p-3">Edge IP</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-gray-100">
+                  {initialAuditLogs.map(log => (
+                    <tr key={log.id} className="hover:bg-gray-50/60 font-mono text-[11px]">
+                      <td className="p-3 text-gray-500 whitespace-nowrap">{log.timestamp}</td>
+                      <td className="p-3 font-bold text-gray-900">{log.actorName}</td>
+                      <td className="p-3">
+                        <span className="px-2 py-0.5 rounded text-[10px] font-bold uppercase bg-slate-100 text-slate-800">
+                          {log.actorRole.replace('_', ' ')}
+                        </span>
+                      </td>
+                      <td className="p-3 font-bold text-brand-green">{log.action}</td>
+                      <td className="p-3 text-gray-700">{log.module}</td>
+                      <td className="p-3 text-gray-600 max-w-xs font-sans text-xs">{log.details}</td>
+                      <td className="p-3 text-gray-400 whitespace-nowrap">{log.ipAddress}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
             </div>
           </div>
 

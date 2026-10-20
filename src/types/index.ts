@@ -1,4 +1,4 @@
-export type UserRole = 'super_admin' | 'admin' | 'vendor' | 'support' | 'customer';
+export type UserRole = 'super_admin' | 'admin' | 'marketer' | 'content_writer' | 'vendor' | 'support' | 'customer';
 
 export interface User {
   id: string;
@@ -279,4 +279,41 @@ export interface SecurityChecklist {
   fileUploadRestricted: boolean;
   sessionTimeoutMinutes: number;
   lastAuditedDate: string;
+}
+
+export interface HeroFestivalConfig {
+  enabled: boolean;
+  festivalName: string; // e.g. "Diwali Special", "Holi Dhamaka", "Makar Sankranti", "Independence Day", "Custom"
+  badgeText: string;
+  mainHeading: string;
+  highlightHeading: string;
+  subheading: string;
+  theme: 'diwali' | 'holi' | 'harvest' | 'patriotic' | 'default';
+  gradientPreset: 'festive-gold' | 'emerald-forest' | 'saffron-glory' | 'royal-indigo' | 'crimson-ruby' | 'diwali-gold' | 'holi-vibrant' | 'makar-sankranti' | 'patriotic' | string;
+  ctaPrimaryText: string;
+  ctaPrimaryLink: string;
+  ctaSecondaryText: string;
+  ctaSecondaryLink: string;
+  showCountdown: boolean;
+  countdownEndDate: string;
+  promoCode: string;
+  promoDiscountPercent: number;
+  heroImageUrl: string;
+  floatingPill1Title: string;
+  floatingPill1Subtitle: string;
+  floatingPill1Icon: string;
+  floatingPill2Title: string;
+  floatingPill2Subtitle: string;
+  floatingPill2Badge: string;
+}
+
+export interface AuditLogEntry {
+  id: string;
+  actorName: string;
+  actorRole: UserRole;
+  action: string;
+  module: 'Users' | 'Vendors' | 'Tickets' | 'Festival Theme' | 'Customizer' | 'Blogs' | 'SEO' | 'Security';
+  details: string;
+  timestamp: string;
+  ipAddress: string;
 }

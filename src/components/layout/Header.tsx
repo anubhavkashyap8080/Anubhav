@@ -97,26 +97,17 @@ export const Header: React.FC = () => {
             {mobileMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
           </button>
 
-          {/* Logo & Tagline */}
-          <Link to="/" className="flex items-center gap-3 shrink-0 group">
-            <div className="relative h-14 w-auto flex items-center">
+          {/* Brand Logo Only (No text next to logo) */}
+          <Link to="/" className="flex items-center shrink-0 group py-1" title="GanvGaliHut • Home">
+            <div className="relative h-12 sm:h-14 w-auto flex items-center">
               <img
                 src={headerConfig.logoUrl || '/logo.png'}
-                alt={headerConfig.brandName}
-                className="h-12 w-auto object-contain transition-transform group-hover:scale-105"
+                alt="GanvGaliHut Logo"
+                className="h-10 sm:h-12 w-auto max-w-[200px] object-contain transition-transform group-hover:scale-105"
                 onError={(e) => {
-                  // Fallback if image fails to render
                   (e.target as HTMLElement).style.display = 'none';
                 }}
               />
-              <div className="hidden sm:block ml-2">
-                <span className="block text-xl font-extrabold text-brand-green tracking-tight font-display">
-                  {headerConfig.brandName}
-                </span>
-                <span className="block text-[10px] text-brand-orange font-medium -mt-1 tracking-wider uppercase">
-                  {headerConfig.tagline}
-                </span>
-              </div>
             </div>
           </Link>
 
@@ -463,9 +454,8 @@ export const Header: React.FC = () => {
         <div className="lg:hidden fixed inset-0 z-50 bg-black/50 backdrop-blur-xs flex">
           <div className="w-4/5 max-w-sm bg-white h-full shadow-2xl flex flex-col overflow-y-auto animate-in slide-in-from-left duration-200">
             <div className="p-4 border-b border-gray-100 flex items-center justify-between bg-brand-cream">
-              <div className="flex items-center gap-2">
-                <img src="/logo.png" alt="GanvGaliHut" className="h-8 w-auto" />
-                <span className="font-bold text-brand-green text-sm">GanvGaliHut</span>
+              <div className="flex items-center">
+                <img src="/logo.png" alt="GanvGaliHut" className="h-8 w-auto object-contain" />
               </div>
               <button
                 onClick={() => setMobileMenuOpen(false)}

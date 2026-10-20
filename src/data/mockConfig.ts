@@ -8,7 +8,9 @@ import {
   User,
   SupportTicket,
   EmailCampaign,
-  SmsMessage
+  SmsMessage,
+  HeroFestivalConfig,
+  AuditLogEntry
 } from '../types';
 
 export const initialHeaderConfig: HeaderConfig = {
@@ -218,6 +220,28 @@ export const initialUsers: User[] = [
     status: 'active',
     joinedDate: 'Apr 10, 2026',
     ordersCount: 5
+  },
+  {
+    id: 'user-06',
+    name: 'Neha Singhania',
+    email: 'neha.marketing@ssindustries.in',
+    phone: '+91 91234 56780',
+    role: 'marketer',
+    avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=150&q=80',
+    status: 'active',
+    joinedDate: 'Mar 15, 2026',
+    lastLogin: 'Today, 11:30 AM'
+  },
+  {
+    id: 'user-07',
+    name: 'Devendra Tripathi',
+    email: 'devendra.writer@ssindustries.in',
+    phone: '+91 93456 78901',
+    role: 'content_writer',
+    avatar: 'https://images.unsplash.com/photo-1522075469751-3a6694fb2f61?auto=format&fit=crop&w=150&q=80',
+    status: 'active',
+    joinedDate: 'Mar 20, 2026',
+    lastLogin: 'Today, 9:45 AM'
   }
 ];
 
@@ -388,3 +412,151 @@ export const initialSecurityChecklist: SecurityChecklist = {
   sessionTimeoutMinutes: 30,
   lastAuditedDate: 'October 20, 2026'
 };
+
+export const initialHeroFestivalConfig: HeroFestivalConfig = {
+  enabled: true,
+  festivalName: 'Diwali Special',
+  badgeText: '🪔 Shubh Deepavali Mahotsav • Special 25% Off Artisan Pack',
+  mainHeading: 'Gaon ke hunar,',
+  highlightHeading: 'ab har ghar tak',
+  subheading: 'High-carbon forged farming tools, authentic Channapatna wooden toys, Moradabad brass puja bells, and golden jute gift jholas crafted with love by rural artisans across Bharat.',
+  theme: 'diwali',
+  gradientPreset: 'festive-gold',
+  ctaPrimaryText: 'Explore Festive Marketplace',
+  ctaPrimaryLink: '/products',
+  ctaSecondaryText: 'Farming & Garden Tools',
+  ctaSecondaryLink: '/category/farming-traditional-tools',
+  showCountdown: true,
+  countdownEndDate: '2026-11-15T23:59:59',
+  promoCode: 'DIWALI2026',
+  promoDiscountPercent: 25,
+  heroImageUrl: 'https://images.unsplash.com/photo-1504148455328-c376907d081c?auto=format&fit=crop&w=800&q=80',
+  floatingPill1Title: 'High-Carbon Steel',
+  floatingPill1Subtitle: 'Forged Desi Hansiya (Sickle)',
+  floatingPill1Icon: '⚒️',
+  floatingPill2Title: '100% Eco Biodegradable',
+  floatingPill2Subtitle: 'Golden Jute Shopping Jhola',
+  floatingPill2Badge: '★ 4.96'
+};
+
+export const FESTIVAL_PRESETS: Record<string, Partial<HeroFestivalConfig>> = {
+  diwali: {
+    festivalName: 'Diwali Special',
+    badgeText: '🪔 Shubh Deepavali Mahotsav • Flat 25% Off Artisan Pack',
+    mainHeading: 'Deepawali ke shubh avsar par,',
+    highlightHeading: 'Gaon ke hunar aapke dwar',
+    subheading: 'Special festival discounts on Moradabad hand-crafted brass bells, clay diyas, S S Industries agricultural tools, and golden jute gift hampers.',
+    gradientPreset: 'festive-gold',
+    theme: 'diwali',
+    promoCode: 'DIWALI2026',
+    promoDiscountPercent: 25,
+    showCountdown: true,
+    floatingPill1Icon: '🪔',
+    floatingPill1Title: 'Brass Puja Bell',
+    floatingPill1Subtitle: 'Moradabad Hand-Cast Metal'
+  },
+  holi: {
+    festivalName: 'Holi Dhamaka',
+    badgeText: '🎨 Rangotsav Special • Rural Handloom & Eco Craft',
+    mainHeading: 'Rang birange tyohar me,',
+    highlightHeading: 'Desi mitti ki mehak aur khushiyaan',
+    subheading: 'Celebrate Holi with 100% natural fiber jute pouches, hand-spun Varanasi khadi kurtas, and handcrafted Channapatna wooden toys.',
+    gradientPreset: 'crimson-ruby',
+    theme: 'holi',
+    promoCode: 'HOLI2026',
+    promoDiscountPercent: 20,
+    showCountdown: true,
+    floatingPill1Icon: '🎨',
+    floatingPill1Title: 'Handloom Khadi',
+    floatingPill1Subtitle: 'Pure Spun Cotton Kurta'
+  },
+  harvest: {
+    festivalName: 'Makar Sankranti & Baisakhi',
+    badgeText: '🌾 Kisan Kranti & Rabi Harvest Season Tools',
+    mainHeading: 'Khet aur khalihaan ki shaan,',
+    highlightHeading: 'S S Industries Forged Tools',
+    subheading: 'Heavy-duty agricultural sickles, hardened carbon steel garden khurpis, heavy fawdas, and chaff cutter toka blades direct from Hardoi foundry.',
+    gradientPreset: 'saffron-glory',
+    theme: 'harvest',
+    promoCode: 'KISAN2026',
+    promoDiscountPercent: 15,
+    showCountdown: true,
+    floatingPill1Icon: '🌾',
+    floatingPill1Title: 'Forged Hansiya',
+    floatingPill1Subtitle: 'High-Carbon Steel Edge'
+  },
+  patriotic: {
+    festivalName: 'Independence & Republic Day',
+    badgeText: '🇮🇳 Swadeshi Bharat • Khadi & Village Industries',
+    mainHeading: 'Garv se apnayein swadeshi,',
+    highlightHeading: 'Har gaon bane atmanirbhar',
+    subheading: 'Empowering 5,000+ rural women self-help groups, generational blacksmiths, and cottage workshops across Uttar Pradesh & Bharat.',
+    gradientPreset: 'royal-indigo',
+    theme: 'patriotic',
+    promoCode: 'AZADI2026',
+    promoDiscountPercent: 26,
+    showCountdown: false,
+    floatingPill1Icon: '🇮🇳',
+    floatingPill1Title: 'Atmanirbhar Gaon',
+    floatingPill1Subtitle: '100% Indian Made'
+  },
+  default: {
+    festivalName: 'Evergreen Rural Marketplace',
+    badgeText: '🌾 S S Industries Enterprise • Empowering 5,000+ Rural Artisans & Smiths',
+    mainHeading: 'Gaon ke hunar,',
+    highlightHeading: 'ab har ghar tak',
+    subheading: 'Discover high-durability hand-forged agricultural tools, high-carbon steel sickles, heavy garden khurpis, eco golden jute bags, GI Channapatna wooden toys, and handlooms.',
+    gradientPreset: 'emerald-forest',
+    theme: 'default',
+    promoCode: 'VILLAGE10',
+    promoDiscountPercent: 10,
+    showCountdown: false,
+    floatingPill1Icon: '⚒️',
+    floatingPill1Title: 'High-Carbon Steel',
+    floatingPill1Subtitle: 'Forged Desi Hansiya (Sickle)'
+  }
+};
+
+export const initialAuditLogs: AuditLogEntry[] = [
+  {
+    id: 'log-01',
+    actorName: 'Anubhav Kashyap',
+    actorRole: 'super_admin',
+    action: 'SYSTEM_BOOT',
+    module: 'Security',
+    details: 'System initialized with edge CDN security policies, XSS input filters, and role-based permissions matrix.',
+    timestamp: '2026-10-20 14:30:15',
+    ipAddress: '103.21.244.0 (Cloudflare Edge)'
+  },
+  {
+    id: 'log-02',
+    actorName: 'Anubhav Kashyap',
+    actorRole: 'super_admin',
+    action: 'FESTIVAL_BANNER_CONFIG',
+    module: 'Festival Theme',
+    details: 'Applied Diwali Special festive theme with 25% discount promo code DIWALI2026.',
+    timestamp: '2026-10-20 15:10:44',
+    ipAddress: '103.21.244.0 (Cloudflare Edge)'
+  },
+  {
+    id: 'log-03',
+    actorName: 'Sunil Sharma',
+    actorRole: 'admin',
+    action: 'VENDOR_KYC_VERIFIED',
+    module: 'Vendors',
+    details: 'Approved KYC documents for Ramkishan Lohar (Hardoi Blacksmith Foundry).',
+    timestamp: '2026-10-20 15:20:00',
+    ipAddress: '103.21.244.12'
+  },
+  {
+    id: 'log-04',
+    actorName: 'Neha Singhania',
+    actorRole: 'marketer',
+    action: 'CAMPAIGN_DISPATCH',
+    module: 'SEO',
+    details: 'Prepared Festive Rabi Harvest newsletter campaign targeting 4,500 registered rural customers.',
+    timestamp: '2026-10-20 16:05:10',
+    ipAddress: '103.21.244.45'
+  }
+];
+
