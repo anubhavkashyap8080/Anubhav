@@ -24,16 +24,39 @@ import {
   Search,
   CheckCircle,
   Activity,
-  Layers
+  Layers,
+  Lock,
+  AlertCircle
 } from 'lucide-react';
 
 export const AdminLayout: React.FC = () => {
-  const { currentUser, currentRole, switchRole, logout } = useAuth();
+  const { currentUser, currentRole, switchRole, logout, loginAsAdmin } = useAuth();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [roleDropdownOpen, setRoleDropdownOpen] = useState(false);
   const [showNotifications, setShowNotifications] = useState(false);
   const navigate = useNavigate();
   const location = useLocation();
+
+  // Admin Security Gate Form State
+  const [gateEmail, setGateEmail] = useState('admin@gaungalihat.com');
+  const [gatePassword, setGatePassword] = useState('');
+  const [gateError, setGateError] = useState('');
+  const [gateLoading, setGateLoading] = useState(false);
+
+  const isAuthorizedAdmin =
+    currentUser &&
+    ['super_admin', 'admin', 'marketer', 'content_writer', 'support', 'vendor'].includes(currentUser.role);
+
+  const handleGateLogin = (e: React.FormEvent) => {
+    e.preventDefault();
+    setGateError('');
+    setGateLoading(true);
+    const res = loginAsAdmin(gateEmail, gatePassword);
+    setGateLoading(false);
+    if (!res.success) {
+      setGateError(res.message || 'Access Denied: Invalid administrator credentials.');
+    }
+  };
 
   const handleLogout = () => {
     logout();
@@ -95,6 +118,93 @@ export const AdminLayout: React.FC = () => {
       ]
     }
   ];
+
+  // REAL ROUTE PROTECTION GATE: Only authenticated administrative staff may enter
+  if (!isAuthorizedAdmin) {
+    return (
+      <div className="min-h-screen bg-slate-950 text-slate-100 flex items-center justify-center p-4">
+        <div className="bg-slate-900 border border-slate-800 rounded-3xl p-6 sm:p-8 max-w-md w-full shadow-2xl space-y-6">
+          <div className="text-center space-y-2">
+            <div className="w-14 h-14 bg-amber-400/10 border border-amber-400/30 rounded-2xl flex items-center justify-center mx-auto text-amber-400 shadow-inner">
+              <ShieldCheck className="w-7 h-7" />
+            </div>
+            <h2 className="text-xl sm:text-2xl font-bold font-display text-white">
+              GaunGaliHat Security Clearance
+            </h2>
+            <p className="text-xs text-slate-400">
+              Restricted Portal: Enter verified administrative credentials to access operations & marketplace controls.
+            </p>
+          </div>
+
+          {currentUser?.role === 'customer' && (
+            <div className="p-3 bg-red-950/60 border border-red-800 text-red-200 text-xs rounded-xl flex items-center gap-2">
+              <AlertCircle className="w-4 h-4 text-red-400 shrink-0" />
+              <span>Signed in as "{currentUser.name}" (Customer). You must log in with Administrative privileges.</span>
+            </div>
+          )}
+
+          {gateError && (
+            <div className="p-3 bg-red-950/60 border border-red-800 text-red-200 text-xs rounded-xl flex items-center gap-2">
+              <AlertCircle className="w-4 h-4 text-red-400 shrink-0" />
+              <span>{gateError}</span>
+            </div>
+          )}
+
+          <form onSubmit={handleGateLogin} className="space-y-4 text-xs">
+            <div>
+              <label className="block font-semibold text-slate-300 mb-1">
+                Admin Email / Identity
+              </label>
+              <input
+                type="text"
+                required
+                value={gateEmail}
+                onChange={(e) => setGateEmail(e.target.value)}
+                placeholder="admin@gaungalihat.com"
+                className="w-full p-3 bg-slate-950 border border-slate-700 rounded-xl text-white font-medium focus:border-amber-400 focus:outline-hidden"
+              />
+            </div>
+
+            <div>
+              <div className="flex justify-between items-center mb-1">
+                <label className="font-semibold text-slate-300">Security Passcode / PIN</label>
+                <span className="text-[10px] text-amber-400/80">Default: admin123 or PIN: 7897</span>
+              </div>
+              <input
+                type="password"
+                required
+                value={gatePassword}
+                onChange={(e) => setGatePassword(e.target.value)}
+                placeholder="Enter password or 4-digit PIN"
+                className="w-full p-3 bg-slate-950 border border-slate-700 rounded-xl text-white font-mono text-sm focus:border-amber-400 focus:outline-hidden"
+              />
+            </div>
+
+            <button
+              type="submit"
+              disabled={gateLoading}
+              className="w-full py-3 bg-amber-400 hover:bg-amber-300 text-slate-950 font-bold rounded-xl shadow-lg transition-all flex items-center justify-center gap-2 cursor-pointer text-sm"
+            >
+              <Lock className="w-4 h-4" />
+              <span>{gateLoading ? 'Verifying Security Clearance...' : 'Authenticate & Unlock Console'}</span>
+            </button>
+          </form>
+
+          <div className="pt-4 border-t border-slate-800 flex items-center justify-between text-xs">
+            <Link
+              to="/"
+              className="text-slate-400 hover:text-white flex items-center gap-1.5 transition-colors"
+            >
+              <span>← Return to Public Storefront</span>
+            </Link>
+            <span className="text-[10px] font-mono text-emerald-400">
+              ● Cloudflare Edge Protected
+            </span>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-slate-900 text-slate-100 flex flex-col lg:flex-row font-sans selection:bg-amber-400 selection:text-gray-900">

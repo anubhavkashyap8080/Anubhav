@@ -14,9 +14,11 @@ import {
   Printer,
   X
 } from 'lucide-react';
-import { mockProducts } from '../data/mockProducts';
+import { usePlatform } from '../context/PlatformContext';
 
 export const SellerDashboard: React.FC = () => {
+  const { products } = usePlatform();
+  const allProducts = products && products.length > 0 ? products : [];
   const [notification, setNotification] = useState<string | null>(null);
 
   const notify = (msg: string) => {
@@ -215,7 +217,7 @@ export const SellerDashboard: React.FC = () => {
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-          {mockProducts.filter(p => p.seller.id === 'seller-1').slice(0, 3).map(p => (
+          {allProducts.slice(0, 3).map(p => (
             <div key={p.id} className="p-4 rounded-xl border border-gray-100 flex items-center justify-between gap-3">
               <img src={p.image} alt={p.name} className="w-12 h-12 rounded-lg object-cover" />
               <div className="flex-1 min-w-0 text-xs">

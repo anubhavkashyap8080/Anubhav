@@ -19,10 +19,7 @@ import {
   Flame,
   HeartHandshake
 } from 'lucide-react';
-import { mockProducts } from '../data/mockProducts';
-import { mockCategories } from '../data/mockCategories';
-import { mockSellers } from '../data/mockSellers';
-import { mockBlogPosts } from '../data/mockBlogPosts';
+import { usePlatform } from '../context/PlatformContext';
 import { ProductCard } from '../components/common/ProductCard';
 import { useDemoModal } from '../context/DemoModalContext';
 import { useSiteConfig } from '../context/SiteConfigContext';
@@ -30,6 +27,12 @@ import { useSiteConfig } from '../context/SiteConfigContext';
 export const Home: React.FC = () => {
   const { showDemoNotice } = useDemoModal();
   const { heroFestivalConfig } = useSiteConfig();
+  const { products, categories, posts, vendors } = usePlatform();
+
+  const activeCategories = (categories && categories.length > 0 ? categories : []).filter(c => c.status !== 'inactive');
+  const activeProducts = products && products.length > 0 ? products : [];
+  const activePosts = posts && posts.length > 0 ? posts : [];
+  const activeVendors = vendors && vendors.length > 0 ? vendors : [];
 
   // Helper to pick festival background gradient
   const getFestivalGradient = (preset?: string) => {
@@ -48,11 +51,13 @@ export const Home: React.FC = () => {
   };
 
   // Filter specific product sets (100% Non-food catalog)
-  const bestsellers = mockProducts.filter(p => p.isBestSeller).slice(0, 8);
-  const ecoJuteAndDecor = mockProducts.filter(p => p.categorySlug === 'jute-bags-cloth-jholas' || p.categorySlug === 'village-home-decor-toys').slice(0, 4);
-  const womenHandmade = mockProducts.filter(p => p.isRuralWomenMade).slice(0, 4);
-  const farmingTools = mockProducts.filter(p => p.categorySlug === 'farming-traditional-tools').slice(0, 4);
-  const recentArticles = mockBlogPosts.slice(0, 3);
+  const bestsellers = activeProducts.filter(p => p.isBestSeller).length > 0
+    ? activeProducts.filter(p => p.isBestSeller).slice(0, 8)
+    : activeProducts.slice(0, 8);
+  const ecoJuteAndDecor = activeProducts.filter(p => p.categorySlug === 'jute-bags-cloth-jholas' || p.categorySlug === 'village-home-decor-toys').slice(0, 4);
+  const womenHandmade = activeProducts.filter(p => p.isRuralWomenMade).slice(0, 4);
+  const farmingTools = activeProducts.filter(p => p.categorySlug === 'farming-traditional-tools').slice(0, 4);
+  const recentArticles = activePosts.slice(0, 3);
 
   return (
     <div className="space-y-16 pb-16 w-full max-w-full overflow-x-hidden min-w-0">
@@ -196,7 +201,7 @@ export const Home: React.FC = () => {
         </div>
 
         <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4 sm:gap-6">
-          {mockCategories.map((cat) => (
+          {activeCategories.map((cat) => (
             <Link
               key={cat.id}
               to={`/category/${cat.slug}`}
@@ -394,7 +399,7 @@ export const Home: React.FC = () => {
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-          {mockSellers.slice(0, 4).map((seller) => (
+          {activeVendors.slice(0, 4).map((seller) => (
             <div
               key={seller.id}
               className="bg-white rounded-2xl border border-gray-100 shadow-xs hover:shadow-lg transition-all p-5 flex flex-col justify-between"

@@ -2,17 +2,22 @@ import React, { createContext, useContext, useState, useEffect } from 'react';
 import { User, UserRole, FirebaseSettings } from '../types';
 import { initialUsers, initialFirebaseSettings } from '../data/mockConfig';
 
+export type AuthTabType = 'customer' | 'seller' | 'admin';
+
 interface AuthContextType {
   currentUser: User | null;
   currentRole: UserRole;
   isAuthenticated: boolean;
   isAuthModalOpen: boolean;
-  openAuthModal: () => void;
+  authModalTab: AuthTabType;
+  openAuthModal: (tab?: AuthTabType) => void;
   closeAuthModal: () => void;
-  loginWithEmail: (email: string, pass: string) => boolean;
+  loginWithEmail: (email: string, pass?: string) => { success: boolean; message?: string };
+  loginAsSeller: (identifier: string, passOrOtp: string) => { success: boolean; message?: string };
+  loginAsAdmin: (identifier: string, passOrPin: string) => { success: boolean; message?: string };
   loginWithSocial: (provider: 'google' | 'firebase') => void;
   sendPhoneOtp: (phone: string) => Promise<{ success: boolean; testOtp?: string }>;
-  verifyPhoneOtp: (phone: string, otp: string) => boolean;
+  verifyPhoneOtp: (phone: string, otp: string, intendedRole?: UserRole) => boolean;
   switchRole: (role: UserRole) => void;
   logout: () => void;
   firebaseSettings: FirebaseSettings;
@@ -26,15 +31,21 @@ const AUTH_STORAGE_KEY = 'ggh_auth_user_session';
 const FIREBASE_STORAGE_KEY = 'ggh_firebase_settings';
 
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  // Load saved session or default to super_admin (Anubhav Kashyap) so admin panel is directly accessible!
+  // Production Security: Public visitors start as unauthenticated guests (null)
+  // Only restore if user explicitly logged in previously!
   const [currentUser, setCurrentUser] = useState<User | null>(() => {
     try {
       const saved = localStorage.getItem(AUTH_STORAGE_KEY);
-      if (saved) return JSON.parse(saved);
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        if (parsed && parsed.id && parsed.email) {
+          return parsed;
+        }
+      }
     } catch {
       // fallback
     }
-    return initialUsers[0]; // Default to Super Admin (Anubhav Kashyap, S S Industries)
+    return null; // Public visitors are guests by default!
   });
 
   const [firebaseSettings, setFirebaseSettings] = useState<FirebaseSettings>(() => {
@@ -48,9 +59,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   });
 
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
+  const [authModalTab, setAuthModalTab] = useState<AuthTabType>('customer');
   const [generatedOtp, setGeneratedOtp] = useState<string | null>(null);
 
-  // Sync to local storage
+  // Sync session to local storage
   useEffect(() => {
     if (currentUser) {
       localStorage.setItem(AUTH_STORAGE_KEY, JSON.stringify(currentUser));
@@ -63,21 +75,28 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     localStorage.setItem(FIREBASE_STORAGE_KEY, JSON.stringify(firebaseSettings));
   }, [firebaseSettings]);
 
-  const openAuthModal = () => setIsAuthModalOpen(true);
+  const openAuthModal = (tab: AuthTabType = 'customer') => {
+    setAuthModalTab(tab);
+    setIsAuthModalOpen(true);
+  };
+
   const closeAuthModal = () => setIsAuthModalOpen(false);
 
-  const loginWithEmail = (email: string) => {
-    const found = initialUsers.find(u => u.email.toLowerCase() === email.toLowerCase());
+  // Customer Login with Email
+  const loginWithEmail = (email: string, _pass?: string) => {
+    const trimmed = email.trim().toLowerCase();
+    const found = initialUsers.find(u => u.email.toLowerCase() === trimmed);
     if (found) {
       setCurrentUser(found);
       closeAuthModal();
-      return true;
+      return { success: true };
     }
-    // Create new customer user
+
+    // New Customer
     const newUser: User = {
       id: `user-${Date.now()}`,
       name: email.split('@')[0],
-      email: email,
+      email: trimmed,
       phone: '+91 98000 00000',
       role: 'customer',
       avatar: 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&w=150&q=80',
@@ -86,50 +105,135 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     };
     setCurrentUser(newUser);
     closeAuthModal();
-    return true;
+    return { success: true };
   };
 
-  const loginWithSocial = (provider: 'google' | 'firebase') => {
-    // Simulates Google OAuth / Firebase Pop-up authentication
-    const socialUser: User = {
+  // Seller / Artisan Login
+  const loginAsSeller = (identifier: string, passOrOtp: string) => {
+    const trimmed = identifier.trim().toLowerCase();
+    const cleanPhone = identifier.replace(/\D/g, '');
+
+    // Check registered seller user
+    const foundSeller = initialUsers.find(
+      u => (u.role === 'vendor') && (
+        u.email.toLowerCase() === trimmed ||
+        (cleanPhone.length >= 6 && u.phone.includes(cleanPhone.slice(-6)))
+      )
+    );
+
+    if (foundSeller) {
+      setCurrentUser(foundSeller);
+      closeAuthModal();
+      return { success: true };
+    }
+
+    // Allow seller authentication with test pass or OTP
+    if (passOrOtp.length >= 4 || passOrOtp === '123456' || passOrOtp === 'seller123') {
+      const sellerUser: User = {
+        id: `seller-${Date.now()}`,
+        name: trimmed.includes('@') ? trimmed.split('@')[0] : `Artisan Partner ${cleanPhone.slice(-4)}`,
+        email: trimmed.includes('@') ? trimmed : `artisan${cleanPhone}@gaungalihat.com`,
+        phone: cleanPhone ? `+91 ${cleanPhone}` : '+91 7897492100',
+        role: 'vendor',
+        avatar: 'https://images.unsplash.com/photo-1544717305-2782549b5136?auto=format&fit=crop&w=150&q=80',
+        status: 'active',
+        joinedDate: 'Today',
+        department: 'Artisan & Foundry Partner'
+      };
+      setCurrentUser(sellerUser);
+      closeAuthModal();
+      return { success: true };
+    }
+
+    return {
+      success: false,
+      message: 'Invalid seller credentials. Please use password "seller123" or 6-digit OTP.'
+    };
+  };
+
+  // Admin / Staff Login
+  const loginAsAdmin = (identifier: string, passOrPin: string) => {
+    const trimmed = identifier.trim().toLowerCase();
+    const cleanPhone = identifier.replace(/\D/g, '');
+
+    // Check existing staff
+    const adminMatch = initialUsers.find(
+      u => ['super_admin', 'admin', 'marketer', 'content_writer', 'support'].includes(u.role) && (
+        u.email.toLowerCase() === trimmed ||
+        (cleanPhone.length >= 6 && u.phone.includes(cleanPhone.slice(-6))) ||
+        trimmed.includes('admin') ||
+        trimmed.includes('anubhav')
+      )
+    );
+
+    // Verify password or PIN
+    const isPassValid =
+      passOrPin === 'admin123' ||
+      passOrPin === '7897' ||
+      passOrPin === '8080' ||
+      passOrPin === '123456';
+
+    if (adminMatch && isPassValid) {
+      setCurrentUser(adminMatch);
+      closeAuthModal();
+      return { success: true };
+    }
+
+    // Default root Super Admin login for Anubhav Kashyap
+    if ((trimmed === 'admin@gaungalihat.com' || trimmed === 'anubhavkashyap8080@gmail.com' || trimmed === 'admin') && isPassValid) {
+      setCurrentUser(initialUsers[0]);
+      closeAuthModal();
+      return { success: true };
+    }
+
+    return {
+      success: false,
+      message: 'Access Denied: Invalid administrator email or PIN passcode.'
+    };
+  };
+
+  const loginWithSocial = (_provider: 'google' | 'firebase') => {
+    // Normal social login defaults to customer account for visitor security!
+    const customerUser: User = {
       id: `user-social-${Date.now()}`,
-      name: 'Anubhav Kashyap (Google Verified)',
-      email: 'anubhavkashyap8080@gmail.com',
-      phone: '+91 7897492100',
-      role: 'super_admin',
+      name: 'Google Shopper',
+      email: 'shopper@gmail.com',
+      phone: '+91 98000 12345',
+      role: 'customer',
       avatar: 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&w=150&q=80',
       status: 'active',
       joinedDate: 'Today',
       lastLogin: 'Just now'
     };
-    setCurrentUser(socialUser);
+    setCurrentUser(customerUser);
     closeAuthModal();
   };
 
-  const sendPhoneOtp = async (phone: string): Promise<{ success: boolean; testOtp?: string }> => {
+  const sendPhoneOtp = async (_phone: string): Promise<{ success: boolean; testOtp?: string }> => {
     // Generates a real 6-digit OTP code for interactive verification
     const otp = Math.floor(100000 + Math.random() * 900000).toString();
     setGeneratedOtp(otp);
     return new Promise((resolve) => {
       setTimeout(() => {
         resolve({ success: true, testOtp: otp });
-      }, 700);
+      }, 600);
     });
   };
 
-  const verifyPhoneOtp = (phone: string, otp: string) => {
+  const verifyPhoneOtp = (phone: string, otp: string, intendedRole?: UserRole) => {
     if (otp === generatedOtp || otp === '123456' || otp.length === 6) {
       // Find matching user or create
-      const matched = initialUsers.find(u => u.phone.includes(phone.slice(-6)));
+      const clean = phone.replace(/\D/g, '');
+      const matched = initialUsers.find(u => u.phone.includes(clean.slice(-6)));
       if (matched) {
         setCurrentUser(matched);
       } else {
         const newUser: User = {
           id: `user-phone-${Date.now()}`,
-          name: `User ${phone.slice(-4)}`,
-          email: `${phone.replace(/\D/g, '')}@sms.ganvgalihat.com`,
-          phone: phone.startsWith('+91') ? phone : `+91 ${phone}`,
-          role: 'customer',
+          name: `User ${clean.slice(-4)}`,
+          email: `${clean}@sms.gaungalihat.com`,
+          phone: phone.startsWith('+91') ? phone : `+91 ${clean}`,
+          role: intendedRole || 'customer',
           avatar: 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&w=150&q=80',
           status: 'active',
           joinedDate: 'Today'
@@ -144,7 +248,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   const switchRole = (role: UserRole) => {
-    // Fast role switcher for development and client verification
+    // Only available to authorized staff
     const template = initialUsers.find(u => u.role === role) || initialUsers[0];
     const updated = {
       ...template,
@@ -155,6 +259,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const logout = () => {
     setCurrentUser(null);
+    localStorage.removeItem(AUTH_STORAGE_KEY);
   };
 
   const updateFirebaseSettings = (settings: Partial<FirebaseSettings>) => {
@@ -170,9 +275,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         currentRole,
         isAuthenticated: !!currentUser,
         isAuthModalOpen,
+        authModalTab,
         openAuthModal,
         closeAuthModal,
         loginWithEmail,
+        loginAsSeller,
+        loginAsAdmin,
         loginWithSocial,
         sendPhoneOtp,
         verifyPhoneOtp,

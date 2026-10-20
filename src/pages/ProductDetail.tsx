@@ -17,7 +17,7 @@ import {
   ChevronRight,
   Info
 } from 'lucide-react';
-import { mockProducts } from '../data/mockProducts';
+import { usePlatform } from '../context/PlatformContext';
 import { ProductCard } from '../components/common/ProductCard';
 import { useCartWishlist } from '../context/CartWishlistContext';
 import { useDemoModal } from '../context/DemoModalContext';
@@ -27,16 +27,35 @@ export const ProductDetail: React.FC = () => {
   const navigate = useNavigate();
   const { addToCart, toggleWishlist, isInWishlist } = useCartWishlist();
   const { showDemoNotice } = useDemoModal();
+  const { products } = usePlatform();
 
-  const product = mockProducts.find(p => p.slug === slug) || mockProducts[0];
-  const [selectedImage, setSelectedImage] = useState<string>(product.image);
+  const allProducts = products && products.length > 0 ? products : [];
+  const product = allProducts.find(p => p.slug === slug) || allProducts[0];
+  const [selectedImage, setSelectedImage] = useState<string>(product ? product.image : '');
   const [quantity, setQuantity] = useState<number>(1);
   const [activeTab, setActiveTab] = useState<'desc' | 'story' | 'reviews'>('desc');
+
+  React.useEffect(() => {
+    if (product) {
+      setSelectedImage(product.image);
+    }
+  }, [product]);
+
+  if (!product) {
+    return (
+      <div className="max-w-7xl mx-auto px-4 py-16 text-center">
+        <h2 className="text-xl font-bold text-gray-800">Product Not Found</h2>
+        <Link to="/products" className="mt-4 inline-block px-4 py-2 bg-brand-green text-white rounded-lg">
+          Browse Marketplace
+        </Link>
+      </div>
+    );
+  }
 
   const inWishlist = isInWishlist(product.id);
 
   // Related products from same category
-  const relatedProducts = mockProducts
+  const relatedProducts = allProducts
     .filter(p => p.categorySlug === product.categorySlug && p.id !== product.id)
     .slice(0, 4);
 

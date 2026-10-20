@@ -13,7 +13,7 @@ import {
   Flame,
   MapPin
 } from 'lucide-react';
-import { mockCategories } from '../../data/mockCategories';
+import { usePlatform } from '../../context/PlatformContext';
 
 const iconMap: Record<string, React.ReactNode> = {
   Cookie: <Cookie className="w-4 h-4" />,
@@ -28,6 +28,8 @@ const iconMap: Record<string, React.ReactNode> = {
 
 export const CategoryNav: React.FC = () => {
   const location = useLocation();
+  const { categories } = usePlatform();
+  const activeCategories = (categories && categories.length > 0 ? categories : []).filter(c => c.status !== 'inactive');
 
   return (
     <nav className="bg-brand-sand border-b border-gray-200/80 shadow-xs w-full max-w-full overflow-hidden">
@@ -48,7 +50,7 @@ export const CategoryNav: React.FC = () => {
           </Link>
 
           {/* Category Links */}
-          {mockCategories.map((cat) => {
+          {activeCategories.map((cat) => {
             const isActive = location.pathname === `/category/${cat.slug}`;
             return (
               <Link

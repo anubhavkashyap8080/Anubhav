@@ -11,11 +11,14 @@ import {
   Grid,
   Check
 } from 'lucide-react';
-import { mockProducts } from '../data/mockProducts';
-import { mockCategories } from '../data/mockCategories';
+import { usePlatform } from '../context/PlatformContext';
 import { ProductCard } from '../components/common/ProductCard';
 
 export const Products: React.FC = () => {
+  const { products, categories } = usePlatform();
+  const allProducts = products && products.length > 0 ? products : [];
+  const allCategories = (categories && categories.length > 0 ? categories : []).filter(c => c.status !== 'inactive');
+
   const { categorySlug } = useParams<{ categorySlug?: string }>();
   const [searchParams] = useSearchParams();
   const searchQuery = searchParams.get('q') || '';
@@ -37,12 +40,12 @@ export const Products: React.FC = () => {
   }, [categorySlug]);
 
   const currentCategoryObj = useMemo(() => {
-    return mockCategories.find(c => c.slug === selectedCategory);
-  }, [selectedCategory]);
+    return allCategories.find(c => c.slug === selectedCategory);
+  }, [allCategories, selectedCategory]);
 
   // Filtered and sorted products
   const filteredProducts = useMemo(() => {
-    return mockProducts.filter(product => {
+    return allProducts.filter(product => {
       // Category filter
       if (selectedCategory !== 'all' && product.categorySlug !== selectedCategory) {
         return false;
@@ -83,7 +86,7 @@ export const Products: React.FC = () => {
       // Default: featured (bestseller first)
       return (b.isBestSeller ? 1 : 0) - (a.isBestSeller ? 1 : 0);
     });
-  }, [selectedCategory, searchQuery, selectedSellerType, priceRange, inStockOnly, womenShgOnly, sortBy]);
+  }, [selectedCategory, searchQuery, selectedSellerType, priceRange, inStockOnly, womenShgOnly, sortBy, allProducts]);
 
   const handleResetFilters = () => {
     setSelectedCategory('all');
@@ -205,10 +208,10 @@ export const Products: React.FC = () => {
                 }`}
               >
                 <span>All Categories</span>
-                <span className="text-[10px] opacity-80">{mockProducts.length}</span>
+                <span className="text-[10px] opacity-80">{allProducts.length}</span>
               </button>
 
-              {mockCategories.map(cat => (
+              {allCategories.map(cat => (
                 <button
                   key={cat.id}
                   onClick={() => setSelectedCategory(cat.slug)}
@@ -356,7 +359,7 @@ export const Products: React.FC = () => {
                   className="w-full text-xs p-2 border border-gray-300 rounded-lg"
                 >
                   <option value="all">All Categories</option>
-                  {mockCategories.map(c => (
+                  {allCategories.map(c => (
                     <option key={c.id} value={c.slug}>{c.name}</option>
                   ))}
                 </select>

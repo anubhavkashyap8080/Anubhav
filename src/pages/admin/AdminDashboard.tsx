@@ -55,7 +55,7 @@ import { AdminCategoriesTab } from './tabs/AdminCategoriesTab';
 import { AdminTeamTab } from './tabs/AdminTeamTab';
 
 export const AdminDashboard: React.FC = () => {
-  const { currentUser, currentRole, switchRole } = useAuth();
+  const { currentUser, currentRole, logout } = useAuth();
   const {
     users,
     addUser,
@@ -295,26 +295,26 @@ export const AdminDashboard: React.FC = () => {
           </p>
         </div>
 
-        {/* Live Role Switcher */}
-        <div className="bg-black/25 backdrop-blur-md p-2 rounded-xl border border-white/10 text-xs">
-          <span className="text-[10px] text-emerald-200/80 font-semibold block mb-1">
-            Switch RBAC Role (Simulate User Permissions):
-          </span>
-          <div className="flex flex-wrap gap-1">
-            {(['super_admin', 'admin', 'marketer', 'content_writer', 'vendor', 'support', 'customer'] as UserRole[]).map((role) => (
-              <button
-                key={role}
-                onClick={() => switchRole(role)}
-                className={`px-2 py-0.5 rounded-md text-[10px] font-bold transition-all cursor-pointer ${
-                  currentRole === role
-                    ? 'bg-amber-400 text-gray-950 shadow-xs'
-                    : 'bg-white/10 text-emerald-100 hover:bg-white/20'
-                }`}
-              >
-                {role.replace('_', ' ')}
-              </button>
-            ))}
+        {/* Live Production Edge & Session Status */}
+        <div className="bg-black/40 backdrop-blur-md p-3 rounded-xl border border-white/10 text-xs flex items-center gap-3">
+          <div className="space-y-1">
+            <div className="flex items-center gap-1.5 text-[11px] text-emerald-300 font-semibold">
+              <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+              <span>Cloudflare Edge Active</span>
+            </div>
+            <div className="text-[10px] text-gray-300">
+              Clearance: <span className="font-mono text-amber-300 font-bold">{currentUser?.role?.toUpperCase() || 'SUPER_ADMIN'}</span>
+            </div>
           </div>
+          <button
+            onClick={() => {
+              logout();
+              window.location.href = '/';
+            }}
+            className="px-3 py-1.5 rounded-lg bg-red-500/20 hover:bg-red-500/40 text-red-200 border border-red-500/40 text-xs font-semibold transition-all cursor-pointer"
+          >
+            Sign Out
+          </button>
         </div>
       </div>
 

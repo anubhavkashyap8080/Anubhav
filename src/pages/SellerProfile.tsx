@@ -11,17 +11,31 @@ import {
   ShieldCheck,
   Package
 } from 'lucide-react';
-import { mockSellers } from '../data/mockSellers';
-import { mockProducts } from '../data/mockProducts';
+import { usePlatform } from '../context/PlatformContext';
 import { ProductCard } from '../components/common/ProductCard';
 import { useDemoModal } from '../context/DemoModalContext';
 
 export const SellerProfile: React.FC = () => {
   const { sellerSlug } = useParams<{ sellerSlug: string }>();
   const { showDemoNotice } = useDemoModal();
+  const { vendors, products } = usePlatform();
 
-  const seller = mockSellers.find(s => s.slug === sellerSlug) || mockSellers[0];
-  const sellerProducts = mockProducts.filter(p => p.seller.id === seller.id);
+  const allVendors = vendors && vendors.length > 0 ? vendors : [];
+  const allProducts = products && products.length > 0 ? products : [];
+  const seller = allVendors.find(s => s.slug === sellerSlug) || allVendors[0];
+
+  if (!seller) {
+    return (
+      <div className="max-w-7xl mx-auto px-4 py-16 text-center">
+        <h2 className="text-xl font-bold text-gray-800">Artisan Not Found</h2>
+        <Link to="/products" className="mt-4 inline-block px-4 py-2 bg-brand-green text-white rounded-lg">
+          Browse Marketplace
+        </Link>
+      </div>
+    );
+  }
+
+  const sellerProducts = allProducts.filter(p => p.seller.id === seller.id);
 
   return (
     <div className="space-y-8 pb-16">

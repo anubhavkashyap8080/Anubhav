@@ -21,13 +21,14 @@ import { useSiteConfig } from '../../context/SiteConfigContext';
 import { useCartWishlist } from '../../context/CartWishlistContext';
 import { useDemoModal } from '../../context/DemoModalContext';
 import { useAuth } from '../../context/AuthContext';
-import { mockProducts } from '../../data/mockProducts';
+import { usePlatform } from '../../context/PlatformContext';
 
 export const Header: React.FC = () => {
   const { headerConfig } = useSiteConfig();
   const { cartCount, wishlistCount, cartTotal } = useCartWishlist();
   const { showDemoNotice } = useDemoModal();
-  const { currentUser, currentRole, openAuthModal, logout, switchRole } = useAuth();
+  const { currentUser, currentRole, openAuthModal, logout } = useAuth();
+  const { products } = usePlatform();
   const navigate = useNavigate();
 
   const [searchQuery, setSearchQuery] = useState('');
@@ -41,11 +42,12 @@ export const Header: React.FC = () => {
   const searchRef = useRef<HTMLDivElement>(null);
   const accountRef = useRef<HTMLDivElement>(null);
 
-  // Filter search suggestions
+  // Filter search suggestions from live platform products
   const suggestions = searchQuery.trim()
-    ? mockProducts.filter(p =>
+    ? products.filter(p =>
         p.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
         p.category.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        (p.code && p.code.toLowerCase().includes(searchQuery.toLowerCase())) ||
         p.tags.some(t => t.toLowerCase().includes(searchQuery.toLowerCase()))
       ).slice(0, 5)
     : [];
@@ -210,7 +212,7 @@ export const Header: React.FC = () => {
             </div>
           )}
 
-          {/* Action Icons: Nearby Artisans, Become Seller, Account, Wishlist, Cart */}
+          {/* Action Icons: Nearby Artisans, Seller Login, Account, Wishlist, Cart */}
           {headerConfig.showIcons && (
             <div className="flex items-center gap-2 sm:gap-3 shrink-0">
               
@@ -224,14 +226,26 @@ export const Header: React.FC = () => {
                 <span>Nearby Artisans</span>
               </Link>
 
-              {/* Become a Seller CTA (Desktop) */}
-              <Link
-                to={headerConfig.ctaHref || '/become-seller'}
-                className="hidden xl:inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-brand-orange/40 text-brand-orange bg-orange-50/60 hover:bg-brand-orange hover:text-white transition-all text-xs font-semibold"
-              >
-                <Store className="w-3.5 h-3.5" />
-                <span>{headerConfig.ctaLabel || 'Become a Seller'}</span>
-              </Link>
+              {/* Dedicated Seller Login / Portal Button (Always visible) */}
+              {currentUser?.role === 'vendor' ? (
+                <Link
+                  to="/seller/dashboard"
+                  className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-brand-orange text-white bg-brand-orange hover:bg-orange-600 transition-all text-xs font-bold shadow-2xs"
+                >
+                  <Store className="w-3.5 h-3.5" />
+                  <span>Seller Dashboard</span>
+                </Link>
+              ) : (
+                <button
+                  type="button"
+                  onClick={() => openAuthModal('seller')}
+                  className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-brand-orange/50 text-brand-orange bg-orange-50/70 hover:bg-brand-orange hover:text-white transition-all text-xs font-bold cursor-pointer"
+                  title="Artisan & Seller Portal Login"
+                >
+                  <Store className="w-3.5 h-3.5" />
+                  <span>Seller Login</span>
+                </button>
+              )}
 
               {/* Wishlist Icon */}
               <Link
@@ -273,7 +287,7 @@ export const Header: React.FC = () => {
               <div ref={accountRef} className="relative">
                 <button
                   onClick={() => setAccountMenuOpen(!accountMenuOpen)}
-                  className="flex items-center gap-1.5 p-1.5 sm:p-2 rounded-full hover:bg-gray-100 text-gray-700 transition-colors focus:outline-none focus:ring-2 focus:ring-brand-green"
+                  className="flex items-center gap-1.5 p-1.5 sm:p-2 rounded-full hover:bg-gray-100 text-gray-700 transition-colors focus:outline-none focus:ring-2 focus:ring-brand-green cursor-pointer"
                   aria-label="Account Menu"
                 >
                   <div className="w-8 h-8 rounded-full bg-emerald-100 text-brand-green flex items-center justify-center font-bold text-xs ring-2 ring-emerald-600/30 overflow-hidden">
@@ -287,8 +301,8 @@ export const Header: React.FC = () => {
                     <span className="text-xs font-semibold text-gray-800 leading-tight truncate max-w-[90px]">
                       {currentUser ? currentUser.name.split(' ')[0] : 'Sign In'}
                     </span>
-                    <span className="text-[10px] text-brand-orange font-bold uppercase leading-none">
-                      {currentUser ? currentUser.role.replace('_', ' ') : 'OTP / Login'}
+                    <span className="text-[10px] text-brand-green font-bold uppercase leading-none">
+                      {currentUser ? currentUser.role.replace('_', ' ') : 'Customer'}
                     </span>
                   </div>
                   <ChevronDown className="w-3.5 h-3.5 text-gray-400 hidden sm:block" />
@@ -297,128 +311,137 @@ export const Header: React.FC = () => {
                 {/* Account Dropdown Menu */}
                 {accountMenuOpen && (
                   <div className="absolute right-0 top-full mt-2 w-64 bg-white rounded-2xl shadow-2xl border border-gray-100 py-2.5 z-50 animate-in fade-in zoom-in-95 duration-150">
-                    <div className="px-4 py-2 border-b border-gray-100">
-                      <p className="text-[11px] text-gray-500">Welcome to GaunGaliHat</p>
-                      <p className="text-sm font-bold text-gray-900 truncate">
-                        {currentUser ? currentUser.name : 'Namaste, Guest'}
-                      </p>
-                      <div className="flex items-center gap-1.5 mt-1">
-                        <span className="inline-block px-2 py-0.5 bg-emerald-100 text-emerald-800 text-[10px] font-bold rounded uppercase">
-                          Role: {currentUser ? currentUser.role.replace('_', ' ') : 'Visitor'}
-                        </span>
-                        {currentUser?.status === 'active' && (
-                          <span className="text-[10px] text-emerald-600 font-semibold flex items-center gap-0.5">
-                            ● Active
-                          </span>
-                        )}
-                      </div>
-                    </div>
+                    {/* Logged in state */}
+                    {currentUser ? (
+                      <>
+                        <div className="px-4 py-2 border-b border-gray-100">
+                          <p className="text-[11px] text-gray-500">Signed in as</p>
+                          <p className="text-sm font-bold text-gray-900 truncate">
+                            {currentUser.name}
+                          </p>
+                          <div className="flex items-center gap-1.5 mt-1">
+                            <span className="inline-block px-2 py-0.5 bg-emerald-100 text-emerald-800 text-[10px] font-bold rounded uppercase">
+                              {currentUser.role.replace('_', ' ')}
+                            </span>
+                            <span className="text-[10px] text-emerald-600 font-semibold flex items-center gap-0.5">
+                              ● Online
+                            </span>
+                          </div>
+                        </div>
 
-                    {/* Quick Role Switcher (Multi-level user access demonstration) */}
-                    <div className="px-3 py-2 bg-gray-50/80 border-b border-gray-100 text-[11px]">
-                      <span className="text-gray-500 font-semibold block mb-1.5">Switch Access Role:</span>
-                      <div className="grid grid-cols-3 gap-1">
-                        <button
-                          onClick={() => switchRole('super_admin')}
-                          className={`px-1.5 py-1 rounded text-[10px] font-bold transition-all ${
-                            currentRole === 'super_admin'
-                              ? 'bg-red-600 text-white shadow-xs'
-                              : 'bg-white text-gray-700 hover:bg-gray-100 border border-gray-200'
-                          }`}
-                        >
-                          Super Admin
-                        </button>
-                        <button
-                          onClick={() => switchRole('vendor')}
-                          className={`px-1.5 py-1 rounded text-[10px] font-bold transition-all ${
-                            currentRole === 'vendor'
-                              ? 'bg-brand-orange text-white shadow-xs'
-                              : 'bg-white text-gray-700 hover:bg-gray-100 border border-gray-200'
-                          }`}
-                        >
-                          Vendor
-                        </button>
-                        <button
-                          onClick={() => switchRole('customer')}
-                          className={`px-1.5 py-1 rounded text-[10px] font-bold transition-all ${
-                            currentRole === 'customer'
-                              ? 'bg-brand-green text-white shadow-xs'
-                              : 'bg-white text-gray-700 hover:bg-gray-100 border border-gray-200'
-                          }`}
-                        >
-                          Customer
-                        </button>
-                      </div>
-                    </div>
+                        <div className="py-1 text-xs">
+                          {/* Role Specific Navigation */}
+                          {['super_admin', 'admin', 'marketer', 'content_writer', 'support'].includes(currentUser.role) && (
+                            <Link
+                              to="/admin"
+                              onClick={() => setAccountMenuOpen(false)}
+                              className="flex items-center justify-between px-4 py-2 font-bold text-brand-green hover:bg-emerald-50"
+                            >
+                              <span className="flex items-center gap-2">
+                                <Settings className="w-4 h-4 text-brand-green" />
+                                Admin Operations Center
+                              </span>
+                              <span className="px-1.5 py-0.5 bg-emerald-100 text-[9px] font-bold rounded">
+                                Portal
+                              </span>
+                            </Link>
+                          )}
 
-                    <div className="py-1">
-                      <Link
-                        to="/admin"
-                        onClick={() => setAccountMenuOpen(false)}
-                        className="flex items-center justify-between px-4 py-2 text-xs font-bold text-brand-green hover:bg-emerald-50"
-                      >
-                        <span className="flex items-center gap-2">
-                          <Settings className="w-4 h-4 text-brand-green" />
-                          Admin Operations Center
-                        </span>
-                        <span className="px-1.5 py-0.5 bg-emerald-100 text-[9px] font-bold rounded">
-                          10 Modules
-                        </span>
-                      </Link>
+                          {currentUser.role === 'vendor' && (
+                            <Link
+                              to="/seller/dashboard"
+                              onClick={() => setAccountMenuOpen(false)}
+                              className="flex items-center gap-2 px-4 py-2 font-bold text-brand-orange hover:bg-orange-50"
+                            >
+                              <Store className="w-4 h-4 text-brand-orange" />
+                              Seller Workshop Dashboard
+                            </Link>
+                          )}
 
-                      <Link
-                        to="/nearby-artisans"
-                        onClick={() => setAccountMenuOpen(false)}
-                        className="flex items-center gap-2 px-4 py-2 text-xs font-medium text-gray-700 hover:bg-emerald-50 hover:text-brand-green"
-                      >
-                        <MapPin className="w-4 h-4 text-brand-orange" />
-                        Nearby Artisan Map Directory
-                      </Link>
+                          <Link
+                            to="/account"
+                            onClick={() => setAccountMenuOpen(false)}
+                            className="flex items-center gap-2 px-4 py-2 font-medium text-gray-700 hover:bg-gray-50 hover:text-brand-green"
+                          >
+                            <User className="w-4 h-4 text-gray-400" />
+                            Buyer Profile & Orders
+                          </Link>
 
-                      <Link
-                        to="/account"
-                        onClick={() => setAccountMenuOpen(false)}
-                        className="flex items-center gap-2 px-4 py-2 text-xs font-medium text-gray-700 hover:bg-emerald-50 hover:text-brand-green"
-                      >
-                        <User className="w-4 h-4 text-gray-400" />
-                        Buyer Profile & Addresses
-                      </Link>
+                          <Link
+                            to="/wishlist"
+                            onClick={() => setAccountMenuOpen(false)}
+                            className="flex items-center gap-2 px-4 py-2 font-medium text-gray-700 hover:bg-gray-50 hover:text-brand-green"
+                          >
+                            <Heart className="w-4 h-4 text-gray-400" />
+                            My Wishlist ({wishlistCount})
+                          </Link>
 
-                      <Link
-                        to="/seller/dashboard"
-                        onClick={() => setAccountMenuOpen(false)}
-                        className="flex items-center gap-2 px-4 py-2 text-xs font-medium text-gray-700 hover:bg-emerald-50 hover:text-brand-green"
-                      >
-                        <Store className="w-4 h-4 text-brand-orange" />
-                        Seller Dashboard
-                      </Link>
-                    </div>
+                          <Link
+                            to="/nearby-artisans"
+                            onClick={() => setAccountMenuOpen(false)}
+                            className="flex items-center gap-2 px-4 py-2 font-medium text-gray-700 hover:bg-gray-50 hover:text-brand-green"
+                          >
+                            <MapPin className="w-4 h-4 text-brand-orange" />
+                            Nearby Artisan Directory
+                          </Link>
+                        </div>
 
-                    <div className="border-t border-gray-100 pt-1.5 px-3">
-                      {!currentUser ? (
+                        <div className="border-t border-gray-100 pt-1.5 px-3">
+                          <button
+                            onClick={() => {
+                              setAccountMenuOpen(false);
+                              logout();
+                            }}
+                            className="w-full flex items-center gap-2 px-3 py-1.5 text-xs font-semibold text-red-600 hover:bg-red-50 rounded-lg text-left cursor-pointer"
+                          >
+                            <LogOut className="w-4 h-4" />
+                            Sign Out
+                          </button>
+                        </div>
+                      </>
+                    ) : (
+                      /* Guest visitor state */
+                      <div className="p-3 space-y-2.5">
+                        <div className="text-center pb-2 border-b border-gray-100">
+                          <p className="text-xs font-bold text-gray-900">Namaste! Welcome to GaunGaliHat</p>
+                          <p className="text-[11px] text-gray-500 mt-0.5">Please sign in to access your orders and account</p>
+                        </div>
+
                         <button
                           onClick={() => {
                             setAccountMenuOpen(false);
-                            openAuthModal();
+                            openAuthModal('customer');
                           }}
-                          className="w-full flex items-center justify-center gap-2 px-3 py-2 text-xs font-bold bg-brand-green text-white rounded-lg hover:bg-brand-green-dark shadow-sm transition-all"
+                          className="w-full flex items-center justify-center gap-2 py-2 px-3 bg-brand-green hover:bg-brand-green-dark text-white rounded-xl text-xs font-bold shadow-xs transition-colors cursor-pointer"
                         >
-                          <ShieldCheck className="w-4 h-4" />
-                          Sign In / Mobile OTP
+                          <User className="w-4 h-4" />
+                          <span>Shopper Sign In / Mobile OTP</span>
                         </button>
-                      ) : (
+
                         <button
                           onClick={() => {
                             setAccountMenuOpen(false);
-                            logout();
+                            openAuthModal('seller');
                           }}
-                          className="w-full flex items-center gap-2 px-3 py-1.5 text-xs font-semibold text-red-600 hover:bg-red-50 rounded-lg text-left"
+                          className="w-full flex items-center justify-center gap-2 py-2 px-3 bg-orange-50 hover:bg-orange-100 text-brand-orange border border-brand-orange/30 rounded-xl text-xs font-bold transition-colors cursor-pointer"
                         >
-                          <LogOut className="w-4 h-4" />
-                          Sign Out ({currentUser.name.split(' ')[0]})
+                          <Store className="w-4 h-4 text-brand-orange" />
+                          <span>Artisan & Seller Portal Login</span>
                         </button>
-                      )}
-                    </div>
+
+                        <div className="pt-1 text-center">
+                          <button
+                            onClick={() => {
+                              setAccountMenuOpen(false);
+                              openAuthModal('admin');
+                            }}
+                            className="text-[10px] text-gray-400 hover:text-gray-700 hover:underline cursor-pointer"
+                          >
+                            Staff & Administration Login →
+                          </button>
+                        </div>
+                      </div>
+                    )}
                   </div>
                 )}
               </div>
