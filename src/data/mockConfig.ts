@@ -171,6 +171,8 @@ export const initialUsers: User[] = [
   {
     id: 'user-01',
     name: 'Anubhav Kashyap',
+    username: 'anubhav',
+    password: 'admin123',
     email: 'anubhav@ssindustries.in',
     phone: '+91 7897492100',
     role: 'super_admin',
@@ -189,6 +191,8 @@ export const initialUsers: User[] = [
   {
     id: 'user-02',
     name: 'Sunil Sharma',
+    username: 'sunil_ops',
+    password: 'admin123',
     email: 'sunil.ops@ssindustries.in',
     phone: '+91 9005756321',
     role: 'admin',
@@ -206,6 +210,8 @@ export const initialUsers: User[] = [
   {
     id: 'user-06',
     name: 'Neha Singhania',
+    username: 'neha_market',
+    password: 'admin123',
     email: 'neha.marketing@ssindustries.in',
     phone: '+91 91234 56780',
     role: 'marketer',
@@ -223,6 +229,8 @@ export const initialUsers: User[] = [
   {
     id: 'user-07',
     name: 'Devendra Tripathi',
+    username: 'devendra_writer',
+    password: 'admin123',
     email: 'devendra.writer@ssindustries.in',
     phone: '+91 93456 78901',
     role: 'content_writer',
@@ -240,6 +248,8 @@ export const initialUsers: User[] = [
   {
     id: 'user-04',
     name: 'Priya Verma',
+    username: 'priya_support',
+    password: 'admin123',
     email: 'priya.support@ssindustries.in',
     phone: '+91 94512 88410',
     role: 'support',
@@ -256,6 +266,8 @@ export const initialUsers: User[] = [
   {
     id: 'user-08',
     name: 'Kavita Saini',
+    username: 'kavita_catalog',
+    password: 'admin123',
     email: 'kavita.catalog@ssindustries.in',
     phone: '+91 98765 43210',
     role: 'admin',
@@ -271,6 +283,8 @@ export const initialUsers: User[] = [
   {
     id: 'user-03',
     name: 'Ramkishan Lohar',
+    username: 'ramkishan_artisan',
+    password: 'seller123',
     email: 'ramkishan@ganvgalihat.com',
     phone: '+91 8303578806',
     role: 'vendor',
@@ -287,6 +301,8 @@ export const initialUsers: User[] = [
   {
     id: 'user-05',
     name: 'Aarav Gupta',
+    username: 'aarav_shopper',
+    password: 'shopper123',
     email: 'aarav.buyer@gmail.com',
     phone: '+91 98112 34567',
     role: 'customer',

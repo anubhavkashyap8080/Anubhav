@@ -19,16 +19,34 @@ import {
   ShieldCheck,
   Send,
   UserCheck,
-  Lock
+  Lock,
+  Key,
+  Eye,
+  EyeOff,
+  Copy,
+  Check
 } from 'lucide-react';
 
 export const AdminTeamTab: React.FC = () => {
-  const { users, updateUserRole, toggleUserStatus } = usePlatform();
+  const { users, updateUserRole, toggleUserStatus, addUser } = usePlatform();
   const { currentUser } = useAuth();
 
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedRoleFilter, setSelectedRoleFilter] = useState<string>('all');
   const [selectedUser, setSelectedUser] = useState<User | null>(null);
+
+  // New Team Member Modal State
+  const [showAddMemberModal, setShowAddMemberModal] = useState(false);
+  const [newMemberName, setNewMemberName] = useState('');
+  const [newMemberUsername, setNewMemberUsername] = useState('');
+  const [newMemberPassword, setNewMemberPassword] = useState('');
+  const [newMemberEmail, setNewMemberEmail] = useState('');
+  const [newMemberPhone, setNewMemberPhone] = useState('');
+  const [newMemberRole, setNewMemberRole] = useState<UserRole>('admin');
+  const [newMemberDepartment, setNewMemberDepartment] = useState('');
+  const [showMemberPasswordInForm, setShowMemberPasswordInForm] = useState(false);
+  const [revealedMemberPasswords, setRevealedMemberPasswords] = useState<Record<string, boolean>>({});
+  const [copiedMemberId, setCopiedMemberId] = useState<string | null>(null);
 
   // New Work Log Entry Form in Modal
   const [showAddLogForm, setShowAddLogForm] = useState(false);
@@ -86,6 +104,30 @@ export const AdminTeamTab: React.FC = () => {
     setNewLogTitle('');
     setNewLogDetails('');
     setShowAddLogForm(false);
+  };
+
+  const handleCreateTeamMember = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!newMemberName.trim() || !newMemberEmail.trim()) return;
+    const cleanUsername = newMemberUsername.trim() || newMemberName.trim().toLowerCase().replace(/[^a-zA-Z0-9_]/g, '_');
+    const cleanPassword = newMemberPassword.trim() || 'Admin@2026';
+    addUser({
+      name: newMemberName.trim(),
+      username: cleanUsername,
+      password: cleanPassword,
+      email: newMemberEmail.trim(),
+      phone: newMemberPhone.trim() || '+91 7897492100',
+      role: newMemberRole,
+      department: newMemberDepartment.trim() || (newMemberRole === 'admin' ? 'Operations & Dispatch' : newMemberRole === 'marketer' ? 'Growth Marketing' : newMemberRole === 'content_writer' ? 'Rural Editorial' : newMemberRole === 'support' ? 'Customer Care' : 'Management'),
+      status: 'active'
+    });
+    setNewMemberName('');
+    setNewMemberUsername('');
+    setNewMemberPassword('');
+    setNewMemberEmail('');
+    setNewMemberPhone('');
+    setNewMemberDepartment('');
+    setShowAddMemberModal(false);
   };
 
   const getRoleBadgeColor = (role: UserRole) => {
@@ -192,9 +234,18 @@ export const AdminTeamTab: React.FC = () => {
             </select>
           </div>
 
-          <span className="text-xs text-gray-500 font-semibold">
-            Click on any team member to inspect their full profile & work audit history
-          </span>
+          <div className="flex items-center gap-3 w-full sm:w-auto justify-between sm:justify-end">
+            <span className="text-[11px] text-gray-500 hidden md:inline">
+              Click profile to view login key & audit trail
+            </span>
+            <button
+              onClick={() => setShowAddMemberModal(true)}
+              className="px-3.5 py-2 bg-brand-green hover:bg-brand-green-dark text-white text-xs font-bold rounded-xl shadow-xs flex items-center gap-1.5 transition-all cursor-pointer"
+            >
+              <Plus className="w-4 h-4" />
+              <span>Add Team Member</span>
+            </button>
+          </div>
         </div>
 
         {/* Team Members List */}
@@ -214,6 +265,7 @@ export const AdminTeamTab: React.FC = () => {
             <tbody className="divide-y divide-gray-100">
               {teamMembers.map((member) => {
                 const logsCount = member.workLog?.length || 0;
+                const memberHandle = member.username || member.email.split('@')[0];
                 return (
                   <tr
                     key={member.id}
@@ -232,9 +284,14 @@ export const AdminTeamTab: React.FC = () => {
                           className="w-8 h-8 rounded-full object-cover border border-gray-200"
                         />
                         <div>
-                          <p className="font-bold text-gray-900 group-hover:text-brand-green transition-colors">
-                            {member.name}
-                          </p>
+                          <div className="flex items-center gap-1.5">
+                            <p className="font-bold text-gray-900 group-hover:text-brand-green transition-colors">
+                              {member.name}
+                            </p>
+                            <span className="font-mono text-[9px] bg-slate-100 text-slate-700 px-1.5 py-0.2 rounded font-semibold">
+                              @{memberHandle}
+                            </span>
+                          </div>
                           <p className="text-[11px] text-gray-500 font-mono">{member.email}</p>
                         </div>
                       </div>
@@ -350,6 +407,59 @@ export const AdminTeamTab: React.FC = () => {
               >
                 ✕
               </button>
+            </div>
+
+            {/* Login Credentials & Clearance */}
+            <div className="p-3.5 bg-slate-900 text-white rounded-2xl border border-slate-800 space-y-2">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-1.5 font-bold text-xs text-amber-300">
+                  <ShieldCheck className="w-4 h-4 text-amber-400" />
+                  <span>Portal Login Credentials & Clearance</span>
+                </div>
+                <span className="font-mono text-[10px] text-emerald-400">● 256-Bit Edge Guarded</span>
+              </div>
+              
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs pt-1">
+                <div className="p-2.5 bg-slate-950 rounded-xl border border-slate-800">
+                  <span className="text-[10px] text-slate-400 block font-medium">Username / User ID:</span>
+                  <span className="font-mono font-bold text-white text-xs">@{selectedUser.username || selectedUser.email.split('@')[0]}</span>
+                </div>
+
+                <div className="p-2.5 bg-slate-950 rounded-xl border border-slate-800 flex items-center justify-between">
+                  <div>
+                    <span className="text-[10px] text-slate-400 block font-medium">Security Password:</span>
+                    <span className="font-mono font-bold text-amber-300 text-xs">
+                      {revealedMemberPasswords[selectedUser.id]
+                        ? (selectedUser.password || 'admin123')
+                        : '••••••••'}
+                    </span>
+                  </div>
+                  <div className="flex items-center gap-1">
+                    <button
+                      type="button"
+                      onClick={() => setRevealedMemberPasswords(prev => ({ ...prev, [selectedUser.id]: !prev[selectedUser.id] }))}
+                      className="p-1 text-slate-400 hover:text-white rounded cursor-pointer"
+                      title={revealedMemberPasswords[selectedUser.id] ? 'Hide' : 'Reveal'}
+                    >
+                      {revealedMemberPasswords[selectedUser.id] ? <EyeOff className="w-3.5 h-3.5" /> : <Eye className="w-3.5 h-3.5" />}
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        const u = selectedUser.username || selectedUser.email.split('@')[0];
+                        const p = selectedUser.password || 'admin123';
+                        navigator.clipboard.writeText(`Username: ${u}\nPassword: ${p}\nEmail: ${selectedUser.email}`);
+                        setCopiedMemberId(selectedUser.id);
+                        setTimeout(() => setCopiedMemberId(null), 2000);
+                      }}
+                      className="p-1 text-slate-400 hover:text-emerald-400 rounded cursor-pointer"
+                      title="Copy Credentials"
+                    >
+                      {copiedMemberId === selectedUser.id ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Copy className="w-3.5 h-3.5" />}
+                    </button>
+                  </div>
+                </div>
+              </div>
             </div>
 
             {/* Quick Staff Controls: Role Switch & Status */}
@@ -522,6 +632,167 @@ export const AdminTeamTab: React.FC = () => {
                 Close Profile
               </button>
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* Add Team Member Modal */}
+      {showAddMemberModal && (
+        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4">
+          <div className="bg-white rounded-3xl p-6 max-w-md w-full space-y-4 shadow-2xl animate-in zoom-in-95 duration-150">
+            <div className="flex items-center justify-between border-b border-gray-100 pb-3">
+              <div>
+                <h4 className="font-bold text-base text-gray-900 font-display">Add Official Team Member</h4>
+                <p className="text-[11px] text-gray-500">Configure team access credentials and department assignment.</p>
+              </div>
+              <button
+                onClick={() => setShowAddMemberModal(false)}
+                className="p-1 text-gray-400 hover:text-gray-700 rounded-lg cursor-pointer"
+              >
+                ✕
+              </button>
+            </div>
+
+            <form onSubmit={handleCreateTeamMember} className="space-y-3 text-xs">
+              <div>
+                <label className="block font-semibold text-gray-700 mb-1">Full Name *</label>
+                <input
+                  type="text"
+                  required
+                  placeholder="e.g. Vikramaditya Singh"
+                  value={newMemberName}
+                  onChange={(e) => {
+                    setNewMemberName(e.target.value);
+                    if (!newMemberUsername) {
+                      setNewMemberUsername(e.target.value.toLowerCase().replace(/[^a-zA-Z0-9_]/g, '_'));
+                    }
+                  }}
+                  className="w-full p-2.5 border border-gray-300 rounded-xl"
+                />
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block font-semibold text-gray-700 mb-1">
+                    Username (for Login) *
+                  </label>
+                  <div className="relative">
+                    <span className="absolute left-2.5 top-1/2 -translate-y-1/2 text-gray-400 font-mono">@</span>
+                    <input
+                      type="text"
+                      required
+                      placeholder="vikram_ops"
+                      value={newMemberUsername}
+                      onChange={(e) => setNewMemberUsername(e.target.value.toLowerCase().replace(/[^a-zA-Z0-9_]/g, ''))}
+                      className="w-full pl-7 pr-2.5 py-2.5 border border-gray-300 rounded-xl font-mono text-xs"
+                    />
+                  </div>
+                </div>
+
+                <div>
+                  <div className="flex items-center justify-between mb-1">
+                    <label className="font-semibold text-gray-700">Password *</label>
+                    <button
+                      type="button"
+                      onClick={() => setNewMemberPassword(`Admin@${Math.floor(1000 + Math.random() * 9000)}`)}
+                      className="text-[10px] text-brand-green hover:underline cursor-pointer font-semibold"
+                    >
+                      Generate Key
+                    </button>
+                  </div>
+                  <div className="relative">
+                    <input
+                      type={showMemberPasswordInForm ? 'text' : 'password'}
+                      required
+                      placeholder="Admin@2026"
+                      value={newMemberPassword}
+                      onChange={(e) => setNewMemberPassword(e.target.value)}
+                      className="w-full pl-2.5 pr-8 py-2.5 border border-gray-300 rounded-xl font-mono text-xs"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowMemberPasswordInForm(!showMemberPasswordInForm)}
+                      className="absolute right-2.5 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-700 p-0.5"
+                    >
+                      {showMemberPasswordInForm ? <EyeOff className="w-3.5 h-3.5" /> : <Eye className="w-3.5 h-3.5" />}
+                    </button>
+                  </div>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block font-semibold text-gray-700 mb-1">Official Email *</label>
+                  <input
+                    type="email"
+                    required
+                    placeholder="vikram@ssindustries.in"
+                    value={newMemberEmail}
+                    onChange={(e) => setNewMemberEmail(e.target.value)}
+                    className="w-full p-2.5 border border-gray-300 rounded-xl"
+                  />
+                </div>
+                <div>
+                  <label className="block font-semibold text-gray-700 mb-1">Phone Number</label>
+                  <input
+                    type="tel"
+                    placeholder="+91 98765 43210"
+                    value={newMemberPhone}
+                    onChange={(e) => setNewMemberPhone(e.target.value)}
+                    className="w-full p-2.5 border border-gray-300 rounded-xl"
+                  />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block font-semibold text-gray-700 mb-1">Department</label>
+                  <input
+                    type="text"
+                    placeholder="e.g. Regional Logistics & QC"
+                    value={newMemberDepartment}
+                    onChange={(e) => setNewMemberDepartment(e.target.value)}
+                    className="w-full p-2.5 border border-gray-300 rounded-xl"
+                  />
+                </div>
+                <div>
+                  <label className="block font-semibold text-gray-700 mb-1">Assigned Role *</label>
+                  <select
+                    value={newMemberRole}
+                    onChange={(e) => setNewMemberRole(e.target.value as UserRole)}
+                    className="w-full p-2.5 border border-gray-300 rounded-xl font-semibold bg-white"
+                  >
+                    <option value="super_admin">Super Admin</option>
+                    <option value="admin">Operations Admin</option>
+                    <option value="marketer">Marketing Manager</option>
+                    <option value="content_writer">Content Writer</option>
+                    <option value="support">Customer Support</option>
+                    <option value="vendor">Vendor Lead</option>
+                  </select>
+                </div>
+              </div>
+
+              <div className="p-3 bg-emerald-50 border border-emerald-200 rounded-xl text-[11px] text-emerald-900 flex items-center gap-2">
+                <CheckCircle2 className="w-4 h-4 text-brand-green shrink-0" />
+                <span>The staff member can authenticate immediately with this username/password across all clearance gates.</span>
+              </div>
+
+              <div className="flex gap-2 pt-2">
+                <button
+                  type="submit"
+                  className="flex-1 py-2.5 bg-brand-green hover:bg-brand-green-dark text-white font-bold rounded-xl shadow-xs transition-colors cursor-pointer"
+                >
+                  Confirm & Provision Member
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setShowAddMemberModal(false)}
+                  className="px-4 py-2.5 border border-gray-300 hover:bg-gray-50 rounded-xl text-gray-700 cursor-pointer"
+                >
+                  Cancel
+                </button>
+              </div>
+            </form>
           </div>
         </div>
       )}

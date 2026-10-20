@@ -13,6 +13,8 @@ export interface UserWorkLog {
 export interface User {
   id: string;
   name: string;
+  username?: string;
+  password?: string;
   email: string;
   phone: string;
   role: UserRole;
@@ -98,7 +100,7 @@ export interface Product {
   isTool?: boolean;
   isHardware?: boolean;
   isCraft?: boolean;
-  tags: string[];
+  tags?: string[];
   isDemoData?: boolean;
 }
 

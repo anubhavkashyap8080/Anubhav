@@ -1,4 +1,5 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import { Link } from 'react-router-dom';
 import {
   TrendingUp,
   Package,
@@ -12,28 +13,340 @@ import {
   ChevronRight,
   ShieldCheck,
   Printer,
-  X
+  X,
+  Search,
+  Filter,
+  Layers,
+  Edit3,
+  Trash2,
+  Save,
+  MapPin,
+  Phone,
+  Mail,
+  Sparkles,
+  Building2,
+  Check,
+  RefreshCw,
+  QrCode,
+  ArrowRight,
+  FileText
 } from 'lucide-react';
 import { usePlatform } from '../context/PlatformContext';
+import { useAuth } from '../context/AuthContext';
+import { Product, Seller } from '../types';
 
 export const SellerDashboard: React.FC = () => {
-  const { products } = usePlatform();
-  const allProducts = products && products.length > 0 ? products : [];
-  const [notification, setNotification] = useState<string | null>(null);
+  const { products, addProduct, updateProduct, deleteProduct, categories, vendors } = usePlatform();
+  const { currentUser, logout, openAuthModal } = useAuth();
 
+  // Active Main Tab: 'products' | 'orders' | 'payouts' | 'profile'
+  const [activeTab, setActiveTab] = useState<'products' | 'orders' | 'payouts' | 'profile'>('products');
+
+  // Toast Notification
+  const [notification, setNotification] = useState<string | null>(null);
   const notify = (msg: string) => {
     setNotification(msg);
     setTimeout(() => setNotification(null), 3500);
   };
 
-  const sampleOrders = [
-    { id: 'ORD-9821', item: 'Forged Carbon Steel Hansiya Sickle (Hardwood Handle)', customer: 'Vikram Joshi (Bengaluru)', date: 'Today, 10:30 AM', amount: 360, status: 'Ready for Dispatch' },
-    { id: 'ORD-9818', item: 'Hand-Embroidered Jute Market Bag (Pack of 2)', customer: 'Pooja Kashyap (Mumbai)', date: 'Yesterday', amount: 520, status: 'In Transit (India Post)' },
-    { id: 'ORD-9804', item: 'Handmade Wooden Village Puppet Toy Set', customer: 'Deepak Sharma (Delhi)', date: 'Oct 18, 2026', amount: 450, status: 'Delivered' },
+  // Workshop Profile State (Customizable by Artisan)
+  const [workshopProfile, setWorkshopProfile] = useState(() => {
+    try {
+      const saved = localStorage.getItem('ggh_vendor_profile');
+      if (saved) return JSON.parse(saved);
+    } catch {
+      // fallback
+    }
+    return {
+      name: 'Saraswati Mahila SHG & Lohar Foundry',
+      tagline: '18 Rural Women Artisans & Ancestral Coal Blacksmiths',
+      village: 'Dewa / Madhoganj',
+      panchayat: 'Newada Gram Panchayat',
+      district: 'Hardoi',
+      state: 'Uttar Pradesh',
+      pincode: '241126',
+      contactPhone: '+91 7897492100',
+      whatsapp: '+91 7897492100',
+      contactEmail: 'artisan@gaungalihat.com',
+      memberCount: 18,
+      specialty: 'High-Carbon Forged Farming Tools & Eco Handlooms',
+      craftStory: 'Generational coal forge metallurgy and handloom weaving producing unbreakable hansiya sickles, heavy khurpi trowels, and natural jute market bags.'
+    };
+  });
+
+  // Persist Workshop Profile
+  useEffect(() => {
+    localStorage.setItem('ggh_vendor_profile', JSON.stringify(workshopProfile));
+  }, [workshopProfile]);
+
+  // Bank & UPI Settlement State
+  const [bankDetails, setBankDetails] = useState(() => {
+    try {
+      const saved = localStorage.getItem('ggh_vendor_bank_details');
+      if (saved) return JSON.parse(saved);
+    } catch {
+      // fallback
+    }
+    return {
+      accountHolder: 'Saraswati Mahila SHG',
+      bankName: 'State Bank of India',
+      accountNumber: '38920194821',
+      ifscCode: 'SBIN0001245',
+      branch: 'Madhoganj Branch, Hardoi',
+      upiId: 'saraswati.shg@sbi'
+    };
+  });
+
+  useEffect(() => {
+    localStorage.setItem('ggh_vendor_bank_details', JSON.stringify(bankDetails));
+  }, [bankDetails]);
+
+  // Product Filters
+  const [selectedCategory, setSelectedCategory] = useState<string>('all');
+  const [productSearch, setProductSearch] = useState<string>('');
+  const [stockFilter, setStockFilter] = useState<'all' | 'In Stock' | 'Only Few Left' | 'Out of Stock'>('all');
+
+  // Add Product Modal State
+  const [showAddModal, setShowAddModal] = useState(false);
+  const [newTitle, setNewTitle] = useState('');
+  const [newHindiTitle, setNewHindiTitle] = useState('');
+  const [newCategorySlug, setNewCategorySlug] = useState('farming-traditional-tools');
+  const [newPrice, setNewPrice] = useState('320');
+  const [newOriginalPrice, setNewOriginalPrice] = useState('450');
+  const [newStockStatus, setNewStockStatus] = useState<'In Stock' | 'Only Few Left' | 'Out of Stock'>('In Stock');
+  const [newStockCount, setNewStockCount] = useState('50');
+  const [newDescription, setNewDescription] = useState('');
+  const [newImageUrl, setNewImageUrl] = useState('https://images.unsplash.com/photo-1589923188900-85dae523342b?auto=format&fit=crop&w=600&q=80');
+  const [newIsWomenMade, setNewIsWomenMade] = useState(true);
+  const [newIsTool, setNewIsTool] = useState(true);
+
+  // Quick Price Edit Modal State
+  const [editingProduct, setEditingProduct] = useState<Product | null>(null);
+  const [editPrice, setEditPrice] = useState('');
+  const [editOriginalPrice, setEditOriginalPrice] = useState('');
+
+  // Orders State & Filters
+  const [orderFilter, setOrderFilter] = useState<'all' | 'Ready for Dispatch' | 'In Transit' | 'Delivered'>('all');
+  const [orders, setOrders] = useState([
+    {
+      id: 'ORD-9821',
+      item: 'Forged Carbon Steel Hansiya Sickle (Hardwood Handle)',
+      sku: 'GGH-TL-101',
+      customer: 'Vikram Joshi',
+      address: 'Plot 44, Indiranagar, Bengaluru, Karnataka - 560038',
+      date: 'Today, 10:30 AM',
+      amount: 360,
+      payment: 'Prepaid (UPI)',
+      status: 'Ready for Dispatch',
+      consignmentNo: 'EU982147890IN'
+    },
+    {
+      id: 'ORD-9818',
+      item: 'Hand-Embroidered Jute Market Bag (Pack of 2)',
+      sku: 'GGH-JT-301',
+      customer: 'Pooja Kashyap',
+      address: 'Flat 302, Sea Breeze Apts, Bandra West, Mumbai - 400050',
+      date: 'Yesterday, 4:15 PM',
+      amount: 520,
+      payment: 'Cash on Delivery (COD)',
+      status: 'In Transit',
+      consignmentNo: 'EU981845120IN'
+    },
+    {
+      id: 'ORD-9804',
+      item: 'Handmade Wooden Village Puppet Toy Set',
+      sku: 'GGH-DC-401',
+      customer: 'Deepak Sharma',
+      address: 'B-12, Sector 62, Noida, Uttar Pradesh - 201301',
+      date: 'Oct 18, 2026',
+      amount: 450,
+      payment: 'Prepaid (Card)',
+      status: 'Delivered',
+      consignmentNo: 'EU980411234IN'
+    },
+    {
+      id: 'ORD-9799',
+      item: 'Carbon Steel Garden Khurpi (Forged Blade)',
+      sku: 'GGH-TL-102',
+      customer: 'Rameshwar Yadav',
+      address: 'Village Post Baragaon, Varanasi, UP - 221006',
+      date: 'Oct 17, 2026',
+      amount: 280,
+      payment: 'Prepaid (UPI)',
+      status: 'Delivered',
+      consignmentNo: 'EU979989012IN'
+    }
+  ]);
+
+  // Dispatch Label Print Modal State
+  const [selectedOrderForLabel, setSelectedOrderForLabel] = useState<typeof orders[0] | null>(null);
+
+  // Settlement & Payout Request State
+  const [payoutAmount, setPayoutAmount] = useState('14500');
+  const [showPayoutModal, setShowPayoutModal] = useState(false);
+  const [payoutHistory, setPayoutHistory] = useState([
+    { id: 'PAY-901', date: 'Oct 10, 2026', amount: 24000, fee: 1200, net: 22800, utr: 'SBIN26101089214', status: 'Settled to Bank' },
+    { id: 'PAY-882', date: 'Sep 25, 2026', amount: 18500, fee: 925, net: 17575, utr: 'SBIN26092544102', status: 'Settled to Bank' }
+  ]);
+
+  // Filtered Products Logic
+  const filteredProducts = products.filter((p) => {
+    const matchesCategory =
+      selectedCategory === 'all' ||
+      p.categorySlug === selectedCategory ||
+      p.category.toLowerCase().includes(selectedCategory.toLowerCase());
+
+    const matchesSearch =
+      p.name.toLowerCase().includes(productSearch.toLowerCase()) ||
+      (p.hindiName && p.hindiName.includes(productSearch)) ||
+      (p.code && p.code.toLowerCase().includes(productSearch.toLowerCase())) ||
+      p.description.toLowerCase().includes(productSearch.toLowerCase());
+
+    const matchesStock = stockFilter === 'all' || p.stockStatus === stockFilter;
+
+    return matchesCategory && matchesSearch && matchesStock;
+  });
+
+  // Filtered Orders Logic
+  const filteredOrders = orders.filter((o) => {
+    if (orderFilter === 'all') return true;
+    return o.status === orderFilter;
+  });
+
+  // Handle Create Product
+  const handleCreateProduct = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!newTitle.trim()) return;
+
+    const matchedCat = categories.find((c) => c.slug === newCategorySlug) || categories[0] || {
+      name: 'Farming & Agricultural Tools',
+      slug: 'farming-traditional-tools'
+    };
+
+    const priceNum = parseFloat(newPrice) || 299;
+    const origPriceNum = parseFloat(newOriginalPrice) || Math.round(priceNum * 1.3);
+    const discountPercent = Math.round(((origPriceNum - priceNum) / origPriceNum) * 100);
+
+    const generatedSku = `GGH-${newCategorySlug.slice(0, 2).toUpperCase()}-${Math.floor(100 + Math.random() * 900)}`;
+
+    addProduct({
+      code: generatedSku,
+      name: newTitle.trim(),
+      hindiName: newHindiTitle.trim() || undefined,
+      slug: newTitle.trim().toLowerCase().replace(/[^a-z0-9]+/g, '-'),
+      category: matchedCat.name,
+      categorySlug: matchedCat.slug,
+      price: priceNum,
+      originalPrice: origPriceNum,
+      discount: discountPercent > 0 ? discountPercent : 0,
+      rating: 5.0,
+      reviewCount: 1,
+      image: newImageUrl.trim() || 'https://images.unsplash.com/photo-1589923188900-85dae523342b?auto=format&fit=crop&w=600&q=80',
+      gallery: [newImageUrl.trim()],
+      stock: parseInt(newStockCount) || 50,
+      seller: {
+        id: currentUser?.id || 'seller-shg',
+        name: workshopProfile.name,
+        slug: workshopProfile.name.toLowerCase().replace(/[^a-z0-9]+/g, '-'),
+        type: 'SHG',
+        location: `${workshopProfile.village}, ${workshopProfile.panchayat}`,
+        district: workshopProfile.district,
+        state: workshopProfile.state,
+        verified: true,
+        rating: 4.9,
+        memberCount: workshopProfile.memberCount,
+        avatar: 'https://images.unsplash.com/photo-1544717305-2782549b5136?auto=format&fit=crop&w=150&q=80',
+        phone: workshopProfile.contactPhone
+      },
+      description: newDescription.trim() || `${newTitle} handcrafted directly by village artisans in Hardoi using authentic rural techniques.`,
+      story: workshopProfile.craftStory,
+      attributes: {
+        Origin: `${workshopProfile.village}, ${workshopProfile.district}, ${workshopProfile.state}`,
+        Material: newIsTool ? 'Tempered High-Carbon Steel & Solid Hardwood' : 'Natural Biodegradable Fibre',
+        Forging: newIsTool ? 'Ancestral Hand-Beaten Forge' : 'Hand-Spun & Woven',
+        Dispatch: 'Direct from Village Workshop'
+      },
+      stockStatus: newStockStatus,
+      isRuralWomenMade: newIsWomenMade,
+      isTool: newIsTool,
+      isBestSeller: true,
+      tags: [matchedCat.name, 'Village Craft', 'Rural Made', 'Hardoi']
+    });
+
+    notify(`Listed "${newTitle}" successfully! Synchronized across the GaunGaliHat public marketplace.`);
+    setShowAddModal(false);
+    setNewTitle('');
+    setNewHindiTitle('');
+    setNewDescription('');
+  };
+
+  // Preset Village Image Options for Quick Listing
+  const presetImages = [
+    { label: 'Forged Hansiya Sickle', url: 'https://images.unsplash.com/photo-1589923188900-85dae523342b?auto=format&fit=crop&w=600&q=80' },
+    { label: 'Iron Khurpi / Fawda', url: 'https://images.unsplash.com/photo-1504148455328-c376907d081c?auto=format&fit=crop&w=600&q=80' },
+    { label: 'Jute Market Bag', url: 'https://images.unsplash.com/photo-1544816155-12df9643f363?auto=format&fit=crop&w=600&q=80' },
+    { label: 'Village Decor & Toys', url: 'https://images.unsplash.com/photo-1513519245088-0e12902e5a38?auto=format&fit=crop&w=600&q=80' },
+    { label: 'Chikan Suit / Handloom', url: 'https://images.unsplash.com/photo-1610030469983-98e550d6193c?auto=format&fit=crop&w=600&q=80' },
+    { label: 'Earthen Clay Handi', url: 'https://images.unsplash.com/photo-1565193566173-7a0ee3dbe261?auto=format&fit=crop&w=600&q=80' }
   ];
 
+  // Quick Stock Status Update
+  const handleUpdateStock = (productId: string, stockStatus: Product['stockStatus']) => {
+    updateProduct(productId, { stockStatus });
+    notify(`Stock status updated to "${stockStatus}" and saved to Edge KV.`);
+  };
+
+  // Quick Price Edit Save
+  const handleSavePriceEdit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!editingProduct) return;
+    const price = parseFloat(editPrice) || editingProduct.price;
+    const originalPrice = parseFloat(editOriginalPrice) || editingProduct.originalPrice;
+    const discount = Math.round(((originalPrice - price) / originalPrice) * 100);
+
+    updateProduct(editingProduct.id, {
+      price,
+      originalPrice,
+      discount: discount > 0 ? discount : 0
+    });
+
+    notify(`Updated price for "${editingProduct.name}" to ₹${price}.`);
+    setEditingProduct(null);
+  };
+
+  // Handle Order Status Change
+  const handleUpdateOrderStatus = (orderId: string, newStatus: string) => {
+    setOrders((prev) =>
+      prev.map((o) => (o.id === orderId ? { ...o, status: newStatus } : o))
+    );
+    notify(`Order ${orderId} marked as "${newStatus}". Dispatch records updated.`);
+  };
+
+  // Handle Payout Request Submit
+  const handleRequestPayout = (e: React.FormEvent) => {
+    e.preventDefault();
+    const amountNum = parseFloat(payoutAmount);
+    if (!amountNum || amountNum <= 0) return;
+
+    const fee = Math.round(amountNum * 0.05);
+    const net = amountNum - fee;
+    const newRecord = {
+      id: `PAY-${Math.floor(900 + Math.random() * 100)}`,
+      date: 'Today, Just now',
+      amount: amountNum,
+      fee: fee,
+      net: net,
+      utr: `SBIN${Date.now().toString().slice(-8)}`,
+      status: 'Processing (NEFT / IMPS)'
+    };
+
+    setPayoutHistory([newRecord, ...payoutHistory]);
+    setShowPayoutModal(false);
+    notify(`Payout request of ₹${net.toLocaleString()} initiated! Crediting to ${bankDetails.accountHolder} (${bankDetails.bankName}).`);
+  };
+
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 space-y-8">
+    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-6">
       
       {/* Toast Notification */}
       {notification && (
@@ -44,7 +357,7 @@ export const SellerDashboard: React.FC = () => {
           </div>
           <button
             onClick={() => setNotification(null)}
-            className="p-1 hover:bg-emerald-100 rounded-lg text-emerald-700"
+            className="p-1 hover:bg-emerald-100 rounded-lg text-emerald-700 cursor-pointer"
           >
             <X className="w-4 h-4" />
           </button>
@@ -54,45 +367,36 @@ export const SellerDashboard: React.FC = () => {
       {/* Official Status Header */}
       <div className="p-4 bg-white border border-gray-200 rounded-2xl flex flex-col sm:flex-row sm:items-center justify-between gap-4 text-xs shadow-xs">
         <div className="flex items-center gap-3">
-          <ShieldCheck className="w-5 h-5 text-brand-green shrink-0" />
+          <div className="w-10 h-10 rounded-xl bg-orange-100 border border-orange-200 flex items-center justify-center shrink-0">
+            <Store className="w-5 h-5 text-brand-orange" />
+          </div>
           <div>
-            <span className="font-bold text-gray-900">Artisan & Foundry Partner Operations Portal:</span>
-            <span className="text-gray-600 ml-1">
-              Live inventory synchronization, postal dispatch tracking, and direct bank payout settlement.
-            </span>
+            <div className="flex items-center gap-2">
+              <span className="font-bold text-gray-900 text-sm">
+                {workshopProfile.name}
+              </span>
+              <span className="px-2 py-0.5 bg-emerald-100 text-emerald-800 font-bold rounded text-[10px]">
+                KYC Verified Partner
+              </span>
+            </div>
+            <p className="text-gray-500 text-[11px] mt-0.5">
+              {workshopProfile.village}, {workshopProfile.district}, {workshopProfile.state} • Postal Pincode: {workshopProfile.pincode}
+            </p>
           </div>
         </div>
-        <span className="px-2.5 py-1 bg-emerald-100 text-emerald-800 font-bold rounded-lg shrink-0">
-          KYC Verified Partner
-        </span>
-      </div>
 
-      {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-gray-200">
-        <div>
-          <div className="flex items-center gap-2">
-            <h1 className="text-2xl sm:text-3xl font-extrabold text-gray-900 font-display">
-              Artisan Hub: Saraswati Mahila SHG
-            </h1>
-            <span className="px-2 py-0.5 rounded bg-emerald-100 text-brand-green font-bold text-xs">
-              Verified Seller
-            </span>
-          </div>
-          <p className="text-xs text-gray-500 mt-1">Village Dewa, Barabanki, UP • 18 Rural Women Artisans</p>
-        </div>
-
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-2 shrink-0">
           <button
-            onClick={() => notify('Payout request of ₹14,500 submitted to accounts desk. Transfer via NEFT scheduled within 24 hours.')}
-            className="px-4 py-2.5 bg-white border border-gray-300 hover:border-brand-green text-gray-800 text-xs font-semibold rounded-xl shadow-xs flex items-center gap-1.5 transition-all cursor-pointer"
+            onClick={() => setShowPayoutModal(true)}
+            className="px-3.5 py-2 bg-white border border-gray-300 hover:border-brand-green text-gray-800 text-xs font-semibold rounded-xl shadow-xs flex items-center gap-1.5 transition-all cursor-pointer"
           >
             <Banknote className="w-4 h-4 text-brand-green" />
             <span>Request Payout</span>
           </button>
 
           <button
-            onClick={() => notify('Product creation modal opened. Ready to list rural inventory.')}
-            className="px-4 py-2.5 bg-brand-green hover:bg-brand-green-dark text-white text-xs font-semibold rounded-xl shadow-sm flex items-center gap-1.5 transition-all cursor-pointer"
+            onClick={() => setShowAddModal(true)}
+            className="px-4 py-2 bg-brand-green hover:bg-brand-green-dark text-white text-xs font-bold rounded-xl shadow-xs flex items-center gap-1.5 transition-all cursor-pointer"
           >
             <Plus className="w-4 h-4" />
             <span>Add New Product</span>
@@ -100,141 +404,1098 @@ export const SellerDashboard: React.FC = () => {
         </div>
       </div>
 
-      {/* Metric Cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-        <div className="bg-white p-6 rounded-2xl border border-gray-100 shadow-xs space-y-1">
+      {/* KPI Overview Cards */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        <div className="bg-white p-5 rounded-2xl border border-gray-100 shadow-xs space-y-1">
           <div className="flex justify-between items-center text-xs text-gray-500">
-            <span>Monthly Revenue</span>
+            <span>Monthly Workshop Sales</span>
             <span className="p-2 bg-emerald-50 text-brand-green rounded-lg">
               <TrendingUp className="w-4 h-4" />
             </span>
           </div>
-          <div className="text-2xl font-extrabold text-gray-900 font-display">₹38,920</div>
-          <p className="text-[11px] text-emerald-600 font-medium">↑ 18% from last month</p>
+          <div className="text-2xl font-extrabold text-gray-900 font-display">₹48,920</div>
+          <p className="text-[11px] text-emerald-600 font-medium">↑ 22% direct rural artisan income</p>
         </div>
 
-        <div className="bg-white p-6 rounded-2xl border border-gray-100 shadow-xs space-y-1">
+        <div className="bg-white p-5 rounded-2xl border border-gray-100 shadow-xs space-y-1">
           <div className="flex justify-between items-center text-xs text-gray-500">
             <span>Orders Dispatched</span>
             <span className="p-2 bg-blue-50 text-blue-600 rounded-lg">
               <Package className="w-4 h-4" />
             </span>
           </div>
-          <div className="text-2xl font-extrabold text-gray-900 font-display">42 Orders</div>
-          <p className="text-[11px] text-gray-500 font-medium">100% on-time postal dispatch</p>
+          <div className="text-2xl font-extrabold text-gray-900 font-display">
+            {orders.length} Consignments
+          </div>
+          <p className="text-[11px] text-blue-600 font-medium">India Post Speed Post Integrated</p>
         </div>
 
-        <div className="bg-white p-6 rounded-2xl border border-gray-100 shadow-xs space-y-1">
+        <div className="bg-white p-5 rounded-2xl border border-gray-100 shadow-xs space-y-1">
           <div className="flex justify-between items-center text-xs text-gray-500">
-            <span>Direct Payout Due</span>
+            <span>Disbursable Balance</span>
             <span className="p-2 bg-amber-50 text-brand-orange rounded-lg">
               <Banknote className="w-4 h-4" />
             </span>
           </div>
           <div className="text-2xl font-extrabold text-brand-green font-display">₹14,500</div>
-          <p className="text-[11px] text-gray-500 font-medium">Scheduled for direct account credit</p>
+          <p className="text-[11px] text-gray-500 font-medium">Ready for direct NEFT account transfer</p>
         </div>
 
-        <div className="bg-white p-6 rounded-2xl border border-gray-100 shadow-xs space-y-1">
+        <div className="bg-white p-5 rounded-2xl border border-gray-100 shadow-xs space-y-1">
           <div className="flex justify-between items-center text-xs text-gray-500">
-            <span>Customer Rating</span>
-            <span className="p-2 bg-yellow-50 text-amber-500 rounded-lg">
-              ★
+            <span>Active Listed Products</span>
+            <span className="p-2 bg-purple-50 text-purple-600 rounded-lg">
+              <Layers className="w-4 h-4" />
             </span>
           </div>
-          <div className="text-2xl font-extrabold text-gray-900 font-display">4.9 / 5.0</div>
-          <p className="text-[11px] text-gray-500 font-medium">184 Verified reviews</p>
+          <div className="text-2xl font-extrabold text-purple-700 font-display">
+            {products.length} Items
+          </div>
+          <p className="text-[11px] text-gray-500 font-medium">Across {categories.length} rural craft categories</p>
         </div>
       </div>
 
-      {/* Orders Table */}
-      <div className="bg-white rounded-2xl border border-gray-100 shadow-xs overflow-hidden">
-        <div className="p-6 border-b border-gray-100 flex items-center justify-between">
-          <h2 className="font-bold text-base text-gray-900 font-display">Recent Village Orders</h2>
-          <button
-            onClick={() => notify('Displaying all historical order manifests.')}
-            className="text-xs text-brand-green font-semibold hover:underline cursor-pointer"
-          >
-            View All Orders &rarr;
-          </button>
-        </div>
+      {/* Main Tab Switcher */}
+      <div className="flex border-b border-gray-200 bg-white p-1.5 rounded-2xl shadow-xs text-xs font-semibold gap-1 overflow-x-auto">
+        <button
+          onClick={() => setActiveTab('products')}
+          className={`flex items-center gap-2 px-4 py-2.5 rounded-xl transition-all whitespace-nowrap cursor-pointer ${
+            activeTab === 'products'
+              ? 'bg-brand-green text-white font-bold shadow-xs'
+              : 'text-gray-600 hover:text-gray-900 hover:bg-gray-50'
+          }`}
+        >
+          <Layers className="w-4 h-4" />
+          <span>Category Products & Stock ({filteredProducts.length})</span>
+        </button>
 
-        <div className="overflow-x-auto">
-          <table className="w-full text-left text-xs">
-            <thead className="bg-gray-50 text-gray-500 border-b border-gray-100 uppercase tracking-wider font-semibold">
-              <tr>
-                <th className="p-4">Order ID</th>
-                <th className="p-4">Product</th>
-                <th className="p-4">Customer</th>
-                <th className="p-4">Date</th>
-                <th className="p-4">Amount</th>
-                <th className="p-4">Status</th>
-                <th className="p-4 text-right">Action</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-gray-100">
-              {sampleOrders.map(ord => (
-                <tr key={ord.id} className="hover:bg-gray-50/60">
-                  <td className="p-4 font-mono font-bold text-gray-900">{ord.id}</td>
-                  <td className="p-4 font-medium text-gray-800">{ord.item}</td>
-                  <td className="p-4 text-gray-600">{ord.customer}</td>
-                  <td className="p-4 text-gray-500">{ord.date}</td>
-                  <td className="p-4 font-bold text-gray-900">₹{ord.amount}</td>
-                  <td className="p-4">
-                    <span className="px-2.5 py-1 rounded-full bg-emerald-50 text-emerald-800 font-semibold text-[10px]">
-                      {ord.status}
-                    </span>
-                  </td>
-                  <td className="p-4 text-right">
-                    <button
-                      onClick={() => {
-                        notify(`Generated India Post dispatch manifest for ${ord.id}. Ready for printer.`);
-                        setTimeout(() => window.print(), 500);
-                      }}
-                      className="text-xs font-semibold text-brand-green hover:underline cursor-pointer flex items-center gap-1 ml-auto"
-                    >
-                      <Printer className="w-3.5 h-3.5" />
-                      <span>Print Label</span>
-                    </button>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+        <button
+          onClick={() => setActiveTab('orders')}
+          className={`flex items-center gap-2 px-4 py-2.5 rounded-xl transition-all whitespace-nowrap cursor-pointer ${
+            activeTab === 'orders'
+              ? 'bg-brand-green text-white font-bold shadow-xs'
+              : 'text-gray-600 hover:text-gray-900 hover:bg-gray-50'
+          }`}
+        >
+          <Package className="w-4 h-4" />
+          <span>Orders & Postal Dispatches ({orders.length})</span>
+        </button>
+
+        <button
+          onClick={() => setActiveTab('payouts')}
+          className={`flex items-center gap-2 px-4 py-2.5 rounded-xl transition-all whitespace-nowrap cursor-pointer ${
+            activeTab === 'payouts'
+              ? 'bg-brand-green text-white font-bold shadow-xs'
+              : 'text-gray-600 hover:text-gray-900 hover:bg-gray-50'
+          }`}
+        >
+          <Banknote className="w-4 h-4" />
+          <span>Bank Settlements & UPI</span>
+        </button>
+
+        <button
+          onClick={() => setActiveTab('profile')}
+          className={`flex items-center gap-2 px-4 py-2.5 rounded-xl transition-all whitespace-nowrap cursor-pointer ${
+            activeTab === 'profile'
+              ? 'bg-brand-green text-white font-bold shadow-xs'
+              : 'text-gray-600 hover:text-gray-900 hover:bg-gray-50'
+          }`}
+        >
+          <Store className="w-4 h-4" />
+          <span>Workshop Profile Customizer</span>
+        </button>
       </div>
 
-      {/* Listed Products Status */}
-      <div className="bg-white rounded-2xl border border-gray-100 shadow-xs p-6 space-y-4">
-        <div className="flex items-center justify-between border-b border-gray-100 pb-4">
-          <h2 className="font-bold text-base text-gray-900 font-display">Active Product Listings (Saraswati SHG)</h2>
-          <button
-            onClick={() => notify('Stock levels updated and synchronized with Cloudflare KV edge store.')}
-            className="text-xs text-brand-green font-semibold hover:underline cursor-pointer"
-          >
-            Bulk Stock Sync
-          </button>
-        </div>
+      {/* TAB 1: CATEGORY-WISE PRODUCTS & LIVE INVENTORY */}
+      {activeTab === 'products' && (
+        <div className="space-y-4">
+          
+          {/* Category Filter Pills */}
+          <div className="bg-white p-4 rounded-2xl border border-gray-100 shadow-xs space-y-3">
+            <div className="flex items-center justify-between">
+              <span className="text-xs font-bold text-gray-800 uppercase tracking-wider flex items-center gap-1.5">
+                <Filter className="w-3.5 h-3.5 text-brand-green" />
+                <span>Filter by Village Category</span>
+              </span>
+              <span className="text-[11px] text-gray-500 font-medium">
+                Showing {filteredProducts.length} of {products.length} products
+              </span>
+            </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-          {allProducts.slice(0, 3).map(p => (
-            <div key={p.id} className="p-4 rounded-xl border border-gray-100 flex items-center justify-between gap-3">
-              <img src={p.image} alt={p.name} className="w-12 h-12 rounded-lg object-cover" />
-              <div className="flex-1 min-w-0 text-xs">
-                <p className="font-bold text-gray-900 truncate">{p.name}</p>
-                <p className="text-gray-500">₹{p.price} • Stock: <span className="text-emerald-700 font-bold">{p.stockStatus}</span></p>
-              </div>
+            <div className="flex flex-wrap gap-2">
               <button
-                onClick={() => notify(`Opening product editor for ${p.name}`)}
-                className="text-xs text-gray-500 hover:text-brand-green p-1 cursor-pointer"
-                title="Edit"
+                onClick={() => setSelectedCategory('all')}
+                className={`px-3 py-1.5 rounded-xl text-xs font-semibold transition-all cursor-pointer ${
+                  selectedCategory === 'all'
+                    ? 'bg-brand-green text-white shadow-xs'
+                    : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                }`}
               >
-                Edit
+                All Categories ({products.length})
+              </button>
+
+              {categories.map((cat) => {
+                const count = products.filter(
+                  (p) => p.categorySlug === cat.slug || p.category.toLowerCase().includes(cat.name.toLowerCase())
+                ).length;
+                return (
+                  <button
+                    key={cat.id}
+                    onClick={() => setSelectedCategory(cat.slug)}
+                    className={`px-3 py-1.5 rounded-xl text-xs font-semibold transition-all cursor-pointer ${
+                      selectedCategory === cat.slug
+                        ? 'bg-brand-orange text-white shadow-xs'
+                        : 'bg-gray-50 border border-gray-200 text-gray-700 hover:bg-gray-100'
+                    }`}
+                  >
+                    {cat.name} ({count})
+                  </button>
+                );
+              })}
+            </div>
+
+            {/* Search & Stock Filter Sub-bar */}
+            <div className="pt-2 border-t border-gray-100 flex flex-col sm:flex-row items-center justify-between gap-3">
+              <div className="relative w-full sm:w-72">
+                <Search className="w-4 h-4 text-gray-400 absolute left-3 top-1/2 -translate-y-1/2" />
+                <input
+                  type="text"
+                  placeholder="Search by title, Hindi name, or SKU code..."
+                  value={productSearch}
+                  onChange={(e) => setProductSearch(e.target.value)}
+                  className="w-full pl-9 pr-3 py-2 text-xs border border-gray-200 rounded-xl bg-gray-50/50 focus:bg-white"
+                />
+              </div>
+
+              <div className="flex items-center gap-2 w-full sm:w-auto">
+                <span className="text-xs text-gray-500 font-medium">Stock Status:</span>
+                <select
+                  value={stockFilter}
+                  onChange={(e) => setStockFilter(e.target.value as any)}
+                  className="px-3 py-2 text-xs border border-gray-200 rounded-xl bg-gray-50 text-gray-700 font-medium"
+                >
+                  <option value="all">All Stock Status</option>
+                  <option value="In Stock">In Stock</option>
+                  <option value="Only Few Left">Only Few Left</option>
+                  <option value="Out of Stock">Out of Stock</option>
+                </select>
+              </div>
+            </div>
+          </div>
+
+          {/* Product Listing Table */}
+          <div className="bg-white rounded-2xl border border-gray-100 shadow-xs overflow-hidden">
+            <div className="overflow-x-auto text-xs">
+              <table className="w-full text-left border-collapse">
+                <thead className="bg-gray-50/80 text-gray-500 uppercase font-bold text-[10px] tracking-wider border-b border-gray-100">
+                  <tr>
+                    <th className="p-3.5">Product & SKU</th>
+                    <th className="p-3.5">Category</th>
+                    <th className="p-3.5">Selling Price</th>
+                    <th className="p-3.5">Live Stock Status</th>
+                    <th className="p-3.5">Attributes & GI</th>
+                    <th className="p-3.5 text-right">Actions</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-gray-100">
+                  {filteredProducts.length === 0 ? (
+                    <tr>
+                      <td colSpan={6} className="text-center py-12 text-gray-400">
+                        No products match the selected category or search filter.
+                      </td>
+                    </tr>
+                  ) : (
+                    filteredProducts.map((prod) => (
+                      <tr key={prod.id} className="hover:bg-gray-50/60 transition-colors">
+                        
+                        {/* Title & SKU */}
+                        <td className="p-3.5">
+                          <div className="flex items-center gap-3">
+                            <img
+                              src={prod.image}
+                              alt={prod.name}
+                              className="w-12 h-12 rounded-xl object-cover border border-gray-200 shrink-0"
+                            />
+                            <div>
+                              <div className="flex items-center gap-1.5">
+                                <span className="font-bold text-gray-900 line-clamp-1">{prod.name}</span>
+                                {prod.hindiName && (
+                                  <span className="font-hindi text-[11px] text-amber-800 bg-amber-50 px-1.5 py-0.2 rounded border border-amber-200 font-semibold">
+                                    {prod.hindiName}
+                                  </span>
+                                )}
+                              </div>
+                              <div className="flex items-center gap-2 mt-0.5">
+                                <span className="font-mono text-[10px] text-gray-500 font-semibold">
+                                  {prod.code || `GGH-${prod.id.slice(-4)}`}
+                                </span>
+                                <span className="text-[10px] text-gray-400">•</span>
+                                <span className="text-[10px] text-gray-500">
+                                  {prod.stock ? `${prod.stock} units` : '50 units'}
+                                </span>
+                              </div>
+                            </div>
+                          </div>
+                        </td>
+
+                        {/* Category */}
+                        <td className="p-3.5 whitespace-nowrap">
+                          <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-50 text-brand-green border border-emerald-200">
+                            {prod.category}
+                          </span>
+                        </td>
+
+                        {/* Price & MRP */}
+                        <td className="p-3.5 whitespace-nowrap">
+                          <div className="flex items-center gap-1.5">
+                            <span className="font-bold text-gray-900 text-sm">₹{prod.price}</span>
+                            {prod.originalPrice > prod.price && (
+                              <span className="text-gray-400 line-through text-[11px]">
+                                ₹{prod.originalPrice}
+                              </span>
+                            )}
+                          </div>
+                          {prod.discount > 0 && (
+                            <span className="text-[10px] text-emerald-600 font-bold">
+                              {prod.discount}% OFF
+                            </span>
+                          )}
+                        </td>
+
+                        {/* Stock Status Selector */}
+                        <td className="p-3.5 whitespace-nowrap">
+                          <select
+                            value={prod.stockStatus}
+                            onChange={(e) => handleUpdateStock(prod.id, e.target.value as any)}
+                            className={`px-2 py-1 text-xs font-bold rounded-lg border cursor-pointer ${
+                              prod.stockStatus === 'In Stock'
+                                ? 'bg-emerald-50 text-emerald-800 border-emerald-200'
+                                : prod.stockStatus === 'Only Few Left'
+                                ? 'bg-amber-50 text-amber-800 border-amber-200'
+                                : 'bg-red-50 text-red-800 border-red-200'
+                            }`}
+                          >
+                            <option value="In Stock">● In Stock</option>
+                            <option value="Only Few Left">▲ Only Few Left</option>
+                            <option value="Out of Stock">✕ Out of Stock</option>
+                          </select>
+                        </td>
+
+                        {/* Attributes Badges */}
+                        <td className="p-3.5 whitespace-nowrap">
+                          <div className="flex flex-wrap gap-1">
+                            {prod.isRuralWomenMade && (
+                              <span className="px-1.5 py-0.2 rounded text-[9px] font-bold bg-pink-50 text-pink-700 border border-pink-200">
+                                Rural Women
+                              </span>
+                            )}
+                            {prod.isTool && (
+                              <span className="px-1.5 py-0.2 rounded text-[9px] font-bold bg-slate-100 text-slate-800">
+                                Desi Forge
+                              </span>
+                            )}
+                          </div>
+                        </td>
+
+                        {/* Actions */}
+                        <td className="p-3.5 text-right whitespace-nowrap">
+                          <div className="flex items-center justify-end gap-1.5">
+                            <button
+                              onClick={() => {
+                                setEditingProduct(prod);
+                                setEditPrice(prod.price.toString());
+                                setEditOriginalPrice(prod.originalPrice.toString());
+                              }}
+                              className="p-1.5 text-gray-500 hover:text-brand-green hover:bg-emerald-50 rounded-lg transition-colors cursor-pointer"
+                              title="Quick Edit Price"
+                            >
+                              <Edit3 className="w-3.5 h-3.5" />
+                            </button>
+                            <button
+                              onClick={() => {
+                                if (confirm(`Remove "${prod.name}" from marketplace?`)) {
+                                  deleteProduct(prod.id);
+                                  notify(`Deleted "${prod.name}" from catalog.`);
+                                }
+                              }}
+                              className="p-1.5 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors cursor-pointer"
+                              title="Delete Product"
+                            >
+                              <Trash2 className="w-3.5 h-3.5" />
+                            </button>
+                          </div>
+                        </td>
+
+                      </tr>
+                    ))
+                  )}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* TAB 2: ORDERS & INDIA POST DISPATCH */}
+      {activeTab === 'orders' && (
+        <div className="space-y-4">
+          <div className="bg-white p-4 rounded-2xl border border-gray-100 shadow-xs flex flex-col sm:flex-row items-center justify-between gap-3 text-xs">
+            <div className="flex items-center gap-2">
+              <span className="font-bold text-gray-800 uppercase tracking-wider">Order Status:</span>
+              <div className="flex gap-1.5">
+                {(['all', 'Ready for Dispatch', 'In Transit', 'Delivered'] as const).map((st) => (
+                  <button
+                    key={st}
+                    onClick={() => setOrderFilter(st)}
+                    className={`px-3 py-1.5 rounded-xl font-semibold transition-all cursor-pointer ${
+                      orderFilter === st
+                        ? 'bg-brand-green text-white shadow-xs'
+                        : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                    }`}
+                  >
+                    {st === 'all' ? 'All Orders' : st}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            <span className="text-gray-500 font-medium">
+              India Post Speed Post Direct Rural Pickup Active
+            </span>
+          </div>
+
+          <div className="bg-white rounded-2xl border border-gray-100 shadow-xs overflow-hidden">
+            <div className="overflow-x-auto text-xs">
+              <table className="w-full text-left">
+                <thead className="bg-gray-50/80 text-gray-500 uppercase font-bold text-[10px] tracking-wider border-b border-gray-100">
+                  <tr>
+                    <th className="p-3.5">Order ID</th>
+                    <th className="p-3.5">Item & SKU</th>
+                    <th className="p-3.5">Customer & Delivery Destination</th>
+                    <th className="p-3.5">Amount & Payment</th>
+                    <th className="p-3.5">Dispatch Status</th>
+                    <th className="p-3.5 text-right">Postal Manifest</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-gray-100">
+                  {filteredOrders.map((ord) => (
+                    <tr key={ord.id} className="hover:bg-gray-50/60 transition-colors">
+                      <td className="p-3.5 font-mono font-bold text-gray-900">{ord.id}</td>
+                      <td className="p-3.5">
+                        <p className="font-bold text-gray-900 line-clamp-1">{ord.item}</p>
+                        <p className="text-[10px] font-mono text-gray-500">{ord.sku} • {ord.date}</p>
+                      </td>
+                      <td className="p-3.5">
+                        <p className="font-bold text-gray-800">{ord.customer}</p>
+                        <p className="text-[11px] text-gray-500 line-clamp-1">{ord.address}</p>
+                      </td>
+                      <td className="p-3.5 whitespace-nowrap">
+                        <p className="font-bold text-gray-900 text-sm">₹{ord.amount}</p>
+                        <span className={`text-[10px] font-semibold ${ord.payment.includes('Prepaid') ? 'text-emerald-700' : 'text-amber-800'}`}>
+                          {ord.payment}
+                        </span>
+                      </td>
+                      <td className="p-3.5 whitespace-nowrap">
+                        <select
+                          value={ord.status}
+                          onChange={(e) => handleUpdateOrderStatus(ord.id, e.target.value)}
+                          className="px-2 py-1 text-xs font-semibold rounded-lg border border-gray-200 bg-white"
+                        >
+                          <option value="Ready for Dispatch">Ready for Dispatch</option>
+                          <option value="In Transit">In Transit (India Post)</option>
+                          <option value="Delivered">Delivered</option>
+                        </select>
+                      </td>
+                      <td className="p-3.5 text-right whitespace-nowrap">
+                        <button
+                          onClick={() => setSelectedOrderForLabel(ord)}
+                          className="px-3 py-1.5 bg-brand-green/10 hover:bg-brand-green text-brand-green hover:text-white rounded-lg text-xs font-bold transition-all cursor-pointer inline-flex items-center gap-1.5"
+                        >
+                          <Printer className="w-3.5 h-3.5" />
+                          <span>Print Label</span>
+                        </button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* TAB 3: BANK SETTLEMENTS & UPI */}
+      {activeTab === 'payouts' && (
+        <div className="space-y-6">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            
+            <div className="bg-white p-5 rounded-2xl border border-gray-100 shadow-xs space-y-1">
+              <span className="text-xs text-gray-500 font-medium">Total Lifetime Earnings</span>
+              <div className="text-2xl font-extrabold text-gray-900 font-display">₹91,420</div>
+              <p className="text-[11px] text-gray-500">100% direct rural bank transfers</p>
+            </div>
+
+            <div className="bg-white p-5 rounded-2xl border border-gray-100 shadow-xs space-y-1">
+              <span className="text-xs text-gray-500 font-medium">Platform Facilitation Fee</span>
+              <div className="text-2xl font-extrabold text-gray-900 font-display">5.0%</div>
+              <p className="text-[11px] text-emerald-600 font-medium">Subsidized promotional rate</p>
+            </div>
+
+            <div className="bg-white p-5 rounded-2xl border border-gray-100 shadow-xs space-y-1">
+              <span className="text-xs text-gray-500 font-medium">Available for Instant Payout</span>
+              <div className="text-2xl font-extrabold text-brand-green font-display">₹14,500</div>
+              <button
+                onClick={() => setShowPayoutModal(true)}
+                className="mt-2 w-full py-2 bg-brand-green hover:bg-brand-green-dark text-white text-xs font-bold rounded-xl transition-all shadow-xs cursor-pointer"
+              >
+                Request NEFT / UPI Payout Now
               </button>
             </div>
-          ))}
+
+          </div>
+
+          {/* Bank Account Configurator */}
+          <div className="bg-white p-6 rounded-2xl border border-gray-100 shadow-xs space-y-4">
+            <div className="flex items-center justify-between border-b border-gray-100 pb-3">
+              <div>
+                <h3 className="font-bold text-sm text-gray-900 font-display">
+                  Artisan Bank & UPI Settlement Credentials
+                </h3>
+                <p className="text-xs text-gray-500">
+                  Government-linked bank account for automated rural direct benefit transfer (DBT).
+                </p>
+              </div>
+              <span className="px-2.5 py-1 bg-emerald-50 text-brand-green border border-emerald-200 rounded-lg text-xs font-bold">
+                ✓ Bank Verified
+              </span>
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 text-xs">
+              <div>
+                <label className="block font-semibold text-gray-700 mb-1">Beneficiary Account Name</label>
+                <input
+                  type="text"
+                  value={bankDetails.accountHolder}
+                  onChange={(e) => setBankDetails({ ...bankDetails, accountHolder: e.target.value })}
+                  className="w-full p-2.5 border border-gray-300 rounded-xl font-medium"
+                />
+              </div>
+
+              <div>
+                <label className="block font-semibold text-gray-700 mb-1">Bank Name</label>
+                <input
+                  type="text"
+                  value={bankDetails.bankName}
+                  onChange={(e) => setBankDetails({ ...bankDetails, bankName: e.target.value })}
+                  className="w-full p-2.5 border border-gray-300 rounded-xl"
+                />
+              </div>
+
+              <div>
+                <label className="block font-semibold text-gray-700 mb-1">Account Number</label>
+                <input
+                  type="text"
+                  value={bankDetails.accountNumber}
+                  onChange={(e) => setBankDetails({ ...bankDetails, accountNumber: e.target.value })}
+                  className="w-full p-2.5 border border-gray-300 rounded-xl font-mono"
+                />
+              </div>
+
+              <div>
+                <label className="block font-semibold text-gray-700 mb-1">IFSC Code</label>
+                <input
+                  type="text"
+                  value={bankDetails.ifscCode}
+                  onChange={(e) => setBankDetails({ ...bankDetails, ifscCode: e.target.value.toUpperCase() })}
+                  className="w-full p-2.5 border border-gray-300 rounded-xl font-mono"
+                />
+              </div>
+
+              <div>
+                <label className="block font-semibold text-gray-700 mb-1">Branch Name</label>
+                <input
+                  type="text"
+                  value={bankDetails.branch}
+                  onChange={(e) => setBankDetails({ ...bankDetails, branch: e.target.value })}
+                  className="w-full p-2.5 border border-gray-300 rounded-xl"
+                />
+              </div>
+
+              <div>
+                <label className="block font-semibold text-gray-700 mb-1">UPI VPA ID</label>
+                <input
+                  type="text"
+                  value={bankDetails.upiId}
+                  onChange={(e) => setBankDetails({ ...bankDetails, upiId: e.target.value })}
+                  className="w-full p-2.5 border border-gray-300 rounded-xl font-mono"
+                />
+              </div>
+            </div>
+
+            <div className="flex justify-end pt-2">
+              <button
+                onClick={() => notify('Bank & UPI settlement details saved successfully!')}
+                className="px-4 py-2 bg-brand-green text-white text-xs font-bold rounded-xl shadow-xs cursor-pointer"
+              >
+                Save Bank Details
+              </button>
+            </div>
+          </div>
+
+          {/* Settlement Records */}
+          <div className="bg-white rounded-2xl border border-gray-100 shadow-xs overflow-hidden">
+            <div className="p-4 border-b border-gray-100 flex items-center justify-between">
+              <h4 className="font-bold text-xs text-gray-900 uppercase tracking-wider">
+                Settlement & Payout Disbursement History
+              </h4>
+              <span className="text-xs text-emerald-700 font-semibold">100% On-Time Record</span>
+            </div>
+
+            <div className="overflow-x-auto text-xs">
+              <table className="w-full text-left">
+                <thead className="bg-gray-50 text-gray-500 uppercase font-bold text-[10px]">
+                  <tr>
+                    <th className="p-3">Reference ID</th>
+                    <th className="p-3">Disbursement Date</th>
+                    <th className="p-3">Gross Amount</th>
+                    <th className="p-3">Platform Fee (5%)</th>
+                    <th className="p-3">Net Transferred</th>
+                    <th className="p-3">Bank UTR Number</th>
+                    <th className="p-3">Status</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-gray-100">
+                  {payoutHistory.map((p) => (
+                    <tr key={p.id} className="hover:bg-gray-50/60">
+                      <td className="p-3 font-mono font-bold">{p.id}</td>
+                      <td className="p-3 text-gray-600">{p.date}</td>
+                      <td className="p-3 font-semibold">₹{p.amount.toLocaleString()}</td>
+                      <td className="p-3 text-red-600 font-medium">-₹{p.fee.toLocaleString()}</td>
+                      <td className="p-3 font-bold text-emerald-800 text-sm">₹{p.net.toLocaleString()}</td>
+                      <td className="p-3 font-mono text-[11px] text-gray-500">{p.utr}</td>
+                      <td className="p-3">
+                        <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-100 text-emerald-800">
+                          {p.status}
+                        </span>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
         </div>
-      </div>
+      )}
+
+      {/* TAB 4: WORKSHOP PROFILE CUSTOMIZER */}
+      {activeTab === 'profile' && (
+        <div className="bg-white p-6 rounded-2xl border border-gray-100 shadow-xs space-y-5">
+          <div className="border-b border-gray-100 pb-3 flex items-center justify-between">
+            <div>
+              <h3 className="font-bold text-base text-gray-900 font-display">
+                Artisan Workshop & Storefront Profile
+              </h3>
+              <p className="text-xs text-gray-500">
+                Customize your workshop story, village cluster location, and contact information.
+              </p>
+            </div>
+            <button
+              onClick={() => notify('Workshop profile updated across GaunGaliHat marketplace!')}
+              className="px-4 py-2 bg-brand-green text-white text-xs font-bold rounded-xl shadow-xs cursor-pointer flex items-center gap-1.5"
+            >
+              <Save className="w-3.5 h-3.5" />
+              <span>Save Profile Changes</span>
+            </button>
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs">
+            <div>
+              <label className="block font-semibold text-gray-700 mb-1">Workshop / SHG Name *</label>
+              <input
+                type="text"
+                value={workshopProfile.name}
+                onChange={(e) => setWorkshopProfile({ ...workshopProfile, name: e.target.value })}
+                className="w-full p-2.5 border border-gray-300 rounded-xl font-bold"
+              />
+            </div>
+
+            <div>
+              <label className="block font-semibold text-gray-700 mb-1">Artisan Tagline</label>
+              <input
+                type="text"
+                value={workshopProfile.tagline}
+                onChange={(e) => setWorkshopProfile({ ...workshopProfile, tagline: e.target.value })}
+                className="w-full p-2.5 border border-gray-300 rounded-xl"
+              />
+            </div>
+
+            <div>
+              <label className="block font-semibold text-gray-700 mb-1">Village / Town *</label>
+              <input
+                type="text"
+                value={workshopProfile.village}
+                onChange={(e) => setWorkshopProfile({ ...workshopProfile, village: e.target.value })}
+                className="w-full p-2.5 border border-gray-300 rounded-xl"
+              />
+            </div>
+
+            <div>
+              <label className="block font-semibold text-gray-700 mb-1">Gram Panchayat / Industrial Area</label>
+              <input
+                type="text"
+                value={workshopProfile.panchayat}
+                onChange={(e) => setWorkshopProfile({ ...workshopProfile, panchayat: e.target.value })}
+                className="w-full p-2.5 border border-gray-300 rounded-xl"
+              />
+            </div>
+
+            <div>
+              <label className="block font-semibold text-gray-700 mb-1">District</label>
+              <input
+                type="text"
+                value={workshopProfile.district}
+                onChange={(e) => setWorkshopProfile({ ...workshopProfile, district: e.target.value })}
+                className="w-full p-2.5 border border-gray-300 rounded-xl"
+              />
+            </div>
+
+            <div>
+              <label className="block font-semibold text-gray-700 mb-1">Postal Pincode</label>
+              <input
+                type="text"
+                value={workshopProfile.pincode}
+                onChange={(e) => setWorkshopProfile({ ...workshopProfile, pincode: e.target.value })}
+                className="w-full p-2.5 border border-gray-300 rounded-xl font-mono"
+              />
+            </div>
+
+            <div>
+              <label className="block font-semibold text-gray-700 mb-1">Direct Artisan Contact Phone</label>
+              <input
+                type="tel"
+                value={workshopProfile.contactPhone}
+                onChange={(e) => setWorkshopProfile({ ...workshopProfile, contactPhone: e.target.value })}
+                className="w-full p-2.5 border border-gray-300 rounded-xl font-mono"
+              />
+            </div>
+
+            <div>
+              <label className="block font-semibold text-gray-700 mb-1">WhatsApp Customer Dispatch Inquiry</label>
+              <input
+                type="tel"
+                value={workshopProfile.whatsapp}
+                onChange={(e) => setWorkshopProfile({ ...workshopProfile, whatsapp: e.target.value })}
+                className="w-full p-2.5 border border-gray-300 rounded-xl font-mono"
+              />
+            </div>
+          </div>
+
+          <div className="text-xs">
+            <label className="block font-semibold text-gray-700 mb-1">
+              Generational Craft Story & Ancestral Heritage
+            </label>
+            <textarea
+              rows={4}
+              value={workshopProfile.craftStory}
+              onChange={(e) => setWorkshopProfile({ ...workshopProfile, craftStory: e.target.value })}
+              className="w-full p-3 border border-gray-300 rounded-xl leading-relaxed"
+            ></textarea>
+          </div>
+        </div>
+      )}
+
+      {/* MODAL 1: ADD NEW VILLAGE PRODUCT */}
+      {showAddModal && (
+        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4 overflow-y-auto">
+          <div className="bg-white rounded-3xl p-6 max-w-xl w-full space-y-4 shadow-2xl animate-in zoom-in-95 duration-150 my-6">
+            <div className="flex items-center justify-between border-b border-gray-100 pb-3">
+              <div>
+                <h4 className="font-bold text-base text-gray-900 font-display">
+                  List New Village Product in Catalog
+                </h4>
+                <p className="text-[11px] text-gray-500">
+                  Direct listing to GaunGaliHat marketplace with instant KV synchronization.
+                </p>
+              </div>
+              <button
+                onClick={() => setShowAddModal(false)}
+                className="p-1 text-gray-400 hover:text-gray-700 rounded-lg cursor-pointer"
+              >
+                ✕
+              </button>
+            </div>
+
+            <form onSubmit={handleCreateProduct} className="space-y-3.5 text-xs">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div>
+                  <label className="block font-semibold text-gray-700 mb-1">Product Title (English) *</label>
+                  <input
+                    type="text"
+                    required
+                    placeholder="e.g. Forged Carbon Steel Khurpi"
+                    value={newTitle}
+                    onChange={(e) => setNewTitle(e.target.value)}
+                    className="w-full p-2.5 border border-gray-300 rounded-xl"
+                  />
+                </div>
+
+                <div>
+                  <label className="block font-semibold text-gray-700 mb-1">Product Title (Hindi)</label>
+                  <input
+                    type="text"
+                    placeholder="e.g. देसी लोहे की खुरपी"
+                    value={newHindiTitle}
+                    onChange={(e) => setNewHindiTitle(e.target.value)}
+                    className="w-full p-2.5 border border-gray-300 rounded-xl font-hindi"
+                  />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div>
+                  <label className="block font-semibold text-gray-700 mb-1">Marketplace Category *</label>
+                  <select
+                    value={newCategorySlug}
+                    onChange={(e) => setNewCategorySlug(e.target.value)}
+                    className="w-full p-2.5 border border-gray-300 rounded-xl bg-white font-medium"
+                  >
+                    {categories.map((c) => (
+                      <option key={c.id} value={c.slug}>
+                        {c.name}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                <div>
+                  <label className="block font-semibold text-gray-700 mb-1">Stock Status *</label>
+                  <select
+                    value={newStockStatus}
+                    onChange={(e) => setNewStockStatus(e.target.value as any)}
+                    className="w-full p-2.5 border border-gray-300 rounded-xl bg-white font-medium"
+                  >
+                    <option value="In Stock">In Stock</option>
+                    <option value="Only Few Left">Only Few Left</option>
+                    <option value="Out of Stock">Out of Stock</option>
+                  </select>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-3 gap-3">
+                <div>
+                  <label className="block font-semibold text-gray-700 mb-1">Selling Price (₹) *</label>
+                  <input
+                    type="number"
+                    required
+                    value={newPrice}
+                    onChange={(e) => setNewPrice(e.target.value)}
+                    className="w-full p-2.5 border border-gray-300 rounded-xl font-bold"
+                  />
+                </div>
+                <div>
+                  <label className="block font-semibold text-gray-700 mb-1">MRP Price (₹)</label>
+                  <input
+                    type="number"
+                    value={newOriginalPrice}
+                    onChange={(e) => setNewOriginalPrice(e.target.value)}
+                    className="w-full p-2.5 border border-gray-300 rounded-xl text-gray-500"
+                  />
+                </div>
+                <div>
+                  <label className="block font-semibold text-gray-700 mb-1">Stock Units</label>
+                  <input
+                    type="number"
+                    value={newStockCount}
+                    onChange={(e) => setNewStockCount(e.target.value)}
+                    className="w-full p-2.5 border border-gray-300 rounded-xl font-mono"
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label className="block font-semibold text-gray-700 mb-1">Select Preset Craft Photo or Custom URL</label>
+                <div className="grid grid-cols-3 sm:grid-cols-6 gap-2 mb-2">
+                  {presetImages.map((img, idx) => (
+                    <button
+                      key={idx}
+                      type="button"
+                      onClick={() => setNewImageUrl(img.url)}
+                      className={`p-1 rounded-xl border text-center transition-all cursor-pointer ${
+                        newImageUrl === img.url
+                          ? 'border-brand-green ring-2 ring-brand-green bg-emerald-50'
+                          : 'border-gray-200 hover:border-gray-400'
+                      }`}
+                    >
+                      <img src={img.url} alt={img.label} className="w-full h-10 object-cover rounded-lg" />
+                      <span className="text-[9px] font-semibold text-gray-700 line-clamp-1 mt-0.5">{img.label}</span>
+                    </button>
+                  ))}
+                </div>
+                <input
+                  type="url"
+                  placeholder="Or paste external image URL..."
+                  value={newImageUrl}
+                  onChange={(e) => setNewImageUrl(e.target.value)}
+                  className="w-full p-2.5 border border-gray-300 rounded-xl font-mono text-[11px]"
+                />
+              </div>
+
+              <div>
+                <label className="block font-semibold text-gray-700 mb-1">Description & Craft Specifications</label>
+                <textarea
+                  rows={2}
+                  placeholder="Forged carbon steel, heat-treated durability, hardwood handle grip..."
+                  value={newDescription}
+                  onChange={(e) => setNewDescription(e.target.value)}
+                  className="w-full p-2.5 border border-gray-300 rounded-xl"
+                ></textarea>
+              </div>
+
+              <div className="flex items-center gap-4 pt-1">
+                <label className="flex items-center gap-2 cursor-pointer font-semibold text-gray-700">
+                  <input
+                    type="checkbox"
+                    checked={newIsWomenMade}
+                    onChange={(e) => setNewIsWomenMade(e.target.checked)}
+                    className="rounded text-brand-green focus:ring-brand-green"
+                  />
+                  <span>Handcrafted by Rural Women SHG</span>
+                </label>
+
+                <label className="flex items-center gap-2 cursor-pointer font-semibold text-gray-700">
+                  <input
+                    type="checkbox"
+                    checked={newIsTool}
+                    onChange={(e) => setNewIsTool(e.target.checked)}
+                    className="rounded text-brand-green focus:ring-brand-green"
+                  />
+                  <span>Farming / Village Tool</span>
+                </label>
+              </div>
+
+              <div className="flex gap-2 pt-3 border-t border-gray-100">
+                <button
+                  type="submit"
+                  className="flex-1 py-2.5 bg-brand-green hover:bg-brand-green-dark text-white font-bold rounded-xl shadow-xs transition-colors cursor-pointer"
+                >
+                  Publish Product to Storefront
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setShowAddModal(false)}
+                  className="px-4 py-2.5 border border-gray-300 hover:bg-gray-50 rounded-xl text-gray-700 cursor-pointer"
+                >
+                  Cancel
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* MODAL 2: QUICK EDIT PRICE */}
+      {editingProduct && (
+        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4">
+          <div className="bg-white rounded-3xl p-6 max-w-sm w-full space-y-4 shadow-2xl animate-in zoom-in-95 duration-150">
+            <h4 className="font-bold text-base text-gray-900 font-display">
+              Update Price: {editingProduct.name}
+            </h4>
+            <form onSubmit={handleSavePriceEdit} className="space-y-3 text-xs">
+              <div>
+                <label className="block font-semibold text-gray-700 mb-1">Selling Price (₹)</label>
+                <input
+                  type="number"
+                  required
+                  value={editPrice}
+                  onChange={(e) => setEditPrice(e.target.value)}
+                  className="w-full p-2.5 border border-gray-300 rounded-xl font-bold text-sm"
+                />
+              </div>
+              <div>
+                <label className="block font-semibold text-gray-700 mb-1">Original MRP Price (₹)</label>
+                <input
+                  type="number"
+                  value={editOriginalPrice}
+                  onChange={(e) => setEditOriginalPrice(e.target.value)}
+                  className="w-full p-2.5 border border-gray-300 rounded-xl"
+                />
+              </div>
+              <div className="flex gap-2 pt-2">
+                <button
+                  type="submit"
+                  className="flex-1 py-2.5 bg-brand-green hover:bg-brand-green-dark text-white font-bold rounded-xl shadow-xs cursor-pointer"
+                >
+                  Save New Price
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setEditingProduct(null)}
+                  className="px-4 py-2.5 border border-gray-300 hover:bg-gray-50 rounded-xl text-gray-700 cursor-pointer"
+                >
+                  Cancel
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* MODAL 3: INDIA POST SPEED POST DISPATCH LABEL */}
+      {selectedOrderForLabel && (
+        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4">
+          <div className="bg-white rounded-3xl p-6 max-w-lg w-full space-y-4 shadow-2xl border border-gray-200 animate-in zoom-in-95 duration-150">
+            <div className="flex items-center justify-between border-b border-gray-200 pb-3">
+              <div className="flex items-center gap-2">
+                <div className="w-8 h-8 rounded-lg bg-red-600 text-white font-black flex items-center justify-center text-xs">
+                  IP
+                </div>
+                <div>
+                  <h4 className="font-bold text-sm text-gray-900 font-display">
+                    India Post • Speed Post Parcel Manifest
+                  </h4>
+                  <span className="font-mono text-[10px] text-gray-500">
+                    Consignment No: {selectedOrderForLabel.consignmentNo}
+                  </span>
+                </div>
+              </div>
+              <button
+                onClick={() => setSelectedOrderForLabel(null)}
+                className="p-1 text-gray-400 hover:text-gray-700 cursor-pointer"
+              >
+                ✕
+              </button>
+            </div>
+
+            {/* Printable Parcel Label Box */}
+            <div className="border-2 border-dashed border-gray-400 p-4 rounded-2xl bg-amber-50/20 text-xs space-y-3 font-sans">
+              <div className="flex items-center justify-between border-b border-gray-300 pb-2">
+                <div>
+                  <span className="font-black text-red-600 text-base tracking-wide">भारतीय डाक • INDIA POST</span>
+                  <span className="block text-[10px] font-bold text-gray-700">SPEED POST DOMESTIC PARCEL</span>
+                </div>
+                <div className="text-right">
+                  <span className="font-mono font-bold text-xs bg-black text-white px-2 py-0.5 rounded">
+                    {selectedOrderForLabel.payment.includes('Prepaid') ? 'PREPAID' : 'COD: ₹' + selectedOrderForLabel.amount}
+                  </span>
+                  <span className="block text-[10px] font-mono text-gray-500 mt-0.5">WT: 1.25 KG</span>
+                </div>
+              </div>
+
+              {/* Barcode Mock */}
+              <div className="text-center py-2 bg-white rounded-lg border border-gray-300">
+                <div className="font-mono font-bold tracking-[6px] text-lg select-all">
+                  ||| | | |||| || | || |||| |
+                </div>
+                <span className="font-mono text-xs text-gray-700 font-bold">
+                  *{selectedOrderForLabel.consignmentNo}*
+                </span>
+              </div>
+
+              <div className="grid grid-cols-2 gap-3 pt-1 border-t border-gray-300 text-[11px]">
+                <div className="space-y-0.5 border-r border-gray-200 pr-2">
+                  <span className="font-bold text-gray-500 uppercase text-[9px] block">CONSIGNOR (SENDER):</span>
+                  <p className="font-bold text-gray-900">{workshopProfile.name}</p>
+                  <p className="text-gray-600">{workshopProfile.village}, {workshopProfile.district}</p>
+                  <p className="text-gray-600">Uttar Pradesh - {workshopProfile.pincode}</p>
+                  <p className="font-mono text-gray-500">{workshopProfile.contactPhone}</p>
+                </div>
+
+                <div className="space-y-0.5 pl-1">
+                  <span className="font-bold text-gray-500 uppercase text-[9px] block">CONSIGNEE (DELIVER TO):</span>
+                  <p className="font-bold text-gray-900">{selectedOrderForLabel.customer}</p>
+                  <p className="text-gray-700 font-medium leading-tight">{selectedOrderForLabel.address}</p>
+                </div>
+              </div>
+
+              <div className="p-2 bg-gray-100 rounded-lg text-[10px] text-gray-600 flex justify-between">
+                <span>Article: {selectedOrderForLabel.item}</span>
+                <span className="font-mono font-bold">Order: {selectedOrderForLabel.id}</span>
+              </div>
+            </div>
+
+            <div className="flex gap-2 pt-2">
+              <button
+                onClick={() => {
+                  window.print();
+                  notify(`Printed dispatch manifest for order ${selectedOrderForLabel.id}`);
+                }}
+                className="flex-1 py-2.5 bg-red-600 hover:bg-red-700 text-white font-bold rounded-xl shadow-xs transition-colors cursor-pointer flex items-center justify-center gap-1.5"
+              >
+                <Printer className="w-4 h-4" />
+                <span>Send to Thermal Label Printer</span>
+              </button>
+              <button
+                onClick={() => setSelectedOrderForLabel(null)}
+                className="px-4 py-2.5 border border-gray-300 hover:bg-gray-50 rounded-xl text-gray-700 cursor-pointer"
+              >
+                Close
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* MODAL 4: REQUEST PAYOUT */}
+      {showPayoutModal && (
+        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4">
+          <div className="bg-white rounded-3xl p-6 max-w-sm w-full space-y-4 shadow-2xl animate-in zoom-in-95 duration-150">
+            <h4 className="font-bold text-base text-gray-900 font-display">
+              Request Bank Settlement
+            </h4>
+            <p className="text-xs text-gray-500">
+              Funds are disbursed via automated NEFT / IMPS within 24 hours.
+            </p>
+
+            <form onSubmit={handleRequestPayout} className="space-y-3 text-xs">
+              <div>
+                <label className="block font-semibold text-gray-700 mb-1">Requested Amount (₹)</label>
+                <input
+                  type="number"
+                  required
+                  value={payoutAmount}
+                  onChange={(e) => setPayoutAmount(e.target.value)}
+                  className="w-full p-2.5 border border-gray-300 rounded-xl font-bold text-sm"
+                />
+              </div>
+
+              <div className="p-3 bg-gray-50 rounded-xl border border-gray-200 space-y-1 text-[11px]">
+                <div className="flex justify-between">
+                  <span className="text-gray-500">Gross Settlement:</span>
+                  <span className="font-bold">₹{parseFloat(payoutAmount || '0').toLocaleString()}</span>
+                </div>
+                <div className="flex justify-between text-red-600">
+                  <span>Platform Fee (5%):</span>
+                  <span>-₹{Math.round((parseFloat(payoutAmount || '0') * 0.05)).toLocaleString()}</span>
+                </div>
+                <div className="flex justify-between border-t border-gray-200 pt-1 font-bold text-brand-green text-xs">
+                  <span>Net Credited to Bank:</span>
+                  <span>₹{Math.round((parseFloat(payoutAmount || '0') * 0.95)).toLocaleString()}</span>
+                </div>
+              </div>
+
+              <div className="text-[11px] text-gray-500">
+                Destination: <span className="font-bold text-gray-800">{bankDetails.accountHolder}</span> ({bankDetails.bankName})
+              </div>
+
+              <div className="flex gap-2 pt-2">
+                <button
+                  type="submit"
+                  className="flex-1 py-2.5 bg-brand-green hover:bg-brand-green-dark text-white font-bold rounded-xl shadow-xs cursor-pointer"
+                >
+                  Confirm Payout Request
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setShowPayoutModal(false)}
+                  className="px-4 py-2.5 border border-gray-300 hover:bg-gray-50 rounded-xl text-gray-700 cursor-pointer"
+                >
+                  Cancel
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
 
     </div>
   );

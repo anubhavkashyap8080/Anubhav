@@ -33,6 +33,9 @@ import {
   MapPin,
   RefreshCw,
   Lock,
+  Key,
+  Eye,
+  EyeOff,
   UserCheck,
   Palette,
   Zap,
@@ -150,9 +153,15 @@ export const AdminDashboard: React.FC = () => {
   // Add User Modal State
   const [showAddUserModal, setShowAddUserModal] = useState(false);
   const [newUserName, setNewUserName] = useState('');
+  const [newUsername, setNewUsername] = useState('');
+  const [newUserPassword, setNewUserPassword] = useState('');
   const [newUserEmail, setNewUserEmail] = useState('');
   const [newUserPhone, setNewUserPhone] = useState('');
+  const [newUserDepartment, setNewUserDepartment] = useState('');
   const [newUserRole, setNewUserRole] = useState<UserRole>('customer');
+  const [showPasswordInForm, setShowPasswordInForm] = useState(false);
+  const [revealedPasswords, setRevealedPasswords] = useState<Record<string, boolean>>({});
+  const [copiedUserId, setCopiedUserId] = useState<string | null>(null);
 
   // Email Campaign Form State
   const [emailSubject, setEmailSubject] = useState('');
@@ -224,17 +233,26 @@ export const AdminDashboard: React.FC = () => {
   const handleCreateUser = (e: React.FormEvent) => {
     e.preventDefault();
     if (!newUserName.trim() || !newUserEmail.trim()) return;
+    const cleanUsername = newUsername.trim() || newUserName.trim().toLowerCase().replace(/[^a-zA-Z0-9_]/g, '_');
+    const cleanPassword = newUserPassword.trim() || 'Welcome@2026';
     addUser({
       name: newUserName.trim(),
+      username: cleanUsername,
+      password: cleanPassword,
       email: newUserEmail.trim(),
       phone: newUserPhone.trim() || '+91 7897492100',
       role: newUserRole,
-      status: 'active'
+      status: 'active',
+      department: newUserDepartment.trim() || (newUserRole === 'vendor' ? 'Artisan Workshop' : newUserRole === 'super_admin' ? 'Executive Governance' : 'Operations Team')
     });
     setNewUserName('');
+    setNewUsername('');
+    setNewUserPassword('');
     setNewUserEmail('');
     setNewUserPhone('');
+    setNewUserDepartment('');
     setShowAddUserModal(false);
+    notifySave();
   };
 
   const handleSendEmail = (e: React.FormEvent) => {
@@ -742,7 +760,8 @@ export const AdminDashboard: React.FC = () => {
             <table className="w-full text-left">
               <thead className="bg-gray-50 text-gray-500 uppercase font-semibold">
                 <tr>
-                  <th className="p-3">User</th>
+                  <th className="p-3">User & Handle</th>
+                  <th className="p-3">Login Credentials</th>
                   <th className="p-3">Phone</th>
                   <th className="p-3">Role</th>
                   <th className="p-3">Status</th>
@@ -751,61 +770,101 @@ export const AdminDashboard: React.FC = () => {
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-100">
-                {filteredUsers.map(user => (
-                  <tr key={user.id} className="hover:bg-gray-50/60">
-                    <td className="p-3">
-                      <div className="flex items-center gap-2.5">
-                        <img
-                          src={user.avatar || 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&w=150&q=80'}
-                          alt={user.name}
-                          className="w-7 h-7 rounded-full object-cover"
-                        />
-                        <div>
-                          <p className="font-bold text-gray-900">{user.name}</p>
-                          <p className="text-[11px] text-gray-500">{user.email}</p>
+                {filteredUsers.map(user => {
+                  const userHandle = user.username || user.email.split('@')[0];
+                  const isRevealed = revealedPasswords[user.id];
+                  const userPass = user.password || (user.role === 'vendor' ? 'seller123' : user.role === 'customer' ? 'shopper123' : 'admin123');
+                  const isCopied = copiedUserId === user.id;
+
+                  return (
+                    <tr key={user.id} className="hover:bg-gray-50/60">
+                      <td className="p-3">
+                        <div className="flex items-center gap-2.5">
+                          <img
+                            src={user.avatar || 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&w=150&q=80'}
+                            alt={user.name}
+                            className="w-8 h-8 rounded-full object-cover ring-1 ring-gray-200"
+                          />
+                          <div>
+                            <div className="flex items-center gap-1.5">
+                              <p className="font-bold text-gray-900">{user.name}</p>
+                              <span className="font-mono text-[10px] bg-slate-100 text-slate-700 px-1.5 py-0.5 rounded font-semibold">
+                                @{userHandle}
+                              </span>
+                            </div>
+                            <p className="text-[11px] text-gray-500">{user.email}</p>
+                          </div>
                         </div>
-                      </div>
-                    </td>
-                    <td className="p-3 font-mono text-[11px] text-gray-700">{user.phone}</td>
-                    <td className="p-3">
-                      <select
-                        value={user.role}
-                        onChange={(e) => updateUserRole(user.id, e.target.value as UserRole)}
-                        className="px-2 py-1 bg-white border border-gray-200 rounded-lg text-xs font-semibold text-brand-green"
-                      >
-                        <option value="super_admin">Super Admin</option>
-                        <option value="admin">Admin</option>
-                        <option value="marketer">Marketer</option>
-                        <option value="content_writer">Content Writer</option>
-                        <option value="vendor">Vendor</option>
-                        <option value="support">Support</option>
-                        <option value="customer">Customer</option>
-                      </select>
-                    </td>
-                    <td className="p-3">
-                      <button
-                        onClick={() => toggleUserStatus(user.id)}
-                        className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${
-                          user.status === 'active'
-                            ? 'bg-emerald-100 text-emerald-800'
-                            : 'bg-red-100 text-red-800'
-                        }`}
-                      >
-                        {user.status === 'active' ? 'Active' : 'Suspended'}
-                      </button>
-                    </td>
-                    <td className="p-3 text-gray-500">{user.joinedDate}</td>
-                    <td className="p-3 text-right">
-                      <button
-                        onClick={() => deleteUser(user.id)}
-                        className="p-1.5 text-gray-400 hover:text-red-600 rounded-lg transition-colors cursor-pointer"
-                        title="Delete User"
-                      >
-                        <Trash2 className="w-4 h-4" />
-                      </button>
-                    </td>
-                  </tr>
-                ))}
+                      </td>
+                      <td className="p-3">
+                        <div className="inline-flex items-center gap-1.5 bg-gray-50 border border-gray-200 px-2 py-1 rounded-lg">
+                          <Key className="w-3 h-3 text-brand-green shrink-0" />
+                          <span className="font-mono text-[11px] font-semibold text-gray-800">
+                            {isRevealed ? userPass : '••••••••'}
+                          </span>
+                          <button
+                            type="button"
+                            onClick={() => setRevealedPasswords(prev => ({ ...prev, [user.id]: !isRevealed }))}
+                            className="text-gray-400 hover:text-gray-700 p-0.5 cursor-pointer ml-1"
+                            title={isRevealed ? 'Hide Password' : 'Show Password'}
+                          >
+                            {isRevealed ? <EyeOff className="w-3 h-3" /> : <Eye className="w-3 h-3" />}
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => {
+                              navigator.clipboard.writeText(`Username: ${userHandle}\nPassword: ${userPass}\nEmail: ${user.email}`);
+                              setCopiedUserId(user.id);
+                              setTimeout(() => setCopiedUserId(null), 2000);
+                            }}
+                            className="text-gray-400 hover:text-brand-green p-0.5 cursor-pointer"
+                            title="Copy Login Credentials"
+                          >
+                            {isCopied ? <Check className="w-3 h-3 text-emerald-600" /> : <Copy className="w-3 h-3" />}
+                          </button>
+                        </div>
+                      </td>
+                      <td className="p-3 font-mono text-[11px] text-gray-700">{user.phone}</td>
+                      <td className="p-3">
+                        <select
+                          value={user.role}
+                          onChange={(e) => updateUserRole(user.id, e.target.value as UserRole)}
+                          className="px-2 py-1 bg-white border border-gray-200 rounded-lg text-xs font-semibold text-brand-green"
+                        >
+                          <option value="super_admin">Super Admin</option>
+                          <option value="admin">Admin</option>
+                          <option value="marketer">Marketer</option>
+                          <option value="content_writer">Content Writer</option>
+                          <option value="vendor">Vendor</option>
+                          <option value="support">Support</option>
+                          <option value="customer">Customer</option>
+                        </select>
+                      </td>
+                      <td className="p-3">
+                        <button
+                          onClick={() => toggleUserStatus(user.id)}
+                          className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${
+                            user.status === 'active'
+                              ? 'bg-emerald-100 text-emerald-800'
+                              : 'bg-red-100 text-red-800'
+                          }`}
+                        >
+                          {user.status === 'active' ? 'Active' : 'Suspended'}
+                        </button>
+                      </td>
+                      <td className="p-3 text-gray-500">{user.joinedDate}</td>
+                      <td className="p-3 text-right">
+                        <button
+                          onClick={() => deleteUser(user.id)}
+                          className="p-1.5 text-gray-400 hover:text-red-600 rounded-lg transition-colors cursor-pointer"
+                          title="Delete User"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </button>
+                      </td>
+                    </tr>
+                  );
+                })}
               </tbody>
             </table>
           </div>
@@ -813,68 +872,156 @@ export const AdminDashboard: React.FC = () => {
           {/* Add User Modal */}
           {showAddUserModal && (
             <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4">
-              <div className="bg-white rounded-3xl p-6 max-w-sm w-full space-y-4 shadow-2xl animate-in zoom-in-95 duration-150">
-                <h4 className="font-bold text-base text-gray-900 font-display">Create User Account</h4>
+              <div className="bg-white rounded-3xl p-6 max-w-md w-full space-y-4 shadow-2xl animate-in zoom-in-95 duration-150">
+                <div className="flex items-center justify-between border-b border-gray-100 pb-3">
+                  <div>
+                    <h4 className="font-bold text-base text-gray-900 font-display">Create User & Team Account</h4>
+                    <p className="text-[11px] text-gray-500">Provide username & password so the user can immediately log in.</p>
+                  </div>
+                  <button
+                    onClick={() => setShowAddUserModal(false)}
+                    className="p-1 text-gray-400 hover:text-gray-700 rounded-lg cursor-pointer"
+                  >
+                    ✕
+                  </button>
+                </div>
+
                 <form onSubmit={handleCreateUser} className="space-y-3 text-xs">
                   <div>
-                    <label className="block font-semibold text-gray-700 mb-1">Full Name</label>
+                    <label className="block font-semibold text-gray-700 mb-1">Full Name *</label>
                     <input
                       type="text"
                       required
                       placeholder="e.g. Ramesh Kumar"
                       value={newUserName}
-                      onChange={(e) => setNewUserName(e.target.value)}
-                      className="w-full p-2 border border-gray-300 rounded-lg"
+                      onChange={(e) => {
+                        setNewUserName(e.target.value);
+                        if (!newUsername) {
+                          setNewUsername(e.target.value.toLowerCase().replace(/[^a-zA-Z0-9_]/g, '_'));
+                        }
+                      }}
+                      className="w-full p-2.5 border border-gray-300 rounded-xl"
                     />
                   </div>
-                  <div>
-                    <label className="block font-semibold text-gray-700 mb-1">Email</label>
-                    <input
-                      type="email"
-                      required
-                      placeholder="ramesh@example.com"
-                      value={newUserEmail}
-                      onChange={(e) => setNewUserEmail(e.target.value)}
-                      className="w-full p-2 border border-gray-300 rounded-lg"
-                    />
+
+                  <div className="grid grid-cols-2 gap-3">
+                    <div>
+                      <label className="block font-semibold text-gray-700 mb-1">
+                        Username (for Login) *
+                      </label>
+                      <div className="relative">
+                        <span className="absolute left-2.5 top-1/2 -translate-y-1/2 text-gray-400 font-mono">@</span>
+                        <input
+                          type="text"
+                          required
+                          placeholder="ramesh_ops"
+                          value={newUsername}
+                          onChange={(e) => setNewUsername(e.target.value.toLowerCase().replace(/[^a-zA-Z0-9_]/g, ''))}
+                          className="w-full pl-7 pr-2.5 py-2.5 border border-gray-300 rounded-xl font-mono text-xs"
+                        />
+                      </div>
+                    </div>
+
+                    <div>
+                      <div className="flex items-center justify-between mb-1">
+                        <label className="font-semibold text-gray-700">Password *</label>
+                        <button
+                          type="button"
+                          onClick={() => setNewUserPassword(`Ggh@${Math.floor(1000 + Math.random() * 9000)}`)}
+                          className="text-[10px] text-brand-green hover:underline cursor-pointer font-semibold"
+                        >
+                          Auto-Generate
+                        </button>
+                      </div>
+                      <div className="relative">
+                        <input
+                          type={showPasswordInForm ? 'text' : 'password'}
+                          required
+                          placeholder="Pass@123"
+                          value={newUserPassword}
+                          onChange={(e) => setNewUserPassword(e.target.value)}
+                          className="w-full pl-2.5 pr-8 py-2.5 border border-gray-300 rounded-xl font-mono text-xs"
+                        />
+                        <button
+                          type="button"
+                          onClick={() => setShowPasswordInForm(!showPasswordInForm)}
+                          className="absolute right-2.5 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-700 p-0.5"
+                        >
+                          {showPasswordInForm ? <EyeOff className="w-3.5 h-3.5" /> : <Eye className="w-3.5 h-3.5" />}
+                        </button>
+                      </div>
+                    </div>
                   </div>
-                  <div>
-                    <label className="block font-semibold text-gray-700 mb-1">Phone Number</label>
-                    <input
-                      type="tel"
-                      placeholder="+91 98765 43210"
-                      value={newUserPhone}
-                      onChange={(e) => setNewUserPhone(e.target.value)}
-                      className="w-full p-2 border border-gray-300 rounded-lg"
-                    />
+
+                  <div className="grid grid-cols-2 gap-3">
+                    <div>
+                      <label className="block font-semibold text-gray-700 mb-1">Email Address *</label>
+                      <input
+                        type="email"
+                        required
+                        placeholder="ramesh@example.com"
+                        value={newUserEmail}
+                        onChange={(e) => setNewUserEmail(e.target.value)}
+                        className="w-full p-2.5 border border-gray-300 rounded-xl"
+                      />
+                    </div>
+                    <div>
+                      <label className="block font-semibold text-gray-700 mb-1">Phone Number</label>
+                      <input
+                        type="tel"
+                        placeholder="+91 98765 43210"
+                        value={newUserPhone}
+                        onChange={(e) => setNewUserPhone(e.target.value)}
+                        className="w-full p-2.5 border border-gray-300 rounded-xl"
+                      />
+                    </div>
                   </div>
-                  <div>
-                    <label className="block font-semibold text-gray-700 mb-1">Assigned Role</label>
-                    <select
-                      value={newUserRole}
-                      onChange={(e) => setNewUserRole(e.target.value as UserRole)}
-                      className="w-full p-2 border border-gray-300 rounded-lg"
-                    >
-                      <option value="customer">Customer / Buyer</option>
-                      <option value="vendor">Vendor / Seller</option>
-                      <option value="support">Support Agent</option>
-                      <option value="marketer">Marketing Manager</option>
-                      <option value="content_writer">Content Writer</option>
-                      <option value="admin">Operations Admin</option>
-                      <option value="super_admin">Super Admin</option>
-                    </select>
+
+                  <div className="grid grid-cols-2 gap-3">
+                    <div>
+                      <label className="block font-semibold text-gray-700 mb-1">Department / Division</label>
+                      <input
+                        type="text"
+                        placeholder="e.g. Regional Logistics"
+                        value={newUserDepartment}
+                        onChange={(e) => setNewUserDepartment(e.target.value)}
+                        className="w-full p-2.5 border border-gray-300 rounded-xl"
+                      />
+                    </div>
+                    <div>
+                      <label className="block font-semibold text-gray-700 mb-1">Assigned Role *</label>
+                      <select
+                        value={newUserRole}
+                        onChange={(e) => setNewUserRole(e.target.value as UserRole)}
+                        className="w-full p-2.5 border border-gray-300 rounded-xl font-semibold bg-white"
+                      >
+                        <option value="customer">Customer / Buyer</option>
+                        <option value="vendor">Vendor / Seller</option>
+                        <option value="support">Support Agent</option>
+                        <option value="marketer">Marketing Manager</option>
+                        <option value="content_writer">Content Writer</option>
+                        <option value="admin">Operations Admin</option>
+                        <option value="super_admin">Super Admin</option>
+                      </select>
+                    </div>
                   </div>
+
+                  <div className="p-3 bg-emerald-50 border border-emerald-200 rounded-xl text-[11px] text-emerald-900 flex items-center gap-2">
+                    <CheckCircle2 className="w-4 h-4 text-brand-green shrink-0" />
+                    <span>The newly created user can immediately log in using their Username or Email and the configured Password.</span>
+                  </div>
+
                   <div className="flex gap-2 pt-2">
                     <button
                       type="submit"
-                      className="flex-1 py-2.5 bg-brand-green text-white font-bold rounded-lg shadow-sm"
+                      className="flex-1 py-2.5 bg-brand-green hover:bg-brand-green-dark text-white font-bold rounded-xl shadow-xs transition-colors cursor-pointer"
                     >
-                      Save User
+                      Save & Activate Account
                     </button>
                     <button
                       type="button"
                       onClick={() => setShowAddUserModal(false)}
-                      className="px-4 py-2.5 border border-gray-300 rounded-lg text-gray-700"
+                      className="px-4 py-2.5 border border-gray-300 hover:bg-gray-50 rounded-xl text-gray-700 cursor-pointer"
                     >
                       Cancel
                     </button>

@@ -82,11 +82,33 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const closeAuthModal = () => setIsAuthModalOpen(false);
 
-  // Customer Login with Email
-  const loginWithEmail = (email: string, _pass?: string) => {
-    const trimmed = email.trim().toLowerCase();
-    const found = initialUsers.find(u => u.email.toLowerCase() === trimmed);
+  const getStoredUsers = (): User[] => {
+    try {
+      const raw = localStorage.getItem('ggh_platform_users');
+      if (raw) {
+        const parsed = JSON.parse(raw);
+        if (Array.isArray(parsed) && parsed.length > 0) {
+          return parsed;
+        }
+      }
+    } catch {
+      // fallback
+    }
+    return initialUsers;
+  };
+
+  // Customer Login with Email or Username
+  const loginWithEmail = (identifier: string, pass?: string) => {
+    const trimmed = identifier.trim().toLowerCase();
+    const allUsers = getStoredUsers();
+    const found = allUsers.find(u => 
+      u.email.toLowerCase() === trimmed ||
+      (u.username && u.username.toLowerCase() === trimmed)
+    );
     if (found) {
+      if (found.password && pass && found.password !== pass) {
+        return { success: false, message: 'Invalid password. Please check your credentials.' };
+      }
       setCurrentUser(found);
       closeAuthModal();
       return { success: true };
@@ -95,8 +117,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     // New Customer
     const newUser: User = {
       id: `user-${Date.now()}`,
-      name: email.split('@')[0],
-      email: trimmed,
+      name: trimmed.includes('@') ? trimmed.split('@')[0] : trimmed,
+      username: trimmed.includes('@') ? trimmed.split('@')[0] : trimmed,
+      password: pass || 'shopper123',
+      email: trimmed.includes('@') ? trimmed : `${trimmed}@shopper.gaungalihat.com`,
       phone: '+91 98000 00000',
       role: 'customer',
       avatar: 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&w=150&q=80',
@@ -108,30 +132,46 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     return { success: true };
   };
 
-  // Seller / Artisan Login
+  // Seller / Artisan Login with Username, Email or Phone
   const loginAsSeller = (identifier: string, passOrOtp: string) => {
     const trimmed = identifier.trim().toLowerCase();
     const cleanPhone = identifier.replace(/\D/g, '');
+    const allUsers = getStoredUsers();
 
     // Check registered seller user
-    const foundSeller = initialUsers.find(
+    const foundSeller = allUsers.find(
       u => (u.role === 'vendor') && (
+        (u.username && u.username.toLowerCase() === trimmed) ||
         u.email.toLowerCase() === trimmed ||
-        (cleanPhone.length >= 6 && u.phone.includes(cleanPhone.slice(-6)))
+        (cleanPhone.length >= 6 && u.phone.replace(/\D/g, '').includes(cleanPhone.slice(-6)))
       )
     );
 
     if (foundSeller) {
-      setCurrentUser(foundSeller);
-      closeAuthModal();
-      return { success: true };
+      const isSellerPassValid =
+        (foundSeller.password && foundSeller.password === passOrOtp) ||
+        passOrOtp === 'seller123' ||
+        passOrOtp === '123456' ||
+        passOrOtp.length === 6;
+
+      if (isSellerPassValid) {
+        setCurrentUser(foundSeller);
+        closeAuthModal();
+        return { success: true };
+      }
+      return {
+        success: false,
+        message: 'Invalid password. Please enter the correct password for your artisan account.'
+      };
     }
 
-    // Allow seller authentication with test pass or OTP
+    // Allow seller authentication with test pass or OTP for new artisan numbers
     if (passOrOtp.length >= 4 || passOrOtp === '123456' || passOrOtp === 'seller123') {
       const sellerUser: User = {
         id: `seller-${Date.now()}`,
         name: trimmed.includes('@') ? trimmed.split('@')[0] : `Artisan Partner ${cleanPhone.slice(-4)}`,
+        username: trimmed.replace(/[^a-zA-Z0-9_]/g, '') || `seller_${Date.now().toString().slice(-4)}`,
+        password: passOrOtp,
         email: trimmed.includes('@') ? trimmed : `artisan${cleanPhone}@gaungalihat.com`,
         phone: cleanPhone ? `+91 ${cleanPhone}` : '+91 7897492100',
         role: 'vendor',
@@ -147,48 +187,56 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
     return {
       success: false,
-      message: 'Invalid seller credentials. Please use password "seller123" or 6-digit OTP.'
+      message: 'Invalid seller credentials. Please use your registered username/password or 6-digit OTP.'
     };
   };
 
-  // Admin / Staff Login
+  // Admin / Staff Login with Username, Email or Phone
   const loginAsAdmin = (identifier: string, passOrPin: string) => {
     const trimmed = identifier.trim().toLowerCase();
     const cleanPhone = identifier.replace(/\D/g, '');
+    const allUsers = getStoredUsers();
 
-    // Check existing staff
-    const adminMatch = initialUsers.find(
+    // Check staff in stored users (matching username, email, phone, or root keyword)
+    const staffMatch = allUsers.find(
       u => ['super_admin', 'admin', 'marketer', 'content_writer', 'support'].includes(u.role) && (
+        (u.username && u.username.toLowerCase() === trimmed) ||
         u.email.toLowerCase() === trimmed ||
-        (cleanPhone.length >= 6 && u.phone.includes(cleanPhone.slice(-6))) ||
-        trimmed.includes('admin') ||
-        trimmed.includes('anubhav')
+        (cleanPhone.length >= 6 && u.phone.replace(/\D/g, '').includes(cleanPhone.slice(-6))) ||
+        (trimmed === 'admin' && ['super_admin', 'admin'].includes(u.role)) ||
+        (trimmed === 'anubhav' && u.role === 'super_admin')
       )
     );
 
-    // Verify password or PIN
-    const isPassValid =
+    const isMasterPass =
       passOrPin === 'admin123' ||
       passOrPin === '7897' ||
       passOrPin === '8080' ||
       passOrPin === '123456';
 
-    if (adminMatch && isPassValid) {
-      setCurrentUser(adminMatch);
-      closeAuthModal();
-      return { success: true };
+    if (staffMatch) {
+      const passValid = (staffMatch.password && staffMatch.password === passOrPin) || isMasterPass;
+      if (passValid) {
+        setCurrentUser(staffMatch);
+        closeAuthModal();
+        return { success: true };
+      }
+      return {
+        success: false,
+        message: 'Invalid password. Please check your admin credentials.'
+      };
     }
 
-    // Default root Super Admin login for Anubhav Kashyap
-    if ((trimmed === 'admin@gaungalihat.com' || trimmed === 'anubhavkashyap8080@gmail.com' || trimmed === 'admin') && isPassValid) {
-      setCurrentUser(initialUsers[0]);
+    // Default root Super Admin login fallback
+    if ((trimmed === 'admin@gaungalihat.com' || trimmed === 'anubhavkashyap8080@gmail.com' || trimmed === 'admin' || trimmed === 'anubhav') && isMasterPass) {
+      setCurrentUser(allUsers[0] || initialUsers[0]);
       closeAuthModal();
       return { success: true };
     }
 
     return {
       success: false,
-      message: 'Access Denied: Invalid administrator email or PIN passcode.'
+      message: 'Access Denied: No staff account found for this username/email.'
     };
   };
 
@@ -197,6 +245,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     const customerUser: User = {
       id: `user-social-${Date.now()}`,
       name: 'Google Shopper',
+      username: 'google_shopper',
       email: 'shopper@gmail.com',
       phone: '+91 98000 12345',
       role: 'customer',
@@ -224,13 +273,15 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     if (otp === generatedOtp || otp === '123456' || otp.length === 6) {
       // Find matching user or create
       const clean = phone.replace(/\D/g, '');
-      const matched = initialUsers.find(u => u.phone.includes(clean.slice(-6)));
+      const allUsers = getStoredUsers();
+      const matched = allUsers.find(u => u.phone.replace(/\D/g, '').includes(clean.slice(-6)));
       if (matched) {
         setCurrentUser(matched);
       } else {
         const newUser: User = {
           id: `user-phone-${Date.now()}`,
           name: `User ${clean.slice(-4)}`,
+          username: `user_${clean.slice(-4)}`,
           email: `${clean}@sms.gaungalihat.com`,
           phone: phone.startsWith('+91') ? phone : `+91 ${clean}`,
           role: intendedRole || 'customer',
@@ -249,7 +300,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const switchRole = (role: UserRole) => {
     // Only available to authorized staff
-    const template = initialUsers.find(u => u.role === role) || initialUsers[0];
+    const allUsers = getStoredUsers();
+    const template = allUsers.find(u => u.role === role) || allUsers[0] || initialUsers[0];
     const updated = {
       ...template,
       role: role

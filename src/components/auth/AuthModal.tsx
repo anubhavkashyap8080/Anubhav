@@ -339,11 +339,11 @@ export const AuthModal: React.FC = () => {
               ) : (
                 <form onSubmit={handleCustomerEmailLogin} className="space-y-3 text-xs">
                   <div>
-                    <label className="block font-semibold text-gray-700 mb-1">Email Address</label>
+                    <label className="block font-semibold text-gray-700 mb-1">Email Address or Username</label>
                     <input
-                      type="email"
+                      type="text"
                       required
-                      placeholder="you@example.com"
+                      placeholder="e.g. aarav_shopper or you@example.com"
                       value={customerEmail}
                       onChange={(e) => setCustomerEmail(e.target.value)}
                       className="w-full p-2.5 border border-gray-300 rounded-xl"
@@ -353,7 +353,7 @@ export const AuthModal: React.FC = () => {
                     <label className="block font-semibold text-gray-700 mb-1">Password</label>
                     <input
                       type="password"
-                      placeholder="••••••••"
+                      placeholder="Enter account password (default: shopper123)"
                       value={customerPassword}
                       onChange={(e) => setCustomerPassword(e.target.value)}
                       className="w-full p-2.5 border border-gray-300 rounded-xl"
@@ -363,7 +363,7 @@ export const AuthModal: React.FC = () => {
                     type="submit"
                     className="w-full py-2.5 bg-brand-green hover:bg-brand-green-dark text-white font-bold rounded-xl shadow-xs cursor-pointer"
                   >
-                    Sign In
+                    Sign In to Account
                   </button>
                 </form>
               )}
@@ -398,12 +398,12 @@ export const AuthModal: React.FC = () => {
               <form onSubmit={handleSellerLogin} className="space-y-3 text-xs">
                 <div>
                   <label className="block font-semibold text-gray-700 mb-1">
-                    Registered Mobile Number or Seller Email
+                    Artisan Username, Seller Email, or Mobile
                   </label>
                   <input
                     type="text"
                     required
-                    placeholder="+91 78974 92100 or seller@gaungalihat.com"
+                    placeholder="e.g. ramkishan_artisan, +91 83035 78806, or email"
                     value={sellerIdentifier}
                     onChange={(e) => setSellerIdentifier(e.target.value)}
                     className="w-full p-2.5 border border-gray-300 rounded-xl"
@@ -414,11 +414,11 @@ export const AuthModal: React.FC = () => {
                 <div>
                   <div className="flex justify-between items-center mb-1">
                     <label className="font-semibold text-gray-700">Password / Access Key</label>
-                    <span className="text-[10px] text-gray-400">Default test: seller123</span>
+                    <span className="text-[10px] text-brand-orange font-semibold">Your password or "seller123"</span>
                   </div>
                   <input
                     type="password"
-                    placeholder="••••••••"
+                    placeholder="Enter seller password"
                     value={sellerPassOrOtp}
                     onChange={(e) => setSellerPassOrOtp(e.target.value)}
                     className="w-full p-2.5 border border-gray-300 rounded-xl"
@@ -462,11 +462,11 @@ export const AuthModal: React.FC = () => {
 
               <form onSubmit={handleAdminLogin} className="space-y-3 text-xs">
                 <div>
-                  <label className="block font-semibold text-gray-700 mb-1">Admin Email / ID</label>
+                  <label className="block font-semibold text-gray-700 mb-1">Admin Username or Official Email</label>
                   <input
                     type="text"
                     required
-                    placeholder="admin@gaungalihat.com"
+                    placeholder="Username (e.g. anubhav, sunil_ops) or email"
                     value={adminIdentifier}
                     onChange={(e) => setAdminIdentifier(e.target.value)}
                     className="w-full p-2.5 border border-gray-300 rounded-xl font-medium"
@@ -476,13 +476,13 @@ export const AuthModal: React.FC = () => {
 
                 <div>
                   <div className="flex justify-between items-center mb-1">
-                    <label className="font-semibold text-gray-700">Security Passcode / PIN</label>
-                    <span className="text-[10px] text-emerald-700 font-semibold">Pass: admin123 or PIN: 7897</span>
+                    <label className="font-semibold text-gray-700">Security Passcode / Password</label>
+                    <span className="text-[10px] text-emerald-700 font-semibold">Your password or master PIN: 7897</span>
                   </div>
                   <input
                     type="password"
                     required
-                    placeholder="Enter security password or PIN"
+                    placeholder="Enter your security password or PIN"
                     value={adminPasscode}
                     onChange={(e) => setAdminPasscode(e.target.value)}
                     className="w-full p-2.5 border border-gray-300 rounded-xl font-mono text-sm"

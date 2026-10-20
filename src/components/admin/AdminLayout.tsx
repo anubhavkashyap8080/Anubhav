@@ -153,29 +153,29 @@ export const AdminLayout: React.FC = () => {
           <form onSubmit={handleGateLogin} className="space-y-4 text-xs">
             <div>
               <label className="block font-semibold text-slate-300 mb-1">
-                Admin Email / Identity
+                Admin Username or Email
               </label>
               <input
                 type="text"
                 required
                 value={gateEmail}
                 onChange={(e) => setGateEmail(e.target.value)}
-                placeholder="admin@gaungalihat.com"
+                placeholder="Username (e.g. anubhav, sunil_ops) or admin email"
                 className="w-full p-3 bg-slate-950 border border-slate-700 rounded-xl text-white font-medium focus:border-amber-400 focus:outline-hidden"
               />
             </div>
 
             <div>
               <div className="flex justify-between items-center mb-1">
-                <label className="font-semibold text-slate-300">Security Passcode / PIN</label>
-                <span className="text-[10px] text-amber-400/80">Default: admin123 or PIN: 7897</span>
+                <label className="font-semibold text-slate-300">Security Password / PIN</label>
+                <span className="text-[10px] text-amber-400/80">Your password or master PIN: 7897</span>
               </div>
               <input
                 type="password"
                 required
                 value={gatePassword}
                 onChange={(e) => setGatePassword(e.target.value)}
-                placeholder="Enter password or 4-digit PIN"
+                placeholder="Enter your password or master PIN"
                 className="w-full p-3 bg-slate-950 border border-slate-700 rounded-xl text-white font-mono text-sm focus:border-amber-400 focus:outline-hidden"
               />
             </div>
