@@ -5,11 +5,11 @@ export const ReturnsPolicy: React.FC = () => {
   return (
     <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-10 space-y-8">
       
-      {/* Top Banner Notice */}
-      <div className="p-4 bg-amber-50 border border-amber-200 rounded-2xl flex items-center gap-3 text-xs text-amber-900">
-        <Info className="w-5 h-5 text-brand-orange shrink-0" />
+      {/* Official Policy Header */}
+      <div className="p-4 bg-white border border-gray-200 rounded-2xl flex items-center gap-3 text-xs text-gray-800 shadow-xs">
+        <ShieldCheck className="w-5 h-5 text-brand-green shrink-0" />
         <div>
-          <span className="font-bold">Policy Document Preview:</span> Demonstration return and refund guidelines for GanvGaliHut Phase 1.
+          <span className="font-bold text-gray-900">Official Artisan Protection & Consumer Policy:</span> Fair-trade guarantees and transparent return process for handcrafted items and agricultural tools.
         </div>
       </div>
 
@@ -17,7 +17,7 @@ export const ReturnsPolicy: React.FC = () => {
         <h1 className="text-3xl font-extrabold text-gray-900 font-display">
           Return and Refund Policy
         </h1>
-        <p className="text-xs text-gray-500">Effective Date: October 2026 • Version 1.0 (Demo)</p>
+        <p className="text-xs text-gray-500">Effective Date: October 2026 • Official Guidelines</p>
       </div>
 
       <div className="bg-white rounded-3xl border border-gray-100 shadow-xs p-6 sm:p-10 space-y-6 text-xs text-gray-700 leading-relaxed">

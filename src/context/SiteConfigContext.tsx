@@ -89,6 +89,19 @@ export const SiteConfigProvider: React.FC<{ children: ReactNode }> = ({ children
   useEffect(() => { localStorage.setItem(SEC_STORAGE, JSON.stringify(securityChecklist)); }, [securityChecklist]);
   useEffect(() => { localStorage.setItem(HERO_FESTIVAL_STORAGE, JSON.stringify(heroFestivalConfig)); }, [heroFestivalConfig]);
 
+  // Dynamically update favicon in browser tab
+  useEffect(() => {
+    if (headerConfig?.faviconUrl) {
+      let link: HTMLLinkElement | null = document.querySelector("link[rel*='icon']");
+      if (!link) {
+        link = document.createElement('link');
+        link.rel = 'icon';
+        document.getElementsByTagName('head')[0].appendChild(link);
+      }
+      link.href = headerConfig.faviconUrl;
+    }
+  }, [headerConfig?.faviconUrl]);
+
   const updateHeaderConfig = (updates: Partial<HeaderConfig>) => {
     setHeaderConfig(prev => ({ ...prev, ...updates }));
   };

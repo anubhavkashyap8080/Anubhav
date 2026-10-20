@@ -175,6 +175,9 @@ export interface HeaderConfig {
   logoUrl: string;
   brandName: string;
   tagline: string;
+  faviconUrl?: string;
+  customHeadCode?: string;
+  customHeaderCode?: string;
   showAnnouncement: boolean;
   announcementText: string;
   showLocationSelector: boolean;
@@ -198,6 +201,8 @@ export interface FooterConfig {
   socialLinks: SocialLinksConfig;
   copyrightText: string;
   showNewsletter: boolean;
+  customFooterCode?: string;
+  customCss?: string;
   columns: Array<{
     title: string;
     links: Array<{ label: string; href: string }>;
