@@ -82,7 +82,7 @@ export const Wishlist: React.FC = () => {
                     className="w-full py-2 bg-brand-green hover:bg-brand-green-dark text-white text-xs font-semibold rounded-lg flex items-center justify-center gap-1.5 transition-colors cursor-pointer"
                   >
                     <ShoppingBag className="w-3.5 h-3.5" />
-                    <span>Move to Cart (Demo)</span>
+                    <span>Move to Cart</span>
                   </button>
                 </div>
               </div>

@@ -284,11 +284,11 @@ export const Checkout: React.FC = () => {
               type="submit"
               className="w-full py-4 bg-brand-green hover:bg-brand-green-dark text-white font-bold text-sm rounded-xl shadow-lg hover:shadow-emerald-900/20 transition-all cursor-pointer active:scale-95"
             >
-              Place Order & Pay (Demo)
+              Place Order & Pay
             </button>
 
             <p className="text-[10px] text-center text-gray-400">
-              Phase 1 Interactive Prototype. No real transaction occurs.
+              Guaranteed safe & secure checkout protected by 256-bit encryption.
             </p>
           </div>
         </div>

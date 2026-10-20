@@ -38,6 +38,34 @@ export const SeoSettings: React.FC = () => {
     setTimeout(() => setSaveNotice(null), 3500);
   };
 
+  const handleDownloadSitemap = () => {
+    const blob = new Blob([exampleSitemapXml], { type: 'application/xml' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'sitemap.xml';
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+    setSaveNotice('sitemap.xml generated and downloaded.');
+    setTimeout(() => setSaveNotice(null), 3500);
+  };
+
+  const handleDownloadRobots = () => {
+    const blob = new Blob([seoConfig.robotsTxt], { type: 'text/plain' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'robots.txt';
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+    setSaveNotice('robots.txt generated and downloaded.');
+    setTimeout(() => setSaveNotice(null), 3500);
+  };
+
   const handleCopy = (text: string, label: string) => {
     navigator.clipboard?.writeText(text);
     setCopiedNotification(label);
@@ -252,7 +280,7 @@ export const SeoSettings: React.FC = () => {
                 className="w-4 h-4 text-brand-green rounded"
               />
               <span className="font-semibold text-gray-800">
-                Allow Search Engines to Index the Public Marketplace (Preview Mode)
+                Allow Search Engines to Index the Public Marketplace
               </span>
             </label>
           </div>
@@ -312,11 +340,11 @@ export const SeoSettings: React.FC = () => {
                   <span>Copy XML</span>
                 </button>
                 <button
-                  onClick={() => handleAction('Download Sitemap XML')}
+                  onClick={handleDownloadSitemap}
                   className="px-3 py-1 bg-brand-green hover:bg-brand-green-dark rounded-lg flex items-center gap-1 cursor-pointer"
                 >
                   <Download className="w-3 h-3" />
-                  <span>Generate File (Demo)</span>
+                  <span>Download sitemap.xml</span>
                 </button>
               </div>
             </div>
@@ -344,7 +372,7 @@ export const SeoSettings: React.FC = () => {
           <div className="bg-white rounded-2xl border border-gray-100 shadow-xs p-6 space-y-4">
             <div className="flex items-center justify-between pb-3 border-b border-gray-100">
               <h2 className="font-bold text-sm text-gray-900 font-display">
-                Robots.txt Content Editor (Preview)
+                Robots.txt Content Editor
               </h2>
               <div className="flex items-center gap-2">
                 <button
@@ -355,11 +383,11 @@ export const SeoSettings: React.FC = () => {
                   <span>Copy</span>
                 </button>
                 <button
-                  onClick={() => handleAction('Deploy Robots.txt to Root')}
+                  onClick={handleDownloadRobots}
                   className="px-4 py-1.5 bg-brand-green text-white text-xs font-semibold rounded-lg hover:bg-brand-green-dark flex items-center gap-1 cursor-pointer"
                 >
                   <Download className="w-3.5 h-3.5" />
-                  <span>Generate File (Demo)</span>
+                  <span>Download robots.txt</span>
                 </button>
               </div>
             </div>

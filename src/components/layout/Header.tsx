@@ -101,11 +101,11 @@ export const Header: React.FC = () => {
 
           {/* Brand Logo Only (No text next to logo) */}
           <Link to="/" className="flex items-center shrink-0 group py-1" title="GaunGaliHat • Home">
-            <div className="relative h-12 sm:h-14 w-auto flex items-center">
+            <div className="relative h-10 sm:h-14 w-auto flex items-center">
               <img
                 src={headerConfig.logoUrl || '/logo.png'}
                 alt="GaunGaliHat Logo"
-                className="h-10 sm:h-12 w-auto max-w-[200px] object-contain transition-transform group-hover:scale-105"
+                className="h-8 sm:h-12 w-auto max-w-[110px] sm:max-w-[200px] object-contain transition-transform group-hover:scale-105"
                 onError={(e) => {
                   (e.target as HTMLElement).style.display = 'none';
                 }}
@@ -214,7 +214,7 @@ export const Header: React.FC = () => {
 
           {/* Action Icons: Nearby Artisans, Seller Login, Account, Wishlist, Cart */}
           {headerConfig.showIcons && (
-            <div className="flex items-center gap-2 sm:gap-3 shrink-0">
+            <div className="flex items-center gap-1 sm:gap-3 shrink-0">
               
               {/* Nearby Artisans Map CTA */}
               <Link
@@ -230,20 +230,22 @@ export const Header: React.FC = () => {
               {currentUser?.role === 'vendor' ? (
                 <Link
                   to="/seller/dashboard"
-                  className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-brand-orange text-white bg-brand-orange hover:bg-orange-600 transition-all text-xs font-bold shadow-2xs"
+                  className="inline-flex items-center gap-1 px-2 sm:px-3 py-1 sm:py-1.5 rounded-lg border border-brand-orange text-white bg-brand-orange hover:bg-orange-600 transition-all text-xs font-bold shadow-2xs shrink-0"
                 >
                   <Store className="w-3.5 h-3.5" />
-                  <span>Seller Dashboard</span>
+                  <span className="hidden xs:inline">Seller Dashboard</span>
+                  <span className="xs:hidden text-[11px]">Dashboard</span>
                 </Link>
               ) : (
                 <button
                   type="button"
                   onClick={() => openAuthModal('seller')}
-                  className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-brand-orange/50 text-brand-orange bg-orange-50/70 hover:bg-brand-orange hover:text-white transition-all text-xs font-bold cursor-pointer"
-                  title="Artisan & Seller Portal Login"
+                  className="inline-flex items-center gap-1 px-2 sm:px-3 py-1 sm:py-1.5 rounded-lg border border-brand-orange/50 text-brand-orange bg-orange-50/70 hover:bg-brand-orange hover:text-white transition-all text-xs font-bold cursor-pointer shrink-0"
+                  title="Artisan & Seller Login"
                 >
                   <Store className="w-3.5 h-3.5" />
-                  <span>Seller Login</span>
+                  <span className="hidden xs:inline">Seller Login</span>
+                  <span className="xs:hidden text-[11px]">Seller</span>
                 </button>
               )}
 
@@ -310,7 +312,7 @@ export const Header: React.FC = () => {
 
                 {/* Account Dropdown Menu */}
                 {accountMenuOpen && (
-                  <div className="absolute right-0 top-full mt-2 w-64 bg-white rounded-2xl shadow-2xl border border-gray-100 py-2.5 z-50 animate-in fade-in zoom-in-95 duration-150">
+                  <div className="fixed sm:absolute right-2 sm:right-0 top-16 sm:top-full mt-2 w-[calc(100vw-1rem)] sm:w-64 max-w-xs bg-white rounded-2xl shadow-2xl border border-gray-100 py-2.5 z-50 animate-in fade-in zoom-in-95 duration-150">
                     {/* Logged in state */}
                     {currentUser ? (
                       <>
@@ -412,10 +414,10 @@ export const Header: React.FC = () => {
                             setAccountMenuOpen(false);
                             openAuthModal('customer');
                           }}
-                          className="w-full flex items-center justify-center gap-2 py-2 px-3 bg-brand-green hover:bg-brand-green-dark text-white rounded-xl text-xs font-bold shadow-xs transition-colors cursor-pointer"
+                          className="w-full flex items-center justify-center gap-2 py-2.5 px-3 bg-brand-green hover:bg-brand-green-dark text-white rounded-xl text-xs font-bold shadow-xs transition-colors cursor-pointer"
                         >
                           <User className="w-4 h-4" />
-                          <span>Shopper Sign In / Mobile OTP</span>
+                          <span>Shopper Login</span>
                         </button>
 
                         <button
@@ -423,10 +425,10 @@ export const Header: React.FC = () => {
                             setAccountMenuOpen(false);
                             openAuthModal('seller');
                           }}
-                          className="w-full flex items-center justify-center gap-2 py-2 px-3 bg-orange-50 hover:bg-orange-100 text-brand-orange border border-brand-orange/30 rounded-xl text-xs font-bold transition-colors cursor-pointer"
+                          className="w-full flex items-center justify-center gap-2 py-2.5 px-3 bg-orange-50 hover:bg-orange-100 text-brand-orange border border-brand-orange/30 rounded-xl text-xs font-bold transition-colors cursor-pointer"
                         >
                           <Store className="w-4 h-4 text-brand-orange" />
-                          <span>Artisan & Seller Portal Login</span>
+                          <span>Artisan & Seller Login</span>
                         </button>
 
                         <div className="pt-1 text-center">
@@ -544,60 +546,60 @@ export const Header: React.FC = () => {
                 </Link>
               </div>
 
-              <div className="border-t border-gray-100 my-4 pt-3 space-y-1">
-                <p className="text-[11px] font-bold text-gray-400 uppercase tracking-wider px-2 mb-1">
-                  Admin Previews
-                </p>
-                <Link
-                  to="/admin"
-                  onClick={() => setMobileMenuOpen(false)}
-                  className="block px-3 py-2 text-sm font-medium text-gray-700 hover:bg-emerald-50 rounded-lg"
-                >
-                  Admin Central Dashboard
-                </Link>
-                <Link
-                  to="/admin/site-customization"
-                  onClick={() => setMobileMenuOpen(false)}
-                  className="block px-3 py-2 text-sm font-medium text-gray-700 hover:bg-emerald-50 rounded-lg"
-                >
-                  Header / Footer Settings
-                </Link>
-                <Link
-                  to="/admin/blog"
-                  onClick={() => setMobileMenuOpen(false)}
-                  className="block px-3 py-2 text-sm font-medium text-gray-700 hover:bg-emerald-50 rounded-lg"
-                >
-                  Blog & CMS Management
-                </Link>
-                <Link
-                  to="/admin/seo-settings"
-                  onClick={() => setMobileMenuOpen(false)}
-                  className="block px-3 py-2 text-sm font-medium text-gray-700 hover:bg-emerald-50 rounded-lg"
-                >
-                  SEO & Sitemap Settings
-                </Link>
-                <Link
-                  to="/admin/security-settings"
-                  onClick={() => setMobileMenuOpen(false)}
-                  className="block px-3 py-2 text-sm font-medium text-gray-700 hover:bg-emerald-50 rounded-lg"
-                >
-                  Security & Privacy
-                </Link>
-              </div>
+              {/* Only show Admin Portal if user is logged in as staff */}
+              {currentUser && ['super_admin', 'admin', 'marketer', 'content_writer', 'support'].includes(currentUser.role) && (
+                <div className="border-t border-gray-100 my-4 pt-3 space-y-1">
+                  <p className="text-[11px] font-bold text-gray-400 uppercase tracking-wider px-2 mb-1">
+                    Management Portal
+                  </p>
+                  <Link
+                    to="/admin"
+                    onClick={() => setMobileMenuOpen(false)}
+                    className="block px-3 py-2 text-sm font-bold text-brand-green bg-emerald-50 rounded-lg hover:bg-emerald-100"
+                  >
+                    Admin Operations Center
+                  </Link>
+                </div>
+              )}
 
               {/* User / Sign In Button in Mobile Drawer */}
-              <div className="border-t border-gray-100 my-4 pt-3">
+              <div className="border-t border-gray-100 my-4 pt-3 space-y-2">
                 {!currentUser ? (
-                  <button
-                    onClick={() => {
-                      setMobileMenuOpen(false);
-                      openAuthModal();
-                    }}
-                    className="w-full flex items-center justify-center gap-2 px-4 py-2.5 bg-brand-green text-white font-bold text-xs rounded-xl shadow-sm hover:bg-brand-green-dark"
-                  >
-                    <ShieldCheck className="w-4 h-4" />
-                    Sign In with Google / Phone OTP
-                  </button>
+                  <>
+                    <button
+                      onClick={() => {
+                        setMobileMenuOpen(false);
+                        openAuthModal('customer');
+                      }}
+                      className="w-full flex items-center justify-center gap-2 px-4 py-2.5 bg-brand-green text-white font-bold text-xs rounded-xl shadow-xs hover:bg-brand-green-dark cursor-pointer"
+                    >
+                      <User className="w-4 h-4" />
+                      <span>Shopper Login</span>
+                    </button>
+
+                    <button
+                      onClick={() => {
+                        setMobileMenuOpen(false);
+                        openAuthModal('seller');
+                      }}
+                      className="w-full flex items-center justify-center gap-2 px-4 py-2.5 bg-orange-50 border border-brand-orange/40 text-brand-orange font-bold text-xs rounded-xl shadow-xs hover:bg-orange-100 cursor-pointer"
+                    >
+                      <Store className="w-4 h-4 text-brand-orange" />
+                      <span>Artisan & Seller Login</span>
+                    </button>
+
+                    <div className="text-center pt-1">
+                      <button
+                        onClick={() => {
+                          setMobileMenuOpen(false);
+                          openAuthModal('admin');
+                        }}
+                        className="text-[11px] text-gray-400 hover:text-gray-700 hover:underline cursor-pointer"
+                      >
+                        Staff & Administration Login →
+                      </button>
+                    </div>
+                  </>
                 ) : (
                   <div className="p-3 bg-gray-50 rounded-xl space-y-2">
                     <div className="flex items-center justify-between">
@@ -611,7 +613,7 @@ export const Header: React.FC = () => {
                         setMobileMenuOpen(false);
                         logout();
                       }}
-                      className="w-full text-center text-xs text-red-600 font-semibold hover:underline"
+                      className="w-full text-center text-xs text-red-600 font-semibold hover:underline cursor-pointer"
                     >
                       Sign Out
                     </button>

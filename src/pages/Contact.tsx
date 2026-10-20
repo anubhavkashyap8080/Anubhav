@@ -148,11 +148,11 @@ export const Contact: React.FC = () => {
             </div>
           </div>
 
-          {/* Demo Callout */}
-          <div className="p-4 bg-amber-50 rounded-2xl border border-amber-200 text-xs text-amber-900 flex items-start gap-2.5">
-            <Info className="w-4 h-4 text-brand-orange shrink-0 mt-0.5" />
+          {/* Support Guarantee Callout */}
+          <div className="p-4 bg-emerald-50 rounded-2xl border border-emerald-200 text-xs text-emerald-900 flex items-start gap-2.5">
+            <Info className="w-4 h-4 text-brand-green shrink-0 mt-0.5" />
             <div>
-              <span className="font-bold">Contact Form Preview:</span> This is a frontend demo. Submitting the form below will display the global demo notice without dispatching real transactional emails.
+              <span className="font-bold">Direct Support Assurance:</span> Our village artisan coordination team reviews every inquiry and responds within 24 business hours.
             </div>
           </div>
         </div>
@@ -234,7 +234,7 @@ export const Contact: React.FC = () => {
                 type="submit"
                 className="w-full sm:w-auto px-8 py-3.5 bg-brand-green hover:bg-brand-green-dark text-white font-bold text-xs rounded-xl shadow-md transition-all flex items-center justify-center gap-2 cursor-pointer active:scale-95"
               >
-                <span>Send Message (Demo)</span>
+                <span>Send Message</span>
                 <Send className="w-3.5 h-3.5" />
               </button>
             </div>

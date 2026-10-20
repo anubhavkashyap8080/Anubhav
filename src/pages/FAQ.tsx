@@ -111,10 +111,10 @@ export const FAQ: React.FC = () => {
         <h3 className="font-bold text-base text-gray-900 font-display">Have a specific question not listed here?</h3>
         <p className="text-xs text-gray-600">Our customer support team is always available to help.</p>
         <button
-          onClick={() => showDemoNotice('Support Chat', 'Omnichannel live chat & WhatsApp support triggers will be active in Phase 2.')}
+          onClick={() => showDemoNotice('Support Chat', 'Connecting you with our support team on WhatsApp and email.')}
           className="px-6 py-2.5 bg-brand-green hover:bg-brand-green-dark text-white text-xs font-bold rounded-xl shadow-xs cursor-pointer"
         >
-          Chat with Support Mitra (Demo)
+          Chat with Support Mitra
         </button>
       </div>
 

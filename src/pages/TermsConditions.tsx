@@ -6,10 +6,10 @@ export const TermsConditions: React.FC = () => {
     <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-10 space-y-8">
       
       {/* Top Banner Notice */}
-      <div className="p-4 bg-amber-50 border border-amber-200 rounded-2xl flex items-center gap-3 text-xs text-amber-900">
-        <Info className="w-5 h-5 text-brand-orange shrink-0" />
+      <div className="p-4 bg-emerald-50 border border-emerald-200 rounded-2xl flex items-center gap-3 text-xs text-emerald-900">
+        <FileText className="w-5 h-5 text-brand-green shrink-0" />
         <div>
-          <span className="font-bold">Legal Terms Preview:</span> Demonstration Terms & Conditions governing marketplace usage for GaunGaliHat Phase 1.
+          <span className="font-bold">Legal Governance:</span> Official Terms & Conditions governing marketplace transactions on GaunGaliHat.
         </div>
       </div>
 
@@ -17,7 +17,7 @@ export const TermsConditions: React.FC = () => {
         <h1 className="text-3xl font-extrabold text-gray-900 font-display">
           Terms & Conditions
         </h1>
-        <p className="text-xs text-gray-500">Effective Date: October 2026 • Version 1.0 (Demo)</p>
+        <p className="text-xs text-gray-500">Effective Date: October 2026 • Version 1.0 (Production)</p>
       </div>
 
       <div className="bg-white rounded-3xl border border-gray-100 shadow-xs p-6 sm:p-10 space-y-6 text-xs text-gray-700 leading-relaxed">

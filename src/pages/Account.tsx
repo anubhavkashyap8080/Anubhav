@@ -202,7 +202,7 @@ export const Account: React.FC = () => {
               onClick={() => handleAction('Save Profile Updates')}
               className="px-6 py-2.5 bg-brand-green text-white font-semibold rounded-lg cursor-pointer"
             >
-              Save Profile Changes (Demo)
+              Save Profile Changes
             </button>
           </div>
         </div>

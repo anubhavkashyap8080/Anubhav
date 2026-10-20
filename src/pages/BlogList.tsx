@@ -234,10 +234,10 @@ export const BlogList: React.FC = () => {
         {/* Load More Preview Button */}
         <div className="text-center pt-8">
           <button
-            onClick={() => showDemoNotice('Load More Blog Articles', 'All mock village articles are currently shown in this prototype release.')}
+            onClick={() => showDemoNotice('Village Journal', 'All published village articles are up to date.')}
             className="px-6 py-2.5 bg-white border border-gray-300 hover:border-brand-green text-gray-700 text-xs font-semibold rounded-xl shadow-xs cursor-pointer"
           >
-            Load Older Stories (Demo)
+            Load Older Stories
           </button>
         </div>
       </div>

@@ -212,7 +212,7 @@ export const AuthModal: React.FC = () => {
             }`}
           >
             <Store className="w-3.5 h-3.5" />
-            <span>Seller Login</span>
+            <span>Artisan & Seller</span>
           </button>
 
           <button
@@ -224,7 +224,7 @@ export const AuthModal: React.FC = () => {
             }`}
           >
             <ShieldCheck className="w-3.5 h-3.5" />
-            <span>Admin</span>
+            <span>Staff & Admin</span>
           </button>
         </div>
 

@@ -303,14 +303,14 @@ export const ProductDetail: React.FC = () => {
                 className="w-full py-3.5 px-4 bg-white border-2 border-brand-green text-brand-green hover:bg-emerald-50 font-bold text-sm rounded-xl flex items-center justify-center gap-2 shadow-xs transition-all cursor-pointer"
               >
                 <ShoppingBag className="w-4 h-4" />
-                <span>Add to Cart (Demo)</span>
+                <span>Add to Cart</span>
               </button>
 
               <button
                 onClick={handleBuyNow}
                 className="w-full py-3.5 px-4 bg-brand-green hover:bg-brand-green-dark text-white font-bold text-sm rounded-xl shadow-lg hover:shadow-emerald-900/20 transition-all cursor-pointer active:scale-95"
               >
-                Buy Now (Demo)
+                Buy Now
               </button>
             </div>
           </div>

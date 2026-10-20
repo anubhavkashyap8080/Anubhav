@@ -275,46 +275,18 @@ export const AdminLayout: React.FC = () => {
               {currentUser?.email || 'namaste@ganvgalihat.com'}
             </div>
 
-            {/* Quick Role Switcher Pill */}
-            <div className="relative">
+            {/* Real Security Status & Sign Out */}
+            <div className="pt-1 flex items-center justify-between gap-2">
+              <div className="flex items-center gap-1.5 text-[10px] text-emerald-400 font-medium">
+                <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span>
+                <span>Edge Clearance Active</span>
+              </div>
               <button
-                onClick={() => setRoleDropdownOpen(!roleDropdownOpen)}
-                className="w-full py-1.5 px-2.5 rounded-lg bg-slate-800 hover:bg-slate-700/80 border border-slate-700 text-slate-200 text-xs flex items-center justify-between transition-colors cursor-pointer"
+                onClick={handleLogout}
+                className="px-2.5 py-1 rounded-md bg-red-500/20 hover:bg-red-500/30 text-red-300 border border-red-500/30 text-[10px] font-semibold transition-colors cursor-pointer"
               >
-                <div className="flex items-center gap-1.5">
-                  <Layers className="w-3.5 h-3.5 text-amber-400" />
-                  <span className="font-semibold text-[11px]">Role: {currentRoleData.label}</span>
-                </div>
-                <ChevronDown className={`w-3.5 h-3.5 text-slate-400 transition-transform ${roleDropdownOpen ? 'rotate-180' : ''}`} />
+                Sign Out
               </button>
-
-              {roleDropdownOpen && (
-                <div className="absolute left-0 right-0 top-full mt-1.5 bg-slate-900 border border-slate-700 rounded-xl shadow-2xl p-1.5 z-50 space-y-1">
-                  <div className="px-2 py-1 text-[10px] uppercase font-bold text-slate-400 tracking-wider">
-                    Test Role Permissions (RBAC)
-                  </div>
-                  {rolesList.map(item => (
-                    <button
-                      key={item.role}
-                      onClick={() => {
-                        switchRole(item.role);
-                        setRoleDropdownOpen(false);
-                      }}
-                      className={`w-full text-left px-2.5 py-1.5 rounded-lg text-xs flex flex-col gap-0.5 transition-colors cursor-pointer ${
-                        currentRole === item.role
-                          ? 'bg-amber-400/10 text-amber-300 font-bold border border-amber-400/30'
-                          : 'text-slate-300 hover:bg-slate-800'
-                      }`}
-                    >
-                      <div className="flex items-center justify-between">
-                        <span>{item.label}</span>
-                        {currentRole === item.role && <CheckCircle className="w-3.5 h-3.5 text-amber-400" />}
-                      </div>
-                      <span className="text-[10px] text-slate-500 font-normal">{item.desc}</span>
-                    </button>
-                  ))}
-                </div>
-              )}
             </div>
           </div>
 
