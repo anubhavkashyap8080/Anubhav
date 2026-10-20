@@ -9,7 +9,9 @@ import {
   SEOConfig,
   MapSettings,
   EmailCampaign,
-  SmsMessage
+  SmsMessage,
+  Product,
+  Category
 } from '../types';
 import {
   initialUsers,
@@ -22,6 +24,7 @@ import {
 import { mockSellers } from '../data/mockSellers';
 import { mockBlogPosts } from '../data/mockBlogPosts';
 import { mockProducts } from '../data/mockProducts';
+import { mockCategories } from '../data/mockCategories';
 
 interface PlatformContextType {
   // Users Manager
@@ -69,6 +72,18 @@ interface PlatformContextType {
   sendEmailCampaign: (campaign: Omit<EmailCampaign, 'id' | 'sentDate' | 'status' | 'openRate'>) => void;
   smsMessages: SmsMessage[];
   sendSmsMessage: (sms: Omit<SmsMessage, 'id' | 'sentDate' | 'status'>) => void;
+
+  // Products Manager
+  products: Product[];
+  addProduct: (product: Omit<Product, 'id'>) => void;
+  updateProduct: (productId: string, updates: Partial<Product>) => void;
+  deleteProduct: (productId: string) => void;
+
+  // Categories Manager
+  categories: Category[];
+  addCategory: (category: Omit<Category, 'id'>) => void;
+  updateCategory: (categoryId: string, updates: Partial<Category>) => void;
+  deleteCategory: (categoryId: string) => void;
 
   // Map & Location Settings
   mapSettings: MapSettings;
@@ -125,6 +140,26 @@ export const PlatformProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     return saved ? JSON.parse(saved) : initialMapSettings;
   });
 
+  // 8. Products State
+  const [products, setProducts] = useState<Product[]>(() => {
+    try {
+      const saved = localStorage.getItem('ggh_platform_products');
+      return saved ? JSON.parse(saved) : mockProducts;
+    } catch {
+      return mockProducts;
+    }
+  });
+
+  // 9. Categories State
+  const [categories, setCategories] = useState<Category[]>(() => {
+    try {
+      const saved = localStorage.getItem('ggh_platform_categories');
+      return saved ? JSON.parse(saved) : mockCategories;
+    } catch {
+      return mockCategories;
+    }
+  });
+
   // Persist states
   useEffect(() => { localStorage.setItem('ggh_platform_users', JSON.stringify(users)); }, [users]);
   useEffect(() => { localStorage.setItem('ggh_platform_vendors', JSON.stringify(vendors)); }, [vendors]);
@@ -134,6 +169,8 @@ export const PlatformProvider: React.FC<{ children: React.ReactNode }> = ({ chil
   useEffect(() => { localStorage.setItem('ggh_platform_emails', JSON.stringify(emailCampaigns)); }, [emailCampaigns]);
   useEffect(() => { localStorage.setItem('ggh_platform_sms', JSON.stringify(smsMessages)); }, [smsMessages]);
   useEffect(() => { localStorage.setItem('ggh_platform_map', JSON.stringify(mapSettings)); }, [mapSettings]);
+  useEffect(() => { localStorage.setItem('ggh_platform_products', JSON.stringify(products)); }, [products]);
+  useEffect(() => { localStorage.setItem('ggh_platform_categories', JSON.stringify(categories)); }, [categories]);
 
   // User Actions
   const addUser = (userData: Omit<User, 'id' | 'joinedDate'>) => {
@@ -333,6 +370,42 @@ ${allUrls.map(u => `  <url>
     setMapSettings(prev => ({ ...prev, ...settings }));
   };
 
+  // Product Actions
+  const addProduct = (prodData: Omit<Product, 'id'>) => {
+    const newProduct: Product = {
+      ...prodData,
+      id: `prod-${Date.now()}`,
+      code: prodData.code || `GGH-${Date.now().toString().slice(-4)}`
+    };
+    setProducts(prev => [newProduct, ...prev]);
+  };
+
+  const updateProduct = (productId: string, updates: Partial<Product>) => {
+    setProducts(prev => prev.map(p => p.id === productId ? { ...p, ...updates } : p));
+  };
+
+  const deleteProduct = (productId: string) => {
+    setProducts(prev => prev.filter(p => p.id !== productId));
+  };
+
+  // Category Actions
+  const addCategory = (catData: Omit<Category, 'id'>) => {
+    const newCat: Category = {
+      ...catData,
+      id: `cat-${catData.slug || Date.now()}`,
+      status: catData.status || 'active'
+    };
+    setCategories(prev => [...prev, newCat]);
+  };
+
+  const updateCategory = (catId: string, updates: Partial<Category>) => {
+    setCategories(prev => prev.map(c => c.id === catId ? { ...c, ...updates } : c));
+  };
+
+  const deleteCategory = (catId: string) => {
+    setCategories(prev => prev.filter(c => c.id !== catId));
+  };
+
   return (
     <PlatformContext.Provider
       value={{
@@ -363,7 +436,15 @@ ${allUrls.map(u => `  <url>
         smsMessages,
         sendSmsMessage,
         mapSettings,
-        updateMapSettings
+        updateMapSettings,
+        products,
+        addProduct,
+        updateProduct,
+        deleteProduct,
+        categories,
+        addCategory,
+        updateCategory,
+        deleteCategory
       }}
     >
       {children}

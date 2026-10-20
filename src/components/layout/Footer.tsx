@@ -88,12 +88,12 @@ export const Footer: React.FC = () => {
               <Link to="/" className="flex items-center gap-3">
                 <img
                   src="/logo.png"
-                  alt="GanvGaliHut Logo"
+                  alt="GaunGaliHat Logo"
                   className="h-12 w-auto bg-white p-1 rounded-lg"
                 />
                 <div>
                   <span className="font-display font-bold text-xl text-white tracking-wide block">
-                    GanvGaliHut
+                    GaunGaliHat
                   </span>
                   <span className="text-[11px] text-amber-300 font-semibold tracking-wider block">
                     A Brand by S S Industries

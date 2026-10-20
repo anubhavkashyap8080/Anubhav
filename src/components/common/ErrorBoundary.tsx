@@ -21,7 +21,7 @@ export class ErrorBoundary extends Component<Props, State> {
   }
 
   public componentDidCatch(error: Error, errorInfo: ErrorInfo) {
-    console.error('GanvGaliHut Uncaught System Exception caught by ErrorBoundary:', error, errorInfo);
+    console.error('GaunGaliHat Uncaught System Exception caught by ErrorBoundary:', error, errorInfo);
   }
 
   private handleReset = () => {
@@ -50,7 +50,7 @@ export class ErrorBoundary extends Component<Props, State> {
                 Something Encountered a Snag
               </h1>
               <p className="text-xs text-gray-600 leading-relaxed">
-                To guarantee uninterrupted browsing for millions of users, the GanvGaliHut edge resilience system isolated this module.
+                To guarantee uninterrupted browsing for millions of users, the GaunGaliHat edge resilience system isolated this module.
               </p>
             </div>
 

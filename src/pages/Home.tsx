@@ -389,7 +389,7 @@ export const Home: React.FC = () => {
             Meet Our Rural Sellers & SHG Leaders
           </h2>
           <p className="text-xs sm:text-sm text-gray-600 mt-2">
-            Every product on GanvGaliHut comes with a name, a village, and a livelihood story.
+            Every product on GaunGaliHat comes with a name, a village, and a livelihood story.
           </p>
         </div>
 
@@ -446,15 +446,15 @@ export const Home: React.FC = () => {
         </div>
       </section>
 
-      {/* 14. WHY GANVGALIHUT? */}
+      {/* 14. WHY GAUNGALIHAT? */}
       <section className="bg-brand-cream py-16 border-y border-amber-100">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center max-w-2xl mx-auto mb-12">
             <span className="text-xs font-bold text-brand-green uppercase tracking-wider">
-              The GanvGaliHut Difference
+              The GaunGaliHat Difference
             </span>
             <h2 className="text-2xl sm:text-3xl font-bold text-gray-900 font-display mt-1">
-              Why Shop on GanvGaliHut?
+              Why Shop on GaunGaliHat?
             </h2>
             <p className="text-xs sm:text-sm text-gray-600 mt-2">
               We bridge the gap between rural blacksmiths, women weavers, SHG artisans, and modern Indian households with complete honesty.
@@ -557,7 +557,7 @@ export const Home: React.FC = () => {
             Transparent Supply Flow
           </span>
           <h2 className="text-2xl sm:text-3xl font-bold text-gray-900 font-display mt-1">
-            How GanvGaliHut Works
+            How GaunGaliHat Works
           </h2>
         </div>
 

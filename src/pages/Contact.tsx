@@ -61,7 +61,7 @@ export const Contact: React.FC = () => {
           <span>We'd Love to Hear From You</span>
         </div>
         <h1 className="text-3xl sm:text-4xl font-extrabold text-gray-900 font-display">
-          Contact GanvGaliHut
+          Contact GaunGaliHat
         </h1>
         <p className="text-xs sm:text-sm text-gray-600">
           Have a question about an artisan collective, our hand-forged tools, eco jute bags, or bulk order customization? Reach out anytime.
@@ -81,7 +81,7 @@ export const Contact: React.FC = () => {
                 S S Industries
               </h2>
               <p className="text-xs text-emerald-100/90 mt-1">
-                GanvGaliHut is an initiative by S S Industries to empower rural Indian artisans, SHGs, and farmers.
+                GaunGaliHat is an initiative by S S Industries to empower rural Indian artisans, SHGs, and farmers.
               </p>
             </div>
 

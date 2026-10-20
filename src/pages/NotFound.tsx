@@ -75,7 +75,7 @@ export const NotFound: React.FC = () => {
           className="inline-flex items-center gap-2 px-6 py-3 bg-brand-green hover:bg-brand-green-dark text-white text-xs font-bold rounded-xl shadow-md transition-all"
         >
           <Home className="w-4 h-4" />
-          <span>Return to GanvGaliHut Homepage</span>
+          <span>Return to GaunGaliHat Homepage</span>
         </Link>
       </div>
 

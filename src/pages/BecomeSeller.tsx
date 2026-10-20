@@ -34,7 +34,7 @@ export const BecomeSeller: React.FC = () => {
 
             <p className="text-sm sm:text-base text-emerald-100/90 leading-relaxed">
               Are you an artisan, a women self-help group (SHG), an organic farmer, or a cottage unit? 
-              Join GanvGaliHut and reach lakhs of conscious urban families with zero middleman exploitation.
+              Join GaunGaliHat and reach lakhs of conscious urban families with zero middleman exploitation.
             </p>
 
             <div className="flex flex-wrap gap-4 pt-2">
@@ -61,7 +61,7 @@ export const BecomeSeller: React.FC = () => {
       <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="text-center max-w-xl mx-auto mb-10">
           <h2 className="text-2xl sm:text-3xl font-bold text-gray-900 font-display">
-            Why Sell on GanvGaliHut?
+            Why Sell on GaunGaliHat?
           </h2>
           <p className="text-xs sm:text-sm text-gray-600 mt-2">
             Tailored specifically for rural creators, self-help groups, and farmer cooperatives.

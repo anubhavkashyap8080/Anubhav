@@ -50,6 +50,9 @@ import {
   ShoppingBag,
   Layers
 } from 'lucide-react';
+import { AdminProductsTab } from './tabs/AdminProductsTab';
+import { AdminCategoriesTab } from './tabs/AdminCategoriesTab';
+import { AdminTeamTab } from './tabs/AdminTeamTab';
 
 export const AdminDashboard: React.FC = () => {
   const { currentUser, currentRole, switchRole } = useAuth();
@@ -78,7 +81,9 @@ export const AdminDashboard: React.FC = () => {
     smsMessages,
     sendSmsMessage,
     mapSettings,
-    updateMapSettings
+    updateMapSettings,
+    products,
+    categories
   } = usePlatform();
 
   const {
@@ -98,7 +103,7 @@ export const AdminDashboard: React.FC = () => {
 
   // Active Tab
   const [activeTab, setActiveTab] = useState<
-    'overview' | 'users' | 'vendors' | 'tickets' | 'hero_festival' | 'customizer' | 'blogs' | 'map' | 'firebase' | 'seo' | 'communications' | 'security'
+    'overview' | 'products' | 'categories' | 'team' | 'users' | 'vendors' | 'tickets' | 'hero_festival' | 'customizer' | 'blogs' | 'map' | 'firebase' | 'seo' | 'communications' | 'security'
   >((urlTab as any) || 'overview');
 
   useEffect(() => {
@@ -237,8 +242,8 @@ export const AdminDashboard: React.FC = () => {
     if (!emailSubject.trim() || !emailBody.trim()) return;
     sendEmailCampaign({
       subject: emailSubject,
-      senderName: 'S S Industries / GanvGaliHut',
-      senderEmail: 'namaste@ganvgalihat.com',
+      senderName: 'S S Industries / GaunGaliHat',
+      senderEmail: 'namaste@gaungalihat.com',
       recipientAudience: emailAudience,
       recipientCount: emailAudience === 'All Users' ? users.length * 150 : 450,
       template: 'Promotion / Offer',
@@ -276,34 +281,34 @@ export const AdminDashboard: React.FC = () => {
       )}
 
       {/* Top Banner with Active User & Fast Role Switcher */}
-      <div className="bg-gradient-to-r from-emerald-950 via-brand-green to-emerald-900 rounded-3xl p-6 text-white shadow-xl flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+      <div className="bg-gradient-to-r from-emerald-950 via-slate-900 to-emerald-900 rounded-2xl p-4 sm:p-5 text-white shadow-lg flex flex-col md:flex-row items-start md:items-center justify-between gap-3 border border-emerald-800/40">
         <div>
-          <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-800 text-amber-300 text-xs font-semibold mb-1">
-            <Sparkles className="w-3.5 h-3.5" />
-            <span>S S Industries Central Governance</span>
+          <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-emerald-800/80 text-amber-300 text-[11px] font-semibold mb-1 border border-amber-300/20">
+            <Sparkles className="w-3 h-3 text-amber-300" />
+            <span>S S Industries • Central Governance Hub</span>
           </div>
-          <h1 className="text-2xl sm:text-3xl font-bold font-display text-white">
-            GanvGaliHut Operations Portal
+          <h1 className="text-xl sm:text-2xl font-bold font-display text-white tracking-tight">
+            GaunGaliHat Operations & Marketplace Control
           </h1>
-          <p className="text-xs text-emerald-100/90 mt-1">
-            Logged in as <strong>{currentUser?.name || 'Anubhav Kashyap'}</strong> ({currentUser?.email}) • Active Role: <span className="uppercase font-bold text-amber-300">{currentRole}</span>
+          <p className="text-xs text-emerald-100/90 mt-0.5">
+            Operator: <strong>{currentUser?.name || 'Anubhav Kashyap'}</strong> ({currentUser?.email}) • Active RBAC: <span className="uppercase font-bold text-amber-300 bg-amber-400/20 px-1.5 py-0.5 rounded text-[10px] ml-1">{currentRole.replace('_', ' ')}</span>
           </p>
         </div>
 
-        {/* Live Role Switcher (Required for testing multiple user level access) */}
-        <div className="bg-white/10 backdrop-blur-md p-2.5 rounded-2xl border border-white/20 text-xs">
-          <span className="text-[10px] text-emerald-200 font-semibold block mb-1.5">
-            Switch View Role (Test RBAC Access):
+        {/* Live Role Switcher */}
+        <div className="bg-black/25 backdrop-blur-md p-2 rounded-xl border border-white/10 text-xs">
+          <span className="text-[10px] text-emerald-200/80 font-semibold block mb-1">
+            Switch RBAC Role (Simulate User Permissions):
           </span>
-          <div className="flex flex-wrap gap-1.5">
+          <div className="flex flex-wrap gap-1">
             {(['super_admin', 'admin', 'marketer', 'content_writer', 'vendor', 'support', 'customer'] as UserRole[]).map((role) => (
               <button
                 key={role}
                 onClick={() => switchRole(role)}
-                className={`px-2.5 py-1 rounded-lg text-[11px] font-bold transition-all cursor-pointer ${
+                className={`px-2 py-0.5 rounded-md text-[10px] font-bold transition-all cursor-pointer ${
                   currentRole === role
-                    ? 'bg-amber-400 text-gray-900 shadow-sm'
-                    : 'bg-emerald-900/60 text-white hover:bg-emerald-800'
+                    ? 'bg-amber-400 text-gray-950 shadow-xs'
+                    : 'bg-white/10 text-emerald-100 hover:bg-white/20'
                 }`}
               >
                 {role.replace('_', ' ')}
@@ -317,6 +322,9 @@ export const AdminDashboard: React.FC = () => {
       <div className="flex border-b border-gray-200 overflow-x-auto pb-1 scrollbar-none gap-2 text-xs font-semibold text-gray-600">
         {[
           { id: 'overview', label: 'Overview', icon: TrendingUp },
+          { id: 'products', label: `Products Catalog (${products.length})`, icon: ShoppingBag, permRoles: ['super_admin', 'admin', 'marketer', 'vendor'] },
+          { id: 'categories', label: `Categories (${categories.length})`, icon: Layers, permRoles: ['super_admin', 'admin', 'marketer'] },
+          { id: 'team', label: `Team & Work Log (${users.filter(u => u.role !== 'customer').length})`, icon: UserCheck, permRoles: ['super_admin', 'admin'] },
           { id: 'users', label: `Users (${users.length})`, icon: Users, permRoles: ['super_admin', 'admin', 'support'] },
           { id: 'vendors', label: `Vendors (${vendors.length})`, icon: Building2, permRoles: ['super_admin', 'admin', 'vendor'] },
           { id: 'tickets', label: `Support Tickets (${tickets.length})`, icon: Ticket, permRoles: ['super_admin', 'admin', 'support'] },
@@ -339,7 +347,7 @@ export const AdminDashboard: React.FC = () => {
                 setActiveTab(tab.id as any);
                 setSearchParams({ tab: tab.id });
               }}
-              className={`flex items-center gap-1.5 px-3.5 py-2 rounded-xl transition-all whitespace-nowrap cursor-pointer shrink-0 ${
+              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl transition-all whitespace-nowrap cursor-pointer shrink-0 ${
                 isActive
                   ? 'bg-brand-green text-white shadow-xs font-bold'
                   : isPermitted
@@ -347,7 +355,7 @@ export const AdminDashboard: React.FC = () => {
                   : 'bg-gray-100 text-gray-400 border border-gray-200/50 opacity-60'
               }`}
             >
-              <Icon className="w-4 h-4" />
+              <Icon className="w-3.5 h-3.5" />
               <span>{tab.label}</span>
               {tab.badge && (
                 <span className="px-1.5 py-0.5 rounded text-[9px] font-bold bg-amber-200 text-amber-900">
@@ -361,55 +369,55 @@ export const AdminDashboard: React.FC = () => {
 
       {/* TAB 1: OVERVIEW & ADVANCED REVENUE TELEMETRY */}
       {activeTab === 'overview' && (
-        <div className="space-y-6">
-          {/* Top High-Concurrency KPIs */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
-            <div className="bg-white p-5 rounded-2xl border border-gray-100 shadow-xs">
-              <div className="flex items-center justify-between">
-                <span className="text-xs text-gray-500 font-medium">Gross Merchandise Value</span>
-                <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-100 text-emerald-800">+24.6% YoY</span>
+        <div className="space-y-5">
+          {/* Top High-Concurrency KPIs - Compact High-Density Grid */}
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
+            <div className="bg-white p-3.5 sm:p-4 rounded-xl border border-gray-100 shadow-2xs">
+              <div className="flex items-center justify-between gap-1">
+                <span className="text-[11px] text-gray-500 font-semibold truncate">GMV (Turnover)</span>
+                <span className="px-1.5 py-0.5 rounded text-[10px] font-bold bg-emerald-100 text-emerald-800 whitespace-nowrap">+24.6% YoY</span>
               </div>
-              <div className="text-2xl font-bold text-gray-900 font-display mt-1">₹1,42,85,600</div>
-              <p className="text-[11px] text-gray-500 font-medium mt-1">Audited settlement cycle 2026</p>
+              <div className="text-xl font-bold text-gray-900 font-display mt-1">₹1.42 Cr</div>
+              <p className="text-[11px] text-gray-400 font-medium mt-0.5 truncate">Audited 2026 run-rate</p>
             </div>
 
-            <div className="bg-white p-5 rounded-2xl border border-gray-100 shadow-xs">
-              <div className="flex items-center justify-between">
-                <span className="text-xs text-gray-500 font-medium">Completed Orders</span>
-                <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-blue-100 text-blue-800">98.4% Fulfilled</span>
+            <div className="bg-white p-3.5 sm:p-4 rounded-xl border border-gray-100 shadow-2xs">
+              <div className="flex items-center justify-between gap-1">
+                <span className="text-[11px] text-gray-500 font-semibold truncate">Orders Fulfilled</span>
+                <span className="px-1.5 py-0.5 rounded text-[10px] font-bold bg-blue-100 text-blue-800 whitespace-nowrap">98.4% Rate</span>
               </div>
-              <div className="text-2xl font-bold text-blue-600 font-display mt-1">28,450 Orders</div>
-              <p className="text-[11px] text-gray-500 font-medium mt-1">India Post & Delhivery logistics</p>
+              <div className="text-xl font-bold text-blue-600 font-display mt-1">28,450 Orders</div>
+              <p className="text-[11px] text-gray-400 font-medium mt-0.5 truncate">India Post & Delhivery</p>
             </div>
 
-            <div className="bg-white p-5 rounded-2xl border border-gray-100 shadow-xs">
-              <div className="flex items-center justify-between">
-                <span className="text-xs text-gray-500 font-medium">Live Edge Shoppers</span>
-                <span className="flex items-center gap-1 text-[10px] font-bold text-emerald-600">
-                  <span className="w-2 h-2 rounded-full bg-emerald-500 animate-ping"></span>
+            <div className="bg-white p-3.5 sm:p-4 rounded-xl border border-gray-100 shadow-2xs">
+              <div className="flex items-center justify-between gap-1">
+                <span className="text-[11px] text-gray-500 font-semibold truncate">Live Shoppers</span>
+                <span className="flex items-center gap-1 text-[10px] font-bold text-emerald-600 whitespace-nowrap">
+                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-ping"></span>
                   Real-time
                 </span>
               </div>
-              <div className="text-2xl font-bold text-brand-orange font-display mt-1">48,290 Active</div>
-              <p className="text-[11px] text-gray-500 font-medium mt-1">Sub-second concurrent response</p>
+              <div className="text-xl font-bold text-brand-orange font-display mt-1">48,290 Active</div>
+              <p className="text-[11px] text-gray-400 font-medium mt-0.5 truncate">Sub-20ms edge latency</p>
             </div>
 
-            <div className="bg-white p-5 rounded-2xl border border-gray-100 shadow-xs">
-              <div className="flex items-center justify-between">
-                <span className="text-xs text-gray-500 font-medium">CDN Cache Hit Ratio</span>
-                <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-purple-100 text-purple-800">18ms TTFB</span>
+            <div className="bg-white p-3.5 sm:p-4 rounded-xl border border-gray-100 shadow-2xs">
+              <div className="flex items-center justify-between gap-1">
+                <span className="text-[11px] text-gray-500 font-semibold truncate">Catalog SKUs</span>
+                <span className="px-1.5 py-0.5 rounded text-[10px] font-bold bg-purple-100 text-purple-800 whitespace-nowrap">{categories.length} Cats</span>
               </div>
-              <div className="text-2xl font-bold text-purple-600 font-display mt-1">99.82% Hit</div>
-              <p className="text-[11px] text-gray-500 font-medium mt-1">Cloudflare Global Anycast Edge</p>
+              <div className="text-xl font-bold text-purple-700 font-display mt-1">{products.length} Products</div>
+              <p className="text-[11px] text-gray-400 font-medium mt-0.5 truncate">Village staples & tools</p>
             </div>
 
-            <div className="bg-white p-5 rounded-2xl border border-gray-100 shadow-xs">
-              <div className="flex items-center justify-between">
-                <span className="text-xs text-gray-500 font-medium">Production Foundries & SHGs</span>
-                <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-amber-100 text-amber-800">100% KYC</span>
+            <div className="bg-white p-3.5 sm:p-4 rounded-xl border border-gray-100 shadow-2xs">
+              <div className="flex items-center justify-between gap-1">
+                <span className="text-[11px] text-gray-500 font-semibold truncate">Foundries & SHGs</span>
+                <span className="px-1.5 py-0.5 rounded text-[10px] font-bold bg-amber-100 text-amber-800 whitespace-nowrap">100% KYC</span>
               </div>
-              <div className="text-2xl font-bold text-brand-green font-display mt-1">142 Units</div>
-              <p className="text-[11px] text-gray-500 font-medium mt-1">Hardoi, Sandila & regional hubs</p>
+              <div className="text-xl font-bold text-brand-green font-display mt-1">{vendors.length} Supply Hubs</div>
+              <p className="text-[11px] text-gray-400 font-medium mt-0.5 truncate">Hardoi & regional units</p>
             </div>
           </div>
 
@@ -486,26 +494,26 @@ export const AdminDashboard: React.FC = () => {
             </div>
           </div>
 
-          {/* Deep-Dive Grid: Category Volume & Regional Distribution */}
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          {/* Deep-Dive Grid: Category Volume & Regional Distribution (High Density) */}
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
             
             {/* Category Performance Breakdown */}
-            <div className="bg-white p-6 rounded-2xl border border-gray-100 shadow-xs space-y-4">
-              <div className="flex items-center justify-between pb-3 border-b border-gray-100">
+            <div className="bg-white p-4 sm:p-5 rounded-xl border border-gray-100 shadow-2xs space-y-3">
+              <div className="flex items-center justify-between pb-2 border-b border-gray-100">
                 <div className="flex items-center gap-2">
-                  <Layers className="w-5 h-5 text-brand-orange" />
-                  <h3 className="font-bold text-base text-gray-900 font-display">Category Market Volume</h3>
+                  <Layers className="w-4 h-4 text-brand-orange" />
+                  <h3 className="font-bold text-sm text-gray-900 font-display">Category Market Volume</h3>
                 </div>
-                <span className="text-xs text-gray-500">By Turnover Share</span>
+                <span className="text-[11px] text-gray-400 font-medium">Turnover Share</span>
               </div>
 
-              <div className="space-y-4 text-xs">
+              <div className="space-y-2.5 text-xs">
                 <div>
                   <div className="flex justify-between items-center mb-1">
                     <span className="font-bold text-gray-800">Farming & Forged Implements (Sickles, Khurpas, Spades)</span>
-                    <span className="font-bold text-brand-green">44% (₹62.8L • 18,240 pcs)</span>
+                    <span className="font-bold text-brand-green">44% (₹62.8L)</span>
                   </div>
-                  <div className="w-full bg-gray-100 h-2.5 rounded-full overflow-hidden">
+                  <div className="w-full bg-gray-100 h-2 rounded-full overflow-hidden">
                     <div className="bg-brand-green h-full rounded-full" style={{ width: '44%' }}></div>
                   </div>
                 </div>
@@ -513,9 +521,9 @@ export const AdminDashboard: React.FC = () => {
                 <div>
                   <div className="flex justify-between items-center mb-1">
                     <span className="font-bold text-gray-800">Jute Bags, Cloth Jholas & Natural Fibers</span>
-                    <span className="font-bold text-brand-orange">26% (₹37.1L • 12,180 pcs)</span>
+                    <span className="font-bold text-brand-orange">26% (₹37.1L)</span>
                   </div>
-                  <div className="w-full bg-gray-100 h-2.5 rounded-full overflow-hidden">
+                  <div className="w-full bg-gray-100 h-2 rounded-full overflow-hidden">
                     <div className="bg-brand-orange h-full rounded-full" style={{ width: '26%' }}></div>
                   </div>
                 </div>
@@ -523,9 +531,9 @@ export const AdminDashboard: React.FC = () => {
                 <div>
                   <div className="flex justify-between items-center mb-1">
                     <span className="font-bold text-gray-800">Clay Pottery & Terracotta Cookware</span>
-                    <span className="font-bold text-amber-600">16% (₹22.8L • 6,450 pcs)</span>
+                    <span className="font-bold text-amber-600">16% (₹22.8L)</span>
                   </div>
-                  <div className="w-full bg-gray-100 h-2.5 rounded-full overflow-hidden">
+                  <div className="w-full bg-gray-100 h-2 rounded-full overflow-hidden">
                     <div className="bg-amber-500 h-full rounded-full" style={{ width: '16%' }}></div>
                   </div>
                 </div>
@@ -533,72 +541,71 @@ export const AdminDashboard: React.FC = () => {
                 <div>
                   <div className="flex justify-between items-center mb-1">
                     <span className="font-bold text-gray-800">Handloom Khadi Apparel & Dhurries</span>
-                    <span className="font-bold text-blue-600">14% (₹20.0L • 4,920 pcs)</span>
+                    <span className="font-bold text-blue-600">14% (₹20.0L)</span>
                   </div>
-                  <div className="w-full bg-gray-100 h-2.5 rounded-full overflow-hidden">
+                  <div className="w-full bg-gray-100 h-2 rounded-full overflow-hidden">
                     <div className="bg-blue-600 h-full rounded-full" style={{ width: '14%' }}></div>
                   </div>
                 </div>
               </div>
 
-              <div className="p-3 bg-emerald-50 rounded-xl border border-emerald-100 text-xs text-emerald-900 flex items-center justify-between">
+              <div className="p-2.5 bg-emerald-50/80 rounded-lg border border-emerald-100 text-[11px] text-emerald-900 flex items-center justify-between">
                 <span>Top Selling Tool SKU:</span>
-                <span className="font-bold">Heavy High-Carbon Steel Serrated Sickle (S S Industries Madhoganj)</span>
+                <span className="font-bold font-mono">GGH-TL-101 (Hardened Serrated Sickle)</span>
               </div>
             </div>
 
             {/* Regional Traffic & Device Share */}
-            <div className="bg-white p-6 rounded-2xl border border-gray-100 shadow-xs space-y-4">
-              <div className="flex items-center justify-between pb-3 border-b border-gray-100">
+            <div className="bg-white p-4 sm:p-5 rounded-xl border border-gray-100 shadow-2xs space-y-3">
+              <div className="flex items-center justify-between pb-2 border-b border-gray-100">
                 <div className="flex items-center gap-2">
-                  <Globe className="w-5 h-5 text-blue-600" />
-                  <h3 className="font-bold text-base text-gray-900 font-display">Regional Traffic & Device Telemetry</h3>
+                  <Globe className="w-4 h-4 text-blue-600" />
+                  <h3 className="font-bold text-sm text-gray-900 font-display">Regional Traffic & Device Telemetry</h3>
                 </div>
-                <span className="text-xs text-gray-500">330+ Edge PoPs</span>
+                <span className="text-[11px] text-gray-400 font-medium">330+ Edge PoPs</span>
               </div>
 
-              <div className="grid grid-cols-2 gap-3 text-xs">
-                <div className="p-3 bg-gray-50 rounded-xl border border-gray-200 space-y-2">
-                  <span className="font-bold text-gray-900 block">Top States (Demand Geo):</span>
-                  <div className="space-y-1.5 text-gray-700">
-                    <div className="flex justify-between"><span>Uttar Pradesh (Central/East)</span><span className="font-bold">38%</span></div>
+              <div className="grid grid-cols-2 gap-2.5 text-xs">
+                <div className="p-2.5 bg-gray-50 rounded-lg border border-gray-200/70 space-y-1.5">
+                  <span className="font-bold text-gray-900 text-[11px] block">Top States (Demand Geo):</span>
+                  <div className="space-y-1 text-[11px] text-gray-700">
+                    <div className="flex justify-between"><span>Uttar Pradesh</span><span className="font-bold">38%</span></div>
                     <div className="flex justify-between"><span>Bihar & Jharkhand</span><span className="font-bold">19%</span></div>
-                    <div className="flex justify-between"><span>Maharashtra & Gujarat</span><span className="font-bold">14%</span></div>
+                    <div className="flex justify-between"><span>Maharashtra & Guj</span><span className="font-bold">14%</span></div>
                     <div className="flex justify-between"><span>Madhya Pradesh</span><span className="font-bold">11%</span></div>
                     <div className="flex justify-between"><span>Rajasthan & Punjab</span><span className="font-bold">9%</span></div>
-                    <div className="flex justify-between"><span>Other States</span><span className="font-bold">9%</span></div>
                   </div>
                 </div>
 
-                <div className="p-3 bg-gray-50 rounded-xl border border-gray-200 space-y-3">
-                  <span className="font-bold text-gray-900 block">Device Telemetry:</span>
-                  <div className="space-y-2">
+                <div className="p-2.5 bg-gray-50 rounded-lg border border-gray-200/70 space-y-2">
+                  <span className="font-bold text-gray-900 text-[11px] block">Device Telemetry:</span>
+                  <div className="space-y-1.5">
                     <div>
-                      <div className="flex items-center justify-between mb-1">
-                        <span className="flex items-center gap-1.5"><Smartphone className="w-3.5 h-3.5 text-gray-500" /> Mobile (PWA/Browser)</span>
+                      <div className="flex items-center justify-between mb-0.5 text-[11px]">
+                        <span className="flex items-center gap-1"><Smartphone className="w-3 h-3 text-gray-500" /> Mobile (PWA)</span>
                         <span className="font-bold text-brand-green">82%</span>
                       </div>
-                      <div className="w-full bg-gray-200 h-2 rounded-full overflow-hidden">
+                      <div className="w-full bg-gray-200 h-1.5 rounded-full overflow-hidden">
                         <div className="bg-brand-green h-full rounded-full" style={{ width: '82%' }}></div>
                       </div>
                     </div>
 
                     <div>
-                      <div className="flex items-center justify-between mb-1">
-                        <span className="flex items-center gap-1.5"><Laptop className="w-3.5 h-3.5 text-gray-500" /> Desktop Workstation</span>
+                      <div className="flex items-center justify-between mb-0.5 text-[11px]">
+                        <span className="flex items-center gap-1"><Laptop className="w-3 h-3 text-gray-500" /> Desktop Workstation</span>
                         <span className="font-bold text-blue-600">15%</span>
                       </div>
-                      <div className="w-full bg-gray-200 h-2 rounded-full overflow-hidden">
+                      <div className="w-full bg-gray-200 h-1.5 rounded-full overflow-hidden">
                         <div className="bg-blue-600 h-full rounded-full" style={{ width: '15%' }}></div>
                       </div>
                     </div>
 
                     <div>
-                      <div className="flex items-center justify-between mb-1">
-                        <span className="flex items-center gap-1.5"><Layers className="w-3.5 h-3.5 text-gray-500" /> Tablet & Kiosk</span>
+                      <div className="flex items-center justify-between mb-0.5 text-[11px]">
+                        <span className="flex items-center gap-1"><Layers className="w-3 h-3 text-gray-500" /> Tablet & Kiosk</span>
                         <span className="font-bold text-amber-600">3%</span>
                       </div>
-                      <div className="w-full bg-gray-200 h-2 rounded-full overflow-hidden">
+                      <div className="w-full bg-gray-200 h-1.5 rounded-full overflow-hidden">
                         <div className="bg-amber-500 h-full rounded-full" style={{ width: '3%' }}></div>
                       </div>
                     </div>
@@ -606,9 +613,9 @@ export const AdminDashboard: React.FC = () => {
                 </div>
               </div>
 
-              <div className="p-3 bg-blue-50 rounded-xl border border-blue-100 text-xs text-blue-900 flex items-center justify-between">
-                <span>Traffic Sources:</span>
-                <span className="font-bold">Organic Rural Search (46%) • WhatsApp Referral (32%) • Direct (22%)</span>
+              <div className="p-2.5 bg-blue-50/80 rounded-lg border border-blue-100 text-[11px] text-blue-900 flex items-center justify-between">
+                <span>Traffic Breakdown:</span>
+                <span className="font-bold">Organic Search (46%) • WhatsApp (32%) • Direct (22%)</span>
               </div>
             </div>
 
@@ -681,6 +688,15 @@ export const AdminDashboard: React.FC = () => {
           </div>
         </div>
       )}
+
+      {/* TAB: PRODUCTS CATALOG & VILLAGE STAPLES (UNIQUE IDs & VENDORS) */}
+      {activeTab === 'products' && <AdminProductsTab />}
+
+      {/* TAB: CATEGORIES MANAGER (ADD, EDIT, DELETE, STATUS) */}
+      {activeTab === 'categories' && <AdminCategoriesTab />}
+
+      {/* TAB: TEAM PROFILES & WORK AUDIT TRAIL */}
+      {activeTab === 'team' && <AdminTeamTab />}
 
       {/* TAB 2: USERS MANAGER */}
       {activeTab === 'users' && (
@@ -1694,7 +1710,7 @@ export const AdminDashboard: React.FC = () => {
               <label className="block font-semibold text-gray-700 mb-1">Firebase apiKey</label>
               <input
                 type="text"
-                defaultValue="AIzaSyD-GanvGaliHut-SSIndustries-Key"
+                defaultValue="AIzaSyD-GaunGaliHat-SSIndustries-Key"
                 className="w-full p-2.5 border border-gray-300 rounded-xl font-mono text-[11px]"
               />
             </div>
@@ -1702,7 +1718,7 @@ export const AdminDashboard: React.FC = () => {
               <label className="block font-semibold text-gray-700 mb-1">authDomain</label>
               <input
                 type="text"
-                defaultValue="ganvgalihat-ssindustries.firebaseapp.com"
+                defaultValue="gaungalihat-ssindustries.firebaseapp.com"
                 className="w-full p-2.5 border border-gray-300 rounded-xl font-mono text-[11px]"
               />
             </div>
@@ -2326,7 +2342,7 @@ export const AdminDashboard: React.FC = () => {
 
               <div className="p-3 bg-amber-50 rounded-xl border border-amber-200 text-xs text-amber-900 flex items-center gap-2">
                 <Sparkles className="w-4 h-4 text-brand-orange shrink-0" />
-                <span>Changes saved here are instantly visible to customer shoppers visiting the GanvGaliHut homepage.</span>
+                <span>Changes saved here are instantly visible to customer shoppers visiting the GaunGaliHat homepage.</span>
               </div>
             </div>
 

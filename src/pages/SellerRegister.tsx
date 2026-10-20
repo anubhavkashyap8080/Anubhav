@@ -142,7 +142,7 @@ export const SellerRegister: React.FC = () => {
               Artisan Onboarding Submitted!
             </h1>
             <p className="text-xs sm:text-sm text-gray-600 max-w-lg mx-auto">
-              Your partner registration and KYC documentation have been submitted to the GanvGaliHut artisan verification desk.
+              Your partner registration and KYC documentation have been submitted to the GaunGaliHat artisan verification desk.
             </p>
           </div>
 

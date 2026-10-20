@@ -32,7 +32,7 @@ export const About: React.FC = () => {
           </h1>
 
           <p className="text-sm sm:text-base text-emerald-100/90 leading-relaxed max-w-2xl mx-auto">
-            GanvGaliHut was founded by S S Industries to reverse the commercial exploitation of rural Indian artisans, women self-help groups (SHGs), and small organic farmers by building a direct digital bridge to conscious urban homes.
+            GaunGaliHat was founded by S S Industries to reverse the commercial exploitation of rural Indian artisans, women self-help groups (SHGs), and small organic farmers by building a direct digital bridge to conscious urban homes.
           </p>
         </div>
       </section>

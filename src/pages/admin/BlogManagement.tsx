@@ -178,7 +178,7 @@ export const BlogManagement: React.FC = () => {
       title: title.trim(),
       slug: slug.trim() || title.toLowerCase().replace(/[^a-z0-9]+/g, '-').slice(0, 50),
       excerpt: excerpt.trim() || title,
-      content: content || '<p>Article content published via GanvGaliHut CMS Studio.</p>',
+      content: content || '<p>Article content published via GaunGaliHat CMS Studio.</p>',
       category,
       categorySlug: category.toLowerCase().replace(/[^a-z0-9]+/g, '-'),
       image: featuredImage,

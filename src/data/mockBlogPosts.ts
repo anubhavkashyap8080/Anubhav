@@ -33,7 +33,7 @@ export const mockBlogPosts: BlogPost[] = [
       <blockquote>"A genuine hand-forged Hansiya does not just cut grass; it maintains its bite through years of abrasive Indian soil contact."</blockquote>
 
       <h2>Direct from Hardoi to Bharat's Farmers</h2>
-      <p>Through GanvGaliHut, S S Industries brings authentic agricultural implements and cottage workshop tools directly to farmers and gardening enthusiasts without middleman inflation.</p>
+      <p>Through GaunGaliHat, S S Industries brings authentic agricultural implements and cottage workshop tools directly to farmers and gardening enthusiasts without middleman inflation.</p>
     `,
     category: 'Farming & Traditional Tools',
     categorySlug: 'farming-traditional-tools',
@@ -89,7 +89,7 @@ export const mockBlogPosts: BlogPost[] = [
     tags: ['Jute Bags', 'Zero Waste', 'Women SHG', 'Plastic Free', 'Rural Crafts'],
     status: 'Published',
     seo: {
-      title: 'Golden Fiber Revival: Rural Women SHG Jute Bags | GanvGaliHut',
+      title: 'Golden Fiber Revival: Rural Women SHG Jute Bags | GaunGaliHat',
       metaDescription: 'Learn how rural women self-help groups are crafting biodegradable heavy-duty jute shopping totes that eliminate single-use plastics.',
       canonicalUrl: 'https://ganvgalihat.com/blog/golden-fiber-revival-rural-women-jute-bags',
       ogImage: 'https://images.unsplash.com/photo-1544816155-12df9643f363?auto=format&fit=crop&w=800&q=80',
@@ -121,7 +121,7 @@ export const mockBlogPosts: BlogPost[] = [
     tags: ['Channapatna', 'Wooden Toys', 'Child Safe', 'Handicrafts', 'GI Tag'],
     status: 'Published',
     seo: {
-      title: 'The 200-Year Legacy of Channapatna Wooden Toys | GanvGaliHut',
+      title: 'The 200-Year Legacy of Channapatna Wooden Toys | GaunGaliHat',
       metaDescription: 'Discover why GI Channapatna natural wooden toys colored with vegetable dyes are the best non-toxic playthings for toddlers.',
       canonicalUrl: 'https://ganvgalihat.com/blog/200-year-legacy-channapatna-wooden-toys',
       ogImage: 'https://images.unsplash.com/photo-1513519245088-0e12902e5a38?auto=format&fit=crop&w=800&q=80',

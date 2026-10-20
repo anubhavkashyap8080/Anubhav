@@ -59,7 +59,7 @@ export const BlogList: React.FC = () => {
           <span>Village Chronicles & Heritage Wisdom</span>
         </div>
         <h1 className="text-3xl sm:text-5xl font-extrabold text-gray-900 font-display">
-          The GanvGaliHut Journal
+          The GaunGaliHat Journal
         </h1>
         <p className="text-sm sm:text-base text-gray-600 leading-relaxed">
           Stories of women self-help group breakthroughs, handloom traditions, traditional blacksmith metallurgy, and sustainable rural living.

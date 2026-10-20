@@ -9,7 +9,7 @@ export const ShippingPolicy: React.FC = () => {
       <div className="p-4 bg-amber-50 border border-amber-200 rounded-2xl flex items-center gap-3 text-xs text-amber-900">
         <Info className="w-5 h-5 text-brand-orange shrink-0" />
         <div>
-          <span className="font-bold">Policy Document Preview:</span> This is a demonstration shipping policy for GanvGaliHut Phase 1. Final legal terms and courier API SLA metrics will be formalized prior to commercial launch.
+          <span className="font-bold">Policy Document Preview:</span> This is a demonstration shipping policy for GaunGaliHat Phase 1. Final legal terms and courier API SLA metrics will be formalized prior to commercial launch.
         </div>
       </div>
 
@@ -24,7 +24,7 @@ export const ShippingPolicy: React.FC = () => {
         <section className="space-y-2">
           <h2 className="text-base font-bold text-gray-900 font-display">1. Direct-from-Village Dispatch</h2>
           <p>
-            Unlike conventional e-commerce warehouses where mass inventory is stored for months, every item on GanvGaliHut is packed and sealed directly at the artisan workshop, gaushala, or SHG community center upon order receipt to guarantee utmost freshness.
+            Unlike conventional e-commerce warehouses where mass inventory is stored for months, every item on GaunGaliHat is packed and sealed directly at the artisan workshop, gaushala, or SHG community center upon order receipt to guarantee utmost freshness.
           </p>
         </section>
 

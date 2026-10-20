@@ -98,11 +98,11 @@ export const Header: React.FC = () => {
           </button>
 
           {/* Brand Logo Only (No text next to logo) */}
-          <Link to="/" className="flex items-center shrink-0 group py-1" title="GanvGaliHut • Home">
+          <Link to="/" className="flex items-center shrink-0 group py-1" title="GaunGaliHat • Home">
             <div className="relative h-12 sm:h-14 w-auto flex items-center">
               <img
                 src={headerConfig.logoUrl || '/logo.png'}
-                alt="GanvGaliHut Logo"
+                alt="GaunGaliHat Logo"
                 className="h-10 sm:h-12 w-auto max-w-[200px] object-contain transition-transform group-hover:scale-105"
                 onError={(e) => {
                   (e.target as HTMLElement).style.display = 'none';
@@ -298,7 +298,7 @@ export const Header: React.FC = () => {
                 {accountMenuOpen && (
                   <div className="absolute right-0 top-full mt-2 w-64 bg-white rounded-2xl shadow-2xl border border-gray-100 py-2.5 z-50 animate-in fade-in zoom-in-95 duration-150">
                     <div className="px-4 py-2 border-b border-gray-100">
-                      <p className="text-[11px] text-gray-500">Welcome to GanvGaliHut</p>
+                      <p className="text-[11px] text-gray-500">Welcome to GaunGaliHat</p>
                       <p className="text-sm font-bold text-gray-900 truncate">
                         {currentUser ? currentUser.name : 'Namaste, Guest'}
                       </p>
@@ -455,7 +455,7 @@ export const Header: React.FC = () => {
           <div className="w-4/5 max-w-sm bg-white h-full shadow-2xl flex flex-col overflow-y-auto animate-in slide-in-from-left duration-200">
             <div className="p-4 border-b border-gray-100 flex items-center justify-between bg-brand-cream">
               <div className="flex items-center">
-                <img src="/logo.png" alt="GanvGaliHut" className="h-8 w-auto object-contain" />
+                <img src="/logo.png" alt="GaunGaliHat" className="h-8 w-auto object-contain" />
               </div>
               <button
                 onClick={() => setMobileMenuOpen(false)}
@@ -598,7 +598,7 @@ export const Header: React.FC = () => {
             </div>
 
             <div className="p-4 bg-gray-50 border-t border-gray-100 text-xs text-gray-500 text-center">
-              GanvGaliHut • S S Industries Enterprise
+              GaunGaliHat • S S Industries Enterprise
             </div>
           </div>
           <div className="flex-1" onClick={() => setMobileMenuOpen(false)} />

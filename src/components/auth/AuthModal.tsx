@@ -105,7 +105,7 @@ export const AuthModal: React.FC = () => {
           </div>
 
           <h3 className="text-xl font-bold font-display">
-            Welcome to GanvGaliHut
+            Welcome to GaunGaliHat
           </h3>
           <p className="text-xs text-emerald-100/90 mt-1">
             Sign in with Mobile OTP, Google, or explore multiple user permission roles.

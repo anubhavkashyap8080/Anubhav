@@ -102,7 +102,7 @@ export const AdminLayout: React.FC = () => {
       {/* Mobile Top Header (No public shopping controls!) */}
       <div className="lg:hidden bg-slate-950 border-b border-slate-800 px-4 py-3 flex items-center justify-between sticky top-0 z-40">
         <div className="flex items-center gap-3">
-          <img src="/logo.png" alt="GanvGaliHut" className="h-8 w-auto object-contain" />
+          <img src="/logo.png" alt="GaunGaliHat" className="h-8 w-auto object-contain" />
           <div>
             <span className="text-xs font-bold text-white tracking-wide block">Console</span>
             <span className="text-[10px] text-amber-400 uppercase font-mono font-bold">{currentRole.replace('_', ' ')}</span>
@@ -129,11 +129,11 @@ export const AdminLayout: React.FC = () => {
           <div className="p-5 border-b border-slate-800/80 flex items-center justify-between">
             <div className="flex items-center gap-3">
               <div className="w-10 h-10 rounded-xl bg-slate-900 border border-slate-800 flex items-center justify-center p-1.5 shadow-md">
-                <img src="/logo.png" alt="GanvGaliHut" className="w-full h-full object-contain" />
+                <img src="/logo.png" alt="GaunGaliHat" className="w-full h-full object-contain" />
               </div>
               <div>
                 <div className="text-sm font-black text-white tracking-wide font-display">
-                  GanvGaliHut
+                  GaunGaliHat
                 </div>
                 <div className="text-[10px] font-semibold text-emerald-400 flex items-center gap-1.5">
                   <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span>

@@ -93,7 +93,7 @@ export const DemoModal: React.FC = () => {
 
         {/* Subtle footer notice */}
         <div className="px-6 py-2.5 bg-brand-sand/60 border-t border-gray-100 text-[11px] text-gray-500 text-center">
-          GanvGaliHut Frontend Interactive Prototype • Phase 1
+          GaunGaliHat Frontend Interactive Prototype • Phase 1
         </div>
       </div>
     </div>

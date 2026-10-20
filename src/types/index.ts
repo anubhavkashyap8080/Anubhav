@@ -1,5 +1,15 @@
 export type UserRole = 'super_admin' | 'admin' | 'marketer' | 'content_writer' | 'vendor' | 'support' | 'customer';
 
+export interface UserWorkLog {
+  id: string;
+  action: string;
+  module: string;
+  category?: string;
+  timestamp: string;
+  details: string;
+  status?: 'completed' | 'in_progress';
+}
+
 export interface User {
   id: string;
   name: string;
@@ -7,12 +17,14 @@ export interface User {
   phone: string;
   role: UserRole;
   avatar?: string;
+  department?: string;
   status: 'active' | 'suspended' | 'pending';
   joinedDate: string;
   lastLogin?: string;
   ordersCount?: number;
   assignedTickets?: number;
   vendorId?: string;
+  workLog?: UserWorkLog[];
 }
 
 export interface Seller {
@@ -47,7 +59,9 @@ export interface Seller {
 
 export interface Product {
   id: string;
+  code?: string; // Unique Product Code / SKU e.g. GGH-TL-101
   name: string;
+  hindiName?: string;
   slug: string;
   category: string;
   categorySlug: string;
@@ -59,6 +73,8 @@ export interface Product {
   reviewCount: number;
   image: string;
   gallery: string[];
+  stock?: number;
+  unit?: string;
   seller: {
     id: string;
     name: string;
@@ -89,11 +105,14 @@ export interface Product {
 export interface Category {
   id: string;
   name: string;
+  hindiName?: string;
   slug: string;
   description: string;
   image: string;
   productCount: number;
-  iconName: string;
+  itemCount?: number;
+  iconName?: string;
+  status?: 'active' | 'inactive';
 }
 
 export interface CartItem {

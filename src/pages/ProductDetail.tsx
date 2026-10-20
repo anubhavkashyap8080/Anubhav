@@ -390,7 +390,7 @@ export const ProductDetail: React.FC = () => {
               </div>
 
               <p className="text-sm text-gray-700 leading-relaxed">
-                By purchasing this item through GanvGaliHut, you are directly sustaining generational craftsmanship and rural livelihood autonomy. The entire value chain is free of exploitative middle-agents, ensuring dignified earnings returned to village households.
+                By purchasing this item through GaunGaliHat, you are directly sustaining generational craftsmanship and rural livelihood autonomy. The entire value chain is free of exploitative middle-agents, ensuring dignified earnings returned to village households.
               </p>
             </div>
           )}

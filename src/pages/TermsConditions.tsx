@@ -9,7 +9,7 @@ export const TermsConditions: React.FC = () => {
       <div className="p-4 bg-amber-50 border border-amber-200 rounded-2xl flex items-center gap-3 text-xs text-amber-900">
         <Info className="w-5 h-5 text-brand-orange shrink-0" />
         <div>
-          <span className="font-bold">Legal Terms Preview:</span> Demonstration Terms & Conditions governing marketplace usage for GanvGaliHut Phase 1.
+          <span className="font-bold">Legal Terms Preview:</span> Demonstration Terms & Conditions governing marketplace usage for GaunGaliHat Phase 1.
         </div>
       </div>
 
@@ -24,7 +24,7 @@ export const TermsConditions: React.FC = () => {
         <section className="space-y-2">
           <h2 className="text-base font-bold text-gray-900 font-display">1. Marketplace Platform Structure</h2>
           <p>
-            GanvGaliHut operates as an enablement bridge connecting rural artisan collectives, women self-help groups, and farmers directly with consumers. Product descriptions, specifications, and regional origins are provided by verified producers.
+            GaunGaliHat operates as an enablement bridge connecting rural artisan collectives, women self-help groups, and farmers directly with consumers. Product descriptions, specifications, and regional origins are provided by verified producers.
           </p>
         </section>
 

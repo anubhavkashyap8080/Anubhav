@@ -15,12 +15,12 @@ export const FAQ: React.FC = () => {
 
   const faqs = [
     {
-      q: 'How does GanvGaliHut verify that products are truly 100% authentic and durable?',
+      q: 'How does GaunGaliHat verify that products are truly 100% authentic and durable?',
       a: 'We work directly with registered Self-Help Groups (SHGs), foundries, and hereditary blacksmiths. We visit the workshops, test sample batches for leaf-spring steel grade hardness, inspect natural golden jute fibers and wood GI marks firsthand before onboarding.'
     },
     {
       q: 'How does my purchase directly benefit rural women and artisans?',
-      a: 'Unlike traditional trading networks where middlemen capture 70-80% of retail price, GanvGaliHut operates on a zero-exploitation direct model. Artisans set their own prices and receive 100% of fair product earnings directly into their individual or SHG bank accounts.'
+      a: 'Unlike traditional trading networks where middlemen capture 70-80% of retail price, GaunGaliHat operates on a zero-exploitation direct model. Artisans set their own prices and receive 100% of fair product earnings directly into their individual or SHG bank accounts.'
     },
     {
       q: 'What are the delivery timelines from village workshops?',
@@ -35,7 +35,7 @@ export const FAQ: React.FC = () => {
       a: 'Yes, Cash on Delivery is supported across 19,000+ Indian postal codes through our India Post cash collection network.'
     },
     {
-      q: 'How can our women self-help group or village cooperative sell on GanvGaliHut?',
+      q: 'How can our women self-help group or village cooperative sell on GaunGaliHat?',
       a: 'Any verified rural artisan, self-help group, or farmer cooperative can apply via our "Become a Seller" page or contact our local Village Mitra coordinator.'
     }
   ];

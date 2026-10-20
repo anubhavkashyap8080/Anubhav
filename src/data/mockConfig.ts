@@ -15,7 +15,7 @@ import {
 
 export const initialHeaderConfig: HeaderConfig = {
   logoUrl: '/logo.png',
-  brandName: 'GanvGaliHut',
+  brandName: 'GaunGaliHat',
   tagline: 'S S Industries Enterprise • Ganv se ghar tak',
   faviconUrl: '/logo.png',
   customHeadCode: '',
@@ -43,7 +43,7 @@ export const initialHeaderConfig: HeaderConfig = {
 
 export const initialFooterConfig: FooterConfig = {
   companyName: 'S S Industries',
-  description: 'GanvGaliHut is an enterprise initiative promoted by S S Industries to manufacture high-durability farming tools and directly connect rural Indian women self-help groups, generational craftspeople, and cottage workshops with customers across Bharat.',
+  description: 'GaunGaliHat is an enterprise initiative promoted by S S Industries to manufacture high-durability farming tools and directly connect rural Indian women self-help groups, generational craftspeople, and cottage workshops with customers across Bharat.',
   contactPhone: '+91 7897492100',
   altPhone1: '+91 9005756321',
   altPhone2: '+91 8303578806',
@@ -64,7 +64,7 @@ export const initialFooterConfig: FooterConfig = {
     showWhatsapp: true,
     showLinkedin: true
   },
-  copyrightText: '© 2026 GanvGaliHut — S S Industries. All Rights Reserved. Engineered for Rural Crafts & Indian Farming.',
+  copyrightText: '© 2026 GaunGaliHat — S S Industries. All Rights Reserved. Engineered for Rural Crafts & Indian Farming.',
   showNewsletter: true,
   columns: [
     {
@@ -115,11 +115,11 @@ export const initialFooterConfig: FooterConfig = {
 };
 
 export const initialSEOConfig: SEOConfig = {
-  siteTitle: 'GanvGaliHut — S S Industries | Farming Tools & Rural Artisan Marketplace',
+  siteTitle: 'GaunGaliHat — S S Industries | Farming Tools & Rural Artisan Marketplace',
   metaDescription: 'Shop high-carbon steel agricultural tools, desi sickles, heavy fawdas forged by S S Industries in Hardoi, alongside eco jute bags, Channapatna wooden toys, and handlooms.',
   canonicalUrl: 'https://ganvgalihat.pages.dev',
   sitemapUrl: 'https://ganvgalihat.pages.dev/sitemap.xml',
-  robotsTxt: `# Robots.txt for GanvGaliHut (S S Industries)
+  robotsTxt: `# Robots.txt for GaunGaliHat (S S Industries)
 User-agent: *
 Allow: /
 Allow: /products/
@@ -133,19 +133,19 @@ Disallow: /checkout/
 
 Sitemap: https://ganvgalihat.pages.dev/sitemap.xml
 `,
-  googleSearchConsoleVerification: 'google-site-verification=GanvGaliHut-SSIndustries-Verification2026',
+  googleSearchConsoleVerification: 'google-site-verification=GaunGaliHat-SSIndustries-Verification2026',
   googleAnalyticsId: 'G-7XYZ987654',
   googleTagManagerId: 'GTM-VILLAGE1',
   metaPixelId: '1234567890987654',
   blogSeoDefaults: {
-    titleTemplate: '%s | GanvGaliHut Village Journal',
+    titleTemplate: '%s | GaunGaliHat Village Journal',
     defaultOgImage: 'https://images.unsplash.com/photo-1504917599217-d4dc5ebe6122?auto=format&fit=crop&w=1200&q=80'
   },
   indexSearchEngines: true
 };
 
 export const initialFirebaseSettings: FirebaseSettings = {
-  apiKey: 'AIzaSyD-demoKey-GanvGaliHutSSIndustries',
+  apiKey: 'AIzaSyD-demoKey-GaunGaliHatSSIndustries',
   authDomain: 'ganvgalihat-ssindustries.firebaseapp.com',
   projectId: 'ganvgalihat-ssindustries',
   storageBucket: 'ganvgalihat-ssindustries.appspot.com',
@@ -174,10 +174,17 @@ export const initialUsers: User[] = [
     email: 'anubhav@ssindustries.in',
     phone: '+91 7897492100',
     role: 'super_admin',
+    department: 'Executive Governance & Foundry Operations',
     avatar: 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&w=150&q=80',
     status: 'active',
     joinedDate: 'Jan 15, 2026',
-    lastLogin: 'Today, 2:15 PM'
+    lastLogin: 'Today, 2:15 PM',
+    workLog: [
+      { id: 'wl-101', action: 'Approved Vendor KYC & Onboarding', module: 'Vendor Hub', timestamp: 'Today, 1:45 PM', details: 'Verified GSTIN and bank passbook for Purvanchal Kauna Grass Weavers SHG.', status: 'completed' },
+      { id: 'wl-102', action: 'Live Site Favicon & Header Update', module: 'Site Customizer', timestamp: 'Today, 11:20 AM', details: 'Synchronized brand logo asset and favicon across Cloudflare global edge.', status: 'completed' },
+      { id: 'wl-103', action: 'Platform Commission Override', module: 'Financials', timestamp: 'Yesterday, 4:10 PM', details: 'Set S S Industries promotional zero commission on handloom textiles.', status: 'completed' },
+      { id: 'wl-104', action: 'RBAC Role Assignment', module: 'Access Control', timestamp: 'Oct 18, 2026', details: 'Promoted Sunil Sharma to Operations Admin with dispatch privileges.', status: 'completed' }
+    ]
   },
   {
     id: 'user-02',
@@ -185,44 +192,16 @@ export const initialUsers: User[] = [
     email: 'sunil.ops@ssindustries.in',
     phone: '+91 9005756321',
     role: 'admin',
+    department: 'Factory Dispatch & Regional Warehousing',
     avatar: 'https://images.unsplash.com/photo-1570295999919-56ceb5ecca61?auto=format&fit=crop&w=150&q=80',
     status: 'active',
     joinedDate: 'Feb 02, 2026',
-    lastLogin: 'Yesterday'
-  },
-  {
-    id: 'user-03',
-    name: 'Ramkishan Lohar',
-    email: 'ramkishan@ganvgalihat.com',
-    phone: '+91 8303578806',
-    role: 'vendor',
-    avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=150&q=80',
-    status: 'active',
-    joinedDate: 'Feb 18, 2026',
-    vendorId: 'seller-3',
-    ordersCount: 48
-  },
-  {
-    id: 'user-04',
-    name: 'Priya Verma',
-    email: 'priya.support@ssindustries.in',
-    phone: '+91 94512 88410',
-    role: 'support',
-    avatar: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?auto=format&fit=crop&w=150&q=80',
-    status: 'active',
-    joinedDate: 'Mar 01, 2026',
-    assignedTickets: 7
-  },
-  {
-    id: 'user-05',
-    name: 'Aarav Gupta',
-    email: 'aarav.buyer@gmail.com',
-    phone: '+91 98112 34567',
-    role: 'customer',
-    avatar: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&w=150&q=80',
-    status: 'active',
-    joinedDate: 'Apr 10, 2026',
-    ordersCount: 5
+    lastLogin: 'Today, 1:10 PM',
+    workLog: [
+      { id: 'wl-201', action: 'Bulk Inventory Synchronization', module: 'Product Catalog', timestamp: 'Today, 12:30 PM', details: 'Restocked 150 Hansiya sickles and 80 Kulhadi axes from Madhoganj plant batch #B-902.', status: 'completed' },
+      { id: 'wl-202', action: 'India Post Manifest Generation', module: 'Logistics', timestamp: 'Yesterday, 5:45 PM', details: 'Printed 42 dispatch barcode labels for rural orders across UP and Bihar.', status: 'completed' },
+      { id: 'wl-203', action: 'Stock Level Threshold Alert', module: 'Warehouse', timestamp: 'Oct 19, 2026', details: 'Flagged low stock on Sugarcane Harvesting Sickles (12 units remaining).', status: 'completed' }
+    ]
   },
   {
     id: 'user-06',
@@ -230,10 +209,16 @@ export const initialUsers: User[] = [
     email: 'neha.marketing@ssindustries.in',
     phone: '+91 91234 56780',
     role: 'marketer',
+    department: 'Growth Marketing & SEO Strategy',
     avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=150&q=80',
     status: 'active',
     joinedDate: 'Mar 15, 2026',
-    lastLogin: 'Today, 11:30 AM'
+    lastLogin: 'Today, 11:30 AM',
+    workLog: [
+      { id: 'wl-601', action: 'Executed DLT SMS Broadcast', module: 'Communications', timestamp: 'Today, 10:15 AM', details: 'Sent Rabi harvesting tools announcement to 2,400 registered farmers in Hardoi.', status: 'completed' },
+      { id: 'wl-602', action: 'Updated Festival Hero Banner', module: 'Festival Customizer', timestamp: 'Yesterday, 3:30 PM', details: 'Configured Diwali Special theme with 20% discount code "FESTIVAL2026".', status: 'completed' },
+      { id: 'wl-603', action: 'XML Sitemap Feed Regeneration', module: 'Technical SEO', timestamp: 'Oct 18, 2026', details: 'Submitted 24 product URLs and category index to Google Search Console.', status: 'completed' }
+    ]
   },
   {
     id: 'user-07',
@@ -241,10 +226,78 @@ export const initialUsers: User[] = [
     email: 'devendra.writer@ssindustries.in',
     phone: '+91 93456 78901',
     role: 'content_writer',
+    department: 'Rural Editorial & Artisan Journalism',
     avatar: 'https://images.unsplash.com/photo-1522075469751-3a6694fb2f61?auto=format&fit=crop&w=150&q=80',
     status: 'active',
     joinedDate: 'Mar 20, 2026',
-    lastLogin: 'Today, 9:45 AM'
+    lastLogin: 'Today, 9:45 AM',
+    workLog: [
+      { id: 'wl-701', action: 'Authored Village Craft Feature', module: 'Village Journal', timestamp: 'Today, 9:15 AM', details: 'Published in-depth documentary: "Ancestral Coal Forging in Madhoganj".', status: 'completed' },
+      { id: 'wl-702', action: 'Product Copywriting Refinement', module: 'Catalog CMS', timestamp: 'Yesterday, 2:00 PM', details: 'Authored cultural craft origin specifications for Lucknowi Chikan Suit Sets.', status: 'completed' },
+      { id: 'wl-703', action: 'Artisan Interview Archive', module: 'Media Library', timestamp: 'Oct 17, 2026', details: 'Uploaded 8 high-res photographs of pottery kiln firing in Gorakhpur.', status: 'completed' }
+    ]
+  },
+  {
+    id: 'user-04',
+    name: 'Priya Verma',
+    email: 'priya.support@ssindustries.in',
+    phone: '+91 94512 88410',
+    role: 'support',
+    department: 'Customer Helpdesk & Order Resolution',
+    avatar: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?auto=format&fit=crop&w=150&q=80',
+    status: 'active',
+    joinedDate: 'Mar 01, 2026',
+    assignedTickets: 7,
+    workLog: [
+      { id: 'wl-401', action: 'Resolved Customer Support Ticket', module: 'Helpdesk', timestamp: 'Today, 11:50 AM', details: 'Provided India Post speed-post tracking consignment #EU98214IN to Vikram Joshi.', status: 'completed' },
+      { id: 'wl-402', action: 'Initiated Replacement Order', module: 'Returns & Claims', timestamp: 'Yesterday, 1:20 PM', details: 'Approved courier dispatch of new wooden handle for transit damaged khurpi.', status: 'completed' }
+    ]
+  },
+  {
+    id: 'user-08',
+    name: 'Kavita Saini',
+    email: 'kavita.catalog@ssindustries.in',
+    phone: '+91 98765 43210',
+    role: 'admin',
+    department: 'Quality Inspection & SKU Curation',
+    avatar: 'https://images.unsplash.com/photo-1544005313-94ddf0286df2?auto=format&fit=crop&w=150&q=80',
+    status: 'active',
+    joinedDate: 'Apr 05, 2026',
+    workLog: [
+      { id: 'wl-801', action: 'Assigned Unique Product Codes', module: 'Catalog Management', timestamp: 'Today, 10:00 AM', details: 'Created SKU codes GGH-TL-101 through GGH-WM-002 with vendor mapping.', status: 'completed' },
+      { id: 'wl-802', action: 'Inspected Pottery Batch Quality', module: 'Foundry Verification', timestamp: 'Yesterday, 4:00 PM', details: 'Verified lead-free earthen clay certification for Gorakhpur cooking handis.', status: 'completed' }
+    ]
+  },
+  {
+    id: 'user-03',
+    name: 'Ramkishan Lohar',
+    email: 'ramkishan@ganvgalihat.com',
+    phone: '+91 8303578806',
+    role: 'vendor',
+    department: 'Blacksmith Artisan Partner (External)',
+    avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=150&q=80',
+    status: 'active',
+    joinedDate: 'Feb 18, 2026',
+    vendorId: 'seller-3',
+    ordersCount: 48,
+    workLog: [
+      { id: 'wl-301', action: 'Dispatched Heavy Sledge Hammers', module: 'Vendor Portal', timestamp: 'Today, 8:30 AM', details: 'Handed over 12 tempered 3kg hammers to S S Industries transit van.', status: 'completed' }
+    ]
+  },
+  {
+    id: 'user-05',
+    name: 'Aarav Gupta',
+    email: 'aarav.buyer@gmail.com',
+    phone: '+91 98112 34567',
+    role: 'customer',
+    department: 'Retail Customer (D2C)',
+    avatar: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&w=150&q=80',
+    status: 'active',
+    joinedDate: 'Apr 10, 2026',
+    ordersCount: 5,
+    workLog: [
+      { id: 'wl-501', action: 'Placed Order #ORD-9821', module: 'Storefront', timestamp: 'Today, 10:30 AM', details: 'Purchased Forged Carbon Steel Hansiya Sickle via UPI.', status: 'completed' }
+    ]
   }
 ];
 
@@ -346,7 +399,7 @@ export const initialEmailCampaigns: EmailCampaign[] = [
   {
     id: 'camp-01',
     subject: 'S S Industries Harvest Special: Heavy Forged Desi Sickles & Khurpis Ready for Dispatch',
-    senderName: 'GanvGaliHut Marketplace',
+    senderName: 'GaunGaliHat Marketplace',
     senderEmail: 'namaste@ganvgalihat.com',
     recipientAudience: 'All Users',
     recipientCount: 2480,
@@ -358,7 +411,7 @@ export const initialEmailCampaigns: EmailCampaign[] = [
   },
   {
     id: 'camp-02',
-    subject: 'Welcome to GanvGaliHut: Direct Village Commerce from S S Industries',
+    subject: 'Welcome to GaunGaliHat: Direct Village Commerce from S S Industries',
     senderName: 'Anubhav Kashyap',
     senderEmail: 'anubhav@ssindustries.in',
     recipientAudience: 'All Customers',
@@ -377,7 +430,7 @@ export const initialSmsMessages: SmsMessage[] = [
     recipientPhone: '+91 7897492100',
     audience: 'Individual Number',
     dltTemplateId: 'DLT-SSIND-OTP-100234',
-    messageText: 'Your GanvGaliHut verification OTP is 482910. Valid for 10 minutes. S S Industries.',
+    messageText: 'Your GaunGaliHat verification OTP is 482910. Valid for 10 minutes. S S Industries.',
     sentDate: 'Today, 1:40 PM',
     status: 'Delivered',
     type: 'Transactional OTP'
@@ -387,7 +440,7 @@ export const initialSmsMessages: SmsMessage[] = [
     recipientPhone: '+91 9005756321',
     audience: 'All Vendors',
     dltTemplateId: 'DLT-SSIND-PAY-100589',
-    messageText: 'GanvGaliHut Notice: Weekly vendor settlement of ₹18,400 has been credited to your bank account. S S Industries.',
+    messageText: 'GaunGaliHat Notice: Weekly vendor settlement of ₹18,400 has been credited to your bank account. S S Industries.',
     sentDate: 'Oct 18, 2026',
     status: 'Delivered',
     type: 'Dispatch Notification'
@@ -397,7 +450,7 @@ export const initialSmsMessages: SmsMessage[] = [
     recipientPhone: '+91 8303578806',
     audience: 'All Customers',
     dltTemplateId: 'DLT-SSIND-DISP-100812',
-    messageText: 'Your order #GGH-98124 for Desi Hansiya has been dispatched from S S Industries Hardoi Hub via India Post tracking #IN8923412. Track live on GanvGaliHut.',
+    messageText: 'Your order #GGH-98124 for Desi Hansiya has been dispatched from S S Industries Hardoi Hub via India Post tracking #IN8923412. Track live on GaunGaliHat.',
     sentDate: 'Oct 19, 2026',
     status: 'Delivered',
     type: 'Dispatch Notification'

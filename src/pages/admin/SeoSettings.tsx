@@ -46,7 +46,7 @@ export const SeoSettings: React.FC = () => {
 
   const exampleSitemapXml = `<?xml version="1.0" encoding="UTF-8"?>
 <sitemapindex xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
-  <!-- GanvGaliHut Example Sitemap Index Preview -->
+  <!-- GaunGaliHat Example Sitemap Index Preview -->
   <sitemap>
     <loc>https://ganvgalihat.com/sitemap-pages.xml</loc>
     <lastmod>2026-10-20</lastmod>
@@ -71,7 +71,7 @@ export const SeoSettings: React.FC = () => {
     {
       "@type": "Organization",
       "@id": "https://ganvgalihat.com/#organization",
-      "name": "GanvGaliHut",
+      "name": "GaunGaliHat",
       "url": "https://ganvgalihat.com",
       "logo": "https://ganvgalihat.com/logo.png",
       "description": "Direct marketplace connecting rural Indian women self-help groups and artisans with conscious buyers.",
@@ -86,7 +86,7 @@ export const SeoSettings: React.FC = () => {
       "@type": "WebSite",
       "@id": "https://ganvgalihat.com/#website",
       "url": "https://ganvgalihat.com",
-      "name": "GanvGaliHut Marketplace",
+      "name": "GaunGaliHat Marketplace",
       "potentialAction": {
         "@type": "SearchAction",
         "target": "https://ganvgalihat.com/search?q={search_term_string}",
