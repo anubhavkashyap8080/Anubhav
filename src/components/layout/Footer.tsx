@@ -83,42 +83,73 @@ export const Footer: React.FC = () => {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-10">
           
-          {/* Brand Info & Contact */}
-          <div className="lg:col-span-2 space-y-4">
-            <Link to="/" className="flex items-center gap-3">
-              <img
-                src="/logo.png"
-                alt="GanvGaliHut Logo"
-                className="h-12 w-auto bg-white p-1 rounded-lg"
-              />
-              <div>
-                <span className="font-display font-bold text-xl text-white tracking-wide block">
-                  GanvGaliHut
-                </span>
-                <span className="text-[11px] text-brand-orange-light font-medium tracking-wider uppercase block">
-                  Deshi ki mitti ka swad • Ganv se ghar tak
-                </span>
-              </div>
-            </Link>
+            {/* Brand Info & Contact */}
+            <div className="lg:col-span-2 space-y-4">
+              <Link to="/" className="flex items-center gap-3">
+                <img
+                  src="/logo.png"
+                  alt="GanvGaliHut Logo"
+                  className="h-12 w-auto bg-white p-1 rounded-lg"
+                />
+                <div>
+                  <span className="font-display font-bold text-xl text-white tracking-wide block">
+                    GanvGaliHut
+                  </span>
+                  <span className="text-[11px] text-amber-300 font-semibold tracking-wider block">
+                    A Brand by S S Industries
+                  </span>
+                  <span className="text-[10px] text-brand-orange-light font-medium tracking-wider uppercase block">
+                    Deshi ki mitti ka swad • Ganv se ghar tak
+                  </span>
+                </div>
+              </Link>
 
-            <p className="text-xs text-emerald-200/80 leading-relaxed pr-4">
-              {footerConfig.description}
-            </p>
+              <p className="text-xs text-emerald-200/80 leading-relaxed pr-4">
+                {footerConfig.description}
+              </p>
 
-            <div className="space-y-2 text-xs text-emerald-200/90 pt-2">
-              <div className="flex items-center gap-2.5">
-                <MapPin className="w-4 h-4 text-brand-orange-light shrink-0" />
-                <span>{footerConfig.contactAddress}</span>
+              <div className="space-y-3 text-xs text-emerald-200/90 pt-2 border-t border-emerald-800/60">
+                <div className="flex items-start gap-2.5">
+                  <MapPin className="w-4 h-4 text-amber-300 shrink-0 mt-0.5" />
+                  <div>
+                    <span className="font-semibold text-white block">Works / Factory Unit:</span>
+                    <span className="text-emerald-100/90">Madhoganj Baghauli Road, Newada, Hardoi 241126</span>
+                  </div>
+                </div>
+
+                <div className="flex items-start gap-2.5">
+                  <MapPin className="w-4 h-4 text-brand-orange-light shrink-0 mt-0.5" />
+                  <div>
+                    <span className="font-semibold text-white block">Head Office:</span>
+                    <span className="text-emerald-100/90">G145 Phase 2 Industrial Area, UPSIDA Sandila, Hardoi</span>
+                  </div>
+                </div>
+
+                <div className="flex items-start gap-2.5">
+                  <Phone className="w-4 h-4 text-amber-300 shrink-0 mt-0.5" />
+                  <div>
+                    <span className="font-semibold text-white block mb-0.5">Helpline & Orders:</span>
+                    <div className="flex flex-wrap gap-x-3 gap-y-1 text-emerald-100 font-medium">
+                      <a href="tel:+917897492100" className="hover:text-amber-300 transition-colors underline underline-offset-2">
+                        +91 7897492100
+                      </a>
+                      <a href="tel:+919005756321" className="hover:text-amber-300 transition-colors underline underline-offset-2">
+                        +91 9005756321
+                      </a>
+                      <a href="tel:+918303578806" className="hover:text-amber-300 transition-colors underline underline-offset-2">
+                        +91 8303578806
+                      </a>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="flex items-center gap-2.5">
+                  <Mail className="w-4 h-4 text-emerald-300 shrink-0" />
+                  <a href={`mailto:${footerConfig.contactEmail}`} className="hover:text-amber-300 transition-colors">
+                    {footerConfig.contactEmail}
+                  </a>
+                </div>
               </div>
-              <div className="flex items-center gap-2.5">
-                <Phone className="w-4 h-4 text-brand-orange-light shrink-0" />
-                <span>{footerConfig.contactPhone}</span>
-              </div>
-              <div className="flex items-center gap-2.5">
-                <Mail className="w-4 h-4 text-brand-orange-light shrink-0" />
-                <span>{footerConfig.contactEmail}</span>
-              </div>
-            </div>
 
             {/* Social Links */}
             <div className="flex items-center gap-3 pt-3">

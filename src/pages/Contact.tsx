@@ -53,26 +53,61 @@ export const Contact: React.FC = () => {
         
         {/* Contact Info (Left) */}
         <div className="lg:col-span-5 space-y-6">
-          <div className="bg-brand-green text-white rounded-3xl p-8 space-y-6 shadow-md">
-            <h2 className="text-xl font-bold font-display">Marketplace Headquarters</h2>
-            <p className="text-xs text-emerald-100/90 leading-relaxed">
-              Our central liaison team coordinates directly between regional village Mitra units and postal shipping hubs across India.
-            </p>
+          <div className="bg-brand-green text-white rounded-3xl p-6 sm:p-8 space-y-6 shadow-md">
+            <div>
+              <span className="text-[11px] font-semibold text-amber-300 uppercase tracking-wider block">
+                Parent Enterprise
+              </span>
+              <h2 className="text-2xl font-bold font-display text-white mt-0.5">
+                S S Industries
+              </h2>
+              <p className="text-xs text-emerald-100/90 mt-1">
+                GanvGaliHut is an initiative by S S Industries to empower rural Indian artisans, SHGs, and farmers.
+              </p>
+            </div>
 
             <div className="space-y-4 text-xs">
               <div className="flex items-start gap-3">
                 <MapPin className="w-5 h-5 text-amber-300 shrink-0 mt-0.5" />
                 <div>
-                  <p className="font-bold text-white">Physical Address</p>
-                  <p className="text-emerald-100/80">Village Dewa, Barabanki / Corporate Hub: Sector 62, Noida, Uttar Pradesh - 201309</p>
+                  <p className="font-bold text-white">Works / Unit Address</p>
+                  <p className="text-emerald-100/90 leading-relaxed">
+                    Madhoganj Baghauli Road, Newada, Hardoi, Uttar Pradesh - 241126
+                  </p>
+                </div>
+              </div>
+
+              <div className="flex items-start gap-3">
+                <MapPin className="w-5 h-5 text-brand-orange-light shrink-0 mt-0.5" />
+                <div>
+                  <p className="font-bold text-white">Head Office</p>
+                  <p className="text-emerald-100/90 leading-relaxed">
+                    G145 Phase 2 Industrial Area, UPSIDA Sandila, Hardoi, Uttar Pradesh
+                  </p>
                 </div>
               </div>
 
               <div className="flex items-start gap-3">
                 <Phone className="w-5 h-5 text-amber-300 shrink-0 mt-0.5" />
                 <div>
-                  <p className="font-bold text-white">Customer Support & Helpline</p>
-                  <p className="text-emerald-100/80">+91 98765 43210 (Toll Free / WhatsApp)</p>
+                  <p className="font-bold text-white mb-1">Direct Helplines & WhatsApp</p>
+                  <div className="space-y-1 text-emerald-100">
+                    <div>
+                      <a href="tel:+917897492100" className="hover:text-amber-300 font-semibold underline underline-offset-2">
+                        +91 7897492100
+                      </a>
+                    </div>
+                    <div>
+                      <a href="tel:+919005756321" className="hover:text-amber-300 font-semibold underline underline-offset-2">
+                        +91 9005756321
+                      </a>
+                    </div>
+                    <div>
+                      <a href="tel:+918303578806" className="hover:text-amber-300 font-semibold underline underline-offset-2">
+                        +91 8303578806
+                      </a>
+                    </div>
+                  </div>
                 </div>
               </div>
 

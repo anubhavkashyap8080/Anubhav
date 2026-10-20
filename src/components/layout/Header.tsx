@@ -81,10 +81,10 @@ export const Header: React.FC = () => {
   };
 
   return (
-    <header className="sticky top-0 z-40 bg-white border-b border-gray-100 shadow-sm transition-all">
+    <header className="sticky top-0 z-40 bg-white border-b border-gray-100 shadow-sm transition-all w-full max-w-full">
       {/* Main Header Container */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex items-center justify-between h-20 gap-4">
+      <div className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 w-full min-w-0">
+        <div className="flex items-center justify-between h-16 sm:h-20 gap-2 sm:gap-4 w-full min-w-0">
           
           {/* Mobile Menu Button */}
           <button
@@ -348,8 +348,8 @@ export const Header: React.FC = () => {
 
         {/* Mobile Search Input (Visible on small screens) */}
         {headerConfig.showSearch && (
-          <div className="pb-3 sm:hidden">
-            <form onSubmit={handleSearchSubmit} className="relative">
+          <div className="pb-3 sm:hidden w-full min-w-0 max-w-full">
+            <form onSubmit={handleSearchSubmit} className="relative w-full">
               <input
                 type="text"
                 placeholder="Search village items..."

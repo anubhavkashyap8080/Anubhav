@@ -37,41 +37,41 @@ export const Home: React.FC = () => {
   const recentArticles = mockBlogPosts.slice(0, 3);
 
   return (
-    <div className="space-y-16 pb-16">
+    <div className="space-y-16 pb-16 w-full max-w-full overflow-x-hidden min-w-0">
       
       {/* 7. HERO BANNER */}
-      <section className="relative overflow-hidden bg-gradient-to-br from-emerald-900 via-brand-green to-emerald-950 text-white">
+      <section className="relative overflow-hidden bg-gradient-to-br from-emerald-900 via-brand-green to-emerald-950 text-white w-full max-w-full">
         {/* Decorative background elements */}
         <div className="absolute inset-0 opacity-10 bg-[radial-gradient(#ffffff_1px,transparent_1px)] [background-size:16px_16px] pointer-events-none" />
-        <div className="absolute -top-24 -right-24 w-96 h-96 rounded-full bg-brand-orange/20 blur-3xl pointer-events-none" />
-        <div className="absolute -bottom-24 -left-24 w-96 h-96 rounded-full bg-emerald-400/10 blur-3xl pointer-events-none" />
+        <div className="absolute -top-24 -right-24 w-72 sm:w-96 h-72 sm:h-96 rounded-full bg-brand-orange/20 blur-3xl pointer-events-none" />
+        <div className="absolute -bottom-24 -left-24 w-72 sm:w-96 h-72 sm:h-96 rounded-full bg-emerald-400/10 blur-3xl pointer-events-none" />
 
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16 sm:py-24 relative z-10">
-          <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 items-center">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 sm:py-24 relative z-10 w-full min-w-0">
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12 items-center">
             
             {/* Text & CTAs */}
-            <div className="lg:col-span-7 space-y-6 text-center lg:text-left">
-              <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-emerald-800/80 border border-emerald-600/60 text-amber-300 text-xs font-semibold shadow-xs">
-                <Sparkles className="w-3.5 h-3.5" />
-                <span>Empowering 5,000+ Rural Women Artisans & Farmers</span>
+            <div className="lg:col-span-7 space-y-6 text-center lg:text-left min-w-0">
+              <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-emerald-800/80 border border-emerald-600/60 text-amber-300 text-xs font-semibold shadow-xs max-w-full">
+                <Sparkles className="w-3.5 h-3.5 shrink-0" />
+                <span className="truncate">Empowering 5,000+ Rural Women Artisans & Farmers</span>
               </div>
 
-              <h1 className="text-3xl sm:text-5xl lg:text-6xl font-extrabold tracking-tight font-display leading-tight sm:leading-none">
+              <h1 className="text-3xl sm:text-5xl lg:text-6xl font-extrabold tracking-tight font-display leading-tight sm:leading-none break-words">
                 Gaon ke hunar, <br />
                 <span className="text-amber-300 drop-shadow-sm">ab har ghar tak</span>
               </h1>
 
-              <p className="text-base sm:text-lg text-emerald-100/90 max-w-2xl leading-relaxed mx-auto lg:mx-0">
+              <p className="text-sm sm:text-lg text-emerald-100/90 max-w-2xl leading-relaxed mx-auto lg:mx-0">
                 Taste the untamed purity of Vedic Bilona A2 ghee, heirloom sun-dried pickles, 
                 and stone-pounded spices. Discover hand-forged tools and artisanal craft 
                 created by rural women self-help groups across Bharat.
               </p>
 
               {/* Action Buttons */}
-              <div className="flex flex-wrap items-center justify-center lg:justify-start gap-4 pt-2">
+              <div className="flex flex-wrap items-center justify-center lg:justify-start gap-3 sm:gap-4 pt-2">
                 <Link
                   to="/products"
-                  className="px-6 py-3.5 rounded-xl bg-brand-orange hover:bg-brand-orange-dark text-white font-semibold text-sm shadow-lg hover:shadow-orange-600/30 transition-all flex items-center gap-2 active:scale-95"
+                  className="px-5 sm:px-6 py-3 sm:py-3.5 rounded-xl bg-brand-orange hover:bg-brand-orange-dark text-white font-semibold text-xs sm:text-sm shadow-lg hover:shadow-orange-600/30 transition-all flex items-center gap-2 active:scale-95"
                 >
                   <span>Explore Village Marketplace</span>
                   <ArrowRight className="w-4 h-4" />
@@ -79,14 +79,14 @@ export const Home: React.FC = () => {
 
                 <Link
                   to="/category/papad-pickles-snacks"
-                  className="px-6 py-3.5 rounded-xl bg-emerald-800/80 hover:bg-emerald-700/80 border border-emerald-600/80 text-white font-semibold text-sm transition-all flex items-center gap-2"
+                  className="px-5 sm:px-6 py-3 sm:py-3.5 rounded-xl bg-emerald-800/80 hover:bg-emerald-700/80 border border-emerald-600/80 text-white font-semibold text-xs sm:text-sm transition-all flex items-center gap-2"
                 >
                   <span>Shop Desi Foods</span>
                 </Link>
 
                 <Link
                   to="/become-seller"
-                  className="px-4 py-3.5 text-xs text-amber-200 hover:text-white font-medium underline underline-offset-4 flex items-center gap-1"
+                  className="px-4 py-3 text-xs text-amber-200 hover:text-white font-medium underline underline-offset-4 flex items-center gap-1"
                 >
                   <span>Join as an Artisan</span>
                   <ArrowUpRight className="w-3.5 h-3.5" />
@@ -94,50 +94,50 @@ export const Home: React.FC = () => {
               </div>
 
               {/* Trust badges */}
-              <div className="grid grid-cols-3 gap-4 pt-6 border-t border-emerald-800/60 text-left">
+              <div className="grid grid-cols-3 gap-2 sm:gap-4 pt-6 border-t border-emerald-800/60 text-left">
                 <div>
-                  <div className="text-xl sm:text-2xl font-bold text-amber-300 font-display">100%</div>
-                  <div className="text-[11px] text-emerald-200/80">Authentic & Pure Desi</div>
+                  <div className="text-lg sm:text-2xl font-bold text-amber-300 font-display">100%</div>
+                  <div className="text-[10px] sm:text-[11px] text-emerald-200/80">Authentic & Pure Desi</div>
                 </div>
                 <div>
-                  <div className="text-xl sm:text-2xl font-bold text-amber-300 font-display">40+</div>
-                  <div className="text-[11px] text-emerald-200/80">Rural Clusters</div>
+                  <div className="text-lg sm:text-2xl font-bold text-amber-300 font-display">40+</div>
+                  <div className="text-[10px] sm:text-[11px] text-emerald-200/80">Rural Clusters</div>
                 </div>
                 <div>
-                  <div className="text-xl sm:text-2xl font-bold text-amber-300 font-display">0%</div>
-                  <div className="text-[11px] text-emerald-200/80">Middleman Commission</div>
+                  <div className="text-lg sm:text-2xl font-bold text-amber-300 font-display">0%</div>
+                  <div className="text-[10px] sm:text-[11px] text-emerald-200/80">Middleman Margin</div>
                 </div>
               </div>
             </div>
 
             {/* Hero Visual Card Showcase */}
-            <div className="lg:col-span-5 relative">
-              <div className="relative mx-auto max-w-sm rounded-3xl bg-white/10 backdrop-blur-md p-4 border border-white/20 shadow-2xl">
+            <div className="lg:col-span-5 relative mt-6 lg:mt-0 px-2 sm:px-0">
+              <div className="relative mx-auto max-w-sm rounded-3xl bg-white/10 backdrop-blur-md p-3 sm:p-4 border border-white/20 shadow-2xl">
                 <img
                   src="https://images.unsplash.com/photo-1594744803329-e58b31de8bf5?auto=format&fit=crop&w=800&q=80"
                   alt="Rural Indian women artisan"
-                  className="w-full h-80 object-cover rounded-2xl shadow-md"
+                  className="w-full h-72 sm:h-80 object-cover rounded-2xl shadow-md"
                 />
 
                 {/* Floating pill 1 */}
-                <div className="absolute -top-4 -left-4 bg-white text-gray-900 rounded-xl p-3 shadow-xl border border-gray-100 flex items-center gap-3 animate-soft-pulse">
-                  <div className="w-10 h-10 rounded-lg bg-orange-100 text-brand-orange flex items-center justify-center font-bold">
+                <div className="absolute -top-3 left-2 sm:-top-4 sm:-left-4 bg-white text-gray-900 rounded-xl p-2.5 sm:p-3 shadow-xl border border-gray-100 flex items-center gap-2.5 animate-soft-pulse max-w-[90%] sm:max-w-none">
+                  <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-lg bg-orange-100 text-brand-orange flex items-center justify-center font-bold text-sm shrink-0">
                     🌾
                   </div>
-                  <div>
-                    <p className="text-[10px] text-gray-500 font-medium">Grandmother's Recipe</p>
-                    <p className="text-xs font-bold text-gray-800">Moong Dal Papad</p>
+                  <div className="min-w-0">
+                    <p className="text-[9px] sm:text-[10px] text-gray-500 font-medium truncate">Grandmother's Recipe</p>
+                    <p className="text-xs font-bold text-gray-800 truncate">Moong Dal Papad</p>
                   </div>
                 </div>
 
                 {/* Floating pill 2 */}
-                <div className="absolute -bottom-4 -right-4 bg-brand-green text-white rounded-xl p-3 shadow-xl border border-emerald-500 flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-lg bg-emerald-800 flex items-center justify-center text-amber-300 font-bold">
+                <div className="absolute -bottom-3 right-2 sm:-bottom-4 sm:-right-4 bg-brand-green text-white rounded-xl p-2.5 sm:p-3 shadow-xl border border-emerald-500 flex items-center gap-2.5 max-w-[90%] sm:max-w-none">
+                  <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-lg bg-emerald-800 flex items-center justify-center text-amber-300 font-bold text-xs sm:text-sm shrink-0">
                     ★ 4.98
                   </div>
-                  <div>
-                    <p className="text-[10px] text-emerald-200 font-medium">Gir Cow Vedic Bilona</p>
-                    <p className="text-xs font-bold text-white">Pure Desi Ghee</p>
+                  <div className="min-w-0">
+                    <p className="text-[9px] sm:text-[10px] text-emerald-200 font-medium truncate">Gir Cow Vedic Bilona</p>
+                    <p className="text-xs font-bold text-white truncate">Pure Desi Ghee</p>
                   </div>
                 </div>
               </div>

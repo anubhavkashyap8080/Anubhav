@@ -25,17 +25,17 @@ export const initialHeaderConfig: HeaderConfig = {
 };
 
 export const initialFooterConfig: FooterConfig = {
-  description: 'GanvGaliHut connects authentic rural Indian women self-help groups, generational craftspeople, farmers, and cottage industries directly with conscious homes across the nation.',
-  contactPhone: '+91 98765 43210',
+  description: 'GanvGaliHut (by S S Industries) connects authentic rural Indian women self-help groups, generational craftspeople, farmers, and cottage industries directly with conscious homes across the nation.',
+  contactPhone: '+91 7897492100 / +91 9005756321 / +91 8303578806',
   contactEmail: 'namaste@ganvgalihat.com',
-  contactAddress: 'Village Dewa, Barabanki / Corporate Hub: Sector 62, Noida, UP - 201309',
+  contactAddress: 'Works: Madhoganj Baghauli Road, Newada, Hardoi 241126 | Head Office: G145 Phase 2 Industrial Area, UPSIDA Sandila, Hardoi',
   socialLinks: {
     facebook: 'https://facebook.com/ganvgalihat',
     instagram: 'https://instagram.com/ganvgalihat',
     twitter: 'https://twitter.com/ganvgalihat',
     youtube: 'https://youtube.com/ganvgalihat'
   },
-  copyrightText: '© 2026 GanvGaliHut Marketplace. Built with pride for Rural Indian Artisans. (Frontend Design Prototype)',
+  copyrightText: '© 2026 GanvGaliHut — S S Industries. Built with pride for Rural Indian Artisans. (Frontend Design Prototype)',
   showNewsletter: true,
   columns: [
     {

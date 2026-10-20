@@ -29,9 +29,9 @@ export const CategoryNav: React.FC = () => {
   const location = useLocation();
 
   return (
-    <nav className="bg-brand-sand border-b border-gray-200/80 shadow-xs">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex items-center space-x-1 sm:space-x-4 overflow-x-auto py-2.5 scrollbar-none text-xs font-medium text-gray-700 whitespace-nowrap">
+    <nav className="bg-brand-sand border-b border-gray-200/80 shadow-xs w-full max-w-full overflow-hidden">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 w-full min-w-0">
+        <div className="flex items-center space-x-1 sm:space-x-4 overflow-x-auto py-2.5 scrollbar-none text-xs font-medium text-gray-700 whitespace-nowrap w-full min-w-0">
           
           {/* All Products pill */}
           <Link
