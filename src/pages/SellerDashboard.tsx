@@ -54,6 +54,7 @@ export const SellerDashboard: React.FC = () => {
   // Clearance Gate Form State
   const [gateIdentifier, setGateIdentifier] = useState('');
   const [gatePassOrOtp, setGatePassOrOtp] = useState('');
+  const [showGatePass, setShowGatePass] = useState(false);
   const [gateError, setGateError] = useState('');
   const [gateLoading, setGateLoading] = useState(false);
 
@@ -496,21 +497,30 @@ export const SellerDashboard: React.FC = () => {
 
             <div>
               <div className="flex justify-between items-center mb-1">
-                <label className="font-semibold text-slate-300">Password / Access Key or 6-Digit OTP</label>
+                <label className="font-semibold text-slate-300">Password / Access Key or 6-Digit OTP *</label>
                 <span className="text-[10px] text-slate-400 font-mono">PBKDF2 Encrypted</span>
               </div>
-              <input
-                type="password"
-                required
-                autoCapitalize="none"
-                autoCorrect="off"
-                spellCheck={false}
-                autoComplete="current-password"
-                value={gatePassOrOtp}
-                onChange={(e) => setGatePassOrOtp(e.target.value)}
-                placeholder="Enter password or verification code"
-                className="w-full p-3 bg-slate-950 border border-slate-700 rounded-xl text-white font-mono text-sm focus:border-brand-orange focus:outline-hidden"
-              />
+              <div className="relative">
+                <input
+                  type={showGatePass ? 'text' : 'password'}
+                  required
+                  autoCapitalize="none"
+                  autoCorrect="off"
+                  spellCheck={false}
+                  autoComplete="current-password"
+                  value={gatePassOrOtp}
+                  onChange={(e) => setGatePassOrOtp(e.target.value)}
+                  placeholder="Enter password (e.g. seller123 or OTP)"
+                  className="w-full p-3 pr-10 bg-slate-950 border border-slate-700 rounded-xl text-white font-mono text-sm focus:border-brand-orange focus:outline-hidden"
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowGatePass(!showGatePass)}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-white p-1 cursor-pointer"
+                >
+                  {showGatePass ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                </button>
+              </div>
             </div>
 
             <button

@@ -14,7 +14,9 @@ import {
   Building2,
   Store,
   UserCheck,
-  AlertCircle
+  AlertCircle,
+  Eye,
+  EyeOff
 } from 'lucide-react';
 
 export const AuthModal: React.FC = () => {
@@ -62,6 +64,7 @@ export const AuthModal: React.FC = () => {
   // Seller Form State
   const [sellerIdentifier, setSellerIdentifier] = useState('');
   const [sellerPassOrOtp, setSellerPassOrOtp] = useState('');
+  const [showSellerPass, setShowSellerPass] = useState(false);
 
   // Admin Form State (Cleaned: No pre-filled credentials for visitors)
   const [adminIdentifier, setAdminIdentifier] = useState('');
@@ -509,7 +512,7 @@ export const AuthModal: React.FC = () => {
               <form onSubmit={handleSellerLogin} className="space-y-3 text-xs">
                 <div>
                   <label className="block font-semibold text-gray-700 mb-1">
-                    Artisan Username, Seller Email, or Mobile
+                    Registered Mobile (+91), Seller Email, or Username *
                   </label>
                   <input
                     type="text"
@@ -518,38 +521,49 @@ export const AuthModal: React.FC = () => {
                     autoCorrect="off"
                     spellCheck={false}
                     autoComplete="username"
-                    placeholder="e.g. ramkishan_artisan, +91 83035 78806, or email"
+                    placeholder="e.g. 7897492100, 8303578806, or ramkishan_artisan"
                     value={sellerIdentifier}
                     onChange={(e) => setSellerIdentifier(e.target.value)}
-                    className="w-full p-2.5 border border-gray-300 rounded-xl"
+                    className="w-full p-2.5 border border-gray-300 rounded-xl text-gray-900 font-medium"
                     autoFocus
                   />
                 </div>
 
                 <div>
                   <div className="flex justify-between items-center mb-1">
-                    <label className="font-semibold text-gray-700">Password / Access Key</label>
+                    <label className="font-semibold text-gray-700">Password / Access Key or 6-Digit OTP *</label>
                     <span className="text-[10px] text-gray-400 font-mono">PBKDF2 Encrypted</span>
                   </div>
-                  <input
-                    type="password"
-                    autoCapitalize="none"
-                    autoCorrect="off"
-                    spellCheck={false}
-                    autoComplete="current-password"
-                    placeholder="Enter seller password"
-                    value={sellerPassOrOtp}
-                    onChange={(e) => setSellerPassOrOtp(e.target.value)}
-                    className="w-full p-2.5 border border-gray-300 rounded-xl"
-                  />
+                  <div className="relative">
+                    <input
+                      type={showSellerPass ? 'text' : 'password'}
+                      required
+                      autoCapitalize="none"
+                      autoCorrect="off"
+                      spellCheck={false}
+                      autoComplete="current-password"
+                      placeholder="Enter password (e.g. seller123 or OTP)"
+                      value={sellerPassOrOtp}
+                      onChange={(e) => setSellerPassOrOtp(e.target.value)}
+                      className="w-full p-2.5 pr-10 border border-gray-300 rounded-xl font-mono text-gray-900"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowSellerPass(!showSellerPass)}
+                      className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 p-1 cursor-pointer"
+                    >
+                      {showSellerPass ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                    </button>
+                  </div>
                 </div>
 
                 <button
                   type="submit"
-                  className="w-full py-2.5 bg-brand-orange hover:bg-orange-600 text-white font-bold rounded-xl shadow-xs transition-colors cursor-pointer flex items-center justify-center gap-1.5"
+                  disabled={isLoading}
+                  className="w-full py-2.5 bg-brand-orange hover:bg-orange-600 disabled:opacity-50 text-white font-bold rounded-xl shadow-xs transition-colors cursor-pointer flex items-center justify-center gap-1.5"
                 >
-                  <Store className="w-4 h-4" />
-                  <span>Access Seller Workshop Dashboard</span>
+                  {isLoading ? <RotateCw className="w-4 h-4 animate-spin" /> : <Store className="w-4 h-4" />}
+                  <span>{isLoading ? 'Verifying Credentials...' : 'Access Seller Workshop Dashboard'}</span>
                 </button>
               </form>
 
