@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { usePlatform } from '../../../context/PlatformContext';
 import { useAuth } from '../../../context/AuthContext';
 import { User, UserRole, UserWorkLog } from '../../../types';
+import { hashPassword } from '../../../utils/cryptoUtils';
 import {
   Users,
   Shield,
@@ -28,7 +29,7 @@ import {
 } from 'lucide-react';
 
 export const AdminTeamTab: React.FC = () => {
-  const { users, updateUserRole, toggleUserStatus, addUser } = usePlatform();
+  const { users, updateUserRole, updateUserPassword, toggleUserStatus, addUser } = usePlatform();
   const { currentUser } = useAuth();
 
   const [searchTerm, setSearchTerm] = useState('');
@@ -45,8 +46,9 @@ export const AdminTeamTab: React.FC = () => {
   const [newMemberRole, setNewMemberRole] = useState<UserRole>('admin');
   const [newMemberDepartment, setNewMemberDepartment] = useState('');
   const [showMemberPasswordInForm, setShowMemberPasswordInForm] = useState(false);
-  const [revealedMemberPasswords, setRevealedMemberPasswords] = useState<Record<string, boolean>>({});
-  const [copiedMemberId, setCopiedMemberId] = useState<string | null>(null);
+  const [resettingMember, setResettingMember] = useState<User | null>(null);
+  const [newMemberResetPass, setNewMemberResetPass] = useState('');
+  const [resetMemberSuccess, setResetMemberSuccess] = useState<string | null>(null);
 
   // New Work Log Entry Form in Modal
   const [showAddLogForm, setShowAddLogForm] = useState(false);
@@ -106,15 +108,17 @@ export const AdminTeamTab: React.FC = () => {
     setShowAddLogForm(false);
   };
 
-  const handleCreateTeamMember = (e: React.FormEvent) => {
+  const handleCreateTeamMember = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!newMemberName.trim() || !newMemberEmail.trim()) return;
     const cleanUsername = newMemberUsername.trim() || newMemberName.trim().toLowerCase().replace(/[^a-zA-Z0-9_]/g, '_');
-    const cleanPassword = newMemberPassword.trim() || 'Admin@2026';
+    const cleanPassword = newMemberPassword.trim() || `Ggh@${Math.floor(1000 + Math.random() * 9000)}`;
+    const { hashHex, saltHex } = await hashPassword(cleanPassword);
     addUser({
       name: newMemberName.trim(),
       username: cleanUsername,
-      password: cleanPassword,
+      passwordHash: hashHex,
+      passwordSalt: saltHex,
       email: newMemberEmail.trim(),
       phone: newMemberPhone.trim() || '+91 7897492100',
       role: newMemberRole,
@@ -128,6 +132,19 @@ export const AdminTeamTab: React.FC = () => {
     setNewMemberPhone('');
     setNewMemberDepartment('');
     setShowAddMemberModal(false);
+  };
+
+  const handleResetMemberPass = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!resettingMember || !newMemberResetPass.trim()) return;
+    const { hashHex, saltHex } = await hashPassword(newMemberResetPass.trim());
+    updateUserPassword(resettingMember.id, hashHex, saltHex);
+    setResetMemberSuccess(`Password reset & encrypted with PBKDF2 for @${resettingMember.username || resettingMember.name}!`);
+    setTimeout(() => {
+      setResetMemberSuccess(null);
+      setResettingMember(null);
+      setNewMemberResetPass('');
+    }, 2500);
   };
 
   const getRoleBadgeColor = (role: UserRole) => {
@@ -427,37 +444,22 @@ export const AdminTeamTab: React.FC = () => {
 
                 <div className="p-2.5 bg-slate-950 rounded-xl border border-slate-800 flex items-center justify-between">
                   <div>
-                    <span className="text-[10px] text-slate-400 block font-medium">Security Password:</span>
-                    <span className="font-mono font-bold text-amber-300 text-xs">
-                      {revealedMemberPasswords[selectedUser.id]
-                        ? (selectedUser.password || 'admin123')
-                        : '••••••••'}
+                    <span className="text-[10px] text-slate-400 block font-medium">Password Security:</span>
+                    <span className="font-mono text-emerald-400 text-xs font-semibold flex items-center gap-1 mt-0.5">
+                      <ShieldCheck className="w-3.5 h-3.5" />
+                      <span>PBKDF2-SHA256 (Protected)</span>
                     </span>
                   </div>
-                  <div className="flex items-center gap-1">
-                    <button
-                      type="button"
-                      onClick={() => setRevealedMemberPasswords(prev => ({ ...prev, [selectedUser.id]: !prev[selectedUser.id] }))}
-                      className="p-1 text-slate-400 hover:text-white rounded cursor-pointer"
-                      title={revealedMemberPasswords[selectedUser.id] ? 'Hide' : 'Reveal'}
-                    >
-                      {revealedMemberPasswords[selectedUser.id] ? <EyeOff className="w-3.5 h-3.5" /> : <Eye className="w-3.5 h-3.5" />}
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => {
-                        const u = selectedUser.username || selectedUser.email.split('@')[0];
-                        const p = selectedUser.password || 'admin123';
-                        navigator.clipboard.writeText(`Username: ${u}\nPassword: ${p}\nEmail: ${selectedUser.email}`);
-                        setCopiedMemberId(selectedUser.id);
-                        setTimeout(() => setCopiedMemberId(null), 2000);
-                      }}
-                      className="p-1 text-slate-400 hover:text-emerald-400 rounded cursor-pointer"
-                      title="Copy Credentials"
-                    >
-                      {copiedMemberId === selectedUser.id ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Copy className="w-3.5 h-3.5" />}
-                    </button>
-                  </div>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setResettingMember(selectedUser);
+                      setNewMemberResetPass(`Ggh@${Math.floor(1000 + Math.random() * 9000)}`);
+                    }}
+                    className="px-2.5 py-1 bg-amber-400 hover:bg-amber-300 text-slate-950 rounded-lg text-[10px] font-bold cursor-pointer transition-colors"
+                  >
+                    Reset Password
+                  </button>
                 </div>
               </div>
             </div>
@@ -796,6 +798,92 @@ export const AdminTeamTab: React.FC = () => {
           </div>
         </div>
       )}
+
+      {/* Reset Member Password Modal */}
+      {resettingMember && (
+        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4">
+          <div className="bg-white rounded-3xl p-6 max-w-md w-full space-y-4 shadow-2xl animate-in zoom-in-95 duration-150">
+            <div className="flex items-center justify-between border-b border-gray-100 pb-3">
+              <div className="flex items-center gap-2">
+                <div className="w-8 h-8 rounded-xl bg-amber-100 text-amber-800 flex items-center justify-center">
+                  <Key className="w-4 h-4" />
+                </div>
+                <div>
+                  <h4 className="font-bold text-base text-gray-900 font-display">Reset Staff Credentials</h4>
+                  <p className="text-[11px] text-gray-500">Re-key with PBKDF2-HMAC-SHA256 encryption</p>
+                </div>
+              </div>
+              <button
+                onClick={() => setResettingMember(null)}
+                className="p-1 text-gray-400 hover:text-gray-700 rounded-lg cursor-pointer"
+              >
+                ✕
+              </button>
+            </div>
+
+            {resetMemberSuccess ? (
+              <div className="p-3 bg-emerald-50 border border-emerald-200 text-emerald-900 rounded-xl text-xs font-semibold flex items-center gap-2">
+                <Check className="w-4 h-4 text-emerald-600" />
+                <span>{resetMemberSuccess}</span>
+              </div>
+            ) : (
+              <form onSubmit={handleResetMemberPass} className="space-y-3 text-xs">
+                <div className="p-2.5 bg-slate-900 text-white rounded-xl text-xs space-y-1">
+                  <div className="flex items-center justify-between">
+                    <span className="text-slate-400">Team Member:</span>
+                    <span className="font-bold text-amber-300">@{resettingMember.username || resettingMember.name}</span>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <span className="text-slate-400">Department:</span>
+                    <span className="text-slate-300 text-[11px]">{resettingMember.department || 'Operations'}</span>
+                  </div>
+                </div>
+
+                <div>
+                  <div className="flex items-center justify-between mb-1">
+                    <label className="font-semibold text-gray-700">New Password *</label>
+                    <button
+                      type="button"
+                      onClick={() => setNewMemberResetPass(`Ggh@${Math.floor(1000 + Math.random() * 9000)}`)}
+                      className="text-[10px] text-brand-green hover:underline cursor-pointer font-semibold"
+                    >
+                      Auto-Generate Secure Key
+                    </button>
+                  </div>
+                  <input
+                    type="text"
+                    required
+                    placeholder="Enter new password"
+                    value={newMemberResetPass}
+                    onChange={(e) => setNewMemberResetPass(e.target.value)}
+                    className="w-full p-2.5 border border-gray-300 rounded-xl font-mono text-xs"
+                  />
+                  <p className="text-[10px] text-gray-400 mt-1">
+                    Will be securely hashed with PBKDF2 (100,000 rounds) before storing.
+                  </p>
+                </div>
+
+                <div className="flex items-center justify-end gap-2 pt-2">
+                  <button
+                    type="button"
+                    onClick={() => setResettingMember(null)}
+                    className="px-4 py-2 border border-gray-300 rounded-xl text-xs font-semibold text-gray-700 hover:bg-gray-50 cursor-pointer"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="submit"
+                    className="px-4 py-2 bg-brand-green hover:bg-brand-green-dark text-white rounded-xl text-xs font-bold cursor-pointer transition-colors shadow-xs"
+                  >
+                    Save & Encrypt Key
+                  </button>
+                </div>
+              </form>
+            )}
+          </div>
+        </div>
+      )}
+
     </div>
   );
 };

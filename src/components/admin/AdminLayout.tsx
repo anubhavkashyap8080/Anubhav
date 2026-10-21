@@ -38,7 +38,7 @@ export const AdminLayout: React.FC = () => {
   const location = useLocation();
 
   // Admin Security Gate Form State
-  const [gateEmail, setGateEmail] = useState('admin@gaungalihat.com');
+  const [gateEmail, setGateEmail] = useState('');
   const [gatePassword, setGatePassword] = useState('');
   const [gateError, setGateError] = useState('');
   const [gateLoading, setGateLoading] = useState(false);
@@ -47,11 +47,11 @@ export const AdminLayout: React.FC = () => {
     currentUser &&
     ['super_admin', 'admin', 'marketer', 'content_writer', 'support', 'vendor'].includes(currentUser.role);
 
-  const handleGateLogin = (e: React.FormEvent) => {
+  const handleGateLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setGateError('');
     setGateLoading(true);
-    const res = loginAsAdmin(gateEmail, gatePassword);
+    const res = await loginAsAdmin(gateEmail, gatePassword);
     setGateLoading(false);
     if (!res.success) {
       setGateError(res.message || 'Access Denied: Invalid administrator credentials.');
@@ -167,15 +167,15 @@ export const AdminLayout: React.FC = () => {
 
             <div>
               <div className="flex justify-between items-center mb-1">
-                <label className="font-semibold text-slate-300">Security Password / PIN</label>
-                <span className="text-[10px] text-amber-400/80">Your password or master PIN: 7897</span>
+                <label className="font-semibold text-slate-300">Security Password / Passcode</label>
+                <span className="text-[10px] text-slate-400 font-mono">PBKDF2 Encrypted Auth</span>
               </div>
               <input
                 type="password"
                 required
                 value={gatePassword}
                 onChange={(e) => setGatePassword(e.target.value)}
-                placeholder="Enter your password or master PIN"
+                placeholder="Enter authorized administrator password"
                 className="w-full p-3 bg-slate-950 border border-slate-700 rounded-xl text-white font-mono text-sm focus:border-amber-400 focus:outline-hidden"
               />
             </div>
@@ -448,7 +448,7 @@ export const AdminLayout: React.FC = () => {
         </header>
 
         {/* Content Outlet for Admin Pages */}
-        <main className="flex-1 p-3 sm:p-6 lg:p-8 min-w-0 text-slate-900">
+        <main className="flex-1 p-2 sm:p-3 lg:p-4 min-w-0 text-slate-900">
           <Outlet />
         </main>
       </div>

@@ -15,6 +15,8 @@ export interface User {
   name: string;
   username?: string;
   password?: string;
+  passwordHash?: string;
+  passwordSalt?: string;
   email: string;
   phone: string;
   role: UserRole;

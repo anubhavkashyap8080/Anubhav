@@ -26,11 +26,14 @@ import { mockBlogPosts } from '../data/mockBlogPosts';
 import { mockProducts } from '../data/mockProducts';
 import { mockCategories } from '../data/mockCategories';
 
+import { SEED_CREDENTIALS } from '../utils/cryptoUtils';
+
 interface PlatformContextType {
   // Users Manager
   users: User[];
   addUser: (user: Omit<User, 'id' | 'joinedDate'>) => void;
   updateUserRole: (userId: string, newRole: UserRole) => void;
+  updateUserPassword: (userId: string, passwordHash: string, passwordSalt: string) => void;
   toggleUserStatus: (userId: string) => void;
   deleteUser: (userId: string) => void;
 
@@ -95,8 +98,32 @@ const PlatformContext = createContext<PlatformContextType | undefined>(undefined
 export const PlatformProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   // 1. Users State
   const [users, setUsers] = useState<User[]>(() => {
-    const saved = localStorage.getItem('ggh_platform_users');
-    return saved ? JSON.parse(saved) : initialUsers;
+    try {
+      const saved = localStorage.getItem('ggh_platform_users');
+      if (saved) {
+        const parsed: User[] = JSON.parse(saved);
+        if (Array.isArray(parsed) && parsed.length > 0) {
+          return parsed.map(u => {
+            if (!u.passwordHash || !u.passwordSalt) {
+              const seed = u.role === 'customer'
+                ? SEED_CREDENTIALS.shopper
+                : u.role === 'vendor'
+                ? SEED_CREDENTIALS.seller
+                : SEED_CREDENTIALS.admin;
+              const sanitized = { ...u, passwordHash: seed.hashHex, passwordSalt: seed.saltHex };
+              delete sanitized.password;
+              return sanitized;
+            }
+            const sanitized = { ...u };
+            delete sanitized.password;
+            return sanitized;
+          });
+        }
+      }
+    } catch (e) {
+      console.warn('Failed to load users:', e);
+    }
+    return initialUsers;
   });
 
   // 2. Vendors State
@@ -184,6 +211,17 @@ export const PlatformProvider: React.FC<{ children: React.ReactNode }> = ({ chil
 
   const updateUserRole = (userId: string, newRole: UserRole) => {
     setUsers(prev => prev.map(u => u.id === userId ? { ...u, role: newRole } : u));
+  };
+
+  const updateUserPassword = (userId: string, passwordHash: string, passwordSalt: string) => {
+    setUsers(prev => prev.map(u => {
+      if (u.id === userId) {
+        const updated = { ...u, passwordHash, passwordSalt };
+        delete updated.password;
+        return updated;
+      }
+      return u;
+    }));
   };
 
   const toggleUserStatus = (userId: string) => {
@@ -412,6 +450,7 @@ ${allUrls.map(u => `  <url>
         users,
         addUser,
         updateUserRole,
+        updateUserPassword,
         toggleUserStatus,
         deleteUser,
         vendors,

@@ -3,8 +3,9 @@ import { useSearchParams } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { usePlatform } from '../../context/PlatformContext';
 import { useSiteConfig } from '../../context/SiteConfigContext';
-import { UserRole, SupportTicket, BlogPost } from '../../types';
+import { User, UserRole, SupportTicket, BlogPost } from '../../types';
 import { FESTIVAL_PRESETS, initialAuditLogs } from '../../data/mockConfig';
+import { hashPassword } from '../../utils/cryptoUtils';
 import {
   Users,
   Building2,
@@ -63,6 +64,7 @@ export const AdminDashboard: React.FC = () => {
     users,
     addUser,
     updateUserRole,
+    updateUserPassword,
     toggleUserStatus,
     deleteUser,
     vendors,
@@ -160,8 +162,9 @@ export const AdminDashboard: React.FC = () => {
   const [newUserDepartment, setNewUserDepartment] = useState('');
   const [newUserRole, setNewUserRole] = useState<UserRole>('customer');
   const [showPasswordInForm, setShowPasswordInForm] = useState(false);
-  const [revealedPasswords, setRevealedPasswords] = useState<Record<string, boolean>>({});
-  const [copiedUserId, setCopiedUserId] = useState<string | null>(null);
+  const [resettingUser, setResettingUser] = useState<User | null>(null);
+  const [newResetPassword, setNewResetPassword] = useState('');
+  const [resetSuccessMessage, setResetSuccessMessage] = useState<string | null>(null);
 
   // Email Campaign Form State
   const [emailSubject, setEmailSubject] = useState('');
@@ -230,15 +233,17 @@ export const AdminDashboard: React.FC = () => {
     return t.status === ticketFilter;
   });
 
-  const handleCreateUser = (e: React.FormEvent) => {
+  const handleCreateUser = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!newUserName.trim() || !newUserEmail.trim()) return;
     const cleanUsername = newUsername.trim() || newUserName.trim().toLowerCase().replace(/[^a-zA-Z0-9_]/g, '_');
-    const cleanPassword = newUserPassword.trim() || 'Welcome@2026';
+    const cleanPassword = newUserPassword.trim() || `Ggh@${Math.floor(1000 + Math.random() * 9000)}`;
+    const { hashHex, saltHex } = await hashPassword(cleanPassword);
     addUser({
       name: newUserName.trim(),
       username: cleanUsername,
-      password: cleanPassword,
+      passwordHash: hashHex,
+      passwordSalt: saltHex,
       email: newUserEmail.trim(),
       phone: newUserPhone.trim() || '+91 7897492100',
       role: newUserRole,
@@ -253,6 +258,19 @@ export const AdminDashboard: React.FC = () => {
     setNewUserDepartment('');
     setShowAddUserModal(false);
     notifySave();
+  };
+
+  const handleResetPassword = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!resettingUser || !newResetPassword.trim()) return;
+    const { hashHex, saltHex } = await hashPassword(newResetPassword.trim());
+    updateUserPassword(resettingUser.id, hashHex, saltHex);
+    setResetSuccessMessage(`Password successfully reset and encrypted with PBKDF2-SHA256 for @${resettingUser.username || resettingUser.name}!`);
+    setTimeout(() => {
+      setResetSuccessMessage(null);
+      setResettingUser(null);
+      setNewResetPassword('');
+    }, 2500);
   };
 
   const handleSendEmail = (e: React.FormEvent) => {
@@ -288,7 +306,7 @@ export const AdminDashboard: React.FC = () => {
   };
 
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-6 w-full max-w-full overflow-x-hidden min-w-0">
+    <div className="w-full space-y-4 min-w-0 p-0 sm:p-1">
       
       {/* Save Success Floating Toast */}
       {saveSuccessNotice && (
@@ -299,7 +317,7 @@ export const AdminDashboard: React.FC = () => {
       )}
 
       {/* Top Banner with Active User & Fast Role Switcher */}
-      <div className="bg-gradient-to-r from-emerald-950 via-slate-900 to-emerald-900 rounded-2xl p-4 sm:p-5 text-white shadow-lg flex flex-col md:flex-row items-start md:items-center justify-between gap-3 border border-emerald-800/40">
+      <div className="bg-gradient-to-r from-emerald-950 via-slate-900 to-emerald-900 rounded-2xl p-3.5 sm:p-4 text-white shadow-lg flex flex-col md:flex-row items-start md:items-center justify-between gap-3 border border-emerald-800/40">
         <div>
           <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-emerald-800/80 text-amber-300 text-[11px] font-semibold mb-1 border border-amber-300/20">
             <Sparkles className="w-3 h-3 text-amber-300" />
@@ -337,7 +355,7 @@ export const AdminDashboard: React.FC = () => {
       </div>
 
       {/* Tab Navigation Menu */}
-      <div className="flex border-b border-gray-200 overflow-x-auto pb-1 scrollbar-none gap-2 text-xs font-semibold text-gray-600">
+      <div className="flex items-center border-b border-gray-200 overflow-x-auto pb-1.5 pt-0.5 scrollbar-none gap-1.5 text-xs font-semibold text-gray-600 flex-nowrap w-full">
         {[
           { id: 'overview', label: 'Overview', icon: TrendingUp },
           { id: 'products', label: `Products Catalog (${products.length})`, icon: ShoppingBag, permRoles: ['super_admin', 'admin', 'marketer', 'vendor'] },
@@ -761,7 +779,7 @@ export const AdminDashboard: React.FC = () => {
               <thead className="bg-gray-50 text-gray-500 uppercase font-semibold">
                 <tr>
                   <th className="p-3">User & Handle</th>
-                  <th className="p-3">Login Credentials</th>
+                  <th className="p-3">Auth Security</th>
                   <th className="p-3">Phone</th>
                   <th className="p-3">Role</th>
                   <th className="p-3">Status</th>
@@ -772,9 +790,6 @@ export const AdminDashboard: React.FC = () => {
               <tbody className="divide-y divide-gray-100">
                 {filteredUsers.map(user => {
                   const userHandle = user.username || user.email.split('@')[0];
-                  const isRevealed = revealedPasswords[user.id];
-                  const userPass = user.password || (user.role === 'vendor' ? 'seller123' : user.role === 'customer' ? 'shopper123' : 'admin123');
-                  const isCopied = copiedUserId === user.id;
 
                   return (
                     <tr key={user.id} className="hover:bg-gray-50/60">
@@ -797,30 +812,21 @@ export const AdminDashboard: React.FC = () => {
                         </div>
                       </td>
                       <td className="p-3">
-                        <div className="inline-flex items-center gap-1.5 bg-gray-50 border border-gray-200 px-2 py-1 rounded-lg">
-                          <Key className="w-3 h-3 text-brand-green shrink-0" />
-                          <span className="font-mono text-[11px] font-semibold text-gray-800">
-                            {isRevealed ? userPass : '••••••••'}
+                        <div className="flex items-center gap-2">
+                          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-mono font-semibold bg-emerald-50 text-emerald-800 border border-emerald-200">
+                            <ShieldCheck className="w-3 h-3 text-emerald-600" />
+                            <span>PBKDF2-SHA256</span>
                           </span>
                           <button
                             type="button"
-                            onClick={() => setRevealedPasswords(prev => ({ ...prev, [user.id]: !isRevealed }))}
-                            className="text-gray-400 hover:text-gray-700 p-0.5 cursor-pointer ml-1"
-                            title={isRevealed ? 'Hide Password' : 'Show Password'}
-                          >
-                            {isRevealed ? <EyeOff className="w-3 h-3" /> : <Eye className="w-3 h-3" />}
-                          </button>
-                          <button
-                            type="button"
                             onClick={() => {
-                              navigator.clipboard.writeText(`Username: ${userHandle}\nPassword: ${userPass}\nEmail: ${user.email}`);
-                              setCopiedUserId(user.id);
-                              setTimeout(() => setCopiedUserId(null), 2000);
+                              setResettingUser(user);
+                              setNewResetPassword(`Ggh@${Math.floor(1000 + Math.random() * 9000)}`);
                             }}
-                            className="text-gray-400 hover:text-brand-green p-0.5 cursor-pointer"
-                            title="Copy Login Credentials"
+                            className="px-2 py-1 bg-white hover:bg-gray-100 text-gray-700 border border-gray-300 rounded-lg text-[10px] font-bold cursor-pointer transition-colors shadow-2xs"
+                            title="Reset User Password (PBKDF2 Hashed)"
                           >
-                            {isCopied ? <Check className="w-3 h-3 text-emerald-600" /> : <Copy className="w-3 h-3" />}
+                            Reset Key
                           </button>
                         </div>
                       </td>
@@ -2649,6 +2655,91 @@ export const AdminDashboard: React.FC = () => {
             </div>
           </div>
 
+        </div>
+      )}
+
+      {/* Cryptographic Reset Password Modal */}
+      {resettingUser && (
+        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4">
+          <div className="bg-white rounded-3xl p-6 max-w-md w-full space-y-4 shadow-2xl animate-in zoom-in-95 duration-150">
+            <div className="flex items-center justify-between border-b border-gray-100 pb-3">
+              <div className="flex items-center gap-2">
+                <div className="w-8 h-8 rounded-xl bg-amber-100 text-amber-800 flex items-center justify-center">
+                  <Key className="w-4 h-4" />
+                </div>
+                <div>
+                  <h4 className="font-bold text-base text-gray-900 font-display">Reset User Password</h4>
+                  <p className="text-[11px] text-gray-500">Cryptographic PBKDF2-SHA256 re-keying</p>
+                </div>
+              </div>
+              <button
+                onClick={() => setResettingUser(null)}
+                className="p-1 text-gray-400 hover:text-gray-700 rounded-lg cursor-pointer"
+              >
+                ✕
+              </button>
+            </div>
+
+            {resetSuccessMessage ? (
+              <div className="p-3 bg-emerald-50 border border-emerald-200 text-emerald-900 rounded-xl text-xs font-semibold flex items-center gap-2">
+                <Check className="w-4 h-4 text-emerald-600" />
+                <span>{resetSuccessMessage}</span>
+              </div>
+            ) : (
+              <form onSubmit={handleResetPassword} className="space-y-3 text-xs">
+                <div className="p-2.5 bg-slate-900 text-white rounded-xl text-xs space-y-1">
+                  <div className="flex items-center justify-between">
+                    <span className="text-slate-400">Target User:</span>
+                    <span className="font-bold text-amber-300">@{resettingUser.username || resettingUser.name}</span>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <span className="text-slate-400">Email:</span>
+                    <span className="font-mono text-slate-200 text-[11px]">{resettingUser.email}</span>
+                  </div>
+                </div>
+
+                <div>
+                  <div className="flex items-center justify-between mb-1">
+                    <label className="font-semibold text-gray-700">New Password *</label>
+                    <button
+                      type="button"
+                      onClick={() => setNewResetPassword(`Ggh@${Math.floor(1000 + Math.random() * 9000)}`)}
+                      className="text-[10px] text-brand-green hover:underline cursor-pointer font-semibold"
+                    >
+                      Auto-Generate Secure Key
+                    </button>
+                  </div>
+                  <input
+                    type="text"
+                    required
+                    placeholder="Enter new password"
+                    value={newResetPassword}
+                    onChange={(e) => setNewResetPassword(e.target.value)}
+                    className="w-full p-2.5 border border-gray-300 rounded-xl font-mono text-xs"
+                  />
+                  <p className="text-[10px] text-gray-400 mt-1">
+                    Password will be hashed immediately with 16-byte random salt and 100,000 PBKDF2 iterations.
+                  </p>
+                </div>
+
+                <div className="flex items-center justify-end gap-2 pt-2">
+                  <button
+                    type="button"
+                    onClick={() => setResettingUser(null)}
+                    className="px-4 py-2 border border-gray-300 rounded-xl text-xs font-semibold text-gray-700 hover:bg-gray-50 cursor-pointer"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="submit"
+                    className="px-4 py-2 bg-brand-green hover:bg-brand-green-dark text-white rounded-xl text-xs font-bold cursor-pointer transition-colors shadow-xs"
+                  >
+                    Save & Encrypt Key
+                  </button>
+                </div>
+              </form>
+            )}
+          </div>
         </div>
       )}
 

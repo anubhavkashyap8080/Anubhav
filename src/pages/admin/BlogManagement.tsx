@@ -240,7 +240,7 @@ export const BlogManagement: React.FC = () => {
   );
 
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 space-y-8">
+    <div className="w-full space-y-4 min-w-0 p-0 sm:p-1">
       
       {/* Toast Notification */}
       {toastMessage && (

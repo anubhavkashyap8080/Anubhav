@@ -55,8 +55,8 @@ export const AuthModal: React.FC = () => {
   const [sellerIdentifier, setSellerIdentifier] = useState('');
   const [sellerPassOrOtp, setSellerPassOrOtp] = useState('');
 
-  // Admin Form State
-  const [adminIdentifier, setAdminIdentifier] = useState('admin@gaungalihat.com');
+  // Admin Form State (Cleaned: No pre-filled credentials for visitors)
+  const [adminIdentifier, setAdminIdentifier] = useState('');
   const [adminPasscode, setAdminPasscode] = useState('');
 
   // Status & Errors
@@ -113,25 +113,36 @@ export const AuthModal: React.FC = () => {
   };
 
   // Handle Customer Email Login
-  const handleCustomerEmailLogin = (e: React.FormEvent) => {
+  const handleCustomerEmailLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setErrorMsg('');
     if (!customerEmail.trim()) {
       setErrorMsg('Please enter your email address');
       return;
     }
-    loginWithEmail(customerEmail, customerPassword);
+    setIsLoading(true);
+    const res = await loginWithEmail(customerEmail, customerPassword);
+    setIsLoading(false);
+    if (!res.success) {
+      setErrorMsg(res.message || 'Invalid login credentials');
+    }
   };
 
   // Handle Seller Login
-  const handleSellerLogin = (e: React.FormEvent) => {
+  const handleSellerLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setErrorMsg('');
     if (!sellerIdentifier.trim()) {
       setErrorMsg('Please enter registered artisan phone or business email');
       return;
     }
-    const res = loginAsSeller(sellerIdentifier, sellerPassOrOtp || 'seller123');
+    if (!sellerPassOrOtp.trim()) {
+      setErrorMsg('Please enter your password or verification OTP');
+      return;
+    }
+    setIsLoading(true);
+    const res = await loginAsSeller(sellerIdentifier, sellerPassOrOtp);
+    setIsLoading(false);
     if (res.success) {
       navigate('/seller/dashboard');
     } else {
@@ -140,14 +151,20 @@ export const AuthModal: React.FC = () => {
   };
 
   // Handle Admin Login
-  const handleAdminLogin = (e: React.FormEvent) => {
+  const handleAdminLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setErrorMsg('');
     if (!adminIdentifier.trim()) {
-      setErrorMsg('Please enter administrator email or ID');
+      setErrorMsg('Please enter administrator username or email');
       return;
     }
-    const res = loginAsAdmin(adminIdentifier, adminPasscode);
+    if (!adminPasscode.trim()) {
+      setErrorMsg('Please enter your security passcode');
+      return;
+    }
+    setIsLoading(true);
+    const res = await loginAsAdmin(adminIdentifier, adminPasscode);
+    setIsLoading(false);
     if (res.success) {
       navigate('/admin');
     } else {
@@ -353,7 +370,7 @@ export const AuthModal: React.FC = () => {
                     <label className="block font-semibold text-gray-700 mb-1">Password</label>
                     <input
                       type="password"
-                      placeholder="Enter account password (default: shopper123)"
+                      placeholder="Enter account password"
                       value={customerPassword}
                       onChange={(e) => setCustomerPassword(e.target.value)}
                       className="w-full p-2.5 border border-gray-300 rounded-xl"
@@ -414,7 +431,7 @@ export const AuthModal: React.FC = () => {
                 <div>
                   <div className="flex justify-between items-center mb-1">
                     <label className="font-semibold text-gray-700">Password / Access Key</label>
-                    <span className="text-[10px] text-brand-orange font-semibold">Your password or "seller123"</span>
+                    <span className="text-[10px] text-gray-400 font-mono">PBKDF2 Encrypted</span>
                   </div>
                   <input
                     type="password"
@@ -477,12 +494,12 @@ export const AuthModal: React.FC = () => {
                 <div>
                   <div className="flex justify-between items-center mb-1">
                     <label className="font-semibold text-gray-700">Security Passcode / Password</label>
-                    <span className="text-[10px] text-emerald-700 font-semibold">Your password or master PIN: 7897</span>
+                    <span className="text-[10px] text-gray-400 font-mono">PBKDF2 Encrypted</span>
                   </div>
                   <input
                     type="password"
                     required
-                    placeholder="Enter your security password or PIN"
+                    placeholder="Enter authorized security password"
                     value={adminPasscode}
                     onChange={(e) => setAdminPasscode(e.target.value)}
                     className="w-full p-2.5 border border-gray-300 rounded-xl font-mono text-sm"

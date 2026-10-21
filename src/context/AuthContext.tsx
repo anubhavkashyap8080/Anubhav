@@ -1,6 +1,7 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { User, UserRole, FirebaseSettings } from '../types';
 import { initialUsers, initialFirebaseSettings } from '../data/mockConfig';
+import { hashPassword, verifyPassword, SEED_CREDENTIALS } from '../utils/cryptoUtils';
 
 export type AuthTabType = 'customer' | 'seller' | 'admin';
 
@@ -12,9 +13,9 @@ interface AuthContextType {
   authModalTab: AuthTabType;
   openAuthModal: (tab?: AuthTabType) => void;
   closeAuthModal: () => void;
-  loginWithEmail: (email: string, pass?: string) => { success: boolean; message?: string };
-  loginAsSeller: (identifier: string, passOrOtp: string) => { success: boolean; message?: string };
-  loginAsAdmin: (identifier: string, passOrPin: string) => { success: boolean; message?: string };
+  loginWithEmail: (email: string, pass?: string) => Promise<{ success: boolean; message?: string }>;
+  loginAsSeller: (identifier: string, passOrOtp: string) => Promise<{ success: boolean; message?: string }>;
+  loginAsAdmin: (identifier: string, passOrPin: string) => Promise<{ success: boolean; message?: string }>;
   loginWithSocial: (provider: 'google' | 'firebase') => void;
   sendPhoneOtp: (phone: string) => Promise<{ success: boolean; testOtp?: string }>;
   verifyPhoneOtp: (phone: string, otp: string, intendedRole?: UserRole) => boolean;
@@ -88,7 +89,21 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       if (raw) {
         const parsed = JSON.parse(raw);
         if (Array.isArray(parsed) && parsed.length > 0) {
-          return parsed;
+          return parsed.map(u => {
+            if (!u.passwordHash || !u.passwordSalt) {
+              const seed = u.role === 'customer'
+                ? SEED_CREDENTIALS.shopper
+                : u.role === 'vendor'
+                ? SEED_CREDENTIALS.seller
+                : SEED_CREDENTIALS.admin;
+              const sanitized = { ...u, passwordHash: seed.hashHex, passwordSalt: seed.saltHex };
+              delete sanitized.password;
+              return sanitized;
+            }
+            const sanitized = { ...u };
+            delete sanitized.password;
+            return sanitized;
+          });
         }
       }
     } catch {
@@ -97,8 +112,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     return initialUsers;
   };
 
-  // Customer Login with Email or Username
-  const loginWithEmail = (identifier: string, pass?: string) => {
+  // Customer Login with Email or Username (PBKDF2-HMAC-SHA256 Cryptographic Check)
+  const loginWithEmail = async (identifier: string, pass?: string): Promise<{ success: boolean; message?: string }> => {
     const trimmed = identifier.trim().toLowerCase();
     const allUsers = getStoredUsers();
     const found = allUsers.find(u => 
@@ -106,8 +121,16 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       (u.username && u.username.toLowerCase() === trimmed)
     );
     if (found) {
-      if (found.password && pass && found.password !== pass) {
-        return { success: false, message: 'Invalid password. Please check your credentials.' };
+      if (pass) {
+        let isMatch = false;
+        if (found.passwordHash && found.passwordSalt) {
+          isMatch = await verifyPassword(pass, found.passwordHash, found.passwordSalt);
+        } else if (found.password) {
+          isMatch = (found.password === pass);
+        }
+        if (!isMatch) {
+          return { success: false, message: 'Invalid credentials. Password verification failed.' };
+        }
       }
       setCurrentUser(found);
       closeAuthModal();
@@ -115,11 +138,14 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
 
     // New Customer
+    const userPass = pass || `Shopper@${Math.floor(1000 + Math.random() * 9000)}`;
+    const { hashHex, saltHex } = await hashPassword(userPass);
     const newUser: User = {
       id: `user-${Date.now()}`,
       name: trimmed.includes('@') ? trimmed.split('@')[0] : trimmed,
       username: trimmed.includes('@') ? trimmed.split('@')[0] : trimmed,
-      password: pass || 'shopper123',
+      passwordHash: hashHex,
+      passwordSalt: saltHex,
       email: trimmed.includes('@') ? trimmed : `${trimmed}@shopper.gaungalihat.com`,
       phone: '+91 98000 00000',
       role: 'customer',
@@ -127,13 +153,19 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       status: 'active',
       joinedDate: 'Today'
     };
+    try {
+      const existing = getStoredUsers();
+      localStorage.setItem('ggh_platform_users', JSON.stringify([newUser, ...existing]));
+    } catch (e) {
+      console.warn('Storage save error:', e);
+    }
     setCurrentUser(newUser);
     closeAuthModal();
     return { success: true };
   };
 
-  // Seller / Artisan Login with Username, Email or Phone
-  const loginAsSeller = (identifier: string, passOrOtp: string) => {
+  // Seller / Artisan Login with Username, Email or Phone (PBKDF2 Verification)
+  const loginAsSeller = async (identifier: string, passOrOtp: string): Promise<{ success: boolean; message?: string }> => {
     const trimmed = identifier.trim().toLowerCase();
     const cleanPhone = identifier.replace(/\D/g, '');
     const allUsers = getStoredUsers();
@@ -148,30 +180,36 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     );
 
     if (foundSeller) {
-      const isSellerPassValid =
-        (foundSeller.password && foundSeller.password === passOrOtp) ||
-        passOrOtp === 'seller123' ||
-        passOrOtp === '123456' ||
-        passOrOtp.length === 6;
+      let isMatch = false;
+      if (foundSeller.passwordHash && foundSeller.passwordSalt) {
+        isMatch = await verifyPassword(passOrOtp, foundSeller.passwordHash, foundSeller.passwordSalt);
+      } else if (foundSeller.password) {
+        isMatch = (foundSeller.password === passOrOtp);
+      }
+      if (!isMatch && passOrOtp.length === 6 && /^\d+$/.test(passOrOtp)) {
+        isMatch = true;
+      }
 
-      if (isSellerPassValid) {
+      if (isMatch) {
         setCurrentUser(foundSeller);
         closeAuthModal();
         return { success: true };
       }
       return {
         success: false,
-        message: 'Invalid password. Please enter the correct password for your artisan account.'
+        message: 'Invalid credentials. Please enter the correct artisan password or OTP.'
       };
     }
 
-    // Allow seller authentication with test pass or OTP for new artisan numbers
-    if (passOrOtp.length >= 4 || passOrOtp === '123456' || passOrOtp === 'seller123') {
+    // New artisan registering with 6-digit OTP
+    if (passOrOtp.length === 6 && /^\d+$/.test(passOrOtp)) {
+      const { hashHex, saltHex } = await hashPassword(passOrOtp);
       const sellerUser: User = {
         id: `seller-${Date.now()}`,
         name: trimmed.includes('@') ? trimmed.split('@')[0] : `Artisan Partner ${cleanPhone.slice(-4)}`,
         username: trimmed.replace(/[^a-zA-Z0-9_]/g, '') || `seller_${Date.now().toString().slice(-4)}`,
-        password: passOrOtp,
+        passwordHash: hashHex,
+        passwordSalt: saltHex,
         email: trimmed.includes('@') ? trimmed : `artisan${cleanPhone}@gaungalihat.com`,
         phone: cleanPhone ? `+91 ${cleanPhone}` : '+91 7897492100',
         role: 'vendor',
@@ -180,6 +218,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         joinedDate: 'Today',
         department: 'Artisan & Foundry Partner'
       };
+      try {
+        const existing = getStoredUsers();
+        localStorage.setItem('ggh_platform_users', JSON.stringify([sellerUser, ...existing]));
+      } catch (e) {
+        console.warn('Storage save error:', e);
+      }
       setCurrentUser(sellerUser);
       closeAuthModal();
       return { success: true };
@@ -191,8 +235,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     };
   };
 
-  // Admin / Staff Login with Username, Email or Phone
-  const loginAsAdmin = (identifier: string, passOrPin: string) => {
+  // Admin / Staff Login with Username, Email or Phone (Hardened PBKDF2-HMAC-SHA256)
+  const loginAsAdmin = async (identifier: string, passOrPin: string): Promise<{ success: boolean; message?: string }> => {
     const trimmed = identifier.trim().toLowerCase();
     const cleanPhone = identifier.replace(/\D/g, '');
     const allUsers = getStoredUsers();
@@ -208,35 +252,28 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       )
     );
 
-    const isMasterPass =
-      passOrPin === 'admin123' ||
-      passOrPin === '7897' ||
-      passOrPin === '8080' ||
-      passOrPin === '123456';
-
     if (staffMatch) {
-      const passValid = (staffMatch.password && staffMatch.password === passOrPin) || isMasterPass;
-      if (passValid) {
+      let isMatch = false;
+      if (staffMatch.passwordHash && staffMatch.passwordSalt) {
+        isMatch = await verifyPassword(passOrPin, staffMatch.passwordHash, staffMatch.passwordSalt);
+      } else if (staffMatch.password) {
+        isMatch = (staffMatch.password === passOrPin);
+      }
+
+      if (isMatch) {
         setCurrentUser(staffMatch);
         closeAuthModal();
         return { success: true };
       }
       return {
         success: false,
-        message: 'Invalid password. Please check your admin credentials.'
+        message: 'Security Clearance Denied: Invalid administrator password. Cryptographic check failed.'
       };
-    }
-
-    // Default root Super Admin login fallback
-    if ((trimmed === 'admin@gaungalihat.com' || trimmed === 'anubhavkashyap8080@gmail.com' || trimmed === 'admin' || trimmed === 'anubhav') && isMasterPass) {
-      setCurrentUser(allUsers[0] || initialUsers[0]);
-      closeAuthModal();
-      return { success: true };
     }
 
     return {
       success: false,
-      message: 'Access Denied: No staff account found for this username/email.'
+      message: 'Access Denied: No authorized administrative staff account found for this username/email.'
     };
   };
 
