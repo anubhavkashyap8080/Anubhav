@@ -2,6 +2,7 @@ import React, { createContext, useContext, useState, useEffect } from 'react';
 import { User, UserRole, FirebaseSettings } from '../types';
 import { initialUsers, initialFirebaseSettings } from '../data/mockConfig';
 import { hashPassword, verifyPassword, SEED_CREDENTIALS } from '../utils/cryptoUtils';
+import { fetchRemoteUsers, pushRemoteUsers, mergeUsers, syncOnStartup } from '../utils/cloudSync';
 
 export type AuthTabType = 'customer' | 'seller' | 'admin';
 
@@ -76,6 +77,22 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     localStorage.setItem(FIREBASE_STORAGE_KEY, JSON.stringify(firebaseSettings));
   }, [firebaseSettings]);
 
+  // Synchronize staff and users across devices on startup
+  useEffect(() => {
+    syncOnStartup().catch(() => {});
+
+    const handleSync = () => {
+      if (currentUser) {
+        const latestUsers = getStoredUsers();
+        const updated = latestUsers.find(u => u.id === currentUser.id);
+        if (updated) setCurrentUser(updated);
+      }
+    };
+
+    window.addEventListener('ggh_users_synced', handleSync);
+    return () => window.removeEventListener('ggh_users_synced', handleSync);
+  }, [currentUser]);
+
   const openAuthModal = (tab: AuthTabType = 'customer') => {
     setAuthModalTab(tab);
     setIsAuthModalOpen(true);
@@ -112,21 +129,44 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     return initialUsers;
   };
 
-  // Customer Login with Email or Username (PBKDF2-HMAC-SHA256 Cryptographic Check)
+  // Customer Login with Email or Username (PBKDF2-HMAC-SHA256 Cryptographic Check + Cross-Device Sync)
   const loginWithEmail = async (identifier: string, pass?: string): Promise<{ success: boolean; message?: string }> => {
     const trimmed = identifier.trim().toLowerCase();
-    const allUsers = getStoredUsers();
-    const found = allUsers.find(u => 
+    const cleanPass = pass?.trim();
+    let allUsers = getStoredUsers();
+
+    let found = allUsers.find(u => 
       u.email.toLowerCase() === trimmed ||
       (u.username && u.username.toLowerCase() === trimmed)
     );
+
+    // If not found in local cache, check central sync API
+    if (!found) {
+      try {
+        const remote = await fetchRemoteUsers();
+        if (remote && remote.length > 0) {
+          allUsers = mergeUsers(allUsers, remote);
+          localStorage.setItem('ggh_platform_users', JSON.stringify(allUsers));
+          found = allUsers.find(u => 
+            u.email.toLowerCase() === trimmed ||
+            (u.username && u.username.toLowerCase() === trimmed)
+          );
+        }
+      } catch (err) {
+        console.warn('Remote sync check error:', err);
+      }
+    }
+
     if (found) {
       if (pass) {
         let isMatch = false;
         if (found.passwordHash && found.passwordSalt) {
-          isMatch = await verifyPassword(pass, found.passwordHash, found.passwordSalt);
+          isMatch = await verifyPassword(cleanPass || pass, found.passwordHash, found.passwordSalt);
+          if (!isMatch && cleanPass && pass !== cleanPass) {
+            isMatch = await verifyPassword(pass, found.passwordHash, found.passwordSalt);
+          }
         } else if (found.password) {
-          isMatch = (found.password === pass);
+          isMatch = (found.password === pass || found.password === cleanPass);
         }
         if (!isMatch) {
           return { success: false, message: 'Invalid credentials. Password verification failed.' };
@@ -137,8 +177,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       return { success: true };
     }
 
-    // New Customer
-    const userPass = pass || `Shopper@${Math.floor(1000 + Math.random() * 9000)}`;
+    // New Customer Registration
+    const userPass = cleanPass || pass || `Shopper@${Math.floor(1000 + Math.random() * 9000)}`;
     const { hashHex, saltHex } = await hashPassword(userPass);
     const newUser: User = {
       id: `user-${Date.now()}`,
@@ -155,7 +195,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     };
     try {
       const existing = getStoredUsers();
-      localStorage.setItem('ggh_platform_users', JSON.stringify([newUser, ...existing]));
+      const updated = [newUser, ...existing];
+      localStorage.setItem('ggh_platform_users', JSON.stringify(updated));
+      pushRemoteUsers(updated).catch(() => {});
     } catch (e) {
       console.warn('Storage save error:', e);
     }
@@ -164,14 +206,15 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     return { success: true };
   };
 
-  // Seller / Artisan Login with Username, Email or Phone (PBKDF2 Verification)
+  // Seller / Artisan Login with Username, Email or Phone (PBKDF2 Verification + Cross-Device Sync)
   const loginAsSeller = async (identifier: string, passOrOtp: string): Promise<{ success: boolean; message?: string }> => {
     const trimmed = identifier.trim().toLowerCase();
     const cleanPhone = identifier.replace(/\D/g, '');
-    const allUsers = getStoredUsers();
+    const cleanPass = passOrOtp.trim();
+    let allUsers = getStoredUsers();
 
-    // Check registered seller user
-    const foundSeller = allUsers.find(
+    // Check registered seller user locally
+    let foundSeller = allUsers.find(
       u => (u.role === 'vendor') && (
         (u.username && u.username.toLowerCase() === trimmed) ||
         u.email.toLowerCase() === trimmed ||
@@ -179,14 +222,37 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       )
     );
 
+    // If not found in local cache, pull from central server
+    if (!foundSeller) {
+      try {
+        const remote = await fetchRemoteUsers();
+        if (remote && remote.length > 0) {
+          allUsers = mergeUsers(allUsers, remote);
+          localStorage.setItem('ggh_platform_users', JSON.stringify(allUsers));
+          foundSeller = allUsers.find(
+            u => (u.role === 'vendor') && (
+              (u.username && u.username.toLowerCase() === trimmed) ||
+              u.email.toLowerCase() === trimmed ||
+              (cleanPhone.length >= 6 && u.phone.replace(/\D/g, '').includes(cleanPhone.slice(-6)))
+            )
+          );
+        }
+      } catch (err) {
+        console.warn('Remote sync check error:', err);
+      }
+    }
+
     if (foundSeller) {
       let isMatch = false;
       if (foundSeller.passwordHash && foundSeller.passwordSalt) {
-        isMatch = await verifyPassword(passOrOtp, foundSeller.passwordHash, foundSeller.passwordSalt);
+        isMatch = await verifyPassword(cleanPass, foundSeller.passwordHash, foundSeller.passwordSalt);
+        if (!isMatch && passOrOtp !== cleanPass) {
+          isMatch = await verifyPassword(passOrOtp, foundSeller.passwordHash, foundSeller.passwordSalt);
+        }
       } else if (foundSeller.password) {
-        isMatch = (foundSeller.password === passOrOtp);
+        isMatch = (foundSeller.password === cleanPass || foundSeller.password === passOrOtp);
       }
-      if (!isMatch && passOrOtp.length === 6 && /^\d+$/.test(passOrOtp)) {
+      if (!isMatch && cleanPass.length === 6 && /^\d+$/.test(cleanPass)) {
         isMatch = true;
       }
 
@@ -202,8 +268,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
 
     // New artisan registering with 6-digit OTP
-    if (passOrOtp.length === 6 && /^\d+$/.test(passOrOtp)) {
-      const { hashHex, saltHex } = await hashPassword(passOrOtp);
+    if (cleanPass.length === 6 && /^\d+$/.test(cleanPass)) {
+      const { hashHex, saltHex } = await hashPassword(cleanPass);
       const sellerUser: User = {
         id: `seller-${Date.now()}`,
         name: trimmed.includes('@') ? trimmed.split('@')[0] : `Artisan Partner ${cleanPhone.slice(-4)}`,
@@ -220,7 +286,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       };
       try {
         const existing = getStoredUsers();
-        localStorage.setItem('ggh_platform_users', JSON.stringify([sellerUser, ...existing]));
+        const updated = [sellerUser, ...existing];
+        localStorage.setItem('ggh_platform_users', JSON.stringify(updated));
+        pushRemoteUsers(updated).catch(() => {});
       } catch (e) {
         console.warn('Storage save error:', e);
       }
@@ -235,14 +303,14 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     };
   };
 
-  // Admin / Staff Login with Username, Email or Phone (Hardened PBKDF2-HMAC-SHA256)
+  // Admin / Staff Login with Username, Email or Phone (Hardened PBKDF2-HMAC-SHA256 + Automatic Cross-Device Remote Sync)
   const loginAsAdmin = async (identifier: string, passOrPin: string): Promise<{ success: boolean; message?: string }> => {
     const trimmed = identifier.trim().toLowerCase();
     const cleanPhone = identifier.replace(/\D/g, '');
-    const allUsers = getStoredUsers();
+    const cleanPass = passOrPin.trim();
+    let allUsers = getStoredUsers();
 
-    // Check staff in stored users (matching username, email, phone, or root keyword)
-    const staffMatch = allUsers.find(
+    const findStaff = (list: User[]) => list.find(
       u => ['super_admin', 'admin', 'marketer', 'content_writer', 'support'].includes(u.role) && (
         (u.username && u.username.toLowerCase() === trimmed) ||
         u.email.toLowerCase() === trimmed ||
@@ -252,12 +320,35 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       )
     );
 
+    // 1. Check local staff list
+    let staffMatch = findStaff(allUsers);
+
+    // 2. If NOT found locally (e.g. newly created on Desktop and logging in on Mobile):
+    if (!staffMatch) {
+      try {
+        const remoteUsers = await fetchRemoteUsers();
+        if (remoteUsers && remoteUsers.length > 0) {
+          const merged = mergeUsers(allUsers, remoteUsers);
+          localStorage.setItem('ggh_platform_users', JSON.stringify(merged));
+          allUsers = merged;
+          staffMatch = findStaff(allUsers);
+        }
+      } catch (err) {
+        console.warn('Cross-device staff lookup failed:', err);
+      }
+    }
+
     if (staffMatch) {
       let isMatch = false;
       if (staffMatch.passwordHash && staffMatch.passwordSalt) {
-        isMatch = await verifyPassword(passOrPin, staffMatch.passwordHash, staffMatch.passwordSalt);
+        // Test cleaned pass (trimmed of touch-keyboard spaces)
+        isMatch = await verifyPassword(cleanPass, staffMatch.passwordHash, staffMatch.passwordSalt);
+        // If not matching and raw pass had spaces, test raw pass
+        if (!isMatch && passOrPin !== cleanPass) {
+          isMatch = await verifyPassword(passOrPin, staffMatch.passwordHash, staffMatch.passwordSalt);
+        }
       } else if (staffMatch.password) {
-        isMatch = (staffMatch.password === passOrPin);
+        isMatch = (staffMatch.password === cleanPass || staffMatch.password === passOrPin);
       }
 
       if (isMatch) {
@@ -276,6 +367,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       message: 'Access Denied: No authorized administrative staff account found for this username/email.'
     };
   };
+
 
   const loginWithSocial = (_provider: 'google' | 'firebase') => {
     // Normal social login defaults to customer account for visitor security!

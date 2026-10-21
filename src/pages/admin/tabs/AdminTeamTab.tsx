@@ -683,6 +683,9 @@ export const AdminTeamTab: React.FC = () => {
                     <input
                       type="text"
                       required
+                      autoCapitalize="none"
+                      autoCorrect="off"
+                      spellCheck={false}
                       placeholder="vikram_ops"
                       value={newMemberUsername}
                       onChange={(e) => setNewMemberUsername(e.target.value.toLowerCase().replace(/[^a-zA-Z0-9_]/g, ''))}
@@ -706,6 +709,9 @@ export const AdminTeamTab: React.FC = () => {
                     <input
                       type={showMemberPasswordInForm ? 'text' : 'password'}
                       required
+                      autoCapitalize="none"
+                      autoCorrect="off"
+                      spellCheck={false}
                       placeholder="Admin@2026"
                       value={newMemberPassword}
                       onChange={(e) => setNewMemberPassword(e.target.value)}
@@ -728,6 +734,9 @@ export const AdminTeamTab: React.FC = () => {
                   <input
                     type="email"
                     required
+                    autoCapitalize="none"
+                    autoCorrect="off"
+                    spellCheck={false}
                     placeholder="vikram@ssindustries.in"
                     value={newMemberEmail}
                     onChange={(e) => setNewMemberEmail(e.target.value)}

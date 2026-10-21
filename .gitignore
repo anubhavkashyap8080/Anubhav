@@ -25,3 +25,7 @@ dist-ssr
 
 # Cloudflare
 .wrangler
+
+# Local Server State Sync
+.ggh_data
+

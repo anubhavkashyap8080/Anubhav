@@ -141,7 +141,7 @@ export const AuthModal: React.FC = () => {
       return;
     }
     setIsLoading(true);
-    const res = await loginAsSeller(sellerIdentifier, sellerPassOrOtp);
+    const res = await loginAsSeller(sellerIdentifier.trim(), sellerPassOrOtp.trim());
     setIsLoading(false);
     if (res.success) {
       navigate('/seller/dashboard');
@@ -163,7 +163,7 @@ export const AuthModal: React.FC = () => {
       return;
     }
     setIsLoading(true);
-    const res = await loginAsAdmin(adminIdentifier, adminPasscode);
+    const res = await loginAsAdmin(adminIdentifier.trim(), adminPasscode.trim());
     setIsLoading(false);
     if (res.success) {
       navigate('/admin');
@@ -420,6 +420,10 @@ export const AuthModal: React.FC = () => {
                   <input
                     type="text"
                     required
+                    autoCapitalize="none"
+                    autoCorrect="off"
+                    spellCheck={false}
+                    autoComplete="username"
                     placeholder="e.g. ramkishan_artisan, +91 83035 78806, or email"
                     value={sellerIdentifier}
                     onChange={(e) => setSellerIdentifier(e.target.value)}
@@ -435,6 +439,10 @@ export const AuthModal: React.FC = () => {
                   </div>
                   <input
                     type="password"
+                    autoCapitalize="none"
+                    autoCorrect="off"
+                    spellCheck={false}
+                    autoComplete="current-password"
                     placeholder="Enter seller password"
                     value={sellerPassOrOtp}
                     onChange={(e) => setSellerPassOrOtp(e.target.value)}
@@ -483,6 +491,10 @@ export const AuthModal: React.FC = () => {
                   <input
                     type="text"
                     required
+                    autoCapitalize="none"
+                    autoCorrect="off"
+                    spellCheck={false}
+                    autoComplete="username"
                     placeholder="Username (e.g. anubhav, sunil_ops) or email"
                     value={adminIdentifier}
                     onChange={(e) => setAdminIdentifier(e.target.value)}
@@ -499,6 +511,10 @@ export const AuthModal: React.FC = () => {
                   <input
                     type="password"
                     required
+                    autoCapitalize="none"
+                    autoCorrect="off"
+                    spellCheck={false}
+                    autoComplete="current-password"
                     placeholder="Enter authorized security password"
                     value={adminPasscode}
                     onChange={(e) => setAdminPasscode(e.target.value)}

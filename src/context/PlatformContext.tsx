@@ -27,6 +27,7 @@ import { mockProducts } from '../data/mockProducts';
 import { mockCategories } from '../data/mockCategories';
 
 import { SEED_CREDENTIALS } from '../utils/cryptoUtils';
+import { pushRemoteUsers, syncOnStartup } from '../utils/cloudSync';
 
 interface PlatformContextType {
   // Users Manager
@@ -36,6 +37,7 @@ interface PlatformContextType {
   updateUserPassword: (userId: string, passwordHash: string, passwordSalt: string) => void;
   toggleUserStatus: (userId: string) => void;
   deleteUser: (userId: string) => void;
+  syncWithCloud: () => Promise<{ synced: boolean; count: number }>;
 
   // Vendors Manager
   vendors: Seller[];
@@ -187,8 +189,41 @@ export const PlatformProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     }
   });
 
-  // Persist states
-  useEffect(() => { localStorage.setItem('ggh_platform_users', JSON.stringify(users)); }, [users]);
+  // Persist states & propagate to central sync server
+  useEffect(() => {
+    localStorage.setItem('ggh_platform_users', JSON.stringify(users));
+    pushRemoteUsers(users).catch(() => {});
+  }, [users]);
+
+  // Synchronize users state when an external sync or pairing event fires
+  useEffect(() => {
+    const handleSync = () => {
+      const saved = localStorage.getItem('ggh_platform_users');
+      if (saved) {
+        try {
+          const parsed = JSON.parse(saved);
+          if (Array.isArray(parsed) && parsed.length > 0) {
+            setUsers(parsed);
+          }
+        } catch {}
+      }
+    };
+    window.addEventListener('ggh_users_synced', handleSync);
+    return () => window.removeEventListener('ggh_users_synced', handleSync);
+  }, []);
+
+  const syncWithCloud = async () => {
+    const res = await syncOnStartup();
+    const saved = localStorage.getItem('ggh_platform_users');
+    if (saved) {
+      try {
+        const parsed = JSON.parse(saved);
+        if (Array.isArray(parsed)) setUsers(parsed);
+      } catch {}
+    }
+    return { synced: res.synced, count: res.count };
+  };
+
   useEffect(() => { localStorage.setItem('ggh_platform_vendors', JSON.stringify(vendors)); }, [vendors]);
   useEffect(() => { localStorage.setItem('ggh_platform_tickets', JSON.stringify(tickets)); }, [tickets]);
   useEffect(() => { localStorage.setItem('ggh_platform_posts', JSON.stringify(posts)); }, [posts]);
@@ -453,6 +488,7 @@ ${allUrls.map(u => `  <url>
         updateUserPassword,
         toggleUserStatus,
         deleteUser,
+        syncWithCloud,
         vendors,
         updateVendorKyc,
         updateVendorCommission,

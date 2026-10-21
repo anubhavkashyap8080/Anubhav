@@ -26,8 +26,14 @@ import {
   Activity,
   Layers,
   Lock,
-  AlertCircle
+  AlertCircle,
+  Smartphone,
+  QrCode,
+  RefreshCw
 } from 'lucide-react';
+import { DeviceSyncModal } from '../common/DeviceSyncModal';
+import { syncOnStartup } from '../../utils/cloudSync';
+
 
 export const AdminLayout: React.FC = () => {
   const { currentUser, currentRole, switchRole, logout, loginAsAdmin } = useAuth();
@@ -42,6 +48,22 @@ export const AdminLayout: React.FC = () => {
   const [gatePassword, setGatePassword] = useState('');
   const [gateError, setGateError] = useState('');
   const [gateLoading, setGateLoading] = useState(false);
+  const [showDeviceSyncModal, setShowDeviceSyncModal] = useState(false);
+  const [isGateSyncing, setIsGateSyncing] = useState(false);
+  const [gateSyncNotice, setGateSyncNotice] = useState<string | null>(null);
+
+  const handleRefreshGateAccounts = async () => {
+    setIsGateSyncing(true);
+    setGateSyncNotice(null);
+    try {
+      const res = await syncOnStartup();
+      setGateSyncNotice(`Refreshed: ${res.count} accounts available on this device.`);
+    } catch {
+      setGateSyncNotice('Sync check completed.');
+    } finally {
+      setIsGateSyncing(false);
+    }
+  };
 
   const isAuthorizedAdmin =
     currentUser &&
@@ -51,12 +73,13 @@ export const AdminLayout: React.FC = () => {
     e.preventDefault();
     setGateError('');
     setGateLoading(true);
-    const res = await loginAsAdmin(gateEmail, gatePassword);
+    const res = await loginAsAdmin(gateEmail.trim(), gatePassword.trim());
     setGateLoading(false);
     if (!res.success) {
       setGateError(res.message || 'Access Denied: Invalid administrator credentials.');
     }
   };
+
 
   const handleLogout = () => {
     logout();
@@ -150,6 +173,43 @@ export const AdminLayout: React.FC = () => {
             </div>
           )}
 
+          {gateSyncNotice && (
+            <div className="p-3 bg-emerald-950/60 border border-emerald-800 text-emerald-200 text-xs rounded-xl flex items-center gap-2">
+              <CheckCircle className="w-4 h-4 text-emerald-400 shrink-0" />
+              <span>{gateSyncNotice}</span>
+            </div>
+          )}
+
+          {/* Quick Mobile Sync & Account Pair Helper */}
+          <div className="p-2.5 rounded-xl bg-slate-950/80 border border-slate-800 flex items-center justify-between text-[11px]">
+            <div className="flex items-center gap-1.5 text-slate-300">
+              <Smartphone className="w-3.5 h-3.5 text-amber-400" />
+              <span>Multi-Device Sync</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <button
+                type="button"
+                onClick={handleRefreshGateAccounts}
+                disabled={isGateSyncing}
+                className="text-amber-400 hover:text-amber-300 font-semibold flex items-center gap-1 cursor-pointer transition-colors"
+                title="Pull latest admin accounts created on Desktop"
+              >
+                <RefreshCw className={`w-3 h-3 ${isGateSyncing ? 'animate-spin' : ''}`} />
+                <span>{isGateSyncing ? 'Syncing...' : 'Refresh Accounts'}</span>
+              </button>
+              <span className="text-slate-700">|</span>
+              <button
+                type="button"
+                onClick={() => setShowDeviceSyncModal(true)}
+                className="text-emerald-400 hover:text-emerald-300 font-semibold flex items-center gap-1 cursor-pointer transition-colors"
+                title="Scan QR code or enter pair token from Desktop"
+              >
+                <QrCode className="w-3 h-3" />
+                <span>Link Device</span>
+              </button>
+            </div>
+          </div>
+
           <form onSubmit={handleGateLogin} className="space-y-4 text-xs">
             <div>
               <label className="block font-semibold text-slate-300 mb-1">
@@ -158,6 +218,10 @@ export const AdminLayout: React.FC = () => {
               <input
                 type="text"
                 required
+                autoCapitalize="none"
+                autoCorrect="off"
+                spellCheck={false}
+                autoComplete="username"
                 value={gateEmail}
                 onChange={(e) => setGateEmail(e.target.value)}
                 placeholder="Username (e.g. anubhav, sunil_ops) or admin email"
@@ -173,6 +237,10 @@ export const AdminLayout: React.FC = () => {
               <input
                 type="password"
                 required
+                autoCapitalize="none"
+                autoCorrect="off"
+                spellCheck={false}
+                autoComplete="current-password"
                 value={gatePassword}
                 onChange={(e) => setGatePassword(e.target.value)}
                 placeholder="Enter authorized administrator password"
@@ -190,6 +258,7 @@ export const AdminLayout: React.FC = () => {
             </button>
           </form>
 
+
           <div className="pt-4 border-t border-slate-800 flex items-center justify-between text-xs">
             <Link
               to="/"
@@ -202,6 +271,8 @@ export const AdminLayout: React.FC = () => {
             </span>
           </div>
         </div>
+
+        <DeviceSyncModal isOpen={showDeviceSyncModal} onClose={() => setShowDeviceSyncModal(false)} />
       </div>
     );
   }
@@ -219,14 +290,27 @@ export const AdminLayout: React.FC = () => {
           </div>
         </div>
 
-        <button
-          onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-          className="p-2 rounded-xl bg-slate-800 text-slate-300 hover:text-white"
-          aria-label="Toggle Navigation"
-        >
-          {mobileMenuOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
-        </button>
+        <div className="flex items-center gap-2">
+          <button
+            type="button"
+            onClick={() => setShowDeviceSyncModal(true)}
+            className="p-2 rounded-xl bg-slate-800 text-amber-400 hover:text-white transition-colors cursor-pointer"
+            title="Mobile Account Sync"
+            aria-label="Device Sync"
+          >
+            <Smartphone className="w-4 h-4" />
+          </button>
+
+          <button
+            onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+            className="p-2 rounded-xl bg-slate-800 text-slate-300 hover:text-white"
+            aria-label="Toggle Navigation"
+          >
+            {mobileMenuOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
+          </button>
+        </div>
       </div>
+
 
       {/* Sidebar Navigation */}
       <aside
@@ -404,6 +488,17 @@ export const AdminLayout: React.FC = () => {
           </div>
 
           <div className="flex items-center gap-3">
+            {/* Multi-Device Account Sync */}
+            <button
+              type="button"
+              onClick={() => setShowDeviceSyncModal(true)}
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-amber-400/10 hover:bg-amber-400/20 text-amber-300 text-xs font-semibold transition-colors border border-amber-400/30 cursor-pointer"
+              title="Generate Mobile Sync Link & QR Code"
+            >
+              <Smartphone className="w-3.5 h-3.5" />
+              <span>Sync to Mobile</span>
+            </button>
+
             {/* Direct Storefront Shortcut */}
             <Link
               to="/"
@@ -453,6 +548,7 @@ export const AdminLayout: React.FC = () => {
         </main>
       </div>
 
+      <DeviceSyncModal isOpen={showDeviceSyncModal} onClose={() => setShowDeviceSyncModal(false)} />
     </div>
   );
 };

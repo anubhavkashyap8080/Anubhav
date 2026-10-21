@@ -920,6 +920,9 @@ export const AdminDashboard: React.FC = () => {
                         <input
                           type="text"
                           required
+                          autoCapitalize="none"
+                          autoCorrect="off"
+                          spellCheck={false}
                           placeholder="ramesh_ops"
                           value={newUsername}
                           onChange={(e) => setNewUsername(e.target.value.toLowerCase().replace(/[^a-zA-Z0-9_]/g, ''))}
@@ -943,6 +946,9 @@ export const AdminDashboard: React.FC = () => {
                         <input
                           type={showPasswordInForm ? 'text' : 'password'}
                           required
+                          autoCapitalize="none"
+                          autoCorrect="off"
+                          spellCheck={false}
                           placeholder="Pass@123"
                           value={newUserPassword}
                           onChange={(e) => setNewUserPassword(e.target.value)}
@@ -965,6 +971,9 @@ export const AdminDashboard: React.FC = () => {
                       <input
                         type="email"
                         required
+                        autoCapitalize="none"
+                        autoCorrect="off"
+                        spellCheck={false}
                         placeholder="ramesh@example.com"
                         value={newUserEmail}
                         onChange={(e) => setNewUserEmail(e.target.value)}
