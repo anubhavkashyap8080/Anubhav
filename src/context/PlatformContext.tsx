@@ -35,6 +35,7 @@ interface PlatformContextType {
   addUser: (user: Omit<User, 'id' | 'joinedDate'>) => void;
   updateUserRole: (userId: string, newRole: UserRole) => void;
   updateUserPassword: (userId: string, passwordHash: string, passwordSalt: string) => void;
+  updateUserProfile: (userId: string, updates: Partial<User>) => void;
   toggleUserStatus: (userId: string) => void;
   deleteUser: (userId: string) => void;
   syncWithCloud: () => Promise<{ synced: boolean; count: number }>;
@@ -43,6 +44,7 @@ interface PlatformContextType {
   vendors: Seller[];
   updateVendorKyc: (vendorId: string, status: 'Verified' | 'Pending Review' | 'Rejected') => void;
   updateVendorCommission: (vendorId: string, commission: number) => void;
+  updateVendor: (vendorId: string, updates: Partial<Seller>) => void;
   addVendor: (vendor: Omit<Seller, 'id'>) => void;
 
   // Tickets Manager
@@ -259,6 +261,10 @@ export const PlatformProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     }));
   };
 
+  const updateUserProfile = (userId: string, updates: Partial<User>) => {
+    setUsers(prev => prev.map(u => u.id === userId ? { ...u, ...updates } : u));
+  };
+
   const toggleUserStatus = (userId: string) => {
     setUsers(prev => prev.map(u => u.id === userId ? { ...u, status: u.status === 'active' ? 'suspended' : 'active' } : u));
   };
@@ -274,6 +280,10 @@ export const PlatformProvider: React.FC<{ children: React.ReactNode }> = ({ chil
 
   const updateVendorCommission = (vendorId: string, commission: number) => {
     setVendors(prev => prev.map(v => v.id === vendorId ? { ...v, commissionRate: commission } : v));
+  };
+
+  const updateVendor = (vendorId: string, updates: Partial<Seller>) => {
+    setVendors(prev => prev.map(v => v.id === vendorId ? { ...v, ...updates } : v));
   };
 
   const addVendor = (vendorData: Omit<Seller, 'id'>) => {
@@ -486,12 +496,14 @@ ${allUrls.map(u => `  <url>
         addUser,
         updateUserRole,
         updateUserPassword,
+        updateUserProfile,
         toggleUserStatus,
         deleteUser,
         syncWithCloud,
         vendors,
         updateVendorKyc,
         updateVendorCommission,
+        updateVendor,
         addVendor,
         tickets,
         createTicket,

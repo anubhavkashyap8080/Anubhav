@@ -18,6 +18,9 @@ interface AuthContextType {
   loginAsSeller: (identifier: string, passOrOtp: string) => Promise<{ success: boolean; message?: string }>;
   loginAsAdmin: (identifier: string, passOrPin: string) => Promise<{ success: boolean; message?: string }>;
   loginWithSocial: (provider: 'google' | 'firebase') => void;
+  loginWithGoogle: () => Promise<{ success: boolean; message?: string; needConfig?: boolean }>;
+  handleGoogleAuthSuccess: (profile: { email: string; name?: string; picture?: string; sub?: string }) => User;
+  updateCurrentUserProfile: (updates: Partial<User>) => void;
   sendPhoneOtp: (phone: string) => Promise<{ success: boolean; testOtp?: string }>;
   verifyPhoneOtp: (phone: string, otp: string, intendedRole?: UserRole) => boolean;
   switchRole: (role: UserRole) => void;
@@ -369,22 +372,106 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
 
-  const loginWithSocial = (_provider: 'google' | 'firebase') => {
-    // Normal social login defaults to customer account for visitor security!
-    const customerUser: User = {
-      id: `user-social-${Date.now()}`,
-      name: 'Google Shopper',
-      username: 'google_shopper',
-      email: 'shopper@gmail.com',
-      phone: '+91 98000 12345',
+  const handleGoogleAuthSuccess = (profile: { email: string; name?: string; picture?: string; sub?: string }): User => {
+    const allUsers = getStoredUsers();
+    const existing = allUsers.find(u => u.email.toLowerCase() === profile.email.toLowerCase());
+    if (existing) {
+      const updated = {
+        ...existing,
+        name: profile.name || existing.name,
+        avatar: profile.picture || existing.avatar,
+        lastLogin: 'Just now'
+      };
+      setCurrentUser(updated);
+      localStorage.setItem(AUTH_STORAGE_KEY, JSON.stringify(updated));
+      closeAuthModal();
+      return updated;
+    }
+
+    const newUser: User = {
+      id: `user-google-${profile.sub || Date.now()}`,
+      name: profile.name || profile.email.split('@')[0],
+      username: profile.email.split('@')[0].replace(/[^a-zA-Z0-9_]/g, '_'),
+      email: profile.email,
+      phone: '+91 98000 00000',
       role: 'customer',
-      avatar: 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&w=150&q=80',
+      avatar: profile.picture || 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&w=150&q=80',
       status: 'active',
       joinedDate: 'Today',
       lastLogin: 'Just now'
     };
-    setCurrentUser(customerUser);
+
+    const updatedList = [newUser, ...allUsers];
+    localStorage.setItem('ggh_platform_users', JSON.stringify(updatedList));
+    pushRemoteUsers(updatedList).catch(() => {});
+    setCurrentUser(newUser);
+    localStorage.setItem(AUTH_STORAGE_KEY, JSON.stringify(newUser));
     closeAuthModal();
+    return newUser;
+  };
+
+  const loginWithGoogle = async (): Promise<{ success: boolean; message?: string; needConfig?: boolean }> => {
+    const google = typeof window !== 'undefined' ? (window as any).google : null;
+    const clientId = firebaseSettings.googleClientId || (import.meta as any).env?.VITE_GOOGLE_CLIENT_ID;
+
+    if (google?.accounts?.oauth2 && clientId) {
+      return new Promise((resolve) => {
+        try {
+          const client = google.accounts.oauth2.initTokenClient({
+            client_id: clientId,
+            scope: 'email profile openid',
+            callback: async (tokenResponse: any) => {
+              if (tokenResponse?.access_token) {
+                try {
+                  const res = await fetch('https://www.googleapis.com/oauth2/v3/userinfo', {
+                    headers: { Authorization: `Bearer ${tokenResponse.access_token}` }
+                  });
+                  const profile = await res.json();
+                  if (profile && profile.email) {
+                    handleGoogleAuthSuccess(profile);
+                    resolve({ success: true });
+                    return;
+                  }
+                } catch (err: any) {
+                  resolve({ success: false, message: 'Google profile fetch failed: ' + err.message });
+                  return;
+                }
+              }
+              resolve({ success: false, message: 'Google Sign-In was cancelled or access denied.' });
+            },
+            error_callback: (err: any) => {
+              resolve({ success: false, message: 'Google Sign-In popup error: ' + (err?.message || 'Blocked') });
+            }
+          });
+          client.requestAccessToken({ prompt: 'select_account' });
+        } catch (err: any) {
+          resolve({ success: false, message: 'Google OAuth initialization failed: ' + err.message });
+        }
+      });
+    }
+
+    return {
+      success: false,
+      needConfig: true,
+      message: 'Google Client ID not configured yet. Please configure Google OAuth in Admin Settings or use Phone / Email login.'
+    };
+  };
+
+  const loginWithSocial = (provider: 'google' | 'firebase') => {
+    if (provider === 'google') {
+      loginWithGoogle().catch(() => {});
+    }
+  };
+
+  const updateCurrentUserProfile = (updates: Partial<User>) => {
+    if (!currentUser) return;
+    const updated = { ...currentUser, ...updates };
+    setCurrentUser(updated);
+    localStorage.setItem(AUTH_STORAGE_KEY, JSON.stringify(updated));
+    const allUsers = getStoredUsers();
+    const updatedList = allUsers.map(u => u.id === currentUser.id ? updated : u);
+    localStorage.setItem('ggh_platform_users', JSON.stringify(updatedList));
+    pushRemoteUsers(updatedList).catch(() => {});
   };
 
   const sendPhoneOtp = async (_phone: string): Promise<{ success: boolean; testOtp?: string }> => {
@@ -418,6 +505,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           status: 'active',
           joinedDate: 'Today'
         };
+        const updatedList = [newUser, ...allUsers];
+        localStorage.setItem('ggh_platform_users', JSON.stringify(updatedList));
+        pushRemoteUsers(updatedList).catch(() => {});
         setCurrentUser(newUser);
       }
       closeAuthModal();
@@ -463,6 +553,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         loginAsSeller,
         loginAsAdmin,
         loginWithSocial,
+        loginWithGoogle,
+        handleGoogleAuthSuccess,
+        updateCurrentUserProfile,
         sendPhoneOtp,
         verifyPhoneOtp,
         switchRole,

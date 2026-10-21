@@ -1,6 +1,5 @@
-import React, { createContext, useContext, useState, ReactNode } from 'react';
+import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { Product, CartItem } from '../types';
-import { mockProducts } from '../data/mockProducts';
 
 interface CartWishlistContextType {
   cart: CartItem[];
@@ -18,18 +17,50 @@ interface CartWishlistContextType {
 
 const CartWishlistContext = createContext<CartWishlistContextType | undefined>(undefined);
 
-export const CartWishlistProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
-  // Pre-seed with 2 realistic items to show active cart state preview
-  const [cart, setCart] = useState<CartItem[]>([
-    { product: mockProducts[0], quantity: 2 }, // Desi Hansiya
-    { product: mockProducts[1], quantity: 1 }, // Garden Khurpi
-  ]);
+const CART_STORAGE_KEY = 'ggh_user_cart';
+const WISHLIST_STORAGE_KEY = 'ggh_user_wishlist';
 
-  // Pre-seed with 2 wishlist items
-  const [wishlist, setWishlist] = useState<Product[]>([
-    mockProducts[2], // Heavy Fawda
-    mockProducts[3], // Chaff Cutter Toka Blade
-  ]);
+export const CartWishlistProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
+  // Empty by default — items only show when explicitly added by customer
+  const [cart, setCart] = useState<CartItem[]>(() => {
+    try {
+      const saved = localStorage.getItem(CART_STORAGE_KEY);
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        if (Array.isArray(parsed)) return parsed;
+      }
+    } catch {
+      // fallback
+    }
+    return [];
+  });
+
+  // Empty by default — items only show when explicitly added by customer
+  const [wishlist, setWishlist] = useState<Product[]>(() => {
+    try {
+      const saved = localStorage.getItem(WISHLIST_STORAGE_KEY);
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        if (Array.isArray(parsed)) return parsed;
+      }
+    } catch {
+      // fallback
+    }
+    return [];
+  });
+
+  // Persist to local storage
+  useEffect(() => {
+    try {
+      localStorage.setItem(CART_STORAGE_KEY, JSON.stringify(cart));
+    } catch {}
+  }, [cart]);
+
+  useEffect(() => {
+    try {
+      localStorage.setItem(WISHLIST_STORAGE_KEY, JSON.stringify(wishlist));
+    } catch {}
+  }, [wishlist]);
 
   const addToCart = (product: Product, quantity = 1) => {
     setCart(prev => {

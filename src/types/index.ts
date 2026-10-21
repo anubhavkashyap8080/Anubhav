@@ -28,6 +28,10 @@ export interface User {
   ordersCount?: number;
   assignedTickets?: number;
   vendorId?: string;
+  city?: string;
+  state?: string;
+  pincode?: string;
+  address?: string;
   workLog?: UserWorkLog[];
 }
 
@@ -257,6 +261,7 @@ export interface FirebaseSettings {
   messagingSenderId: string;
   appId: string;
   measurementId: string;
+  googleClientId?: string;
   enableSocialLogin: boolean;
   enablePhoneAuth: boolean;
 }

@@ -153,6 +153,7 @@ export const initialFirebaseSettings: FirebaseSettings = {
   messagingSenderId: '7897492100',
   appId: '1:7897492100:web:4f8e91a0c2',
   measurementId: 'G-7XYZ987654',
+  googleClientId: '',
   enableSocialLogin: true,
   enablePhoneAuth: true
 };

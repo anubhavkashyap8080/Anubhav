@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import {
   TrendingUp,
   Package,
@@ -29,15 +29,114 @@ import {
   RefreshCw,
   QrCode,
   ArrowRight,
-  FileText
+  FileText,
+  LogOut,
+  Lock,
+  KeyRound,
+  Eye,
+  EyeOff
 } from 'lucide-react';
 import { usePlatform } from '../context/PlatformContext';
 import { useAuth } from '../context/AuthContext';
 import { Product, Seller } from '../types';
+import { hashPassword, verifyPassword } from '../utils/cryptoUtils';
 
 export const SellerDashboard: React.FC = () => {
-  const { products, addProduct, updateProduct, deleteProduct, categories, vendors } = usePlatform();
-  const { currentUser, logout, openAuthModal } = useAuth();
+  const { products, addProduct, updateProduct, deleteProduct, categories, vendors, updateUserPassword, updateUserProfile } = usePlatform();
+  const { currentUser, logout, openAuthModal, loginAsSeller, updateCurrentUserProfile } = useAuth();
+  const navigate = useNavigate();
+
+  // Route Clearance Check
+  const isAuthorizedSeller =
+    currentUser &&
+    ['vendor', 'admin', 'super_admin'].includes(currentUser.role);
+
+  // Clearance Gate Form State
+  const [gateIdentifier, setGateIdentifier] = useState('');
+  const [gatePassOrOtp, setGatePassOrOtp] = useState('');
+  const [gateError, setGateError] = useState('');
+  const [gateLoading, setGateLoading] = useState(false);
+
+  const handleGateSellerLogin = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setGateError('');
+    setGateLoading(true);
+    const res = await loginAsSeller(gateIdentifier.trim(), gatePassOrOtp.trim());
+    setGateLoading(false);
+    if (!res.success) {
+      setGateError(res.message || 'Access Denied: Invalid artisan credentials.');
+    }
+  };
+
+  const handleSellerLogout = () => {
+    logout();
+    navigate('/');
+  };
+
+  // Password Change Form State
+  const [currentPassInput, setCurrentPassInput] = useState('');
+  const [newPassInput, setNewPassInput] = useState('');
+  const [confirmPassInput, setConfirmPassInput] = useState('');
+  const [showPass, setShowPass] = useState(false);
+  const [passError, setPassError] = useState('');
+  const [passSuccess, setPassSuccess] = useState('');
+  const [isChangingPass, setIsChangingPass] = useState(false);
+
+  const handlePasswordChange = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setPassError('');
+    setPassSuccess('');
+    if (!newPassInput.trim()) {
+      setPassError('Please enter a new password.');
+      return;
+    }
+    if (newPassInput.length < 6) {
+      setPassError('Password must be at least 6 characters.');
+      return;
+    }
+    if (newPassInput !== confirmPassInput) {
+      setPassError('New password and confirmation password do not match.');
+      return;
+    }
+
+    setIsChangingPass(true);
+    if (currentUser?.passwordHash && currentUser?.passwordSalt) {
+      const match = await verifyPassword(currentPassInput.trim(), currentUser.passwordHash, currentUser.passwordSalt);
+      if (!match) {
+        setIsChangingPass(false);
+        setPassError('Current password is incorrect.');
+        return;
+      }
+    }
+
+    const { hashHex, saltHex } = await hashPassword(newPassInput.trim());
+    if (currentUser) {
+      updateUserPassword(currentUser.id, hashHex, saltHex);
+      updateCurrentUserProfile({ passwordHash: hashHex, passwordSalt: saltHex });
+    }
+    setIsChangingPass(false);
+    setCurrentPassInput('');
+    setNewPassInput('');
+    setConfirmPassInput('');
+    setPassSuccess('Security password updated and PBKDF2 encrypted successfully!');
+    notify('Password changed and encrypted with PBKDF2-HMAC-SHA256!');
+  };
+
+  const handleSaveWorkshopProfile = () => {
+    localStorage.setItem('ggh_vendor_profile', JSON.stringify(workshopProfile));
+    localStorage.setItem('ggh_vendor_bank_details', JSON.stringify(bankDetails));
+    if (currentUser) {
+      updateUserProfile(currentUser.id, {
+        name: workshopProfile.name,
+        phone: workshopProfile.contactPhone
+      });
+      updateCurrentUserProfile({
+        name: workshopProfile.name,
+        phone: workshopProfile.contactPhone
+      });
+    }
+    notify('Workshop profile and bank details saved securely across marketplace!');
+  };
 
   // Active Main Tab: 'products' | 'orders' | 'payouts' | 'profile'
   const [activeTab, setActiveTab] = useState<'products' | 'orders' | 'payouts' | 'profile'>('products');
@@ -144,7 +243,7 @@ export const SellerDashboard: React.FC = () => {
       id: 'ORD-9818',
       item: 'Hand-Embroidered Jute Market Bag (Pack of 2)',
       sku: 'GGH-JT-301',
-      customer: 'Pooja Kashyap',
+      customer: 'Suman Devi',
       address: 'Flat 302, Sea Breeze Apts, Bandra West, Mumbai - 400050',
       date: 'Yesterday, 4:15 PM',
       amount: 520,
@@ -345,6 +444,104 @@ export const SellerDashboard: React.FC = () => {
     notify(`Payout request of ₹${net.toLocaleString()} initiated! Crediting to ${bankDetails.accountHolder} (${bankDetails.bankName}).`);
   };
 
+  // 1. Seller Clearance Gate: Unauthorized or Logged-out access is strictly blocked
+  if (!isAuthorizedSeller) {
+    return (
+      <div className="min-h-[85vh] flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8 bg-slate-950 text-white font-sans">
+        <div className="max-w-md w-full bg-slate-900 p-6 sm:p-8 rounded-3xl border border-slate-800 shadow-2xl space-y-5 animate-in zoom-in-95 duration-150">
+          <div className="text-center space-y-2">
+            <div className="w-14 h-14 rounded-2xl bg-orange-500/20 border border-orange-500/40 text-brand-orange mx-auto flex items-center justify-center shadow-lg">
+              <Store className="w-7 h-7" />
+            </div>
+            <h2 className="text-xl sm:text-2xl font-bold font-display text-white">
+              Artisan & Seller Portal
+            </h2>
+            <p className="text-xs text-slate-400 leading-relaxed">
+              Restricted Operations Console: Please sign in with verified artisan partner credentials to access products catalog, order dispatch manifests, and bank settlements.
+            </p>
+          </div>
+
+          {currentUser?.role === 'customer' && (
+            <div className="p-3 bg-amber-950/60 border border-amber-800/80 text-amber-200 text-xs rounded-xl flex items-center gap-2">
+              <AlertCircle className="w-4 h-4 text-amber-400 shrink-0" />
+              <span>Signed in as "{currentUser.name}" (Customer). You must log in with an Artisan / Seller account to access this workshop console.</span>
+            </div>
+          )}
+
+          {gateError && (
+            <div className="p-3 bg-red-950/60 border border-red-800 text-red-200 text-xs rounded-xl flex items-center gap-2">
+              <AlertCircle className="w-4 h-4 text-red-400 shrink-0" />
+              <span>{gateError}</span>
+            </div>
+          )}
+
+          <form onSubmit={handleGateSellerLogin} className="space-y-4 text-xs">
+            <div>
+              <label className="block font-semibold text-slate-300 mb-1">
+                Artisan Username, Registered Mobile (+91), or Email
+              </label>
+              <input
+                type="text"
+                required
+                autoCapitalize="none"
+                autoCorrect="off"
+                spellCheck={false}
+                autoComplete="username"
+                value={gateIdentifier}
+                onChange={(e) => setGateIdentifier(e.target.value)}
+                placeholder="e.g. ramkishan_artisan, 8303578806, or email"
+                className="w-full p-3 bg-slate-950 border border-slate-700 rounded-xl text-white font-medium focus:border-brand-orange focus:outline-hidden"
+              />
+            </div>
+
+            <div>
+              <div className="flex justify-between items-center mb-1">
+                <label className="font-semibold text-slate-300">Password / Access Key or 6-Digit OTP</label>
+                <span className="text-[10px] text-slate-400 font-mono">PBKDF2 Encrypted</span>
+              </div>
+              <input
+                type="password"
+                required
+                autoCapitalize="none"
+                autoCorrect="off"
+                spellCheck={false}
+                autoComplete="current-password"
+                value={gatePassOrOtp}
+                onChange={(e) => setGatePassOrOtp(e.target.value)}
+                placeholder="Enter password or verification code"
+                className="w-full p-3 bg-slate-950 border border-slate-700 rounded-xl text-white font-mono text-sm focus:border-brand-orange focus:outline-hidden"
+              />
+            </div>
+
+            <button
+              type="submit"
+              disabled={gateLoading}
+              className="w-full py-3 bg-brand-orange hover:bg-orange-600 text-white font-bold rounded-xl shadow-lg transition-all flex items-center justify-center gap-2 cursor-pointer text-sm"
+            >
+              <Lock className="w-4 h-4" />
+              <span>{gateLoading ? 'Verifying Artisan Security...' : 'Authenticate & Unlock Workshop Console'}</span>
+            </button>
+          </form>
+
+          <div className="pt-4 border-t border-slate-800 flex flex-col gap-2.5 text-xs">
+            <div className="flex items-center justify-between">
+              <span className="text-slate-400">Want to sell on GaunGaliHat?</span>
+              <Link to="/seller-register" className="text-brand-orange font-bold hover:underline">
+                Register Artisan Workshop →
+              </Link>
+            </div>
+            <div className="flex items-center justify-between pt-2 border-t border-slate-800/80">
+              <Link to="/" className="text-slate-400 hover:text-white flex items-center gap-1 transition-colors">
+                <span>← Return to Public Marketplace</span>
+              </Link>
+              <span className="text-[10px] text-emerald-400 font-mono">● Cloudflare Edge Protected</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-6">
       
@@ -378,6 +575,11 @@ export const SellerDashboard: React.FC = () => {
               <span className="px-2 py-0.5 bg-emerald-100 text-emerald-800 font-bold rounded text-[10px]">
                 KYC Verified Partner
               </span>
+              {currentUser && (
+                <span className="px-2 py-0.5 bg-gray-100 text-gray-700 font-mono rounded text-[10px]">
+                  @{currentUser.username || currentUser.name}
+                </span>
+              )}
             </div>
             <p className="text-gray-500 text-[11px] mt-0.5">
               {workshopProfile.village}, {workshopProfile.district}, {workshopProfile.state} • Postal Pincode: {workshopProfile.pincode}
@@ -386,6 +588,17 @@ export const SellerDashboard: React.FC = () => {
         </div>
 
         <div className="flex items-center gap-2 shrink-0">
+          <Link
+            to={`/seller/${currentUser?.username || 'artisan'}`}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="px-3 py-2 bg-white border border-gray-300 hover:border-brand-green text-gray-700 text-xs font-semibold rounded-xl shadow-xs flex items-center gap-1.5 transition-all cursor-pointer"
+            title="View public storefront profile"
+          >
+            <ExternalLink className="w-3.5 h-3.5 text-brand-green" />
+            <span>Public Store</span>
+          </Link>
+
           <button
             onClick={() => setShowPayoutModal(true)}
             className="px-3.5 py-2 bg-white border border-gray-300 hover:border-brand-green text-gray-800 text-xs font-semibold rounded-xl shadow-xs flex items-center gap-1.5 transition-all cursor-pointer"
@@ -400,6 +613,15 @@ export const SellerDashboard: React.FC = () => {
           >
             <Plus className="w-4 h-4" />
             <span>Add New Product</span>
+          </button>
+
+          <button
+            onClick={handleSellerLogout}
+            className="px-3 py-2 bg-red-50 hover:bg-red-100 text-red-700 border border-red-200 text-xs font-semibold rounded-xl shadow-xs flex items-center gap-1.5 transition-all cursor-pointer"
+            title="Sign out of seller workshop"
+          >
+            <LogOut className="w-3.5 h-3.5 text-red-600" />
+            <span>Sign Out</span>
           </button>
         </div>
       </div>
@@ -987,119 +1209,315 @@ export const SellerDashboard: React.FC = () => {
         </div>
       )}
 
-      {/* TAB 4: WORKSHOP PROFILE CUSTOMIZER */}
+      {/* TAB 4: WORKSHOP PROFILE & SECURITY CUSTOMIZER */}
       {activeTab === 'profile' && (
-        <div className="bg-white p-6 rounded-2xl border border-gray-100 shadow-xs space-y-5">
-          <div className="border-b border-gray-100 pb-3 flex items-center justify-between">
-            <div>
-              <h3 className="font-bold text-base text-gray-900 font-display">
-                Artisan Workshop & Storefront Profile
-              </h3>
-              <p className="text-xs text-gray-500">
-                Customize your workshop story, village cluster location, and contact information.
-              </p>
+        <div className="space-y-6">
+          {/* 1. Artisan Workshop Profile */}
+          <div className="bg-white p-6 rounded-2xl border border-gray-100 shadow-xs space-y-5">
+            <div className="border-b border-gray-100 pb-3 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+              <div>
+                <h3 className="font-bold text-base text-gray-900 font-display flex items-center gap-2">
+                  <Store className="w-5 h-5 text-brand-green" />
+                  <span>Artisan Workshop & Storefront Profile</span>
+                </h3>
+                <p className="text-xs text-gray-500">
+                  Toolsvilla-standard artisan workshop story, village cluster location, and contact information.
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={handleSaveWorkshopProfile}
+                className="px-4 py-2.5 bg-brand-green hover:bg-emerald-700 text-white text-xs font-bold rounded-xl shadow-xs cursor-pointer flex items-center justify-center gap-1.5 transition-colors"
+              >
+                <Save className="w-3.5 h-3.5" />
+                <span>Save Profile Changes</span>
+              </button>
             </div>
-            <button
-              onClick={() => notify('Workshop profile updated across GaunGaliHat marketplace!')}
-              className="px-4 py-2 bg-brand-green text-white text-xs font-bold rounded-xl shadow-xs cursor-pointer flex items-center gap-1.5"
-            >
-              <Save className="w-3.5 h-3.5" />
-              <span>Save Profile Changes</span>
-            </button>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs">
+              <div>
+                <label className="block font-semibold text-gray-700 mb-1">Workshop / SHG Name *</label>
+                <input
+                  type="text"
+                  value={workshopProfile.name}
+                  onChange={(e) => setWorkshopProfile({ ...workshopProfile, name: e.target.value })}
+                  className="w-full p-2.5 border border-gray-300 rounded-xl font-bold text-gray-900 focus:ring-2 focus:ring-brand-green/20 focus:border-brand-green"
+                />
+              </div>
+
+              <div>
+                <label className="block font-semibold text-gray-700 mb-1">Artisan Tagline</label>
+                <input
+                  type="text"
+                  value={workshopProfile.tagline}
+                  onChange={(e) => setWorkshopProfile({ ...workshopProfile, tagline: e.target.value })}
+                  className="w-full p-2.5 border border-gray-300 rounded-xl text-gray-900 focus:ring-2 focus:ring-brand-green/20 focus:border-brand-green"
+                />
+              </div>
+
+              <div>
+                <label className="block font-semibold text-gray-700 mb-1">Village / Town *</label>
+                <input
+                  type="text"
+                  value={workshopProfile.village}
+                  onChange={(e) => setWorkshopProfile({ ...workshopProfile, village: e.target.value })}
+                  className="w-full p-2.5 border border-gray-300 rounded-xl text-gray-900 focus:ring-2 focus:ring-brand-green/20 focus:border-brand-green"
+                />
+              </div>
+
+              <div>
+                <label className="block font-semibold text-gray-700 mb-1">Gram Panchayat / Industrial Area</label>
+                <input
+                  type="text"
+                  value={workshopProfile.panchayat}
+                  onChange={(e) => setWorkshopProfile({ ...workshopProfile, panchayat: e.target.value })}
+                  className="w-full p-2.5 border border-gray-300 rounded-xl text-gray-900 focus:ring-2 focus:ring-brand-green/20 focus:border-brand-green"
+                />
+              </div>
+
+              <div>
+                <label className="block font-semibold text-gray-700 mb-1">District</label>
+                <input
+                  type="text"
+                  value={workshopProfile.district}
+                  onChange={(e) => setWorkshopProfile({ ...workshopProfile, district: e.target.value })}
+                  className="w-full p-2.5 border border-gray-300 rounded-xl text-gray-900 focus:ring-2 focus:ring-brand-green/20 focus:border-brand-green"
+                />
+              </div>
+
+              <div>
+                <label className="block font-semibold text-gray-700 mb-1">Postal Pincode</label>
+                <input
+                  type="text"
+                  value={workshopProfile.pincode}
+                  onChange={(e) => setWorkshopProfile({ ...workshopProfile, pincode: e.target.value })}
+                  className="w-full p-2.5 border border-gray-300 rounded-xl font-mono text-gray-900 focus:ring-2 focus:ring-brand-green/20 focus:border-brand-green"
+                />
+              </div>
+
+              <div>
+                <label className="block font-semibold text-gray-700 mb-1">Direct Artisan Contact Phone</label>
+                <input
+                  type="tel"
+                  value={workshopProfile.contactPhone}
+                  onChange={(e) => setWorkshopProfile({ ...workshopProfile, contactPhone: e.target.value })}
+                  className="w-full p-2.5 border border-gray-300 rounded-xl font-mono text-gray-900 focus:ring-2 focus:ring-brand-green/20 focus:border-brand-green"
+                />
+              </div>
+
+              <div>
+                <label className="block font-semibold text-gray-700 mb-1">WhatsApp Customer Dispatch Inquiry</label>
+                <input
+                  type="tel"
+                  value={workshopProfile.whatsapp}
+                  onChange={(e) => setWorkshopProfile({ ...workshopProfile, whatsapp: e.target.value })}
+                  className="w-full p-2.5 border border-gray-300 rounded-xl font-mono text-gray-900 focus:ring-2 focus:ring-brand-green/20 focus:border-brand-green"
+                />
+              </div>
+            </div>
+
+            <div className="text-xs">
+              <label className="block font-semibold text-gray-700 mb-1">
+                Generational Craft Story & Ancestral Heritage
+              </label>
+              <textarea
+                rows={4}
+                value={workshopProfile.craftStory}
+                onChange={(e) => setWorkshopProfile({ ...workshopProfile, craftStory: e.target.value })}
+                className="w-full p-3 border border-gray-300 rounded-xl leading-relaxed text-gray-900 focus:ring-2 focus:ring-brand-green/20 focus:border-brand-green"
+              ></textarea>
+            </div>
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs">
-            <div>
-              <label className="block font-semibold text-gray-700 mb-1">Workshop / SHG Name *</label>
-              <input
-                type="text"
-                value={workshopProfile.name}
-                onChange={(e) => setWorkshopProfile({ ...workshopProfile, name: e.target.value })}
-                className="w-full p-2.5 border border-gray-300 rounded-xl font-bold"
-              />
+          {/* 2. Direct Bank & Settlement Payouts Details */}
+          <div className="bg-white p-6 rounded-2xl border border-gray-100 shadow-xs space-y-4">
+            <div className="border-b border-gray-100 pb-3 flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+              <div>
+                <h3 className="font-bold text-base text-gray-900 font-display flex items-center gap-2">
+                  <Banknote className="w-5 h-5 text-emerald-600" />
+                  <span>Settlement Bank Account & UPI ID</span>
+                </h3>
+                <p className="text-xs text-gray-500">
+                  Direct artisan payout accounts for verified NEFT / RTGS / IMPS and UPI settlements.
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={handleSaveWorkshopProfile}
+                className="px-3.5 py-2 bg-emerald-50 hover:bg-emerald-100 text-emerald-800 border border-emerald-200 text-xs font-bold rounded-xl cursor-pointer flex items-center justify-center gap-1.5 transition-colors"
+              >
+                <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" />
+                <span>Save Bank Details</span>
+              </button>
             </div>
 
-            <div>
-              <label className="block font-semibold text-gray-700 mb-1">Artisan Tagline</label>
-              <input
-                type="text"
-                value={workshopProfile.tagline}
-                onChange={(e) => setWorkshopProfile({ ...workshopProfile, tagline: e.target.value })}
-                className="w-full p-2.5 border border-gray-300 rounded-xl"
-              />
-            </div>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 text-xs">
+              <div>
+                <label className="block font-semibold text-gray-700 mb-1">Beneficiary Name (Account Holder) *</label>
+                <input
+                  type="text"
+                  value={bankDetails.accountHolder}
+                  onChange={(e) => setBankDetails({ ...bankDetails, accountHolder: e.target.value })}
+                  className="w-full p-2.5 border border-gray-300 rounded-xl font-medium text-gray-900"
+                />
+              </div>
 
-            <div>
-              <label className="block font-semibold text-gray-700 mb-1">Village / Town *</label>
-              <input
-                type="text"
-                value={workshopProfile.village}
-                onChange={(e) => setWorkshopProfile({ ...workshopProfile, village: e.target.value })}
-                className="w-full p-2.5 border border-gray-300 rounded-xl"
-              />
-            </div>
+              <div>
+                <label className="block font-semibold text-gray-700 mb-1">Bank Name *</label>
+                <input
+                  type="text"
+                  value={bankDetails.bankName}
+                  onChange={(e) => setBankDetails({ ...bankDetails, bankName: e.target.value })}
+                  className="w-full p-2.5 border border-gray-300 rounded-xl font-medium text-gray-900"
+                />
+              </div>
 
-            <div>
-              <label className="block font-semibold text-gray-700 mb-1">Gram Panchayat / Industrial Area</label>
-              <input
-                type="text"
-                value={workshopProfile.panchayat}
-                onChange={(e) => setWorkshopProfile({ ...workshopProfile, panchayat: e.target.value })}
-                className="w-full p-2.5 border border-gray-300 rounded-xl"
-              />
-            </div>
+              <div>
+                <label className="block font-semibold text-gray-700 mb-1">Account Number *</label>
+                <input
+                  type="text"
+                  value={bankDetails.accountNumber}
+                  onChange={(e) => setBankDetails({ ...bankDetails, accountNumber: e.target.value })}
+                  className="w-full p-2.5 border border-gray-300 rounded-xl font-mono text-gray-900"
+                />
+              </div>
 
-            <div>
-              <label className="block font-semibold text-gray-700 mb-1">District</label>
-              <input
-                type="text"
-                value={workshopProfile.district}
-                onChange={(e) => setWorkshopProfile({ ...workshopProfile, district: e.target.value })}
-                className="w-full p-2.5 border border-gray-300 rounded-xl"
-              />
-            </div>
+              <div>
+                <label className="block font-semibold text-gray-700 mb-1">Bank IFSC Code *</label>
+                <input
+                  type="text"
+                  value={bankDetails.ifscCode}
+                  onChange={(e) => setBankDetails({ ...bankDetails, ifscCode: e.target.value.toUpperCase() })}
+                  className="w-full p-2.5 border border-gray-300 rounded-xl font-mono uppercase text-gray-900"
+                />
+              </div>
 
-            <div>
-              <label className="block font-semibold text-gray-700 mb-1">Postal Pincode</label>
-              <input
-                type="text"
-                value={workshopProfile.pincode}
-                onChange={(e) => setWorkshopProfile({ ...workshopProfile, pincode: e.target.value })}
-                className="w-full p-2.5 border border-gray-300 rounded-xl font-mono"
-              />
-            </div>
+              <div>
+                <label className="block font-semibold text-gray-700 mb-1">Branch Name</label>
+                <input
+                  type="text"
+                  value={bankDetails.branch}
+                  onChange={(e) => setBankDetails({ ...bankDetails, branch: e.target.value })}
+                  className="w-full p-2.5 border border-gray-300 rounded-xl font-medium text-gray-900"
+                />
+              </div>
 
-            <div>
-              <label className="block font-semibold text-gray-700 mb-1">Direct Artisan Contact Phone</label>
-              <input
-                type="tel"
-                value={workshopProfile.contactPhone}
-                onChange={(e) => setWorkshopProfile({ ...workshopProfile, contactPhone: e.target.value })}
-                className="w-full p-2.5 border border-gray-300 rounded-xl font-mono"
-              />
-            </div>
-
-            <div>
-              <label className="block font-semibold text-gray-700 mb-1">WhatsApp Customer Dispatch Inquiry</label>
-              <input
-                type="tel"
-                value={workshopProfile.whatsapp}
-                onChange={(e) => setWorkshopProfile({ ...workshopProfile, whatsapp: e.target.value })}
-                className="w-full p-2.5 border border-gray-300 rounded-xl font-mono"
-              />
+              <div>
+                <label className="block font-semibold text-gray-700 mb-1">UPI ID (VPA for Instant Disbursal)</label>
+                <input
+                  type="text"
+                  value={bankDetails.upiId}
+                  onChange={(e) => setBankDetails({ ...bankDetails, upiId: e.target.value })}
+                  className="w-full p-2.5 border border-gray-300 rounded-xl font-mono text-gray-900"
+                  placeholder="artisan@upi"
+                />
+              </div>
             </div>
           </div>
 
-          <div className="text-xs">
-            <label className="block font-semibold text-gray-700 mb-1">
-              Generational Craft Story & Ancestral Heritage
-            </label>
-            <textarea
-              rows={4}
-              value={workshopProfile.craftStory}
-              onChange={(e) => setWorkshopProfile({ ...workshopProfile, craftStory: e.target.value })}
-              className="w-full p-3 border border-gray-300 rounded-xl leading-relaxed"
-            ></textarea>
+          {/* 3. Password & Security Key Credentials (PBKDF2 Encrypted) */}
+          <div className="bg-white p-6 rounded-2xl border border-gray-100 shadow-xs space-y-4">
+            <div className="border-b border-gray-100 pb-3 flex items-center justify-between">
+              <div>
+                <h3 className="font-bold text-base text-gray-900 font-display flex items-center gap-2">
+                  <ShieldCheck className="w-5 h-5 text-indigo-600" />
+                  <span>Seller Security & Password Encryption</span>
+                </h3>
+                <p className="text-xs text-gray-500">
+                  Change your login password. All credentials are protected with PBKDF2-HMAC-SHA256 and unique 16-byte cryptographic salt.
+                </p>
+              </div>
+              <span className="hidden sm:inline-flex items-center gap-1 text-[11px] font-mono px-2.5 py-1 bg-indigo-50 text-indigo-700 rounded-full font-bold border border-indigo-200">
+                <Lock className="w-3 h-3" />
+                PBKDF2 Hard Encrypted
+              </span>
+            </div>
+
+            {passError && (
+              <div className="p-3 bg-red-50 border border-red-200 text-red-700 rounded-xl text-xs flex items-center gap-2">
+                <AlertCircle className="w-4 h-4 shrink-0 text-red-500" />
+                <span>{passError}</span>
+              </div>
+            )}
+
+            {passSuccess && (
+              <div className="p-3 bg-emerald-50 border border-emerald-200 text-emerald-800 rounded-xl text-xs flex items-center gap-2">
+                <CheckCircle2 className="w-4 h-4 shrink-0 text-emerald-600" />
+                <span>{passSuccess}</span>
+              </div>
+            )}
+
+            <form onSubmit={handlePasswordChange} className="space-y-4 max-w-xl">
+              <div>
+                <label className="block text-xs font-semibold text-gray-700 mb-1">
+                  Current Password {currentUser?.passwordHash ? '*' : '(Leave empty if not set)'}
+                </label>
+                <div className="relative">
+                  <input
+                    type={showPass ? 'text' : 'password'}
+                    value={currentPassInput}
+                    onChange={(e) => setCurrentPassInput(e.target.value)}
+                    placeholder="Enter existing password"
+                    autoCapitalize="none"
+                    autoCorrect="off"
+                    className="w-full p-2.5 pr-10 border border-gray-300 rounded-xl text-xs focus:ring-2 focus:ring-indigo-200 focus:border-indigo-600 font-mono"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowPass(!showPass)}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                  >
+                    {showPass ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                  </button>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-xs font-semibold text-gray-700 mb-1">
+                    New Secure Password *
+                  </label>
+                  <input
+                    type={showPass ? 'text' : 'password'}
+                    value={newPassInput}
+                    onChange={(e) => setNewPassInput(e.target.value)}
+                    placeholder="Minimum 6 characters"
+                    autoCapitalize="none"
+                    autoCorrect="off"
+                    className="w-full p-2.5 border border-gray-300 rounded-xl text-xs focus:ring-2 focus:ring-indigo-200 focus:border-indigo-600 font-mono"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-xs font-semibold text-gray-700 mb-1">
+                    Confirm New Password *
+                  </label>
+                  <input
+                    type={showPass ? 'text' : 'password'}
+                    value={confirmPassInput}
+                    onChange={(e) => setConfirmPassInput(e.target.value)}
+                    placeholder="Re-enter new password"
+                    autoCapitalize="none"
+                    autoCorrect="off"
+                    className="w-full p-2.5 border border-gray-300 rounded-xl text-xs focus:ring-2 focus:ring-indigo-200 focus:border-indigo-600 font-mono"
+                  />
+                </div>
+              </div>
+
+              <div className="pt-2 flex items-center gap-3">
+                <button
+                  type="submit"
+                  disabled={isChangingPass}
+                  className="px-5 py-2.5 bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50 text-white text-xs font-bold rounded-xl shadow-xs cursor-pointer flex items-center gap-2 transition-colors"
+                >
+                  <KeyRound className="w-4 h-4" />
+                  <span>{isChangingPass ? 'Encrypting & Updating...' : 'Update & Encrypt Password'}</span>
+                </button>
+                <span className="text-[11px] text-gray-500">
+                  Protected with 100,000 PBKDF2 iterations
+                </span>
+              </div>
+            </form>
           </div>
         </div>
       )}
