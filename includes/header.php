@@ -23,7 +23,7 @@ $page_title = isset($page_title) ? $page_title . ' — ' . APP_NAME : APP_NAME .
 $page_desc = isset($page_desc) ? $page_desc : 'High-durability hand-forged agricultural tools, unpolished pulses, Banarasi pickles, and authentic handlooms direct from Indian village clusters.';
 ?>
 <!DOCTYPE html>
-<html lang="hi" class="h-full bg-stone-50">
+<html lang="hi" class="scroll-smooth bg-stone-50">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -68,7 +68,7 @@ $page_desc = isset($page_desc) ? $page_desc : 'High-durability hand-forged agric
 
   <link rel="stylesheet" href="/assets/css/style.css">
 </head>
-<body class="flex flex-col min-h-screen text-gray-800 antialiased selection:bg-emerald-200">
+<body class="flex flex-col min-h-screen text-gray-800 antialiased selection:bg-emerald-200 overflow-x-hidden">
 
   <!-- Impersonation Alert Banner -->
   <?php if (!empty($_SESSION['impersonator_id'])): ?>
@@ -109,16 +109,16 @@ $page_desc = isset($page_desc) ? $page_desc : 'High-durability hand-forged agric
     </div>
   </div>
 
-  <!-- 2. Primary Sticky Header (Matches exact AJAX site styling) -->
-  <header class="sticky top-0 z-40 bg-white border-b border-gray-100 shadow-sm transition-all w-full max-w-full">
-    <div class="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 w-full min-w-0">
-      <div class="flex items-center justify-between h-16 sm:h-20 gap-2 sm:gap-4 w-full min-w-0">
+  <!-- 2. Primary Sticky Header (Unified Full Sticky Header across Desktop & Mobile) -->
+  <header class="sticky top-0 z-40 bg-white border-b border-gray-100 shadow-sm transition-all w-full max-w-full" style="position: -webkit-sticky; position: sticky; top: 0; z-index: 50;">
+    <div class="max-w-7xl mx-auto px-2.5 sm:px-6 lg:px-8 w-full min-w-0">
+      <div class="flex items-center justify-between h-14 sm:h-20 gap-1.5 sm:gap-4 w-full min-w-0">
         
         <!-- Mobile Menu Hamburger Button -->
         <button
           type="button"
           id="mobile-menu-open"
-          class="lg:hidden p-2 text-gray-700 hover:text-brand-green hover:bg-gray-100 rounded-lg focus:outline-none focus:ring-2 focus:ring-brand-green"
+          class="lg:hidden p-1.5 text-gray-700 hover:text-brand-green hover:bg-gray-100 rounded-lg focus:outline-none focus:ring-2 focus:ring-brand-green shrink-0"
           aria-label="Toggle Navigation Menu"
         >
           <i data-lucide="menu" class="w-6 h-6"></i>
@@ -126,11 +126,11 @@ $page_desc = isset($page_desc) ? $page_desc : 'High-durability hand-forged agric
 
         <!-- Brand Logo Only (Exact logo.png from Ajax site without extra placeholder text) -->
         <a href="/" class="flex items-center shrink-0 group py-1" title="GaunGaliHat • Home">
-          <div class="relative h-10 sm:h-14 w-auto flex items-center">
+          <div class="relative h-9 sm:h-14 w-auto flex items-center shrink-0">
             <img
               src="/logo.png"
               alt="GaunGaliHat Logo"
-              class="h-8 sm:h-12 w-auto max-w-[120px] sm:max-w-[210px] object-contain transition-transform group-hover:scale-105"
+              class="h-7 sm:h-12 w-auto max-w-[105px] sm:max-w-[210px] object-contain transition-transform group-hover:scale-105"
               onerror="this.onerror=null; this.src='/assets/images/logo.png';"
             />
           </div>
@@ -195,7 +195,7 @@ $page_desc = isset($page_desc) ? $page_desc : 'High-durability hand-forged agric
         </div>
 
         <!-- 4. Action Icons: Nearby Artisans, Seller Login, Wishlist, Cart, Profile -->
-        <div class="flex items-center gap-1.5 sm:gap-3 shrink-0">
+        <div class="flex items-center gap-1 sm:gap-2.5 shrink-0">
           
           <!-- Nearby Artisans Button -->
           <a
@@ -207,32 +207,30 @@ $page_desc = isset($page_desc) ? $page_desc : 'High-durability hand-forged agric
             <span>Nearby Artisans</span>
           </a>
 
-          <!-- Dedicated Seller Button (Always visible) -->
+          <!-- Dedicated Seller Button (Desktop visible, hidden on mobile to prevent clipping) -->
           <?php if ($current_user && $current_user['role'] === 'vendor'): ?>
             <a
               href="/seller/dashboard.php"
-              class="inline-flex items-center gap-1 px-2.5 sm:px-3 py-1 sm:py-1.5 rounded-lg border border-brand-orange text-white bg-brand-orange hover:bg-orange-600 transition-all text-xs font-bold shadow-xs shrink-0"
+              class="hidden sm:inline-flex items-center gap-1 px-2.5 sm:px-3 py-1 sm:py-1.5 rounded-lg border border-brand-orange text-white bg-brand-orange hover:bg-orange-600 transition-all text-xs font-bold shadow-xs shrink-0"
             >
               <i data-lucide="store" class="w-3.5 h-3.5"></i>
-              <span class="hidden xs:inline">Seller Dashboard</span>
-              <span class="xs:hidden text-[11px]">Dashboard</span>
+              <span>Seller Dashboard</span>
             </a>
           <?php else: ?>
             <a
               href="/login.php?tab=seller"
-              class="inline-flex items-center gap-1 px-2.5 sm:px-3 py-1 sm:py-1.5 rounded-lg border border-brand-orange/50 text-brand-orange bg-orange-50 hover:bg-brand-orange hover:text-white transition-all text-xs font-bold cursor-pointer shrink-0"
+              class="hidden sm:inline-flex items-center gap-1 px-2.5 sm:px-3 py-1 sm:py-1.5 rounded-lg border border-brand-orange/50 text-brand-orange bg-orange-50 hover:bg-brand-orange hover:text-white transition-all text-xs font-bold cursor-pointer shrink-0"
               title="Artisan & Seller Login"
             >
               <i data-lucide="store" class="w-3.5 h-3.5"></i>
-              <span class="hidden xs:inline">Seller Login</span>
-              <span class="xs:hidden text-[11px]">Seller</span>
+              <span>Seller Login</span>
             </a>
           <?php endif; ?>
 
           <!-- Wishlist Icon -->
           <a
             href="/wishlist.php"
-            class="relative p-2 text-gray-600 hover:text-brand-green hover:bg-gray-100 rounded-full transition-colors"
+            class="relative p-1.5 sm:p-2 text-gray-600 hover:text-brand-green hover:bg-gray-100 rounded-full transition-colors shrink-0"
             title="Your Wishlist"
             aria-label="Wishlist"
           >
@@ -245,7 +243,7 @@ $page_desc = isset($page_desc) ? $page_desc : 'High-durability hand-forged agric
           <!-- Cart Icon & Total -->
           <a
             href="/cart.php"
-            class="flex items-center gap-2 p-1.5 sm:px-3 sm:py-1.5 rounded-full sm:rounded-lg text-gray-700 hover:bg-emerald-50 hover:text-brand-green border border-transparent sm:border-gray-200 transition-all"
+            class="flex items-center gap-2 p-1.5 sm:px-3 sm:py-1.5 rounded-full sm:rounded-lg text-gray-700 hover:bg-emerald-50 hover:text-brand-green border border-transparent sm:border-gray-200 transition-all shrink-0"
             title="Shopping Cart"
             aria-label="Shopping Cart"
           >
@@ -262,14 +260,14 @@ $page_desc = isset($page_desc) ? $page_desc : 'High-durability hand-forged agric
           </a>
 
           <!-- Account Dropdown (Matches Header.tsx) -->
-          <div class="relative" id="accountMenuContainer">
+          <div class="relative shrink-0" id="accountMenuContainer">
             <button
               type="button"
               id="accountMenuBtn"
-              class="flex items-center gap-1.5 p-1.5 sm:p-2 rounded-full hover:bg-gray-100 text-gray-700 transition-colors focus:outline-none focus:ring-2 focus:ring-brand-green cursor-pointer"
+              class="flex items-center gap-1 sm:gap-1.5 p-1 sm:p-2 rounded-full hover:bg-gray-100 text-gray-700 transition-colors focus:outline-none focus:ring-2 focus:ring-brand-green cursor-pointer shrink-0"
               aria-label="Account Menu"
             >
-              <div class="w-8 h-8 rounded-full bg-emerald-100 text-brand-green flex items-center justify-center font-bold text-xs ring-2 ring-emerald-600/30 overflow-hidden">
+              <div class="w-8 h-8 rounded-full bg-emerald-100 text-brand-green flex items-center justify-center font-bold text-xs ring-2 ring-emerald-600/30 overflow-hidden shrink-0">
                 <?php if ($current_user && !empty($current_user['avatar'])): ?>
                   <img src="<?= htmlspecialchars($current_user['avatar']) ?>" alt="Avatar" class="w-full h-full object-cover">
                 <?php elseif ($current_user): ?>
@@ -473,6 +471,11 @@ $page_desc = isset($page_desc) ? $page_desc : 'High-durability hand-forged agric
       <!-- Drawer Bottom Actions -->
       <div class="pt-5 border-t border-gray-100 space-y-2">
         <?php if ($current_user): ?>
+          <?php if ($current_user['role'] === 'vendor' || in_array($current_user['role'], ['super_admin', 'admin'])): ?>
+            <a href="/seller/dashboard.php" class="w-full py-2.5 bg-brand-orange text-white font-bold rounded-xl text-center text-xs block shadow-sm">
+              🏪 Seller Hub Dashboard
+            </a>
+          <?php endif; ?>
           <a href="/account.php" class="w-full py-2.5 bg-gray-100 text-gray-800 font-bold rounded-xl text-center text-xs block">
             My Account (<?= htmlspecialchars($current_user['name']) ?>)
           </a>

@@ -165,6 +165,9 @@
     </div>
   </footer>
 
+  <!-- Customer Live Chat & WhatsApp Floating Widget -->
+  <?php require_once __DIR__ . '/live_chat_widget.php'; ?>
+
   <!-- Lucide Icons Refresh Trigger -->
   <script>
     if (typeof lucide !== 'undefined') {

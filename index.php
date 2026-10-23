@@ -24,10 +24,30 @@ $featured_products = $stmt->fetchAll();
 // Fetch Verified Artisan Workshops
 $stmt = $pdo->query("SELECT * FROM vendors WHERE verified = 1 LIMIT 4");
 $verified_vendors = $stmt->fetchAll();
+
+// Dynamic Hero Settings
+$hero_theme = get_setting('hero_theme_color', 'emerald');
+$hero_bg_class = 'from-emerald-950 via-brand-green to-emerald-900';
+$hero_badge_class = 'bg-emerald-800/80 border-emerald-600/60 text-amber-300';
+$hero_accent_text = 'text-amber-300';
+
+if ($hero_theme === 'crimson') {
+    $hero_bg_class = 'from-rose-950 via-red-900 to-amber-950';
+    $hero_badge_class = 'bg-red-950/80 border-amber-500/60 text-amber-300';
+    $hero_accent_text = 'text-amber-300';
+} elseif ($hero_theme === 'amber') {
+    $hero_bg_class = 'from-amber-950 via-orange-900 to-amber-900';
+    $hero_badge_class = 'bg-orange-950/80 border-yellow-400/60 text-yellow-300';
+    $hero_accent_text = 'text-yellow-300';
+} elseif ($hero_theme === 'indigo') {
+    $hero_bg_class = 'from-slate-950 via-indigo-950 to-blue-950';
+    $hero_badge_class = 'bg-indigo-900/80 border-indigo-500/60 text-amber-300';
+    $hero_accent_text = 'text-amber-300';
+}
 ?>
 
-<!-- 1. Hero Banner Section -->
-<section class="relative bg-gradient-to-br from-emerald-950 via-brand-green to-emerald-900 text-white overflow-hidden py-12 sm:py-20">
+<!-- 1. Hero Banner Section (Fully Customisable for Festivals & Sales) -->
+<section class="relative bg-gradient-to-br <?= $hero_bg_class ?> text-white overflow-hidden py-12 sm:py-20">
   <div class="absolute inset-0 opacity-10 bg-[radial-gradient(#ffffff_1px,transparent_1px)] [background-size:16px_16px]"></div>
   <div class="absolute -top-24 -right-24 w-72 sm:w-96 h-72 sm:h-96 rounded-full bg-brand-orange/20 blur-3xl pointer-events-none"></div>
   <div class="absolute -bottom-24 -left-24 w-72 sm:w-96 h-72 sm:h-96 rounded-full bg-emerald-400/10 blur-3xl pointer-events-none"></div>
@@ -36,27 +56,29 @@ $verified_vendors = $stmt->fetchAll();
     <div class="grid grid-cols-1 lg:grid-cols-12 gap-8 items-center">
       
       <div class="lg:col-span-7 space-y-6 text-center lg:text-left">
-        <div class="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-emerald-800/80 border border-emerald-600/60 text-amber-300 text-xs font-semibold shadow-xs">
-          <i data-lucide="sparkles" class="w-3.5 h-3.5 text-amber-300"></i>
-          <span>S S Industries Enterprise • Empowering Rural Artisans, Dal Farmers & SHGs</span>
+        <div class="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full <?= $hero_badge_class ?> border text-xs font-semibold shadow-xs">
+          <i data-lucide="sparkles" class="w-3.5 h-3.5"></i>
+          <span><?= htmlspecialchars(get_setting('hero_badge_text', '🌾 S S Industries Enterprise • Empowering Rural Artisans, Dal Farmers & SHGs')) ?></span>
         </div>
 
         <h1 class="text-3xl sm:text-5xl lg:text-6xl font-extrabold font-display tracking-tight text-white leading-tight">
-          Gaon ke hunar,<br />
-          <span class="text-amber-300 drop-shadow-sm">ab har ghar tak</span>
+          <?= htmlspecialchars(get_setting('hero_title_line1', 'Gaon ke hunar,')) ?><br />
+          <span class="<?= $hero_accent_text ?> drop-shadow-sm"><?= htmlspecialchars(get_setting('hero_title_line2', 'ab har ghar tak')) ?></span>
         </h1>
 
         <p class="text-sm sm:text-base text-emerald-100/90 max-w-xl mx-auto lg:mx-0 leading-relaxed">
-          Discover high-durability hand-forged agricultural sickles, garden khurpis, pure unpolished Awadh pulses, Banarasi mustard oil pickles, eco golden jute bags, and handlooms direct from rural Bharat.
+          <?= htmlspecialchars(get_setting('hero_subtitle', 'Discover high-durability hand-forged agricultural sickles, garden khurpis, pure unpolished Awadh pulses, Banarasi mustard oil pickles, eco golden jute bags, and handlooms direct from rural Bharat.')) ?>
         </p>
 
         <div class="flex flex-wrap items-center justify-center lg:justify-start gap-3 sm:gap-4 pt-2">
-          <a href="/products.php" class="px-5 sm:px-6 py-3 sm:py-3.5 bg-brand-orange hover:bg-brand-orange-dark text-white font-bold text-xs sm:text-sm rounded-xl shadow-lg hover:shadow-orange-600/30 transition-all flex items-center gap-2 cursor-pointer active:scale-95">
-            <span>Explore Marketplace</span>
+          <a href="<?= htmlspecialchars(get_setting('hero_btn1_link', '/products.php')) ?>"
+             class="px-5 sm:px-6 py-3 sm:py-3.5 bg-brand-orange hover:bg-brand-orange-dark text-white font-bold text-xs sm:text-sm rounded-xl shadow-lg hover:shadow-orange-600/30 transition-all flex items-center gap-2 cursor-pointer active:scale-95">
+            <span><?= htmlspecialchars(get_setting('hero_btn1_text', 'Explore Marketplace')) ?></span>
             <i data-lucide="arrow-right" class="w-4 h-4"></i>
           </a>
-          <a href="/products.php?category=farming-traditional-tools" class="px-5 sm:px-6 py-3 sm:py-3.5 bg-emerald-800/80 hover:bg-emerald-700/80 border border-emerald-600/80 text-white font-semibold text-xs sm:text-sm rounded-xl transition-all flex items-center gap-2">
-            <span>Farming & Garden Tools</span>
+          <a href="<?= htmlspecialchars(get_setting('hero_btn2_link', '/products.php?category=farming-traditional-tools')) ?>"
+             class="px-5 sm:px-6 py-3 sm:py-3.5 bg-white/10 hover:bg-white/20 border border-white/20 text-white font-semibold text-xs sm:text-sm rounded-xl transition-all flex items-center gap-2">
+            <span><?= htmlspecialchars(get_setting('hero_btn2_text', 'Farming & Garden Tools')) ?></span>
           </a>
           <a href="/about.php" class="px-5 sm:px-6 py-3 sm:py-3.5 bg-amber-500 hover:bg-amber-600 text-gray-950 font-bold text-xs sm:text-sm rounded-xl transition-all flex items-center gap-1.5 shadow-md">
             <i data-lucide="map-pin" class="w-4 h-4 text-emerald-950"></i>
@@ -65,18 +87,18 @@ $verified_vendors = $stmt->fetchAll();
         </div>
 
         <!-- Badges -->
-        <div class="grid grid-cols-3 gap-2 sm:gap-4 pt-4 border-t border-emerald-800/60 text-left max-w-md mx-auto lg:mx-0">
+        <div class="grid grid-cols-3 gap-2 sm:gap-4 pt-4 border-t border-white/15 text-left max-w-md mx-auto lg:mx-0">
           <div>
-            <div class="text-lg sm:text-2xl font-bold text-amber-300 font-display">100%</div>
-            <div class="text-[10px] sm:text-[11px] text-emerald-200/80">Forged Iron & Pure Dal</div>
+            <div class="text-lg sm:text-2xl font-bold <?= $hero_accent_text ?> font-display"><?= htmlspecialchars(get_setting('hero_stat1_num', '100%')) ?></div>
+            <div class="text-[10px] sm:text-[11px] text-white/80"><?= htmlspecialchars(get_setting('hero_stat1_label', 'Forged Iron & Pure Dal')) ?></div>
           </div>
           <div>
-            <div class="text-lg sm:text-2xl font-bold text-amber-300 font-display">40+</div>
-            <div class="text-[10px] sm:text-[11px] text-emerald-200/80">Village Artisan Hubs</div>
+            <div class="text-lg sm:text-2xl font-bold <?= $hero_accent_text ?> font-display"><?= htmlspecialchars(get_setting('hero_stat2_num', '40+')) ?></div>
+            <div class="text-[10px] sm:text-[11px] text-white/80"><?= htmlspecialchars(get_setting('hero_stat2_label', 'Village Artisan Hubs')) ?></div>
           </div>
           <div>
-            <div class="text-lg sm:text-2xl font-bold text-amber-300 font-display">₹499+</div>
-            <div class="text-[10px] sm:text-[11px] text-emerald-200/80">Free India Delivery</div>
+            <div class="text-lg sm:text-2xl font-bold <?= $hero_accent_text ?> font-display"><?= htmlspecialchars(get_setting('hero_stat3_num', '₹499+')) ?></div>
+            <div class="text-[10px] sm:text-[11px] text-white/80"><?= htmlspecialchars(get_setting('hero_stat3_label', 'Free India Delivery')) ?></div>
           </div>
         </div>
       </div>
@@ -85,8 +107,8 @@ $verified_vendors = $stmt->fetchAll();
       <div class="lg:col-span-5 relative mt-6 lg:mt-0 px-2 sm:px-0">
         <div class="relative mx-auto max-w-sm rounded-3xl bg-white/10 backdrop-blur-md p-3 sm:p-4 border border-white/20 shadow-2xl">
           <img 
-            src="https://images.unsplash.com/photo-1504148455328-c376907d081c?auto=format&fit=crop&w=800&q=80" 
-            alt="Rural Indian blacksmith forging agriculture tools" 
+            src="<?= htmlspecialchars(get_setting('hero_image_url', 'https://images.unsplash.com/photo-1504148455328-c376907d081c?auto=format&fit=crop&w=800&q=80')) ?>" 
+            alt="GaunGaliHat Artisan & Village Showcase" 
             class="w-full h-72 sm:h-80 object-cover rounded-2xl shadow-md"
             onerror="this.onerror=null; this.src='https://images.unsplash.com/photo-1589923188900-85dae523342b?auto=format&fit=crop&w=800&q=80';"
           />
@@ -97,8 +119,8 @@ $verified_vendors = $stmt->fetchAll();
               ⚒️
             </div>
             <div class="min-w-0">
-              <p class="text-[9px] sm:text-[10px] text-gray-500 font-medium truncate">High-Carbon Tempered Steel</p>
-              <p class="text-xs font-bold text-gray-800 truncate">Forged Desi Hansiya</p>
+              <p class="text-[9px] sm:text-[10px] text-gray-500 font-medium truncate"><?= htmlspecialchars(get_setting('hero_tag1_title', 'High-Carbon Tempered Steel')) ?></p>
+              <p class="text-xs font-bold text-gray-800 truncate"><?= htmlspecialchars(get_setting('hero_tag1_subtitle', 'Forged Desi Hansiya')) ?></p>
             </div>
           </div>
 
@@ -108,6 +130,11 @@ $verified_vendors = $stmt->fetchAll();
               ★ 4.96
             </div>
             <div class="min-w-0">
+              <p class="text-[9px] sm:text-[10px] text-emerald-200 font-medium truncate"><?= htmlspecialchars(get_setting('hero_tag2_title', 'Handcrafted Rating')) ?></p>
+              <p class="text-xs font-bold text-white truncate"><?= htmlspecialchars(get_setting('hero_tag2_subtitle', '★ 4.96 Verified')) ?></p>
+            </div>
+          </div>
+        </div>
               <p class="text-[9px] sm:text-[10px] text-emerald-200 font-medium truncate">Unpolished Dal & Pure Achar</p>
               <p class="text-xs font-bold text-white truncate">Direct Village Farm Harvest</p>
             </div>

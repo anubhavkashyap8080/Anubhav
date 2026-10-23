@@ -6,12 +6,33 @@
 
 require_once __DIR__ . '/includes/header.php';
 
+$coupon_msg = '';
+$coupon_err = '';
+
+// Handle Coupon Post Actions
+if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    if (isset($_POST['apply_coupon'])) {
+        $res = validate_and_apply_coupon($_POST['coupon_code'] ?? '');
+        if ($res['success']) {
+            $coupon_msg = $res['message'];
+        } else {
+            $coupon_err = $res['error'];
+        }
+    } elseif (isset($_POST['remove_coupon'])) {
+        remove_applied_coupon();
+        $coupon_msg = 'कूपन हटा दिया गया है।';
+    }
+}
+
 $cart_items = get_cart();
 $cart_subtotal = get_cart_subtotal();
 $cart_weight = get_cart_total_weight();
 $pincode = $_SESSION['shipping_pincode'] ?? '241126';
 $shipping = calculate_shipping_rate($pincode, $cart_subtotal, $cart_weight);
-$final_total = $cart_subtotal + $shipping['shipping_fee'];
+
+$applied_coupon = get_applied_coupon();
+$discount_amount = $applied_coupon ? floatval($applied_coupon['discount_amount']) : 0.0;
+$final_total = max(0, $cart_subtotal + $shipping['shipping_fee'] - $discount_amount);
 ?>
 
 <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8">
@@ -134,6 +155,57 @@ $final_total = $cart_subtotal + $shipping['shipping_fee'];
           </div>
         </div>
 
+        <!-- Promo / Coupon Code Card -->
+        <div class="bg-white rounded-3xl border border-gray-200 p-6 space-y-3 shadow-xs">
+          <div class="flex items-center justify-between pb-2 border-b border-gray-100">
+            <h3 class="font-bold text-sm text-gray-900 font-display flex items-center gap-2">
+              <i data-lucide="tag" class="w-4 h-4 text-amber-500"></i>
+              <span>कूपन कोड (Promo Code)</span>
+            </h3>
+            <span class="text-[10px] text-emerald-700 bg-emerald-50 px-2.5 py-0.5 rounded-full font-bold">छूट पाएं</span>
+          </div>
+
+          <?php if (!empty($coupon_msg)): ?>
+            <div class="p-2.5 bg-emerald-50 border border-emerald-200 text-emerald-800 rounded-xl text-xs font-semibold">
+              <?= htmlspecialchars($coupon_msg) ?>
+            </div>
+          <?php endif; ?>
+
+          <?php if (!empty($coupon_err)): ?>
+            <div class="p-2.5 bg-red-50 border border-red-200 text-red-700 rounded-xl text-xs font-semibold">
+              <?= htmlspecialchars($coupon_err) ?>
+            </div>
+          <?php endif; ?>
+
+          <?php if ($applied_coupon): ?>
+            <div class="p-3 bg-emerald-50 border border-emerald-200 rounded-2xl flex items-center justify-between text-xs">
+              <div class="flex items-center gap-2">
+                <i data-lucide="check-circle" class="w-4 h-4 text-brand-green shrink-0"></i>
+                <div>
+                  <span class="font-bold text-emerald-950 font-mono"><?= htmlspecialchars($applied_coupon['code']) ?></span>
+                  <span class="text-[11px] text-emerald-700 block"><?= htmlspecialchars($applied_coupon['title']) ?></span>
+                </div>
+              </div>
+              <form action="/cart.php" method="POST">
+                <input type="hidden" name="remove_coupon" value="1">
+                <button type="submit" class="text-xs text-red-500 hover:text-red-700 font-bold hover:underline">
+                  हटाएं
+                </button>
+              </form>
+            </div>
+          <?php else: ?>
+            <form action="/cart.php" method="POST" class="flex gap-2">
+              <input type="hidden" name="apply_coupon" value="1">
+              <input type="text" name="coupon_code" required placeholder="उदा. WELCOME50, FESTIVAL20"
+                class="flex-1 px-3 py-2 border border-gray-300 rounded-xl font-mono uppercase text-xs font-bold outline-none focus:border-brand-green">
+              <button type="submit" class="px-4 py-2 bg-brand-green hover:bg-emerald-800 text-white font-bold rounded-xl text-xs transition">
+                लागू करें
+              </button>
+            </form>
+            <p class="text-[10px] text-gray-400">नए ग्राहक पहले आर्डर पर <strong>WELCOME50</strong> का उपयोग कर सकते हैं।</p>
+          <?php endif; ?>
+        </div>
+
         <!-- Summary & Checkout CTA -->
         <div class="bg-white rounded-3xl border border-gray-200 p-6 space-y-4 shadow-xs">
           <h3 class="font-bold text-base text-gray-900 font-display border-b border-gray-100 pb-3">Order Summary</h3>
@@ -142,6 +214,17 @@ $final_total = $cart_subtotal + $shipping['shipping_fee'];
               <span>Items Subtotal</span>
               <span id="cart-subtotal-disp" class="font-bold text-gray-900"><?= format_price($cart_subtotal) ?></span>
             </div>
+            
+            <?php if ($discount_amount > 0): ?>
+              <div class="flex justify-between text-emerald-700 font-semibold bg-emerald-50/60 p-2 rounded-lg">
+                <span class="flex items-center gap-1">
+                  <i data-lucide="tag" class="w-3.5 h-3.5"></i>
+                  कूपन छूट (<?= htmlspecialchars($applied_coupon['code']) ?>)
+                </span>
+                <span>- <?= format_price($discount_amount) ?></span>
+              </div>
+            <?php endif; ?>
+
             <div class="flex justify-between">
               <span>Shipping Fee</span>
               <span id="cart-shipping-disp" class="font-bold <?= $shipping['is_free'] ? 'text-brand-green' : 'text-gray-900' ?>">

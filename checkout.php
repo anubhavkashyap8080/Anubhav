@@ -24,7 +24,10 @@ $total_weight = get_cart_total_weight();
 $default_pincode = $_SESSION['delivery_pincode'] ?? '241126';
 $shipping = calculate_shipping_rate($default_pincode, $subtotal, $total_weight);
 $shipping_fee = $shipping['shipping_fee'];
-$grand_total = $subtotal + $shipping_fee;
+
+$applied_coupon = get_applied_coupon();
+$discount_amount = $applied_coupon ? floatval($applied_coupon['discount_amount']) : 0.0;
+$grand_total = max(0, $subtotal + $shipping_fee - $discount_amount);
 ?>
 
 <div class="bg-stone-50 min-h-screen py-8">
@@ -314,6 +317,16 @@ $grand_total = $subtotal + $shipping_fee;
                   <?= $shipping_fee == 0 ? 'मुफ़्त (FREE)' : format_price($shipping_fee) ?>
                 </span>
               </div>
+
+              <?php if ($discount_amount > 0): ?>
+                <div class="flex justify-between items-center text-emerald-800 bg-emerald-50 p-2.5 rounded-xl font-bold text-xs">
+                  <span class="flex items-center gap-1.5">
+                    <i class="fa-solid fa-ticket text-brand-green"></i>
+                    कूपन छूट (<?= htmlspecialchars($applied_coupon['code']) ?>)
+                  </span>
+                  <span>- <?= format_price($discount_amount) ?></span>
+                </div>
+              <?php endif; ?>
 
               <?php if ($subtotal < FREE_SHIPPING_THRESHOLD): ?>
                 <div id="freeShippingHint" class="bg-amber-50 text-amber-800 p-2.5 rounded-xl text-[11px] flex items-center gap-2">

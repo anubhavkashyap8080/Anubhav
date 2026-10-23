@@ -39,7 +39,10 @@ $subtotal = get_cart_subtotal();
 $total_weight = get_cart_total_weight();
 $shipping = calculate_shipping_rate($shipping_pincode, $subtotal, $total_weight);
 $shipping_fee = $shipping['shipping_fee'];
-$final_total = $subtotal + $shipping_fee;
+
+$applied_coupon = get_applied_coupon();
+$coupon_discount = $applied_coupon ? floatval($applied_coupon['discount_amount']) : 0.0;
+$final_total = max(0, $subtotal + $shipping_fee - $coupon_discount);
 
 $order_number = 'ORD-' . date('Ymd') . '-' . rand(1000, 9999);
 $consignment_no = 'EU' . rand(100000000, 999999999) . 'IN';
@@ -68,6 +71,19 @@ try {
     ]);
 
     $order_id = $pdo->lastInsertId();
+
+    // Record Coupon Usage if applied
+    if ($applied_coupon) {
+        $stmt_cu = $pdo->prepare("
+            INSERT INTO coupon_usages (coupon_id, user_id, order_id, customer_email, customer_phone, discount_amount, used_at)
+            VALUES (?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP)
+        ");
+        $stmt_cu->execute([
+            $applied_coupon['id'], $user_id, $order_id, $customer_email, $customer_phone, $coupon_discount
+        ]);
+        $pdo->prepare("UPDATE coupons SET used_count = used_count + 1 WHERE id = ?")->execute([$applied_coupon['id']]);
+        unset($_SESSION['applied_coupon']);
+    }
 
     // Insert Order Items
     $stmt_item = $pdo->prepare("

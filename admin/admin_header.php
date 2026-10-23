@@ -150,6 +150,21 @@ $flash = get_flash();
           <i class="fa-solid fa-headset"></i> सपोर्ट टिकट्स
         </a>
 
+        <a href="/admin/coupons.php"
+          class="px-3 py-2 rounded-lg transition whitespace-nowrap flex items-center gap-1.5 <?= $current_page === 'coupons.php' ? 'bg-indigo-600 text-white' : 'text-indigo-200 hover:text-white hover:bg-indigo-800' ?>">
+          <i class="fa-solid fa-ticket"></i> कूपन व डिस्काउंट
+        </a>
+
+        <a href="/admin/hero_customizer.php"
+          class="px-3 py-2 rounded-lg transition whitespace-nowrap flex items-center gap-1.5 <?= $current_page === 'hero_customizer.php' ? 'bg-indigo-600 text-white' : 'text-indigo-200 hover:text-white hover:bg-indigo-800' ?>">
+          <i class="fa-solid fa-wand-magic-sparkles"></i> त्योहार व सेल बैनर
+        </a>
+
+        <a href="/admin/live_chat.php"
+          class="px-3 py-2 rounded-lg transition whitespace-nowrap flex items-center gap-1.5 <?= $current_page === 'live_chat.php' ? 'bg-indigo-600 text-white' : 'text-indigo-200 hover:text-white hover:bg-indigo-800' ?>">
+          <i class="fa-solid fa-headset"></i> लाइव चैट कंसोल
+        </a>
+
         <a href="/admin/seo_settings.php"
           class="px-3 py-2 rounded-lg transition whitespace-nowrap flex items-center gap-1.5 <?= $current_page === 'seo_settings.php' ? 'bg-indigo-600 text-white' : 'text-indigo-200 hover:text-white hover:bg-indigo-800' ?>">
           <i class="fa-solid fa-magnifying-glass-chart"></i> SEO सेटिंग्स

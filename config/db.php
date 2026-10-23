@@ -152,10 +152,65 @@ function ensure_platform_schema($pdo) {
                 'social_youtube' => 'https://youtube.com/@ganvgalihat',
                 'social_facebook' => 'https://facebook.com/ganvgalihat',
                 'social_whatsapp' => 'https://wa.me/917897492100',
+                // Hero Section Customizer Defaults (Festivals, Sales, Seasonal)
+                'hero_festive_preset' => 'general',
+                'hero_theme_color' => 'emerald',
+                'hero_badge_text' => '🌾 S S Industries Enterprise • Desh ki mitti ka swad',
+                'hero_title_line1' => 'Gaon ke hunar,',
+                'hero_title_line2' => 'ab har ghar tak',
+                'hero_subtitle' => 'Discover high-durability hand-forged agricultural sickles, garden khurpis, pure unpolished Awadh pulses, Banarasi mustard oil pickles, eco golden jute bags, and handlooms direct from rural Bharat.',
+                'hero_image_url' => 'https://images.unsplash.com/photo-1504148455328-c376907d081c?auto=format&fit=crop&w=800&q=80',
+                'hero_btn1_text' => 'Explore Marketplace',
+                'hero_btn1_link' => '/products.php',
+                'hero_btn2_text' => 'Farming & Garden Tools',
+                'hero_btn2_link' => '/products.php?category=farming-traditional-tools',
+                'hero_stat1_num' => '100%',
+                'hero_stat1_label' => 'Forged Iron & Pure Dal',
+                'hero_stat2_num' => '40+',
+                'hero_stat2_label' => 'Village Artisan Hubs',
+                'hero_stat3_num' => '₹499+',
+                'hero_stat3_label' => 'Free India Delivery',
+                'hero_tag1_title' => 'High-Carbon Tempered Steel',
+                'hero_tag1_subtitle' => 'Forged Desi Hansiya',
+                'hero_tag2_title' => 'Handcrafted Rating',
+                'hero_tag2_subtitle' => '★ 4.96 Verified'
             ];
             $ins = $pdo->prepare("INSERT INTO site_settings (setting_key, setting_value) VALUES (?, ?)");
             foreach ($defaults as $k => $v) {
                 $ins->execute([$k, $v]);
+            }
+        } else {
+            // Ensure any missing hero settings are added
+            $hero_defs = [
+                'hero_festive_preset' => 'general',
+                'hero_theme_color' => 'emerald',
+                'hero_badge_text' => '🌾 S S Industries Enterprise • Desh ki mitti ka swad',
+                'hero_title_line1' => 'Gaon ke hunar,',
+                'hero_title_line2' => 'ab har ghar tak',
+                'hero_subtitle' => 'Discover high-durability hand-forged agricultural sickles, garden khurpis, pure unpolished Awadh pulses, Banarasi mustard oil pickles, eco golden jute bags, and handlooms direct from rural Bharat.',
+                'hero_image_url' => 'https://images.unsplash.com/photo-1504148455328-c376907d081c?auto=format&fit=crop&w=800&q=80',
+                'hero_btn1_text' => 'Explore Marketplace',
+                'hero_btn1_link' => '/products.php',
+                'hero_btn2_text' => 'Farming & Garden Tools',
+                'hero_btn2_link' => '/products.php?category=farming-traditional-tools',
+                'hero_stat1_num' => '100%',
+                'hero_stat1_label' => 'Forged Iron & Pure Dal',
+                'hero_stat2_num' => '40+',
+                'hero_stat2_label' => 'Village Artisan Hubs',
+                'hero_stat3_num' => '₹499+',
+                'hero_stat3_label' => 'Free India Delivery',
+                'hero_tag1_title' => 'High-Carbon Tempered Steel',
+                'hero_tag1_subtitle' => 'Forged Desi Hansiya',
+                'hero_tag2_title' => 'Handcrafted Rating',
+                'hero_tag2_subtitle' => '★ 4.96 Verified'
+            ];
+            $chk_stmt = $pdo->prepare("SELECT setting_key FROM site_settings WHERE setting_key = ?");
+            $ins_stmt = $pdo->prepare("INSERT INTO site_settings (setting_key, setting_value) VALUES (?, ?)");
+            foreach ($hero_defs as $k => $v) {
+                $chk_stmt->execute([$k]);
+                if (!$chk_stmt->fetch()) {
+                    $ins_stmt->execute([$k, $v]);
+                }
             }
         }
     } catch (Exception $e) {}
@@ -313,6 +368,148 @@ function ensure_platform_schema($pdo) {
             if (empty($vcols)) {
                 $pdo->exec("ALTER TABLE `vendors` ADD COLUMN `avatar` VARCHAR(255) DEFAULT NULL");
             }
+        }
+    } catch (Exception $e) {}
+
+    // 6. Coupons & Promo Codes
+    try {
+        if ($is_sqlite) {
+            $pdo->exec("
+                CREATE TABLE IF NOT EXISTS coupons (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    code TEXT UNIQUE NOT NULL,
+                    title TEXT NOT NULL,
+                    description TEXT,
+                    discount_type TEXT DEFAULT 'percentage',
+                    discount_value REAL NOT NULL,
+                    min_order_amount REAL DEFAULT 0,
+                    max_discount REAL DEFAULT 0,
+                    coupon_type TEXT DEFAULT 'sale_discount',
+                    usage_limit INTEGER DEFAULT 1000,
+                    used_count INTEGER DEFAULT 0,
+                    start_date DATE,
+                    expiry_date DATE,
+                    status TEXT DEFAULT 'active',
+                    created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+                );
+                CREATE TABLE IF NOT EXISTS coupon_usages (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    coupon_id INTEGER NOT NULL,
+                    user_id INTEGER,
+                    order_id INTEGER,
+                    customer_email TEXT,
+                    customer_phone TEXT,
+                    discount_amount REAL,
+                    used_at DATETIME DEFAULT CURRENT_TIMESTAMP
+                );
+            ");
+        } else {
+            $pdo->exec("
+                CREATE TABLE IF NOT EXISTS `coupons` (
+                    `id` INT AUTO_INCREMENT PRIMARY KEY,
+                    `code` VARCHAR(50) UNIQUE NOT NULL,
+                    `title` VARCHAR(150) NOT NULL,
+                    `description` TEXT,
+                    `discount_type` ENUM('percentage', 'fixed', 'free_shipping') DEFAULT 'percentage',
+                    `discount_value` DECIMAL(10,2) NOT NULL,
+                    `min_order_amount` DECIMAL(10,2) DEFAULT 0,
+                    `max_discount` DECIMAL(10,2) DEFAULT 0,
+                    `coupon_type` ENUM('one_per_user', 'new_user_only', 'sale_discount') DEFAULT 'sale_discount',
+                    `usage_limit` INT DEFAULT 1000,
+                    `used_count` INT DEFAULT 0,
+                    `start_date` DATE DEFAULT NULL,
+                    `expiry_date` DATE DEFAULT NULL,
+                    `status` ENUM('active', 'inactive') DEFAULT 'active',
+                    `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+                ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+                CREATE TABLE IF NOT EXISTS `coupon_usages` (
+                    `id` INT AUTO_INCREMENT PRIMARY KEY,
+                    `coupon_id` INT NOT NULL,
+                    `user_id` INT DEFAULT NULL,
+                    `order_id` INT DEFAULT NULL,
+                    `customer_email` VARCHAR(150) DEFAULT NULL,
+                    `customer_phone` VARCHAR(50) DEFAULT NULL,
+                    `discount_amount` DECIMAL(10,2) DEFAULT 0,
+                    `used_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+                ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+            ");
+        }
+
+        // Seed initial coupons if none exist
+        $chk_c = $pdo->query("SELECT COUNT(*) FROM coupons")->fetchColumn();
+        if ($chk_c == 0) {
+            $init_coupons = [
+                ['WELCOME50', 'नया ग्राहक विशेष छूट (New User Special)', 'नए ग्राहकों के लिए पहले आर्डर पर फ्लैट ₹50 की छूट', 'fixed', 50, 299, 50, 'new_user_only', 5000, '2027-12-31'],
+                ['FESTIVAL20', 'त्योहार महाबचत सेल (Festive Sale 20% Off)', 'सभी हथकरघा, औजार व दालों पर 20% तक की भारी छूट', 'percentage', 20, 499, 300, 'sale_discount', 2000, '2027-12-31'],
+                ['SPECIAL100', 'विशेष डिस्काउंट (One Code Per User)', 'प्रति ग्राहक 1 बार उपयोग योग्य फ्लैट ₹100 की भारी छूट', 'fixed', 100, 699, 100, 'one_per_user', 1000, '2027-12-31'],
+                ['DESIKISAN', 'देसी किसान औजार छूट (Artisan Forge 15% Off)', 'कृषि उपकरणों और हंसिया/खुरपी पर 15% की विशेष छूट', 'percentage', 15, 399, 250, 'sale_discount', 3000, '2027-12-31']
+            ];
+            $ins_c = $pdo->prepare("
+                INSERT INTO coupons (code, title, description, discount_type, discount_value, min_order_amount, max_discount, coupon_type, usage_limit, expiry_date, status)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'active')
+            ");
+            foreach ($init_coupons as $ic) {
+                $ins_c->execute($ic);
+            }
+        }
+    } catch (Exception $e) {}
+
+    // 7. Live Chat System Tables
+    try {
+        if ($is_sqlite) {
+            $pdo->exec("
+                CREATE TABLE IF NOT EXISTS chat_sessions (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    session_token TEXT UNIQUE NOT NULL,
+                    user_id INTEGER DEFAULT NULL,
+                    user_name TEXT NOT NULL,
+                    user_email TEXT DEFAULT NULL,
+                    user_phone TEXT DEFAULT NULL,
+                    status TEXT DEFAULT 'active',
+                    last_message TEXT,
+                    unread_admin INTEGER DEFAULT 0,
+                    unread_user INTEGER DEFAULT 0,
+                    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+                    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
+                );
+                CREATE TABLE IF NOT EXISTS chat_messages (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    session_id INTEGER NOT NULL,
+                    sender_type TEXT NOT NULL,
+                    sender_name TEXT NOT NULL,
+                    message TEXT NOT NULL,
+                    is_read INTEGER DEFAULT 0,
+                    created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+                );
+            ");
+        } else {
+            $pdo->exec("
+                CREATE TABLE IF NOT EXISTS `chat_sessions` (
+                    `id` INT AUTO_INCREMENT PRIMARY KEY,
+                    `session_token` VARCHAR(100) UNIQUE NOT NULL,
+                    `user_id` INT DEFAULT NULL,
+                    `user_name` VARCHAR(100) NOT NULL,
+                    `user_email` VARCHAR(150) DEFAULT NULL,
+                    `user_phone` VARCHAR(50) DEFAULT NULL,
+                    `status` ENUM('active', 'resolved', 'closed') DEFAULT 'active',
+                    `last_message` TEXT,
+                    `unread_admin` INT DEFAULT 0,
+                    `unread_user` INT DEFAULT 0,
+                    `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                    `updated_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+                ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+                CREATE TABLE IF NOT EXISTS `chat_messages` (
+                    `id` INT AUTO_INCREMENT PRIMARY KEY,
+                    `session_id` INT NOT NULL,
+                    `sender_type` ENUM('user', 'admin', 'support') NOT NULL,
+                    `sender_name` VARCHAR(100) NOT NULL,
+                    `message` TEXT NOT NULL,
+                    `is_read` TINYINT(1) DEFAULT 0,
+                    `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+                ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+            ");
         }
     } catch (Exception $e) {}
 }
