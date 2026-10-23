@@ -1,6 +1,7 @@
 <?php
-$page_title = 'कारीगर व विक्रेता प्रशासन (Artisans & Vendors)';
-require_once __DIR__ . '/admin_header.php';
+require_once __DIR__ . '/../includes/functions.php';
+require_once __DIR__ . '/../includes/auth_check.php';
+require_admin();
 
 // Handle KYC Status Change
 if (isset($_GET['set_kyc']) && isset($_GET['vendor_id'])) {
@@ -33,6 +34,9 @@ $stmt_vendors = $pdo->query("
     ORDER BY v.id ASC
 ");
 $vendors = $stmt_vendors->fetchAll();
+
+$page_title = 'कारीगर व विक्रेता प्रशासन (Artisans & Vendors)';
+require_once __DIR__ . '/admin_header.php';
 ?>
 
 <!-- Title Bar -->

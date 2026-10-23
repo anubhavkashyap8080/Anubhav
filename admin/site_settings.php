@@ -1,6 +1,7 @@
 <?php
-$page_title = 'गेटवे एवं प्लेटफ़ॉर्म सेटिंग्स (Gateways & Shipping Settings)';
-require_once __DIR__ . '/admin_header.php';
+require_once __DIR__ . '/../includes/functions.php';
+require_once __DIR__ . '/../includes/auth_check.php';
+require_admin();
 
 // Handle Save Settings
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['save_settings'])) {
@@ -46,6 +47,9 @@ function get_setting_val($key, $default = '') {
     global $curr_settings;
     return $curr_settings[$key] ?? $default;
 }
+
+$page_title = 'गेटवे एवं प्लेटफ़ॉर्म सेटिंग्स (Gateways & Shipping Settings)';
+require_once __DIR__ . '/admin_header.php';
 ?>
 
 <!-- Title Bar -->

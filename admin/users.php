@@ -1,8 +1,9 @@
 <?php
-$page_title = 'यूजर एवं स्टाफ प्रशासन (Users & Staff Management)';
-require_once __DIR__ . '/admin_header.php';
+require_once __DIR__ . '/../includes/functions.php';
+require_once __DIR__ . '/../includes/auth_check.php';
+require_admin();
 
-// Check Super Admin privilege for user mutations
+$admin_user = get_logged_in_user();
 $is_super = is_super_admin();
 
 // Handle ADD USER
@@ -95,6 +96,9 @@ if (isset($_GET['delete_id'])) {
 // Fetch all users
 $stmt_users = $pdo->query("SELECT * FROM users ORDER BY id ASC");
 $all_users = $stmt_users->fetchAll();
+
+$page_title = 'यूजर एवं स्टाफ प्रशासन (Users & Staff Management)';
+require_once __DIR__ . '/admin_header.php';
 ?>
 
 <!-- Title & Action Bar with Responsive Padding -->

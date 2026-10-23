@@ -1,7 +1,14 @@
 <?php
-$page_title = 'भुगतान एवं सेटलमेंट (Payments & UTR Settlements)';
-require_once __DIR__ . '/seller_header.php';
+require_once __DIR__ . '/../includes/functions.php';
+require_once __DIR__ . '/../includes/auth_check.php';
+require_vendor();
 
+$user = get_logged_in_user();
+$vendor = get_vendor_for_current_user();
+if (!$vendor) {
+    $stmt = $pdo->query("SELECT * FROM vendors ORDER BY id ASC LIMIT 1");
+    $vendor = $stmt->fetch();
+}
 $vendor_id = $vendor['id'];
 
 // Handle Payout Request
@@ -44,6 +51,9 @@ $available_balance = max(0, ($gross_sales - $total_commission) - $total_settled)
 $stmt_payouts = $pdo->prepare("SELECT * FROM vendor_payouts WHERE vendor_id = ? ORDER BY id DESC");
 $stmt_payouts->execute([$vendor_id]);
 $payouts = $stmt_payouts->fetchAll();
+
+$page_title = 'भुगतान एवं सेटलमेंट (Payments & UTR Settlements)';
+require_once __DIR__ . '/seller_header.php';
 ?>
 
 <!-- Title & Quick Transfer Button -->

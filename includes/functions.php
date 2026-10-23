@@ -3,6 +3,10 @@
  * GaunGaliHat Platform Helper Functions
  */
 
+if (ob_get_level() === 0) {
+    ob_start();
+}
+
 require_once __DIR__ . '/../config/db.php';
 require_once __DIR__ . '/../config/settings.php';
 require_once __DIR__ . '/../config/shipping.php';

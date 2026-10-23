@@ -1,6 +1,5 @@
 <?php
-$page_title = 'नया ग्राहक पंजीकरण — GaunGaliHat';
-require_once __DIR__ . '/includes/header.php';
+require_once __DIR__ . '/includes/functions.php';
 
 $error = '';
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
@@ -55,6 +54,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         }
     }
 }
+
+$page_title = 'नया ग्राहक पंजीकरण — GaunGaliHat';
+require_once __DIR__ . '/includes/header.php';
 ?>
 
 <div class="bg-stone-50 min-h-[85vh] py-12 flex items-center justify-center">

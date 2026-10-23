@@ -1,12 +1,14 @@
 <?php
-$page_title = 'Order Confirmation — GaunGaliHat';
-require_once __DIR__ . '/includes/header.php';
+require_once __DIR__ . '/includes/functions.php';
 
 $order_id = intval($_GET['id'] ?? 0);
 if (!$order_id) {
     header('Location: /');
     exit;
 }
+
+$page_title = 'Order Confirmation — GaunGaliHat';
+require_once __DIR__ . '/includes/header.php';
 
 // Fetch order
 $stmt = $pdo->prepare("SELECT * FROM orders WHERE id = ?");

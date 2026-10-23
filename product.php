@@ -3,7 +3,7 @@
  * GaunGaliHat Single Product Detail Page
  */
 
-require_once __DIR__ . '/includes/header.php';
+require_once __DIR__ . '/includes/functions.php';
 
 $product_id = (int)($_GET['id'] ?? 0);
 if ($product_id <= 0) {
@@ -33,6 +33,9 @@ if (!$product) {
 $page_title = $product['name'] . ' — ' . APP_NAME;
 $gallery = json_decode($product['gallery'] ?? '[]', true) ?: [$product['image']];
 $specifications = json_decode($product['specifications'] ?? '{}', true) ?: [];
+
+require_once __DIR__ . '/includes/header.php';
+?>
 
 // Fetch Related Products from same category
 $stmt = $pdo->prepare("SELECT * FROM products WHERE category_id = ? AND id != ? LIMIT 4");

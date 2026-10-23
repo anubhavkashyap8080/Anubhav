@@ -1,6 +1,7 @@
 <?php
-$page_title = 'श्रेणी प्रबंधन (Category Management)';
-require_once __DIR__ . '/admin_header.php';
+require_once __DIR__ . '/../includes/functions.php';
+require_once __DIR__ . '/../includes/auth_check.php';
+require_admin();
 
 // Handle Add Category
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['add_category'])) {
@@ -43,6 +44,9 @@ $stmt_cats = $pdo->query("
     ORDER BY c.sort_order ASC, c.id ASC
 ");
 $categories = $stmt_cats->fetchAll();
+
+$page_title = 'श्रेणी प्रबंधन (Category Management)';
+require_once __DIR__ . '/admin_header.php';
 ?>
 
 <!-- Title & Action Bar -->

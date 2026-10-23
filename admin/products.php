@@ -1,6 +1,7 @@
 <?php
-$page_title = 'कैटलॉग एवं उत्पाद प्रशासन (Master Products Catalog)';
-require_once __DIR__ . '/admin_header.php';
+require_once __DIR__ . '/../includes/functions.php';
+require_once __DIR__ . '/../includes/auth_check.php';
+require_admin();
 
 $cat_filter = clean_input($_GET['category'] ?? '');
 $vendor_filter = intval($_GET['vendor'] ?? 0);
@@ -58,6 +59,9 @@ $sql .= " ORDER BY p.id DESC";
 $stmt = $pdo->prepare($sql);
 $stmt->execute($params);
 $products = $stmt->fetchAll();
+
+$page_title = 'कैटलॉग एवं उत्पाद प्रशासन (Master Products Catalog)';
+require_once __DIR__ . '/admin_header.php';
 ?>
 
 <!-- Title & Filter Controls -->

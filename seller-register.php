@@ -1,6 +1,5 @@
 <?php
-$page_title = 'कारीगर व विक्रेता पंजीकरण — GaunGaliHat';
-require_once __DIR__ . '/includes/header.php';
+require_once __DIR__ . '/includes/functions.php';
 
 $error = '';
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
@@ -88,6 +87,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         }
     }
 }
+
+$page_title = 'कारीगर व विक्रेता पंजीकरण — GaunGaliHat';
+require_once __DIR__ . '/includes/header.php';
 ?>
 
 <div class="bg-stone-50 min-h-screen py-10">

@@ -1,6 +1,7 @@
 <?php
-$page_title = 'केंद्रीय आर्डर एवं लॉजिस्टिक्स (Central Orders)';
-require_once __DIR__ . '/admin_header.php';
+require_once __DIR__ . '/../includes/functions.php';
+require_once __DIR__ . '/../includes/auth_check.php';
+require_admin();
 
 $status_filter = clean_input($_GET['status'] ?? '');
 $q = clean_input($_GET['q'] ?? '');
@@ -35,6 +36,9 @@ $sql .= " ORDER BY id DESC";
 $stmt = $pdo->prepare($sql);
 $stmt->execute($params);
 $orders = $stmt->fetchAll();
+
+$page_title = 'केंद्रीय आर्डर एवं लॉजिस्टिक्स (Central Orders)';
+require_once __DIR__ . '/admin_header.php';
 ?>
 
 <!-- Title & Filters -->

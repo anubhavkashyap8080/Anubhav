@@ -1,6 +1,5 @@
 <?php
-$page_title = 'मेरा खाता (My Account) — GaunGaliHat';
-require_once __DIR__ . '/includes/header.php';
+require_once __DIR__ . '/includes/functions.php';
 require_once __DIR__ . '/includes/auth_check.php';
 
 require_login();
@@ -63,6 +62,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['change_password'])) {
 $stmt_orders = $pdo->prepare("SELECT * FROM orders WHERE user_id = ? OR customer_email = ? ORDER BY id DESC");
 $stmt_orders->execute([$user['id'], $user['email']]);
 $user_orders = $stmt_orders->fetchAll();
+
+$page_title = 'मेरा खाता (My Account) — GaunGaliHat';
+require_once __DIR__ . '/includes/header.php';
 ?>
 
 <div class="bg-stone-50 min-h-screen py-8">

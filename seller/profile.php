@@ -1,7 +1,14 @@
 <?php
-$page_title = 'कार्यशाला प्रोफ़ाइल एवं सुरक्षा (Store Profile & Security)';
-require_once __DIR__ . '/seller_header.php';
+require_once __DIR__ . '/../includes/functions.php';
+require_once __DIR__ . '/../includes/auth_check.php';
+require_vendor();
 
+$user = get_logged_in_user();
+$vendor = get_vendor_for_current_user();
+if (!$vendor) {
+    $stmt = $pdo->query("SELECT * FROM vendors ORDER BY id ASC LIMIT 1");
+    $vendor = $stmt->fetch();
+}
 $vendor_id = $vendor['id'];
 $success_msg = '';
 $error_msg = '';
@@ -67,6 +74,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['change_seller_passwor
         }
     }
 }
+
+$page_title = 'कार्यशाला प्रोफ़ाइल एवं सुरक्षा (Store Profile & Security)';
+require_once __DIR__ . '/seller_header.php';
 ?>
 
 <!-- Title -->

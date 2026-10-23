@@ -19,6 +19,9 @@ $flash = get_flash();
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title><?= isset($page_title) ? htmlspecialchars($page_title) . ' — ' : '' ?>सुपर एडमिन नियंत्रण (Central Admin) — GaunGaliHat</title>
+  <link rel="icon" type="image/x-icon" href="/favicon.ico">
+  <link rel="icon" type="image/png" sizes="32x32" href="/favicon.png">
+  <link rel="apple-touch-icon" href="/apple-touch-icon.png">
   
   <script src="https://cdn.tailwindcss.com"></script>
   <script>
@@ -134,5 +137,5 @@ $flash = get_flash();
     </div>
   <?php endif; ?>
 
-  <main class="flex-1 py-8">
-    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+  <main class="flex-1 py-5 sm:py-8">
+    <div class="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8">

@@ -1,9 +1,36 @@
 <?php
-$page_title = 'खाते में लॉगिन करें — GaunGaliHat';
-require_once __DIR__ . '/includes/header.php';
+/**
+ * GaunGaliHat Secure Unified Login Gateway
+ */
+
+require_once __DIR__ . '/includes/functions.php';
 
 $redirect = clean_input($_GET['redirect'] ?? '');
 $active_tab = clean_input($_GET['tab'] ?? 'shopper'); // shopper, seller, staff
+if ($active_tab === 'admin') {
+    $active_tab = 'staff';
+}
+
+// If already logged in, redirect away from login page
+if (is_logged_in()) {
+    $logged_user = get_logged_in_user();
+    if ($logged_user) {
+        if (!empty($redirect) && strpos($redirect, 'http') === false) {
+            header('Location: /' . ltrim($redirect, '/'));
+            exit;
+        }
+        if (in_array($logged_user['role'], ['super_admin', 'admin'])) {
+            header('Location: /admin/index.php');
+            exit;
+        } elseif ($logged_user['role'] === 'vendor') {
+            header('Location: /seller/dashboard.php');
+            exit;
+        } else {
+            header('Location: /account.php');
+            exit;
+        }
+    }
+}
 
 $error = '';
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
@@ -41,6 +68,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $active_tab = $tab;
     }
 }
+
+// Render Header only after all POST and redirect logic has executed
+$page_title = 'खाते में लॉगिन करें — GaunGaliHat';
+require_once __DIR__ . '/includes/header.php';
 ?>
 
 <div class="bg-stone-50 min-h-[85vh] py-12 flex items-center justify-center">
@@ -148,18 +179,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             </span>
           </button>
         </form>
-
-        <!-- Demo Accounts Hint for Testing -->
-        <div class="mt-6 pt-5 border-t border-gray-100 bg-stone-50 p-3.5 rounded-2xl text-[11px] text-gray-500">
-          <p class="font-bold text-gray-700 mb-1 flex items-center gap-1">
-            <i class="fa-solid fa-key text-amber-500"></i> टेस्ट क्रेडेंशियल्स (Quick Test Logins):
-          </p>
-          <ul class="space-y-0.5 text-[11px] text-gray-600">
-            <li><strong>Super Admin:</strong> <code class="text-brand-green">anubhav</code> / <code class="text-gray-800">admin123</code></li>
-            <li><strong>Seller (Artisan):</strong> <code class="text-brand-green">ramkishan_artisan</code> / <code class="text-gray-800">seller123</code></li>
-            <li><strong>Customer:</strong> <code class="text-brand-green">aarav_buyer</code> / <code class="text-gray-800">seller123</code></li>
-          </ul>
-        </div>
 
       </div>
 

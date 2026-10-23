@@ -1,8 +1,16 @@
 <?php
-$page_title = 'आर्डर व डिस्पैच प्रबंधन (Orders & India Post Dispatch)';
-require_once __DIR__ . '/seller_header.php';
+require_once __DIR__ . '/../includes/functions.php';
+require_once __DIR__ . '/../includes/auth_check.php';
+require_vendor();
 
+$user = get_logged_in_user();
+$vendor = get_vendor_for_current_user();
+if (!$vendor) {
+    $stmt = $pdo->query("SELECT * FROM vendors ORDER BY id ASC LIMIT 1");
+    $vendor = $stmt->fetch();
+}
 $vendor_id = $vendor['id'];
+
 $status_filter = clean_input($_GET['status'] ?? '');
 $view_order_id = intval($_GET['view'] ?? 0);
 
@@ -68,6 +76,9 @@ if ($view_order_id) {
         $selected_items = $stmt_items->fetchAll();
     }
 }
+
+$page_title = 'आर्डर व डिस्पैच प्रबंधन (Orders & India Post Dispatch)';
+require_once __DIR__ . '/seller_header.php';
 ?>
 
 <!-- Title & Status Tabs -->

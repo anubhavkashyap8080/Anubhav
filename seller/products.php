@@ -1,8 +1,16 @@
 <?php
-$page_title = 'उत्पाद सूची एवं कैटलॉग (Product Catalog)';
-require_once __DIR__ . '/seller_header.php';
+require_once __DIR__ . '/../includes/functions.php';
+require_once __DIR__ . '/../includes/auth_check.php';
+require_vendor();
 
+$user = get_logged_in_user();
+$vendor = get_vendor_for_current_user();
+if (!$vendor) {
+    $stmt = $pdo->query("SELECT * FROM vendors ORDER BY id ASC LIMIT 1");
+    $vendor = $stmt->fetch();
+}
 $vendor_id = $vendor['id'];
+
 $action = clean_input($_GET['action'] ?? 'list');
 $selected_category = clean_input($_GET['category'] ?? '');
 $search_query = clean_input($_GET['q'] ?? '');
@@ -99,6 +107,9 @@ $sql .= " ORDER BY p.id DESC";
 $stmt = $pdo->prepare($sql);
 $stmt->execute($params);
 $products = $stmt->fetchAll();
+
+$page_title = 'उत्पाद सूची एवं कैटलॉग (Product Catalog)';
+require_once __DIR__ . '/seller_header.php';
 ?>
 
 <!-- Title & Controls Bar -->
