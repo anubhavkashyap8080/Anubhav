@@ -94,7 +94,16 @@ if ($action === 'customer_send') {
     }
 
     if (!empty($message)) {
-        // Prevent accidental duplicate insert if submitted multiple times within 2 seconds
+        // 1. Session-level immediate debounce (immune to DB timezone variations)
+        if (!empty($_SESSION['last_sent_msg']) && 
+            $_SESSION['last_sent_msg'] === $message && 
+            !empty($_SESSION['last_sent_time']) && 
+            (time() - $_SESSION['last_sent_time']) <= 4) {
+            echo json_encode(['success' => true, 'debounced' => true, 'message_id' => $_SESSION['last_sent_id'] ?? 0]);
+            exit;
+        }
+
+        // 2. Database-level fallback debounce
         $stmt_chk = $pdo->prepare("
             SELECT id, message, created_at 
             FROM chat_messages 
@@ -104,27 +113,34 @@ if ($action === 'customer_send') {
         $stmt_chk->execute([$session['id']]);
         $last_msg = $stmt_chk->fetch();
         if ($last_msg && trim($last_msg['message']) === $message) {
-            $time_diff = time() - strtotime($last_msg['created_at']);
-            if ($time_diff <= 2) {
+            $diff = abs(time() - strtotime($last_msg['created_at']));
+            // If created within 4 seconds (accounting for timezone drift)
+            if ($diff <= 4 || ($diff >= 19790 && $diff <= 19810)) {
                 echo json_encode(['success' => true, 'debounced' => true, 'message_id' => $last_msg['id']]);
                 exit;
             }
         }
 
+        $now = date('Y-m-d H:i:s');
         $sender_name = $guest_name ?: $session['user_name'];
         $stmt_ins = $pdo->prepare("
             INSERT INTO chat_messages (session_id, sender_type, sender_name, message, is_read, created_at)
-            VALUES (?, 'user', ?, ?, 0, CURRENT_TIMESTAMP)
+            VALUES (?, 'user', ?, ?, 0, ?)
         ");
-        $stmt_ins->execute([$session['id'], $sender_name, $message]);
+        $stmt_ins->execute([$session['id'], $sender_name, $message, $now]);
         $new_msg_id = $pdo->lastInsertId();
+
+        // Record in session
+        $_SESSION['last_sent_msg'] = $message;
+        $_SESSION['last_sent_time'] = time();
+        $_SESSION['last_sent_id'] = $new_msg_id;
 
         // Update session
         $pdo->prepare("
             UPDATE chat_sessions 
-            SET last_message = ?, unread_admin = unread_admin + 1, updated_at = CURRENT_TIMESTAMP 
+            SET last_message = ?, unread_admin = unread_admin + 1, updated_at = ? 
             WHERE id = ?
-        ")->execute([$message, $session['id']]);
+        ")->execute([$message, $now, $session['id']]);
 
         echo json_encode(['success' => true, 'message_id' => $new_msg_id]);
         exit;
