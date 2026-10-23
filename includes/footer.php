@@ -1,6 +1,7 @@
 <?php
 /**
  * GaunGaliHat Master Footer
+ * Clean Brand Footer with Vertical Payment Modes List (COD, Net Banking, Cards, UPI)
  */
 ?>
   </main>
@@ -11,7 +12,7 @@
       <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 text-xs">
         <div class="flex items-start gap-3.5 p-4 bg-white rounded-2xl border border-gray-100 shadow-2xs">
           <div class="w-10 h-10 rounded-xl bg-emerald-100 text-brand-green flex items-center justify-center shrink-0">
-            <i data-lucide="anvil" class="w-5 h-5"></i>
+            <i data-lucide="hammer" class="w-5 h-5"></i>
           </div>
           <div>
             <h4 class="font-bold text-gray-900 text-sm">Direct Village Forge</h4>
@@ -45,7 +46,7 @@
           </div>
           <div>
             <h4 class="font-bold text-gray-900 text-sm">Bank-Grade Payments</h4>
-            <p class="text-gray-500 mt-0.5">Secure UPI, Razorpay, PayU, and Cash on Delivery (COD) supported.</p>
+            <p class="text-gray-500 mt-0.5">100% Secure Checkout powered by official integrations.</p>
           </div>
         </div>
       </div>
@@ -53,23 +54,24 @@
   </section>
 
   <!-- Master Footer -->
-  <footer class="bg-slate-950 text-white text-xs pt-12 pb-24 lg:pb-12 border-t border-slate-800">
+  <footer class="bg-slate-950 text-white text-xs pt-12 pb-24 lg:pb-12 border-t-4 border-brand-orange">
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-10">
       <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-8">
         
-        <!-- Brand & Factory Info -->
+        <!-- Brand & Factory Info with Logo -->
         <div class="lg:col-span-2 space-y-4">
-          <div class="flex items-center gap-2">
-            <div class="w-8 h-8 rounded-lg bg-brand-green flex items-center justify-center text-amber-300">
-              <i data-lucide="anvil" class="w-4 h-4"></i>
+          <a href="/" class="flex items-center gap-2">
+            <img src="/logo.png" alt="GaunGaliHat" class="h-10 sm:h-12 w-auto object-contain bg-white/90 p-1 rounded-lg" />
+            <div>
+              <span class="font-extrabold text-lg sm:text-xl font-display text-white block">GaunGaliHat</span>
+              <span class="text-[10px] text-amber-300 font-semibold uppercase tracking-wider block">A Brand by S S Industries</span>
             </div>
-            <span class="font-extrabold text-xl font-display text-white">GaunGaliHat</span>
-          </div>
+          </a>
           <p class="text-slate-400 text-xs leading-relaxed max-w-sm">
-            <?= htmlspecialchars(get_setting('company_name')) ?> enterprise initiative dedicated to empowering rural Indian smallholders, village foundries, and women self-help groups by delivering authentic farming tools and agro-produce straight from rural Bharat.
+            <?= htmlspecialchars(get_setting('company_name', 'S S Industries')) ?> enterprise initiative dedicated to empowering rural Indian smallholders, village foundries, and women self-help groups by delivering authentic farming tools, organic pulses and farm produce straight from rural Bharat.
           </p>
-          <div class="space-y-1 text-[11px] text-slate-400 font-mono">
-            <p>📍 Works: Madhoganj Baghauli Road, Newada, Hardoi, UP - 241126</p>
+          <div class="space-y-1.5 text-[11px] text-slate-400 font-mono">
+            <p>📍 Factory: Madhoganj Baghauli Road, Newada, Hardoi, UP - 241126</p>
             <p>🏭 Plant: G145 Phase 2 Industrial Area, UPSIDA Sandila, Hardoi</p>
             <p>📞 Phone: <?= htmlspecialchars(APP_PHONE) ?></p>
             <p>✉️ Email: <?= htmlspecialchars(APP_EMAIL) ?></p>
@@ -102,31 +104,56 @@
           </ul>
         </div>
 
-        <!-- Trust & Payment Badges -->
+        <!-- Vertically Arranged Payment Methods (COD, Net Banking, Cards, UPI) -->
         <div>
-          <h4 class="font-bold text-white uppercase tracking-wider text-xs mb-3 font-display">Verified Gateways</h4>
-          <p class="text-[11px] text-slate-400 mb-3">100% Secure Checkout powered by official integrations:</p>
-          <div class="space-y-2">
-            <div class="p-2 bg-slate-900 border border-slate-800 rounded-xl flex items-center gap-2">
-              <span class="text-xs font-bold text-blue-400 font-mono">⚡ Razorpay</span>
-              <span class="text-[10px] text-slate-400">UPI, Netbanking, Cards</span>
+          <h4 class="font-bold text-white uppercase tracking-wider text-xs mb-3 font-display">भुगतान विकल्प (Payment Methods)</h4>
+          <p class="text-[11px] text-slate-400 mb-3">स्वीकृत भुगतान माध्यम:</p>
+          <div class="flex flex-col space-y-2 text-xs text-slate-300">
+            
+            <!-- 1. Cash on Delivery -->
+            <div class="flex items-center gap-2.5 py-2 px-3 bg-slate-900 border border-slate-800 rounded-xl hover:border-slate-700 transition">
+              <i data-lucide="banknote" class="w-4 h-4 text-amber-400 shrink-0"></i>
+              <div>
+                <span class="font-bold text-white block">Cash on Delivery (COD)</span>
+                <span class="text-[10px] text-slate-400 block">पार्सल मिलने पर भुगतान</span>
+              </div>
             </div>
-            <div class="p-2 bg-slate-900 border border-slate-800 rounded-xl flex items-center gap-2">
-              <span class="text-xs font-bold text-emerald-400 font-mono">🔒 PayU Money</span>
-              <span class="text-[10px] text-slate-400">SHA-512 Encrypted</span>
+
+            <!-- 2. Net Banking -->
+            <div class="flex items-center gap-2.5 py-2 px-3 bg-slate-900 border border-slate-800 rounded-xl hover:border-slate-700 transition">
+              <i data-lucide="landmark" class="w-4 h-4 text-emerald-400 shrink-0"></i>
+              <div>
+                <span class="font-bold text-white block">Net Banking</span>
+                <span class="text-[10px] text-slate-400 block">सभी प्रमुख भारतीय बैंक</span>
+              </div>
             </div>
-            <div class="p-2 bg-slate-900 border border-slate-800 rounded-xl flex items-center gap-2">
-              <span class="text-xs font-bold text-amber-400 font-mono">💵 Cash on Delivery</span>
-              <span class="text-[10px] text-slate-400">Pay on Package Arrival</span>
+
+            <!-- 3. Cards -->
+            <div class="flex items-center gap-2.5 py-2 px-3 bg-slate-900 border border-slate-800 rounded-xl hover:border-slate-700 transition">
+              <i data-lucide="credit-card" class="w-4 h-4 text-blue-400 shrink-0"></i>
+              <div>
+                <span class="font-bold text-white block">Cards (Debit / Credit)</span>
+                <span class="text-[10px] text-slate-400 block">RuPay, Visa, Mastercard</span>
+              </div>
             </div>
+
+            <!-- 4. UPI -->
+            <div class="flex items-center gap-2.5 py-2 px-3 bg-slate-900 border border-slate-800 rounded-xl hover:border-slate-700 transition">
+              <i data-lucide="smartphone" class="w-4 h-4 text-purple-400 shrink-0"></i>
+              <div>
+                <span class="font-bold text-white block">UPI</span>
+                <span class="text-[10px] text-slate-400 block">GPay, PhonePe, Paytm, BHIM</span>
+              </div>
+            </div>
+
           </div>
         </div>
 
       </div>
 
-      <!-- Copyright -->
+      <!-- Copyright & Bottom Bar -->
       <div class="border-t border-slate-900 pt-6 flex flex-col sm:flex-row items-center justify-between gap-3 text-[11px] text-slate-500">
-        <p>© <?= date('Y') ?> GaunGaliHat — S S Industries. All Rights Reserved.</p>
+        <p>© <?= date('Y') ?> GaunGaliHat — S S Industries Enterprise. All Rights Reserved.</p>
         <div class="flex items-center gap-4">
           <a href="/about.php" class="hover:text-slate-400">Privacy Policy</a>
           <span>•</span>
@@ -138,69 +165,11 @@
     </div>
   </footer>
 
-  <!-- 6. Mobile Bottom Sticky Navigation Bar -->
-  <div class="lg:hidden fixed bottom-0 left-0 right-0 z-40 bg-white/95 backdrop-blur-md border-t border-gray-200 py-2 px-3 flex items-center justify-around shadow-2xl">
-    <a href="/index.php" class="flex flex-col items-center gap-0.5 text-[10px] font-semibold <?= $current_page === 'index.php' ? 'text-brand-green' : 'text-gray-500' ?>">
-      <i data-lucide="home" class="w-5 h-5"></i>
-      <span>Home</span>
-    </a>
-    <a href="/products.php" class="flex flex-col items-center gap-0.5 text-[10px] font-semibold <?= $current_page === 'products.php' ? 'text-brand-green' : 'text-gray-500' ?>">
-      <i data-lucide="layout-grid" class="w-5 h-5"></i>
-      <span>Catalog</span>
-    </a>
-    <a href="/wishlist.php" class="flex flex-col items-center gap-0.5 text-[10px] font-semibold relative text-gray-500">
-      <i data-lucide="heart" class="w-5 h-5"></i>
-      <span id="mobile-wishlist-count" class="absolute -top-1 right-2 w-4 h-4 bg-brand-orange text-white text-[9px] font-bold rounded-full flex items-center justify-center <?= $wishlist_count === 0 ? 'hidden' : '' ?>"><?= $wishlist_count ?></span>
-      <span>Wishlist</span>
-    </a>
-    <a href="/cart.php" class="flex flex-col items-center gap-0.5 text-[10px] font-semibold relative text-gray-500">
-      <i data-lucide="shopping-bag" class="w-5 h-5"></i>
-      <span id="mobile-cart-count" class="absolute -top-1 right-2 w-4 h-4 bg-brand-green text-white text-[9px] font-bold rounded-full flex items-center justify-center <?= $cart_count === 0 ? 'hidden' : '' ?>"><?= $cart_count ?></span>
-      <span>Bag</span>
-    </a>
-    <a href="/account.php" class="flex flex-col items-center gap-0.5 text-[10px] font-semibold text-gray-500">
-      <i data-lucide="user" class="w-5 h-5"></i>
-      <span>Account</span>
-    </a>
-  </div>
-
-  <!-- Pincode Modal -->
-  <div id="pincode-modal" class="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs hidden flex items-center justify-center p-4">
-    <div class="bg-white rounded-3xl max-w-sm w-full p-6 space-y-4 shadow-2xl animate-in zoom-in-95 duration-150">
-      <div class="flex items-center justify-between border-b border-gray-100 pb-3">
-        <h3 class="font-bold text-sm text-gray-900 font-display flex items-center gap-2">
-          <i data-lucide="map-pin" class="w-4 h-4 text-brand-orange"></i>
-          <span>Check Delivery PIN Code</span>
-        </h3>
-        <button onclick="closePincodeModal()" class="text-gray-400 hover:text-gray-600">
-          <i data-lucide="x" class="w-4 h-4"></i>
-        </button>
-      </div>
-      <p class="text-xs text-gray-500">Enter your 6-digit delivery pincode to get live India Post shipping charges & dispatch ETA.</p>
-      <form onsubmit="handlePincodeSubmit(event)" class="space-y-3">
-        <input 
-          type="text" 
-          id="modal-pincode-input"
-          maxlength="6"
-          placeholder="e.g. 241126 or 110001"
-          class="w-full p-3 border border-gray-300 rounded-xl text-center text-lg font-mono font-bold tracking-widest text-gray-900 outline-none focus:border-brand-green"
-          required
-        >
-        <button type="submit" class="w-full py-2.5 bg-brand-green text-white font-bold rounded-xl text-xs shadow-xs hover:bg-brand-green-dark cursor-pointer transition-colors">
-          Verify & Apply Delivery Rate
-        </button>
-      </form>
-      <div id="modal-pincode-result" class="hidden p-3 rounded-xl text-xs"></div>
-    </div>
-  </div>
-
-  <!-- Toast Container -->
-  <div id="toast-container" class="fixed bottom-20 lg:bottom-6 right-6 z-50 flex flex-col gap-2 max-w-sm pointer-events-none"></div>
-
-  <!-- Scripts -->
-  <script src="/assets/js/main.js"></script>
+  <!-- Lucide Icons Refresh Trigger -->
   <script>
-    lucide.createIcons();
+    if (typeof lucide !== 'undefined') {
+      lucide.createIcons();
+    }
   </script>
 </body>
 </html>

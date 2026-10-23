@@ -28,4 +28,6 @@ dist-ssr
 
 # Local Server State Sync
 .ggh_data
+data/*.sqlite
+data/*.db
 

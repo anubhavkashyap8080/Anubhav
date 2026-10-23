@@ -82,7 +82,7 @@ function initLiveSearch() {
   });
 
   function fetchLiveSearch(q, catId) {
-    spinner.classList.remove('hidden');
+    if (spinner) spinner.classList.remove('hidden');
     itemsContainer.innerHTML = '';
     dropdown.classList.remove('hidden');
 
@@ -91,7 +91,7 @@ function initLiveSearch() {
     fetch(url)
       .then(res => res.json())
       .then(data => {
-        spinner.classList.add('hidden');
+        if (spinner) spinner.classList.add('hidden');
         if (!data.results || data.results.length === 0) {
           itemsContainer.innerHTML = `
             <div class="p-6 text-center text-xs text-gray-500">

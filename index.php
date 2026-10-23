@@ -27,72 +27,90 @@ $verified_vendors = $stmt->fetchAll();
 ?>
 
 <!-- 1. Hero Banner Section -->
-<section class="relative bg-gradient-to-br from-emerald-950 via-slate-900 to-emerald-900 text-white overflow-hidden py-12 sm:py-20">
-  <div class="absolute inset-0 opacity-10 bg-[radial-gradient(#10b981_1px,transparent_1px)] [background-size:16px_16px]"></div>
+<section class="relative bg-gradient-to-br from-emerald-950 via-brand-green to-emerald-900 text-white overflow-hidden py-12 sm:py-20">
+  <div class="absolute inset-0 opacity-10 bg-[radial-gradient(#ffffff_1px,transparent_1px)] [background-size:16px_16px]"></div>
+  <div class="absolute -top-24 -right-24 w-72 sm:w-96 h-72 sm:h-96 rounded-full bg-brand-orange/20 blur-3xl pointer-events-none"></div>
+  <div class="absolute -bottom-24 -left-24 w-72 sm:w-96 h-72 sm:h-96 rounded-full bg-emerald-400/10 blur-3xl pointer-events-none"></div>
+
   <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
     <div class="grid grid-cols-1 lg:grid-cols-12 gap-8 items-center">
       
       <div class="lg:col-span-7 space-y-6 text-center lg:text-left">
-        <div class="inline-flex items-center gap-2 px-3.5 py-1 rounded-full bg-emerald-800/80 border border-emerald-600/40 text-amber-300 text-xs font-semibold shadow-inner">
-          <i data-lucide="sparkles" class="w-4 h-4 text-amber-300"></i>
-          <span>Direct from Village Foundries, Awadh Farms & Women SHGs</span>
+        <div class="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-emerald-800/80 border border-emerald-600/60 text-amber-300 text-xs font-semibold shadow-xs">
+          <i data-lucide="sparkles" class="w-3.5 h-3.5 text-amber-300"></i>
+          <span>S S Industries Enterprise • Empowering Rural Artisans, Dal Farmers & SHGs</span>
         </div>
 
         <h1 class="text-3xl sm:text-5xl lg:text-6xl font-extrabold font-display tracking-tight text-white leading-tight">
-          High-Durability Farming Tools, <span class="text-amber-400">Pure Desi Dal</span> & Village Achar.
+          Gaon ke hunar,<br />
+          <span class="text-amber-300 drop-shadow-sm">ab har ghar tak</span>
         </h1>
 
         <p class="text-sm sm:text-base text-emerald-100/90 max-w-xl mx-auto lg:mx-0 leading-relaxed">
-          Manufactured by S S Industries in Hardoi & curated from authentic rural artisan clusters. Hand-forged carbon steel sickles, stone-milled unpolished pulses, and sun-cured mustard oil pickles delivered across India via India Post.
+          Discover high-durability hand-forged agricultural sickles, garden khurpis, pure unpolished Awadh pulses, Banarasi mustard oil pickles, eco golden jute bags, and handlooms direct from rural Bharat.
         </p>
 
         <div class="flex flex-wrap items-center justify-center lg:justify-start gap-3 sm:gap-4 pt-2">
-          <a href="/products.php" class="px-6 py-3.5 bg-brand-orange hover:bg-amber-600 text-white font-bold text-xs sm:text-sm rounded-2xl shadow-lg hover:shadow-amber-900/30 transition-all flex items-center gap-2 cursor-pointer">
-            <i data-lucide="shopping-bag" class="w-4 h-4"></i>
-            <span>Explore All Products</span>
+          <a href="/products.php" class="px-5 sm:px-6 py-3 sm:py-3.5 bg-brand-orange hover:bg-brand-orange-dark text-white font-bold text-xs sm:text-sm rounded-xl shadow-lg hover:shadow-orange-600/30 transition-all flex items-center gap-2 cursor-pointer active:scale-95">
+            <span>Explore Marketplace</span>
             <i data-lucide="arrow-right" class="w-4 h-4"></i>
           </a>
-          <a href="/seller-register.php" class="px-6 py-3.5 bg-white/10 hover:bg-white/20 text-white font-bold text-xs sm:text-sm rounded-2xl border border-white/20 backdrop-blur-xs transition-all flex items-center gap-2 cursor-pointer">
-            <i data-lucide="store" class="w-4 h-4 text-amber-300"></i>
-            <span>Register as Artisan / Farmer</span>
+          <a href="/products.php?category=farming-traditional-tools" class="px-5 sm:px-6 py-3 sm:py-3.5 bg-emerald-800/80 hover:bg-emerald-700/80 border border-emerald-600/80 text-white font-semibold text-xs sm:text-sm rounded-xl transition-all flex items-center gap-2">
+            <span>Farming & Garden Tools</span>
+          </a>
+          <a href="/about.php" class="px-5 sm:px-6 py-3 sm:py-3.5 bg-amber-500 hover:bg-amber-600 text-gray-950 font-bold text-xs sm:text-sm rounded-xl transition-all flex items-center gap-1.5 shadow-md">
+            <i data-lucide="map-pin" class="w-4 h-4 text-emerald-950"></i>
+            <span>Nearby Artisans (Map)</span>
           </a>
         </div>
 
         <!-- Badges -->
-        <div class="pt-4 grid grid-cols-3 gap-2 sm:gap-4 text-left max-w-md mx-auto lg:mx-0 text-slate-300 text-[11px] font-medium">
-          <div class="p-2.5 bg-white/5 rounded-xl border border-white/10">
-            <p class="text-amber-300 font-bold text-sm">₹499+</p>
-            <p class="text-[10px] text-slate-400">Free India Delivery</p>
+        <div class="grid grid-cols-3 gap-2 sm:gap-4 pt-4 border-t border-emerald-800/60 text-left max-w-md mx-auto lg:mx-0">
+          <div>
+            <div class="text-lg sm:text-2xl font-bold text-amber-300 font-display">100%</div>
+            <div class="text-[10px] sm:text-[11px] text-emerald-200/80">Forged Iron & Pure Dal</div>
           </div>
-          <div class="p-2.5 bg-white/5 rounded-xl border border-white/10">
-            <p class="text-emerald-400 font-bold text-sm">100%</p>
-            <p class="text-[10px] text-slate-400">Raw Desi Produce</p>
+          <div>
+            <div class="text-lg sm:text-2xl font-bold text-amber-300 font-display">40+</div>
+            <div class="text-[10px] sm:text-[11px] text-emerald-200/80">Village Artisan Hubs</div>
           </div>
-          <div class="p-2.5 bg-white/5 rounded-xl border border-white/10">
-            <p class="text-white font-bold text-sm">COD</p>
-            <p class="text-[10px] text-slate-400">Cash on Delivery</p>
+          <div>
+            <div class="text-lg sm:text-2xl font-bold text-amber-300 font-display">₹499+</div>
+            <div class="text-[10px] sm:text-[11px] text-emerald-200/80">Free India Delivery</div>
           </div>
         </div>
       </div>
 
-      <!-- Right Hero Graphic -->
-      <div class="lg:col-span-5 relative">
-        <div class="relative mx-auto max-w-md rounded-3xl overflow-hidden border-2 border-emerald-700/50 shadow-2xl bg-slate-900">
+      <!-- Right Hero Graphic Visual Showcase Card -->
+      <div class="lg:col-span-5 relative mt-6 lg:mt-0 px-2 sm:px-0">
+        <div class="relative mx-auto max-w-sm rounded-3xl bg-white/10 backdrop-blur-md p-3 sm:p-4 border border-white/20 shadow-2xl">
           <img 
-            src="https://images.unsplash.com/photo-1504917599217-d4dc5ebe6122?auto=format&fit=crop&w=800&q=80" 
-            alt="Rural Artisan Forge" 
-            class="w-full h-80 sm:h-96 object-cover opacity-90"
-          >
-          <div class="absolute inset-0 bg-gradient-to-t from-slate-950 via-slate-950/40 to-transparent flex flex-col justify-end p-6 space-y-2">
-            <span class="px-2.5 py-1 bg-amber-500 text-slate-950 font-extrabold text-[10px] rounded-full w-max uppercase tracking-wider">
-              S S Industries Works • Hardoi
-            </span>
-            <h3 class="text-lg font-bold text-white font-display">
-              Generational Forge Metallurgy & Pure Village Harvest
-            </h3>
-            <p class="text-xs text-slate-300">
-              Unbreakable high-carbon agricultural sickles and 100% unpolished desi farm grains delivered to your doorstep.
-            </p>
+            src="https://images.unsplash.com/photo-1504148455328-c376907d081c?auto=format&fit=crop&w=800&q=80" 
+            alt="Rural Indian blacksmith forging agriculture tools" 
+            class="w-full h-72 sm:h-80 object-cover rounded-2xl shadow-md"
+            onerror="this.onerror=null; this.src='https://images.unsplash.com/photo-1589923188900-85dae523342b?auto=format&fit=crop&w=800&q=80';"
+          />
+
+          <!-- Floating Pill 1 (Top Left) -->
+          <div class="absolute -top-3 left-2 sm:-top-4 sm:-left-4 bg-white text-gray-900 rounded-xl p-2.5 sm:p-3 shadow-xl border border-gray-100 flex items-center gap-2.5">
+            <div class="w-8 h-8 sm:w-10 sm:h-10 rounded-lg bg-orange-100 text-brand-orange flex items-center justify-center font-bold text-sm shrink-0">
+              ⚒️
+            </div>
+            <div class="min-w-0">
+              <p class="text-[9px] sm:text-[10px] text-gray-500 font-medium truncate">High-Carbon Tempered Steel</p>
+              <p class="text-xs font-bold text-gray-800 truncate">Forged Desi Hansiya</p>
+            </div>
+          </div>
+
+          <!-- Floating Pill 2 (Bottom Right) -->
+          <div class="absolute -bottom-3 right-2 sm:-bottom-4 sm:-right-4 bg-brand-green text-white rounded-xl p-2.5 sm:p-3 shadow-xl border border-emerald-500 flex items-center gap-2.5 max-w-[90%] sm:max-w-none">
+            <div class="w-8 h-8 sm:w-10 sm:h-10 rounded-lg bg-emerald-800 flex items-center justify-center text-amber-300 font-bold text-xs sm:text-sm shrink-0">
+              ★ 4.96
+            </div>
+            <div class="min-w-0">
+              <p class="text-[9px] sm:text-[10px] text-emerald-200 font-medium truncate">Unpolished Dal & Pure Achar</p>
+              <p class="text-xs font-bold text-white truncate">Direct Village Farm Harvest</p>
+            </div>
           </div>
         </div>
       </div>

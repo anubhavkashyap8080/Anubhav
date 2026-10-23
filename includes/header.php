@@ -1,7 +1,7 @@
 <?php
 /**
  * GaunGaliHat Master Header
- * Toolsvilla-standard responsive e-commerce header with Live AJAX Search
+ * Restores original AJAX Site Header, Authentic Logo & Interactive Controls
  */
 
 require_once __DIR__ . '/functions.php';
@@ -9,12 +9,13 @@ require_once __DIR__ . '/functions.php';
 $current_user = get_logged_in_user();
 $cart_count = get_cart_count();
 $wishlist_count = get_wishlist_count();
+$cart_subtotal = get_cart_subtotal();
 $current_page = basename($_SERVER['PHP_SELF']);
 
-// Load categories for search dropdown & nav
+// Load active categories for nav
 $header_categories = [];
 try {
-    $stmt = $pdo->query("SELECT id, name, slug, icon_name FROM categories ORDER BY sort_order ASC, name ASC");
+    $stmt = $pdo->query("SELECT id, name, hindi_name, slug, icon_name FROM categories ORDER BY sort_order ASC, name ASC");
     $header_categories = $stmt->fetchAll();
 } catch (Exception $e) {}
 
@@ -22,13 +23,13 @@ $page_title = isset($page_title) ? $page_title . ' — ' . APP_NAME : APP_NAME .
 $page_desc = isset($page_desc) ? $page_desc : 'High-durability hand-forged agricultural tools, unpolished pulses, Banarasi pickles, and authentic handlooms direct from Indian village clusters.';
 ?>
 <!DOCTYPE html>
-<html lang="en" class="h-full bg-stone-50">
+<html lang="hi" class="h-full bg-stone-50">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title><?= htmlspecialchars($page_title) ?></title>
   <meta name="description" content="<?= htmlspecialchars($page_desc) ?>">
-  <link rel="icon" type="image/png" href="/assets/favicon.png">
+  <link rel="icon" type="image/png" href="/logo.png">
   
   <!-- Tailwind CSS CDN -->
   <script src="https://cdn.tailwindcss.com"></script>
@@ -40,8 +41,11 @@ $page_desc = isset($page_desc) ? $page_desc : 'High-durability hand-forged agric
             brand: {
               green: '#1b4332',
               'green-dark': '#0f291e',
+              'green-50': '#e8f5e9',
               orange: '#d97706',
-              cream: '#fdfbf7',
+              'orange-dark': '#b45309',
+              sand: '#fdfbf7',
+              cream: '#fefae0',
             }
           },
           fontFamily: {
@@ -58,7 +62,6 @@ $page_desc = isset($page_desc) ? $page_desc : 'High-durability hand-forged agric
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Outfit:wght@500;600;700;800&family=Yatra+One&display=swap" rel="stylesheet">
   <script src="https://unpkg.com/lucide@latest"></script>
-  <!-- Chart.js for Dashboards -->
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
   <link rel="stylesheet" href="/assets/css/style.css">
@@ -66,7 +69,7 @@ $page_desc = isset($page_desc) ? $page_desc : 'High-durability hand-forged agric
 <body class="flex flex-col min-h-screen text-gray-800 antialiased selection:bg-emerald-200">
 
   <!-- 1. Top Announcement Bar -->
-  <div class="bg-gradient-to-r from-emerald-950 via-slate-900 to-emerald-900 text-white text-[11px] py-1.5 px-4 sm:px-8 border-b border-emerald-900/40">
+  <div class="bg-gradient-to-r from-emerald-950 via-slate-900 to-emerald-900 text-white text-[11px] py-1.5 px-3 sm:px-8 border-b border-emerald-900/40">
     <div class="max-w-7xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-1 text-center sm:text-left">
       <div class="flex items-center gap-2">
         <span class="inline-flex items-center gap-1 font-semibold text-amber-300">
@@ -76,240 +79,424 @@ $page_desc = isset($page_desc) ? $page_desc : 'High-durability hand-forged agric
         <span class="hidden md:inline text-gray-400">|</span>
         <span class="hidden md:inline text-gray-200"><?= htmlspecialchars(get_setting('announcement_text')) ?></span>
       </div>
-      <div class="flex items-center gap-4 text-emerald-200">
+      <div class="flex items-center gap-3 sm:gap-4 text-emerald-200 text-xs">
         <a href="tel:<?= preg_replace('/\s+/', '', APP_PHONE) ?>" class="hover:text-white flex items-center gap-1">
           <i data-lucide="phone" class="w-3 h-3 text-amber-300"></i>
           <span><?= htmlspecialchars(APP_PHONE) ?></span>
         </a>
         <span>•</span>
         <a href="/seller/dashboard.php" class="hover:text-amber-300 flex items-center gap-1 font-bold text-white transition-colors">
-          <i data-lucide="store" class="w-3 h-3 text-brand-orange"></i>
+          <i data-lucide="store" class="w-3.5 h-3.5 text-brand-orange"></i>
           <span>Seller Hub</span>
         </a>
       </div>
     </div>
   </div>
 
-  <!-- 2. Primary Navigation Header -->
-  <header class="sticky top-0 z-40 bg-white/95 backdrop-blur-md border-b border-gray-200 shadow-xs">
-    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-      <div class="flex items-center justify-between gap-3 sm:gap-6 h-18">
+  <!-- 2. Primary Sticky Header (Matches exact AJAX site styling) -->
+  <header class="sticky top-0 z-40 bg-white border-b border-gray-100 shadow-sm transition-all w-full max-w-full">
+    <div class="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 w-full min-w-0">
+      <div class="flex items-center justify-between h-16 sm:h-20 gap-2 sm:gap-4 w-full min-w-0">
         
-        <!-- Mobile Menu Toggle Button -->
-        <button id="mobile-menu-open" class="lg:hidden p-2 text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-xl">
+        <!-- Mobile Menu Hamburger Button -->
+        <button
+          type="button"
+          id="mobile-menu-open"
+          class="lg:hidden p-2 text-gray-700 hover:text-brand-green hover:bg-gray-100 rounded-lg focus:outline-none focus:ring-2 focus:ring-brand-green"
+          aria-label="Toggle Navigation Menu"
+        >
           <i data-lucide="menu" class="w-6 h-6"></i>
         </button>
 
-        <!-- Brand Logo -->
-        <a href="/index.php" class="flex items-center gap-2.5 shrink-0 group">
-          <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-emerald-800 to-brand-green flex items-center justify-center text-white shadow-md group-hover:scale-105 transition-transform">
-            <i data-lucide="anvil" class="w-5 h-5 text-amber-300"></i>
-          </div>
-          <div>
-            <div class="flex items-center gap-1.5">
-              <span class="font-extrabold text-xl sm:text-2xl font-display tracking-tight text-gray-900">
-                Gaun<span class="text-brand-orange">Gali</span><span class="text-brand-green">Hat</span>
-              </span>
-            </div>
-            <p class="text-[9px] font-bold text-gray-400 tracking-wider uppercase -mt-1">S S Industries • Hardoi</p>
+        <!-- Brand Logo Only (Exact logo.png from Ajax site without extra placeholder text) -->
+        <a href="/" class="flex items-center shrink-0 group py-1" title="GaunGaliHat • Home">
+          <div class="relative h-10 sm:h-14 w-auto flex items-center">
+            <img
+              src="/logo.png"
+              alt="GaunGaliHat Logo"
+              class="h-8 sm:h-12 w-auto max-w-[120px] sm:max-w-[210px] object-contain transition-transform group-hover:scale-105"
+              onerror="this.onerror=null; this.src='/assets/images/logo.png';"
+            />
           </div>
         </a>
 
-        <!-- Delivery Pincode Indicator -->
-        <div class="hidden xl:flex items-center gap-2 px-3 py-1.5 bg-stone-50 border border-gray-200 rounded-xl text-xs text-gray-600 cursor-pointer hover:border-brand-green transition-colors" onclick="openPincodeModal()">
-          <i data-lucide="map-pin" class="w-4 h-4 text-brand-orange shrink-0"></i>
-          <div class="text-left leading-tight">
-            <span class="text-[10px] text-gray-400 block">Deliver to</span>
-            <span class="font-bold text-gray-900" id="header-pincode-display"><?= htmlspecialchars($_SESSION['shipping_pincode'] ?? 'Hardoi 241126') ?></span>
-          </div>
+        <!-- Delivery Location Selector (Pincode) -->
+        <div class="hidden md:flex items-center">
+          <button
+            type="button"
+            onclick="openPincodeModal()"
+            class="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-gray-200 bg-brand-cream/60 hover:border-brand-green hover:bg-emerald-50 transition-colors text-left group"
+          >
+            <i data-lucide="map-pin" class="w-4 h-4 text-brand-orange shrink-0 group-hover:animate-bounce"></i>
+            <div class="text-xs leading-tight">
+              <span class="block text-gray-500 text-[10px]">Express Village Dispatch</span>
+              <span class="font-semibold text-gray-800 truncate max-w-[140px] block" id="header-pincode-display">
+                <?= htmlspecialchars($_SESSION['shipping_pincode'] ?? 'Hardoi 241126') ?>
+              </span>
+            </div>
+            <i data-lucide="chevron-down" class="w-3.5 h-3.5 text-gray-400 group-hover:text-gray-700"></i>
+          </button>
         </div>
 
-        <!-- 3. AJAX Live Search Bar -->
-        <div class="flex-1 max-w-2xl relative">
-          <form action="/products.php" method="GET" class="flex items-center border-2 border-brand-green/80 rounded-2xl bg-white shadow-inner focus-within:ring-2 focus-within:ring-brand-green/20 transition-all overflow-hidden">
-            <!-- Category Filter Dropdown inside search -->
-            <select name="category" id="search-category-select" class="hidden sm:block text-xs font-semibold bg-gray-50 text-gray-700 px-3 py-2.5 border-r border-gray-200 outline-none cursor-pointer hover:bg-gray-100">
-              <option value="">All Categories</option>
-              <?php foreach ($header_categories as $c): ?>
-                <option value="<?= $c['id'] ?>"><?= htmlspecialchars($c['name']) ?></option>
-              <?php endforeach; ?>
-            </select>
-
-            <!-- Search Input -->
-            <div class="relative flex-1 flex items-center">
-              <input 
-                type="text" 
-                name="q" 
-                id="header-live-search-input"
-                placeholder="Search Hansiya, Khurpi, Desi Dal, Banarasi Achar, Jute Bags..." 
-                autocomplete="off"
-                class="w-full px-3.5 py-2.5 text-xs sm:text-sm text-gray-900 placeholder:text-gray-400 outline-none bg-transparent"
-              >
-              <button type="button" id="search-clear-btn" class="hidden text-gray-400 hover:text-gray-600 p-1 mr-1">
-                <i data-lucide="x" class="w-4 h-4"></i>
-              </button>
-            </div>
-
-            <!-- Search Submit Button -->
-            <button type="submit" class="px-4 sm:px-5 py-2.5 bg-brand-green hover:bg-brand-green-dark text-white font-bold text-xs sm:text-sm flex items-center gap-1.5 transition-colors cursor-pointer shrink-0">
-              <i data-lucide="search" class="w-4 h-4"></i>
-              <span class="hidden sm:inline">Search</span>
+        <!-- 3. AJAX Live Autocomplete Search Bar (Rounded-full Style) -->
+        <div class="flex-1 max-w-xl relative hidden sm:block" id="headerSearchContainer">
+          <form action="/products.php" method="GET" class="relative">
+            <input
+              type="text"
+              name="q"
+              id="header-live-search-input"
+              placeholder="Search hand-forged tools, sickles, khurpi, pulses, pickles, jute bags..."
+              autocomplete="off"
+              class="w-full pl-10 pr-24 py-2.5 text-sm bg-gray-50 border border-gray-200 rounded-full focus:bg-white focus:outline-none focus:ring-2 focus:ring-brand-green focus:border-brand-green transition-all"
+            />
+            <i data-lucide="search" class="w-4 h-4 text-gray-400 absolute left-3.5 top-1/2 -translate-y-1/2"></i>
+            
+            <button
+              type="submit"
+              class="absolute right-1.5 top-1/2 -translate-y-1/2 px-4 py-1.5 bg-brand-green hover:bg-brand-green-dark text-white text-xs font-semibold rounded-full shadow-sm transition-all"
+            >
+              Search
             </button>
           </form>
 
-          <!-- Live AJAX Results Dropdown -->
-          <div id="live-search-dropdown" class="hidden absolute left-0 right-0 top-full mt-2 bg-white rounded-2xl shadow-2xl border border-gray-200 overflow-hidden z-50 animate-in fade-in duration-150">
+          <!-- Suggestions Dropdown -->
+          <div id="live-search-dropdown" class="hidden absolute left-0 right-0 top-full mt-2 bg-white rounded-2xl shadow-2xl border border-gray-100 overflow-hidden z-50">
             <div id="live-search-spinner" class="hidden p-4 text-center text-xs text-gray-500">
               <span class="inline-block animate-spin mr-1.5">⏳</span> Searching artisan workshops...
             </div>
-            <div id="live-search-items" class="max-h-96 overflow-y-auto divide-y divide-gray-100"></div>
-            <a href="#" id="live-search-view-all" class="block p-3 bg-stone-50 hover:bg-emerald-50 text-center text-xs font-bold text-brand-green border-t border-gray-100">
-              View all matching products →
-            </a>
+            <div class="px-3 py-2 bg-stone-50 border-b border-gray-100 text-xs text-gray-600 font-medium flex justify-between items-center">
+              <span>Matching Products</span>
+              <span class="text-[10px] text-brand-green font-semibold">Live Rural Catalog</span>
+            </div>
+            <div id="live-search-items" class="max-h-80 overflow-y-auto divide-y divide-gray-50"></div>
+            <div class="p-2.5 bg-gray-50 border-t border-gray-100 text-center">
+              <a href="/products.php" id="live-search-view-all" class="text-xs font-semibold text-brand-green hover:underline flex items-center justify-center gap-1">
+                <span>View all matching results</span>
+                <i data-lucide="external-link" class="w-3 h-3"></i>
+              </a>
+            </div>
           </div>
         </div>
 
-        <!-- 4. Header Actions (Wishlist, Cart, Account, Seller) -->
-        <div class="flex items-center gap-2 sm:gap-4 shrink-0">
+        <!-- 4. Action Icons: Nearby Artisans, Seller Login, Wishlist, Cart, Profile -->
+        <div class="flex items-center gap-1.5 sm:gap-3 shrink-0">
           
-          <!-- Wishlist -->
-          <a href="/wishlist.php" class="relative p-2 text-gray-700 hover:text-brand-orange hover:bg-orange-50 rounded-xl transition-colors hidden sm:flex items-center">
+          <!-- Nearby Artisans Button -->
+          <a
+            href="/about.php"
+            class="hidden md:inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-emerald-600/30 text-brand-green bg-emerald-50 hover:bg-brand-green hover:text-white transition-all text-xs font-semibold"
+            title="Locate rural artisans & foundries"
+          >
+            <i data-lucide="map-pin" class="w-3.5 h-3.5 text-brand-orange"></i>
+            <span>Nearby Artisans</span>
+          </a>
+
+          <!-- Dedicated Seller Button (Always visible) -->
+          <?php if ($current_user && $current_user['role'] === 'vendor'): ?>
+            <a
+              href="/seller/dashboard.php"
+              class="inline-flex items-center gap-1 px-2.5 sm:px-3 py-1 sm:py-1.5 rounded-lg border border-brand-orange text-white bg-brand-orange hover:bg-orange-600 transition-all text-xs font-bold shadow-xs shrink-0"
+            >
+              <i data-lucide="store" class="w-3.5 h-3.5"></i>
+              <span class="hidden xs:inline">Seller Dashboard</span>
+              <span class="xs:hidden text-[11px]">Dashboard</span>
+            </a>
+          <?php else: ?>
+            <a
+              href="/login.php?tab=seller"
+              class="inline-flex items-center gap-1 px-2.5 sm:px-3 py-1 sm:py-1.5 rounded-lg border border-brand-orange/50 text-brand-orange bg-orange-50 hover:bg-brand-orange hover:text-white transition-all text-xs font-bold cursor-pointer shrink-0"
+              title="Artisan & Seller Login"
+            >
+              <i data-lucide="store" class="w-3.5 h-3.5"></i>
+              <span class="hidden xs:inline">Seller Login</span>
+              <span class="xs:hidden text-[11px]">Seller</span>
+            </a>
+          <?php endif; ?>
+
+          <!-- Wishlist Icon -->
+          <a
+            href="/wishlist.php"
+            class="relative p-2 text-gray-600 hover:text-brand-green hover:bg-gray-100 rounded-full transition-colors"
+            title="Your Wishlist"
+            aria-label="Wishlist"
+          >
             <i data-lucide="heart" class="w-5 h-5"></i>
-            <span id="header-wishlist-count" class="absolute -top-1 -right-1 w-5 h-5 bg-brand-orange text-white text-[10px] font-bold rounded-full flex items-center justify-center <?= $wishlist_count === 0 ? 'hidden' : '' ?>">
+            <span id="header-wishlist-count" class="absolute top-0 right-0 w-4 h-4 bg-brand-orange text-white text-[10px] font-bold rounded-full flex items-center justify-center <?= $wishlist_count === 0 ? 'hidden' : '' ?>">
               <?= $wishlist_count ?>
             </span>
           </a>
 
-          <!-- Cart -->
-          <a href="/cart.php" class="relative p-2 text-gray-700 hover:text-brand-green hover:bg-emerald-50 rounded-xl transition-colors flex items-center">
-            <i data-lucide="shopping-bag" class="w-5 h-5"></i>
-            <span id="header-cart-count" class="absolute -top-1 -right-1 w-5 h-5 bg-brand-green text-white text-[10px] font-bold rounded-full flex items-center justify-center <?= $cart_count === 0 ? 'hidden' : '' ?>">
-              <?= $cart_count ?>
-            </span>
+          <!-- Cart Icon & Total -->
+          <a
+            href="/cart.php"
+            class="flex items-center gap-2 p-1.5 sm:px-3 sm:py-1.5 rounded-full sm:rounded-lg text-gray-700 hover:bg-emerald-50 hover:text-brand-green border border-transparent sm:border-gray-200 transition-all"
+            title="Shopping Cart"
+            aria-label="Shopping Cart"
+          >
+            <div class="relative">
+              <i data-lucide="shopping-cart" class="w-5 h-5 text-brand-green"></i>
+              <span id="header-cart-count" class="absolute -top-1.5 -right-2 w-4 h-4 bg-brand-orange text-white text-[10px] font-bold rounded-full flex items-center justify-center <?= $cart_count === 0 ? 'hidden' : '' ?>">
+                <?= $cart_count ?>
+              </span>
+            </div>
+            <div class="hidden lg:block text-left text-xs leading-none">
+              <span class="text-[10px] text-gray-500 block">Total</span>
+              <span class="font-bold text-gray-900" id="header-cart-total">₹<?= number_format($cart_subtotal, 2) ?></span>
+            </div>
           </a>
 
-          <!-- User Profile / Auth Dropdown -->
-          <div class="relative group">
-            <?php if ($current_user): ?>
-              <button class="flex items-center gap-2 p-1.5 rounded-xl hover:bg-gray-100 transition-colors cursor-pointer">
-                <div class="w-8 h-8 rounded-full bg-emerald-100 text-brand-green font-bold text-xs flex items-center justify-center border border-emerald-300">
+          <!-- Account Dropdown (Matches Header.tsx) -->
+          <div class="relative" id="accountMenuContainer">
+            <button
+              type="button"
+              id="accountMenuBtn"
+              class="flex items-center gap-1.5 p-1.5 sm:p-2 rounded-full hover:bg-gray-100 text-gray-700 transition-colors focus:outline-none focus:ring-2 focus:ring-brand-green cursor-pointer"
+              aria-label="Account Menu"
+            >
+              <div class="w-8 h-8 rounded-full bg-emerald-100 text-brand-green flex items-center justify-center font-bold text-xs ring-2 ring-emerald-600/30 overflow-hidden">
+                <?php if ($current_user): ?>
                   <?= strtoupper(substr($current_user['name'], 0, 1)) ?>
-                </div>
-                <div class="hidden lg:block text-left text-xs leading-tight">
-                  <span class="font-bold text-gray-900 block truncate max-w-[110px]"><?= htmlspecialchars($current_user['name']) ?></span>
-                  <span class="text-[10px] text-gray-400 capitalize"><?= htmlspecialchars($current_user['role']) ?></span>
-                </div>
-                <i data-lucide="chevron-down" class="w-3.5 h-3.5 text-gray-400 hidden lg:block"></i>
-              </button>
-            <?php else: ?>
-              <a href="/login.php" class="px-3.5 py-2 bg-emerald-50 hover:bg-emerald-100 text-brand-green border border-emerald-200 rounded-xl text-xs font-bold flex items-center gap-1.5 transition-colors">
-                <i data-lucide="user" class="w-4 h-4"></i>
-                <span>Sign In</span>
-              </a>
-            <?php endif; ?>
+                <?php else: ?>
+                  <i data-lucide="user" class="w-4 h-4"></i>
+                <?php endif; ?>
+              </div>
+              <div class="hidden md:flex flex-col text-left">
+                <span class="text-xs font-semibold text-gray-800 leading-tight truncate max-w-[90px]">
+                  <?= $current_user ? htmlspecialchars(explode(' ', $current_user['name'])[0]) : 'Sign In' ?>
+                </span>
+                <span class="text-[10px] text-brand-green font-bold uppercase leading-none">
+                  <?= $current_user ? htmlspecialchars(str_replace('_', ' ', $current_user['role'])) : 'Customer' ?>
+                </span>
+              </div>
+              <i data-lucide="chevron-down" class="w-3.5 h-3.5 text-gray-400 hidden sm:block"></i>
+            </button>
 
             <!-- Dropdown Menu -->
-            <?php if ($current_user): ?>
-              <div class="absolute right-0 top-full mt-1.5 w-56 bg-white rounded-2xl shadow-xl border border-gray-100 p-2 hidden group-hover:block z-50">
-                <div class="p-2 border-b border-gray-100">
-                  <p class="font-bold text-xs text-gray-900"><?= htmlspecialchars($current_user['name']) ?></p>
-                  <p class="text-[11px] text-gray-400 font-mono"><?= htmlspecialchars($current_user['phone']) ?></p>
+            <div
+              id="accountDropdownMenu"
+              class="hidden absolute right-0 top-full mt-2 w-[calc(100vw-1rem)] sm:w-64 max-w-xs bg-white rounded-2xl shadow-2xl border border-gray-100 py-2.5 z-50 animate-in fade-in zoom-in-95 duration-150"
+            >
+              <?php if ($current_user): ?>
+                <div class="px-4 py-2 border-b border-gray-100">
+                  <p class="text-[11px] text-gray-500">Signed in as</p>
+                  <p class="text-sm font-bold text-gray-900 truncate"><?= htmlspecialchars($current_user['name']) ?></p>
+                  <div class="flex items-center gap-1.5 mt-1">
+                    <span class="inline-block px-2 py-0.5 bg-emerald-100 text-emerald-800 text-[10px] font-bold rounded uppercase">
+                      <?= htmlspecialchars(str_replace('_', ' ', $current_user['role'])) ?>
+                    </span>
+                    <span class="text-[10px] text-emerald-600 font-semibold flex items-center gap-0.5">● Online</span>
+                  </div>
                 </div>
-                <a href="/account.php" class="flex items-center gap-2 px-3 py-2 text-xs text-gray-700 hover:bg-gray-50 rounded-lg">
-                  <i data-lucide="user" class="w-4 h-4 text-gray-400"></i> My Orders & Profile
-                </a>
-                <?php if (in_array($current_user['role'], ['vendor', 'admin', 'super_admin'])): ?>
-                  <a href="/seller/dashboard.php" class="flex items-center gap-2 px-3 py-2 text-xs font-bold text-brand-orange hover:bg-orange-50 rounded-lg">
-                    <i data-lucide="store" class="w-4 h-4 text-brand-orange"></i> Artisan Workshop Hub
+
+                <div class="py-1 text-xs">
+                  <?php if (in_array($current_user['role'], ['super_admin', 'admin'])): ?>
+                    <a href="/admin/index.php" class="flex items-center justify-between px-4 py-2 font-bold text-brand-green hover:bg-emerald-50">
+                      <span class="flex items-center gap-2">
+                        <i data-lucide="settings" class="w-4 h-4 text-brand-green"></i> Admin Operations Center
+                      </span>
+                      <span class="px-1.5 py-0.5 bg-emerald-100 text-[9px] font-bold rounded">Portal</span>
+                    </a>
+                  <?php endif; ?>
+
+                  <?php if ($current_user['role'] === 'vendor' || in_array($current_user['role'], ['super_admin', 'admin'])): ?>
+                    <a href="/seller/dashboard.php" class="flex items-center gap-2 px-4 py-2 font-bold text-brand-orange hover:bg-orange-50">
+                      <i data-lucide="store" class="w-4 h-4 text-brand-orange"></i> Seller Workshop Dashboard
+                    </a>
+                  <?php endif; ?>
+
+                  <a href="/account.php" class="flex items-center gap-2 px-4 py-2 font-medium text-gray-700 hover:bg-gray-50 hover:text-brand-green">
+                    <i data-lucide="user" class="w-4 h-4 text-gray-400"></i> Buyer Profile & Orders
                   </a>
-                <?php endif; ?>
-                <?php if (in_array($current_user['role'], ['admin', 'super_admin'])): ?>
-                  <a href="/admin/index.php" class="flex items-center gap-2 px-3 py-2 text-xs font-bold text-indigo-700 hover:bg-indigo-50 rounded-lg">
-                    <i data-lucide="shield-check" class="w-4 h-4 text-indigo-600"></i> Admin Governance
+
+                  <a href="/wishlist.php" class="flex items-center gap-2 px-4 py-2 font-medium text-gray-700 hover:bg-gray-50 hover:text-brand-green">
+                    <i data-lucide="heart" class="w-4 h-4 text-gray-400"></i> My Wishlist (<?= $wishlist_count ?>)
                   </a>
-                <?php endif; ?>
-                <a href="/logout.php" class="flex items-center gap-2 px-3 py-2 text-xs text-red-600 hover:bg-red-50 rounded-lg mt-1 border-t border-gray-100">
-                  <i data-lucide="log-out" class="w-4 h-4"></i> Sign Out
-                </a>
-              </div>
-            <?php endif; ?>
+
+                  <a href="/about.php" class="flex items-center gap-2 px-4 py-2 font-medium text-gray-700 hover:bg-gray-50 hover:text-brand-green">
+                    <i data-lucide="map-pin" class="w-4 h-4 text-brand-orange"></i> Nearby Artisan Directory
+                  </a>
+                </div>
+
+                <div class="border-t border-gray-100 pt-1.5 px-3">
+                  <a href="/logout.php" class="w-full flex items-center gap-2 px-3 py-1.5 text-xs font-semibold text-red-600 hover:bg-red-50 rounded-lg text-left">
+                    <i data-lucide="log-out" class="w-4 h-4"></i> Sign Out
+                  </a>
+                </div>
+              <?php else: ?>
+                <!-- Guest visitor state -->
+                <div class="p-3 space-y-2.5">
+                  <div class="text-center pb-2 border-b border-gray-100">
+                    <p class="text-xs font-bold text-gray-900">नमस्ते! Welcome to GaunGaliHat</p>
+                    <p class="text-[11px] text-gray-500 mt-0.5">Please sign in to access your orders and account</p>
+                  </div>
+
+                  <a href="/login.php?tab=shopper" class="w-full flex items-center justify-center gap-2 py-2.5 px-3 bg-brand-green hover:bg-brand-green-dark text-white rounded-xl text-xs font-bold shadow-xs transition-colors">
+                    <i data-lucide="user" class="w-4 h-4"></i>
+                    <span>Shopper Login</span>
+                  </a>
+
+                  <a href="/login.php?tab=seller" class="w-full flex items-center justify-center gap-2 py-2.5 px-3 bg-orange-50 hover:bg-orange-100 text-brand-orange border border-brand-orange/30 rounded-xl text-xs font-bold transition-colors">
+                    <i data-lucide="store" class="w-4 h-4 text-brand-orange"></i>
+                    <span>Artisan & Seller Login</span>
+                  </a>
+
+                  <div class="pt-1 text-center">
+                    <a href="/login.php?tab=staff" class="text-[10px] text-gray-400 hover:text-gray-700 hover:underline">
+                      Staff & Administration Login →
+                    </a>
+                  </div>
+                </div>
+              <?php endif; ?>
+            </div>
           </div>
 
         </div>
 
       </div>
+
+      <!-- Mobile Search Input (Visible on small screens) -->
+      <div class="pb-3 sm:hidden w-full min-w-0 max-w-full">
+        <form action="/products.php" method="GET" class="relative w-full">
+          <input
+            type="text"
+            name="q"
+            placeholder="Search village items..."
+            class="w-full pl-9 pr-20 py-2 text-xs bg-gray-50 border border-gray-200 rounded-full focus:bg-white focus:outline-none focus:ring-2 focus:ring-brand-green"
+          />
+          <i data-lucide="search" class="w-3.5 h-3.5 text-gray-400 absolute left-3 top-1/2 -translate-y-1/2"></i>
+          <button type="submit" class="absolute right-1 top-1/2 -translate-y-1/2 px-3 py-1 bg-brand-green text-white text-[11px] font-semibold rounded-full">
+            Search
+          </button>
+        </form>
+      </div>
+
     </div>
 
-    <!-- 5. Category Navigation Bar -->
-    <nav class="hidden lg:block bg-stone-50 border-t border-gray-200/80 px-4 sm:px-8 py-2 text-xs">
-      <div class="max-w-7xl mx-auto flex items-center justify-between gap-6 overflow-x-auto scrollbar-none font-semibold text-gray-700">
-        <a href="/products.php" class="hover:text-brand-green flex items-center gap-1.5 shrink-0 py-1 font-bold text-gray-900">
-          <i data-lucide="layout-grid" class="w-3.5 h-3.5 text-brand-green"></i>
-          <span>All Products</span>
-        </a>
-        <a href="/products.php?category=farming-traditional-tools" class="hover:text-brand-green flex items-center gap-1 shrink-0 py-1">
-          <span>🌾 Farming Tools</span>
-        </a>
-        <a href="/products.php?category=pulses-organic-grains" class="hover:text-brand-green flex items-center gap-1 shrink-0 py-1 text-emerald-800 font-bold">
-          <span>🥣 Desi Pulses & Grains</span>
-        </a>
-        <a href="/products.php?category=pickles-village-murabba" class="hover:text-brand-green flex items-center gap-1 shrink-0 py-1 text-amber-800 font-bold">
-          <span>🫙 Village Pickles & Murabba</span>
-        </a>
-        <a href="/products.php?category=hardware-cottage-implements" class="hover:text-brand-green flex items-center gap-1 shrink-0 py-1">
-          <span>🔨 Ironware & Workshop</span>
-        </a>
-        <a href="/products.php?category=jute-bags-cloth-jholas" class="hover:text-brand-green flex items-center gap-1 shrink-0 py-1">
-          <span>🛍️ Eco Jute Bags</span>
-        </a>
-        <a href="/products.php?category=village-home-decor-toys" class="hover:text-brand-green flex items-center gap-1 shrink-0 py-1">
-          <span>🪵 Wooden Toys & Decor</span>
-        </a>
-        <a href="/products.php?category=handmade-apparel-textiles" class="hover:text-brand-green flex items-center gap-1 shrink-0 py-1">
-          <span>👕 Handloom Khadi</span>
-        </a>
-        <a href="/products.php?category=handmade-by-rural-women" class="hover:text-brand-green flex items-center gap-1 shrink-0 py-1 text-brand-orange font-bold">
-          <span>✨ Women SHG Crafts</span>
-        </a>
+    <!-- 5. Category Navigation Bar (Exact styling from CategoryNav.tsx) -->
+    <nav class="bg-stone-50 border-t border-gray-200/80 shadow-xs w-full max-w-full overflow-hidden">
+      <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 w-full min-w-0">
+        <div class="flex items-center space-x-1 sm:space-x-3 overflow-x-auto py-2.5 scrollbar-none text-xs font-medium text-gray-700 whitespace-nowrap w-full min-w-0">
+          
+          <a
+            href="/products.php"
+            class="flex items-center gap-1.5 px-3 py-1.5 rounded-full transition-all shrink-0 <?= empty($_GET['category']) && $current_page === 'products.php' ? 'bg-brand-green text-white font-semibold shadow-xs' : 'hover:bg-amber-50 hover:text-brand-green text-gray-800' ?>"
+          >
+            <i data-lucide="layout-grid" class="w-3.5 h-3.5"></i>
+            <span>All Products</span>
+          </a>
+
+          <?php foreach ($header_categories as $cat): 
+            $isActive = (isset($_GET['category']) && $_GET['category'] === $cat['slug']);
+          ?>
+            <a
+              href="/products.php?category=<?= htmlspecialchars($cat['slug']) ?>"
+              class="flex items-center gap-1.5 px-3 py-1.5 rounded-full transition-all shrink-0 <?= $isActive ? 'bg-brand-green text-white font-semibold shadow-xs' : 'hover:bg-amber-50 hover:text-brand-green text-gray-800' ?>"
+            >
+              <span><?= htmlspecialchars($cat['hindi_name'] ?? $cat['name']) ?></span>
+              <?php if (strpos($cat['slug'], 'pulses') !== false || strpos($cat['slug'], 'pickle') !== false): ?>
+                <span class="ml-0.5 px-1.5 py-0.2 bg-emerald-100 text-emerald-800 text-[10px] font-bold rounded-full">New</span>
+              <?php endif; ?>
+            </a>
+          <?php endforeach; ?>
+
+          <a
+            href="/about.php"
+            class="flex items-center gap-1.5 px-3 py-1.5 rounded-full transition-all shrink-0 hover:bg-emerald-100/70 text-brand-green font-semibold border border-emerald-300/60"
+          >
+            <i data-lucide="map-pin" class="w-3.5 h-3.5 text-brand-orange"></i>
+            <span>Nearby Artisans (Map)</span>
+          </a>
+        </div>
       </div>
     </nav>
   </header>
 
-  <!-- Mobile Drawer Menu -->
-  <div id="mobile-menu-drawer" class="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs hidden lg:hidden">
-    <div class="fixed inset-y-0 left-0 w-72 bg-white shadow-2xl p-6 flex flex-col justify-between overflow-y-auto">
-      <div class="space-y-6">
-        <div class="flex items-center justify-between border-b border-gray-100 pb-4">
-          <span class="font-extrabold text-lg font-display text-gray-900">
-            Gaun<span class="text-brand-orange">Gali</span><span class="text-brand-green">Hat</span>
-          </span>
-          <button id="mobile-menu-close" class="p-1 text-gray-400 hover:text-gray-700">
+  <!-- Mobile Menu Drawer (Fixed positioning so it never hides or gets cut off) -->
+  <div id="mobile-menu-drawer" class="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs hidden transition-opacity">
+    <div id="mobile-menu-content" class="fixed inset-y-0 left-0 w-80 max-w-[85vw] bg-white shadow-2xl p-5 flex flex-col justify-between overflow-y-auto transform -translate-x-full transition-transform duration-300">
+      <div class="space-y-5">
+        
+        <!-- Header in Drawer -->
+        <div class="flex items-center justify-between border-b border-gray-100 pb-3">
+          <img src="/logo.png" alt="GaunGaliHat" class="h-9 w-auto object-contain" />
+          <button id="mobile-menu-close" class="p-1.5 text-gray-400 hover:text-gray-700 rounded-lg">
             <i data-lucide="x" class="w-5 h-5"></i>
           </button>
         </div>
 
-        <div class="space-y-1 text-sm font-semibold">
-          <a href="/index.php" class="block px-3 py-2 rounded-xl hover:bg-gray-50 text-gray-800">Home</a>
-          <a href="/products.php" class="block px-3 py-2 rounded-xl hover:bg-gray-50 text-gray-800">All Products Catalog</a>
+        <!-- Links -->
+        <div class="space-y-1 text-xs font-semibold">
+          <a href="/index.php" class="flex items-center gap-2.5 px-3 py-2.5 rounded-xl hover:bg-gray-50 text-gray-800">
+            <i data-lucide="home" class="w-4 h-4 text-brand-green"></i> Home Store
+          </a>
+          <a href="/products.php" class="flex items-center gap-2.5 px-3 py-2.5 rounded-xl hover:bg-gray-50 text-gray-800">
+            <i data-lucide="layout-grid" class="w-4 h-4 text-brand-orange"></i> All Products Catalog
+          </a>
+
+          <div class="pt-2 pb-1 text-[11px] font-bold text-gray-400 uppercase tracking-wider px-3">Categories</div>
           <a href="/products.php?category=farming-traditional-tools" class="block px-3 py-2 rounded-xl hover:bg-emerald-50 text-emerald-800 font-bold">🌾 Agricultural Tools</a>
           <a href="/products.php?category=pulses-organic-grains" class="block px-3 py-2 rounded-xl hover:bg-emerald-50 text-emerald-900 font-bold">🥣 Desi Pulses & Dal</a>
           <a href="/products.php?category=pickles-village-murabba" class="block px-3 py-2 rounded-xl hover:bg-amber-50 text-amber-900 font-bold">🫙 Village Pickles & Murabba</a>
+          <a href="/products.php?category=hardware-cottage-implements" class="block px-3 py-2 rounded-xl hover:bg-gray-50 text-gray-800">🔨 Workshop Implements</a>
           <a href="/products.php?category=jute-bags-cloth-jholas" class="block px-3 py-2 rounded-xl hover:bg-gray-50 text-gray-800">🛍️ Eco Jute Bags</a>
-          <a href="/products.php?category=village-home-decor-toys" class="block px-3 py-2 rounded-xl hover:bg-gray-50 text-gray-800">🪵 Wooden Toys & Chatai</a>
+          <a href="/products.php?category=village-home-decor-toys" class="block px-3 py-2 rounded-xl hover:bg-gray-50 text-gray-800">🪵 Wooden Toys & Decor</a>
           <a href="/products.php?category=handmade-by-rural-women" class="block px-3 py-2 rounded-xl hover:bg-orange-50 text-brand-orange font-bold">✨ Women SHG Products</a>
-          <a href="/about.php" class="block px-3 py-2 rounded-xl hover:bg-gray-50 text-gray-800">About S S Industries</a>
-          <a href="/contact.php" class="block px-3 py-2 rounded-xl hover:bg-gray-50 text-gray-800">Contact & Support</a>
+
+          <div class="pt-2 pb-1 text-[11px] font-bold text-gray-400 uppercase tracking-wider px-3">Information</div>
+          <a href="/about.php" class="flex items-center gap-2.5 px-3 py-2 rounded-xl hover:bg-gray-50 text-gray-800">
+            <i data-lucide="info" class="w-4 h-4 text-gray-400"></i> About S S Industries
+          </a>
+          <a href="/contact.php" class="flex items-center gap-2.5 px-3 py-2 rounded-xl hover:bg-gray-50 text-gray-800">
+            <i data-lucide="headset" class="w-4 h-4 text-gray-400"></i> Help & Contact Desk
+          </a>
         </div>
       </div>
 
-      <div class="pt-6 border-t border-gray-100 space-y-2">
+      <!-- Drawer Bottom Actions -->
+      <div class="pt-5 border-t border-gray-100 space-y-2">
         <?php if ($current_user): ?>
-          <a href="/account.php" class="w-full py-2.5 bg-gray-100 text-gray-800 font-bold rounded-xl text-center text-xs block">My Account</a>
-          <a href="/logout.php" class="w-full py-2.5 bg-red-50 text-red-700 font-bold rounded-xl text-center text-xs block">Sign Out</a>
+          <a href="/account.php" class="w-full py-2.5 bg-gray-100 text-gray-800 font-bold rounded-xl text-center text-xs block">
+            My Account (<?= htmlspecialchars($current_user['name']) ?>)
+          </a>
+          <a href="/logout.php" class="w-full py-2.5 bg-red-50 text-red-700 font-bold rounded-xl text-center text-xs block">
+            Sign Out
+          </a>
         <?php else: ?>
-          <a href="/login.php" class="w-full py-2.5 bg-brand-green text-white font-bold rounded-xl text-center text-xs block">Shopper Sign In</a>
-          <a href="/login.php?tab=seller" class="w-full py-2.5 bg-brand-orange text-white font-bold rounded-xl text-center text-xs block">Artisan & Seller Login</a>
+          <a href="/login.php?tab=shopper" class="w-full py-2.5 bg-brand-green text-white font-bold rounded-xl text-center text-xs block shadow-sm">
+            Shopper Login
+          </a>
+          <a href="/login.php?tab=seller" class="w-full py-2.5 bg-brand-orange text-white font-bold rounded-xl text-center text-xs block shadow-sm">
+            Artisan & Seller Login
+          </a>
+          <a href="/login.php?tab=staff" class="text-center text-[11px] text-gray-400 hover:underline block pt-1">
+            Staff & Administration Login →
+          </a>
         <?php endif; ?>
+      </div>
+    </div>
+  </div>
+
+  <!-- Pincode Modal -->
+  <div id="pincodeModal" class="hidden fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4">
+    <div class="bg-white rounded-3xl border border-gray-200 shadow-2xl max-w-sm w-full p-6 text-center">
+      <div class="w-12 h-12 rounded-2xl bg-amber-100 text-brand-orange flex items-center justify-center mx-auto mb-3 text-lg font-bold">
+        <i data-lucide="map-pin" class="w-6 h-6"></i>
+      </div>
+      <h3 class="text-base font-bold text-gray-900 mb-1">डिलीवरी पिन कोड दर्ज करें</h3>
+      <p class="text-xs text-gray-500 mb-4">सटीक डिलीवरी समय एवं शिपिंग शुल्क जांचने के लिए 6-अंकीय पिनकोड लिखें।</p>
+      
+      <div class="relative mb-4">
+        <input type="text" id="modalPincodeInput" maxlength="6" pattern="[0-9]{6}" placeholder="उदा. 241126 या 110001"
+          class="w-full px-4 py-2.5 text-center font-bold text-base tracking-widest border border-gray-300 rounded-xl focus:border-brand-green focus:outline-none">
+      </div>
+      
+      <div class="flex items-center gap-2">
+        <button type="button" onclick="closePincodeModal()" class="flex-1 py-2.5 bg-stone-100 text-stone-700 font-bold rounded-xl text-xs hover:bg-stone-200 transition">
+          रद्द करें
+        </button>
+        <button type="button" onclick="applyPincode()" class="flex-1 py-2.5 bg-brand-green text-white font-bold rounded-xl text-xs hover:bg-emerald-800 transition">
+          लागू करें
+        </button>
       </div>
     </div>
   </div>
@@ -328,3 +515,69 @@ $page_desc = isset($page_desc) ? $page_desc : 'High-durability hand-forged agric
 
   <!-- Main Content Wrapper -->
   <main class="flex-1">
+
+  <script>
+    // Header Dropdown Toggle Logic
+    const accountBtn = document.getElementById('accountMenuBtn');
+    const accountDropdown = document.getElementById('accountDropdownMenu');
+    if (accountBtn && accountDropdown) {
+      accountBtn.addEventListener('click', function(e) {
+        e.stopPropagation();
+        accountDropdown.classList.toggle('hidden');
+      });
+      document.addEventListener('click', function(e) {
+        if (!accountDropdown.contains(e.target) && !accountBtn.contains(e.target)) {
+          accountDropdown.classList.add('hidden');
+        }
+      });
+    }
+
+    // Mobile Menu Drawer Logic (Slides smoothly from left without hiding)
+    const mobileMenuOpenBtn = document.getElementById('mobile-menu-open');
+    const mobileMenuCloseBtn = document.getElementById('mobile-menu-close');
+    const mobileMenuDrawer = document.getElementById('mobile-menu-drawer');
+    const mobileMenuContent = document.getElementById('mobile-menu-content');
+
+    if (mobileMenuOpenBtn && mobileMenuDrawer && mobileMenuContent) {
+      mobileMenuOpenBtn.addEventListener('click', function() {
+        mobileMenuDrawer.classList.remove('hidden');
+        setTimeout(() => {
+          mobileMenuContent.classList.remove('-translate-x-full');
+        }, 10);
+      });
+
+      function closeDrawer() {
+        mobileMenuContent.classList.add('-translate-x-full');
+        setTimeout(() => {
+          mobileMenuDrawer.classList.add('hidden');
+        }, 300);
+      }
+
+      if (mobileMenuCloseBtn) mobileMenuCloseBtn.addEventListener('click', closeDrawer);
+      mobileMenuDrawer.addEventListener('click', function(e) {
+        if (e.target === mobileMenuDrawer) closeDrawer();
+      });
+    }
+
+    // Pincode modal helpers
+    function openPincodeModal() {
+      document.getElementById('pincodeModal').classList.remove('hidden');
+    }
+    function closePincodeModal() {
+      document.getElementById('pincodeModal').classList.add('hidden');
+    }
+    function applyPincode() {
+      const pin = document.getElementById('modalPincodeInput').value.trim();
+      if (pin.length === 6) {
+        document.getElementById('header-pincode-display').innerText = 'Pincode: ' + pin;
+        fetch('/ajax/calculate_shipping.php?pincode=' + pin)
+          .then(res => res.json())
+          .then(data => {
+            closePincodeModal();
+            window.location.reload();
+          });
+      } else {
+        alert('कृपया 6-अंकीय मान्य भारतीय पिनकोड दर्ज करें।');
+      }
+    }
+  </script>

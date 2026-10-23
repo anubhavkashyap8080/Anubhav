@@ -27,3 +27,16 @@
   background: rgba(255, 255, 255, 0.95);
   backdrop-filter: blur(8px);
 }
+
+@keyframes softPulse {
+  0%, 100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-4px);
+  }
+}
+
+.animate-soft-pulse {
+  animation: softPulse 3s ease-in-out infinite;
+}
