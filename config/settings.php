@@ -1,0 +1,46 @@
+<?php
+/**
+ * GaunGaliHat Platform Settings & Gateway Configurations
+ */
+
+require_once __DIR__ . '/db.php';
+
+// Fetch settings from database
+$site_settings = [];
+try {
+    $stmt = $pdo->query("SELECT setting_key, setting_value FROM site_settings");
+    while ($row = $stmt->fetch()) {
+        $site_settings[$row['setting_key']] = $row['setting_value'];
+    }
+} catch (Exception $e) {
+    // defaults if not yet seeded
+}
+
+function get_setting($key, $default = '') {
+    global $site_settings;
+    return isset($site_settings[$key]) ? $site_settings[$key] : $default;
+}
+
+// Global Platform Constants
+define('APP_NAME', get_setting('brand_name', 'GaunGaliHat'));
+define('APP_COMPANY', get_setting('company_name', 'S S Industries'));
+define('APP_TAGLINE', get_setting('brand_tagline', 'S S Industries Enterprise • Ganv se ghar tak'));
+define('APP_PHONE', get_setting('contact_phone', '+91 7897492100'));
+define('APP_EMAIL', get_setting('contact_email', 'namaste@ganvgalihat.com'));
+define('APP_CURRENCY', '₹');
+
+// Payment Gateway Constants
+define('RAZORPAY_ENABLED', (bool)get_setting('razorpay_enabled', 1));
+define('RAZORPAY_KEY_ID', get_setting('razorpay_key_id', 'rzp_test_1DP5mmOlF5G5ag'));
+define('RAZORPAY_KEY_SECRET', get_setting('razorpay_key_secret', 's9F2xKlY02jK3991lmxO92aa'));
+
+define('PAYU_ENABLED', (bool)get_setting('payu_enabled', 1));
+define('PAYU_MERCHANT_KEY', get_setting('payu_merchant_key', 'gtKFFx'));
+define('PAYU_MERCHANT_SALT', get_setting('payu_merchant_salt', 'eCwWELxi'));
+define('PAYU_MODE', get_setting('payu_mode', 'test')); // 'test' or 'live'
+define('PAYU_URL', PAYU_MODE === 'live' ? 'https://secure.payu.in/_payment' : 'https://test.payu.in/_payment');
+
+define('COD_ENABLED', (bool)get_setting('cod_enabled', 1));
+
+// Shipping Constants
+define('FREE_SHIPPING_THRESHOLD', (float)get_setting('free_shipping_threshold', 499));
