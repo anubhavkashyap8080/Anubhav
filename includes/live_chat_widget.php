@@ -30,22 +30,20 @@
         </div>
       </div>
 
-      <!-- Action Controls: Minimize & Cancel / End Chat -->
+      <!-- Action Controls: Minimize & Cancel / End Chat (Symbol-Only) -->
       <div class="flex items-center gap-1.5 shrink-0">
-        <!-- Minimize Button -->
+        <!-- Minimize Button (Symbol-Only) -->
         <button type="button" onclick="minimizeLiveChat()"
-          class="flex items-center gap-1 px-2.5 py-1 text-[11px] font-bold text-gray-200 hover:text-white bg-white/10 hover:bg-white/20 rounded-lg transition"
-          title="Minimize Chat">
-          <i class="fa-solid fa-minus text-[10px]"></i>
-          <span>Minimize</span>
+          class="w-7 h-7 flex items-center justify-center text-gray-300 hover:text-white bg-white/10 hover:bg-white/20 rounded-full transition shadow-xs"
+          title="Minimize">
+          <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M20 12H4"></path></svg>
         </button>
 
-        <!-- Cancel / End Chat Button -->
+        <!-- Cancel / End Chat Button (Symbol-Only) -->
         <button type="button" onclick="cancelLiveChat()"
-          class="flex items-center gap-1 px-2.5 py-1 text-[11px] font-bold text-red-200 hover:text-white bg-red-500/20 hover:bg-red-600 rounded-lg transition"
-          title="End / Cancel Chat">
-          <i class="fa-solid fa-xmark text-xs"></i>
-          <span>Cancel</span>
+          class="w-7 h-7 flex items-center justify-center text-red-200 hover:text-white bg-red-500/20 hover:bg-red-600 rounded-full transition shadow-xs"
+          title="Cancel">
+          <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M6 18L18 6M6 6l12 12"></path></svg>
         </button>
       </div>
     </div>

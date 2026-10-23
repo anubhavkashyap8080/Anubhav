@@ -148,7 +148,7 @@ $page_desc = isset($page_desc) ? $page_desc : 'High-durability hand-forged agric
             <div class="text-xs leading-tight">
               <span class="block text-gray-500 text-[10px]">Express Village Dispatch</span>
               <span class="font-semibold text-gray-800 truncate max-w-[140px] block" id="header-pincode-display">
-                <?= htmlspecialchars($_SESSION['shipping_pincode'] ?? 'Hardoi 241126') ?>
+                <?= htmlspecialchars($_SESSION['delivery_location_text'] ?? ($_SESSION['shipping_pincode'] ?? 'Hardoi 241126')) ?>
               </span>
             </div>
             <i data-lucide="chevron-down" class="w-3.5 h-3.5 text-gray-400 group-hover:text-gray-700"></i>
@@ -498,15 +498,27 @@ $page_desc = isset($page_desc) ? $page_desc : 'High-durability hand-forged agric
     </div>
   </div>
 
-  <!-- Pincode Modal -->
+  <!-- Pincode / Location Modal -->
   <div id="pincodeModal" class="hidden fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4">
     <div class="bg-white rounded-3xl border border-gray-200 shadow-2xl max-w-sm w-full p-6 text-center">
       <div class="w-12 h-12 rounded-2xl bg-amber-100 text-brand-orange flex items-center justify-center mx-auto mb-3 text-lg font-bold">
         <i data-lucide="map-pin" class="w-6 h-6"></i>
       </div>
-      <h3 class="text-base font-bold text-gray-900 mb-1">Enter Delivery PIN Code</h3>
-      <p class="text-xs text-gray-500 mb-4">Check exact delivery charges and India Post estimated arrival time.</p>
+      <h3 class="text-base font-bold text-gray-900 mb-1">Choose Delivery Location</h3>
+      <p class="text-xs text-gray-500 mb-4">Discover nearby rural artisans, express delivery dispatch, and exact India Post shipping.</p>
       
+      <!-- GPS 1-Click Auto Detect Button -->
+      <button type="button" onclick="detectGPSLocation()" id="modalGpsBtn" class="w-full mb-3.5 py-2.5 px-4 bg-amber-500 hover:bg-amber-600 text-stone-950 font-bold rounded-xl text-xs flex items-center justify-center gap-2 shadow-sm transition active:scale-95 cursor-pointer">
+        <i data-lucide="crosshair" class="w-4 h-4 text-stone-900"></i>
+        <span id="gpsBtnText">Use My Current Location (GPS Auto)</span>
+      </button>
+
+      <div class="relative flex py-2 items-center mb-2">
+        <div class="flex-grow border-t border-gray-200"></div>
+        <span class="flex-shrink mx-2 text-[10px] text-gray-400 font-bold uppercase tracking-wider">or enter pincode</span>
+        <div class="flex-grow border-t border-gray-200"></div>
+      </div>
+
       <div class="relative mb-4">
         <input type="text" id="modalPincodeInput" maxlength="6" pattern="[0-9]{6}" placeholder="e.g. 241126 or 110001"
           class="w-full px-4 py-2.5 text-center font-bold text-base tracking-widest border border-gray-300 rounded-xl focus:border-brand-green focus:outline-none">
@@ -581,22 +593,69 @@ $page_desc = isset($page_desc) ? $page_desc : 'High-durability hand-forged agric
       });
     }
 
-    // Pincode modal helpers
+    // Location & Pincode modal helpers
     function openPincodeModal() {
-      document.getElementById('pincodeModal').classList.remove('hidden');
+      const modal = document.getElementById('pincodeModal');
+      if (modal) {
+        modal.classList.remove('hidden');
+        if (typeof lucide !== 'undefined') lucide.createIcons();
+      }
     }
     function closePincodeModal() {
-      document.getElementById('pincodeModal').classList.add('hidden');
+      const modal = document.getElementById('pincodeModal');
+      if (modal) modal.classList.add('hidden');
     }
+    
+    function detectGPSLocation(callback) {
+      if (!navigator.geolocation) {
+        alert('Geolocation is not supported by your browser. Please enter your PIN code manually.');
+        return;
+      }
+      const btnText = document.getElementById('gpsBtnText');
+      if (btnText) btnText.innerText = 'Detecting satellite location...';
+      
+      navigator.geolocation.getCurrentPosition(
+        function(pos) {
+          const lat = pos.coords.latitude;
+          const lng = pos.coords.longitude;
+          fetch('/ajax/set_location.php?lat=' + lat + '&lng=' + lng)
+            .then(res => res.json())
+            .then(data => {
+              if (data.success) {
+                const elem = document.getElementById('header-pincode-display');
+                if (elem) elem.innerText = data.location_text;
+                closePincodeModal();
+                if (typeof callback === 'function') {
+                  callback(data);
+                } else {
+                  window.location.reload();
+                }
+              }
+            })
+            .catch(() => {
+              if (btnText) btnText.innerText = 'GPS Detection Failed - Retry';
+            });
+        },
+        function(err) {
+          alert('Location permission denied or unavailable. Please enter your 6-digit PIN code.');
+          if (btnText) btnText.innerText = 'Use Current Location (GPS Auto)';
+        },
+        { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
+      );
+    }
+
     function applyPincode() {
       const pin = document.getElementById('modalPincodeInput').value.trim();
-      if (pin.length === 6) {
-        document.getElementById('header-pincode-display').innerText = 'Pincode: ' + pin;
-        fetch('/ajax/calculate_shipping.php?pincode=' + pin)
+      if (pin.length === 6 && /^\d+$/.test(pin)) {
+        fetch('/ajax/set_location.php?pincode=' + pin)
           .then(res => res.json())
           .then(data => {
             closePincodeModal();
             window.location.reload();
+          })
+          .catch(() => {
+            fetch('/ajax/calculate_shipping.php?pincode=' + pin)
+              .then(() => { closePincodeModal(); window.location.reload(); });
           });
       } else {
         alert('Please enter a valid 6-digit Indian PIN code.');

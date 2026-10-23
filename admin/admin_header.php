@@ -184,6 +184,11 @@ $flash = get_flash();
           class="px-3 py-2 rounded-lg transition whitespace-nowrap flex items-center gap-1.5 <?= $current_page === 'site_settings.php' ? 'bg-indigo-600 text-white' : 'text-indigo-200 hover:text-white hover:bg-indigo-800' ?>">
           <i class="fa-solid fa-sliders"></i> गेटवे व शिपिंग
         </a>
+
+        <a href="/admin/merchant_feed.php"
+          class="px-3 py-2 rounded-lg transition whitespace-nowrap flex items-center gap-1.5 <?= $current_page === 'merchant_feed.php' ? 'bg-indigo-600 text-white' : 'text-indigo-200 hover:text-white hover:bg-indigo-800' ?>">
+          <i class="fa-brands fa-google text-amber-300"></i> मर्चेंट XML फ़ीड (GMC)
+        </a>
       </div>
     </div>
   </header>
