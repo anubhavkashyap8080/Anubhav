@@ -13,7 +13,7 @@ $vendor_id = $vendor['id'];
 $success_msg = '';
 $error_msg = '';
 
-// Handle Workshop & Bank Profile Update
+// Handle Workshop, Avatar & Bank Profile Update
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['update_store_profile'])) {
     $business_name = clean_input($_POST['business_name'] ?? '');
     $phone = clean_input($_POST['phone'] ?? '');
@@ -26,27 +26,68 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['update_store_profile'
     $bank_account = clean_input($_POST['bank_account'] ?? '');
     $bank_ifsc = clean_input($_POST['bank_ifsc'] ?? '');
     $upi_id = clean_input($_POST['upi_id'] ?? '');
+    $avatar_url = $vendor['avatar'] ?? $user['avatar'] ?? null;
 
-    try {
-        $stmt = $pdo->prepare("
-            UPDATE vendors 
-            SET business_name = ?, phone = ?, whatsapp = ?, village = ?, district = ?, 
-                pincode = ?, story = ?, bank_name = ?, bank_account = ?, bank_ifsc = ?, upi_id = ?
-            WHERE id = ?
-        ");
-        $stmt->execute([
-            $business_name, $phone, $whatsapp, $village, $district,
-            $pincode, $story, $bank_name, $bank_account, $bank_ifsc, $upi_id, $vendor_id
-        ]);
-        
-        // Refresh vendor object
-        $stmt_ref = $pdo->prepare("SELECT * FROM vendors WHERE id = ?");
-        $stmt_ref->execute([$vendor_id]);
-        $vendor = $stmt_ref->fetch();
+    // Handle File Upload if provided
+    if (isset($_FILES['avatar_file']) && $_FILES['avatar_file']['error'] === UPLOAD_ERR_OK) {
+        $file = $_FILES['avatar_file'];
+        $allowed = ['jpg', 'jpeg', 'png', 'webp', 'gif'];
+        $ext = strtolower(pathinfo($file['name'], PATHINFO_EXTENSION));
 
-        $success_msg = 'कार्यशाला विवरण एवं बैंकिंग जानकारी सफलतापूर्वक अपडेट की गई।';
-    } catch (Exception $e) {
-        $error_msg = 'त्रुटि: ' . $e->getMessage();
+        if (in_array($ext, $allowed) && $file['size'] <= 5 * 1024 * 1024) {
+            $finfo = finfo_open(FILEINFO_MIME_TYPE);
+            $mime = finfo_file($finfo, $file['tmp_name']);
+            finfo_close($finfo);
+
+            $valid_mimes = ['image/jpeg', 'image/png', 'image/webp', 'image/gif'];
+            if (in_array($mime, $valid_mimes)) {
+                $target_dir = __DIR__ . '/../uploads/avatars/';
+                if (!is_dir($target_dir)) {
+                    mkdir($target_dir, 0755, true);
+                }
+                $filename = 'vendor_' . $vendor_id . '_' . time() . '.' . $ext;
+                $dest = $target_dir . $filename;
+                if (move_uploaded_file($file['tmp_name'], $dest)) {
+                    $avatar_url = '/uploads/avatars/' . $filename;
+                }
+            } else {
+                $error_msg = 'केवल JPG, PNG या WebP छवियां स्वीकार्य हैं।';
+            }
+        } else {
+            $error_msg = 'फ़ाइल का आकार 5MB से कम होना चाहिए।';
+        }
+    } elseif (!empty($_POST['avatar_url_input'])) {
+        $avatar_url = clean_input($_POST['avatar_url_input']);
+    }
+
+    if (empty($error_msg)) {
+        try {
+            $stmt = $pdo->prepare("
+                UPDATE vendors 
+                SET business_name = ?, phone = ?, whatsapp = ?, village = ?, district = ?, 
+                    pincode = ?, story = ?, bank_name = ?, bank_account = ?, bank_ifsc = ?, upi_id = ?, avatar = ?
+                WHERE id = ?
+            ");
+            $stmt->execute([
+                $business_name, $phone, $whatsapp, $village, $district,
+                $pincode, $story, $bank_name, $bank_account, $bank_ifsc, $upi_id, $avatar_url, $vendor_id
+            ]);
+
+            // Also update users.avatar
+            if (!empty($avatar_url)) {
+                $pdo->prepare("UPDATE users SET avatar = ? WHERE id = ?")->execute([$avatar_url, $user['id']]);
+            }
+            
+            // Refresh vendor & user object
+            $stmt_ref = $pdo->prepare("SELECT * FROM vendors WHERE id = ?");
+            $stmt_ref->execute([$vendor_id]);
+            $vendor = $stmt_ref->fetch();
+            $user = get_logged_in_user();
+
+            $success_msg = 'कार्यशाला विवरण, प्रोफ़ाइल फ़ोटो एवं बैंकिंग जानकारी सफलतापूर्वक अपडेट की गई।';
+        } catch (Exception $e) {
+            $error_msg = 'त्रुटि: ' . $e->getMessage();
+        }
     }
 }
 
@@ -86,7 +127,7 @@ require_once __DIR__ . '/seller_header.php';
     कार्यशाला प्रोफ़ाइल एवं खाता सुरक्षा (Settings)
   </h1>
   <p class="text-xs text-gray-500 mt-1">
-    अपनी ग्रामीण कुटीर उद्योग जानकारी, बैंक खाता और लॉगिन पासवर्ड प्रबंधित करें
+    अपनी ग्रामीण कुटीर उद्योग जानकारी, कार्यशाला लोगो, बैंक खाता और लॉगिन पासवर्ड प्रबंधित करें
   </p>
 </div>
 
@@ -108,15 +149,43 @@ require_once __DIR__ . '/seller_header.php';
   
   <!-- Store Details & Banking Form (8 cols) -->
   <div class="lg:col-span-8 bg-white rounded-2xl border border-gray-200 shadow-sm p-6 sm:p-8">
-    <form action="/seller/profile.php" method="POST" class="space-y-6">
+    <form action="/seller/profile.php" method="POST" enctype="multipart/form-data" class="space-y-6">
       <input type="hidden" name="update_store_profile" value="1">
 
-      <!-- Section 1: Workshop details -->
+      <!-- Section 1: Workshop details & Logo -->
       <div>
         <h3 class="text-sm font-bold text-gray-900 pb-2 mb-4 border-b border-gray-100 flex items-center gap-2">
           <i class="fa-solid fa-store text-amber-600"></i>
           कार्यशाला एवं संस्थान का विवरण (Workshop Details)
         </h3>
+
+        <!-- Logo / Photo Uploader -->
+        <div class="p-4 mb-5 bg-stone-50 rounded-2xl border border-gray-200 flex flex-col sm:flex-row items-center gap-4">
+          <div class="relative">
+            <?php if (!empty($vendor['avatar'])): ?>
+              <img id="vendorAvatarPreview" src="<?= htmlspecialchars($vendor['avatar']) ?>" alt="Workshop"
+                class="w-16 h-16 rounded-2xl object-cover border-2 border-amber-500 shadow-sm">
+            <?php else: ?>
+              <div id="vendorAvatarPreview" class="w-16 h-16 rounded-2xl bg-amber-500 text-stone-900 flex items-center justify-center text-2xl font-bold shadow-sm">
+                <?= strtoupper(mb_substr($vendor['business_name'] ?? $vendor['name'] ?? 'V', 0, 1)) ?>
+              </div>
+            <?php endif; ?>
+          </div>
+
+          <div class="flex-1 text-center sm:text-left space-y-1.5">
+            <label class="block text-xs font-bold text-gray-800">कार्यशाला का लोगो या कारीगर फ़ोटो</label>
+            <div class="flex flex-wrap items-center gap-2 justify-center sm:justify-start">
+              <label class="cursor-pointer px-3.5 py-1.5 bg-white border border-gray-300 hover:border-amber-500 text-gray-700 text-xs font-bold rounded-xl transition shadow-xs flex items-center gap-1.5">
+                <i class="fa-solid fa-camera text-amber-600"></i> फ़ोटो अपलोड करें
+                <input type="file" name="avatar_file" accept="image/*" class="hidden" onchange="previewVendorAvatar(this)">
+              </label>
+              <span class="text-[11px] text-gray-400">या छवि URL:</span>
+            </div>
+            <input type="url" name="avatar_url_input" placeholder="https://example.com/artisan.jpg"
+              value="<?= htmlspecialchars(strpos($vendor['avatar'] ?? '', 'http') === 0 ? $vendor['avatar'] : '') ?>"
+              class="w-full px-3 py-1.5 bg-white border border-gray-200 rounded-xl text-xs focus:outline-none focus:border-amber-500">
+          </div>
+        </div>
 
         <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div class="sm:col-span-2">
@@ -242,5 +311,26 @@ require_once __DIR__ . '/seller_header.php';
   </div>
 
 </div>
+
+<script>
+function previewVendorAvatar(input) {
+  if (input.files && input.files[0]) {
+    const reader = new FileReader();
+    reader.onload = function(e) {
+      const preview = document.getElementById('vendorAvatarPreview');
+      if (preview.tagName === 'IMG') {
+        preview.src = e.target.result;
+      } else {
+        const img = document.createElement('img');
+        img.id = 'vendorAvatarPreview';
+        img.src = e.target.result;
+        img.className = 'w-16 h-16 rounded-2xl object-cover border-2 border-amber-500 shadow-sm';
+        preview.parentNode.replaceChild(img, preview);
+      }
+    };
+    reader.readAsDataURL(input.files[0]);
+  }
+}
+</script>
 
 <?php require_once __DIR__ . '/seller_footer.php'; ?>

@@ -39,9 +39,12 @@ $commission_rate = $vendor['commission_rate'] ?? 4.0;
 $pending_payout = max(0, ($total_sales * (1 - ($commission_rate / 100))) - $total_settled);
 
 // 2. Recent Orders for this Vendor
+$is_sqlite = ($pdo->getAttribute(PDO::ATTR_DRIVER_NAME) === 'sqlite');
+$concat_expr = $is_sqlite ? "GROUP_CONCAT(product_name, ', ')" : "GROUP_CONCAT(product_name SEPARATOR ', ')";
+
 $stmt_recent = $pdo->prepare("
     SELECT DISTINCT o.*, 
-           (SELECT GROUP_CONCAT(product_name SEPARATOR ', ') FROM order_items WHERE order_id = o.id AND vendor_id = ?) as vendor_products,
+           (SELECT $concat_expr FROM order_items WHERE order_id = o.id AND vendor_id = ?) as vendor_products,
            (SELECT SUM(total) FROM order_items WHERE order_id = o.id AND vendor_id = ?) as vendor_item_total
     FROM orders o
     JOIN order_items oi ON o.id = oi.order_id

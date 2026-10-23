@@ -3,15 +3,63 @@ $page_title = 'संपर्क करें (Contact Us) — GaunGaliHat';
 require_once __DIR__ . '/includes/header.php';
 
 $sent = false;
+$ticket_created_num = '';
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $sender_name = clean_input($_POST['name'] ?? '');
     $sender_phone = clean_input($_POST['phone'] ?? '');
     $sender_email = clean_input($_POST['email'] ?? '');
+    $subject_key = clean_input($_POST['subject'] ?? 'order');
     $sender_message = clean_input($_POST['message'] ?? '');
 
+    $cat_map = [
+        'order' => 'Order Tracking',
+        'bulk' => 'Bulk Purchase / Wholesale',
+        'vendor' => 'Artisan Onboarding',
+        'other' => 'General Inquiry'
+    ];
+    $category = $cat_map[$subject_key] ?? 'General Inquiry';
+    $subject_label = "वेबसाइट संपर्क फॉर्म: " . $category;
+
     if (!empty($sender_name) && !empty($sender_phone) && !empty($sender_message)) {
-        set_flash('success', 'धन्यवाद ' . htmlspecialchars($sender_name) . '! आपका संदेश प्राप्त हो गया है। हमारी टीम शीघ्र संपर्क करेगी।');
-        $sent = true;
+        try {
+            $user_id = null;
+            $role = 'visitor';
+            if (is_logged_in()) {
+                $cuser = get_logged_in_user();
+                if ($cuser) {
+                    $user_id = $cuser['id'];
+                    $role = $cuser['role'];
+                    if (empty($sender_email)) {
+                        $sender_email = $cuser['email'];
+                    }
+                }
+            }
+
+            $email_val = !empty($sender_email) ? $sender_email : ($sender_phone . '@visitor.ganvgalihat.com');
+            $ticket_num = 'TKT-' . date('ymd') . '-' . rand(1000, 9999);
+            
+            $stmt_tkt = $pdo->prepare("
+                INSERT INTO tickets (ticket_number, user_id, name, email, phone, role, subject, category, priority, status, message, created_at)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'Medium', 'Open', ?, CURRENT_TIMESTAMP)
+            ");
+            $stmt_tkt->execute([
+                $ticket_num,
+                $user_id,
+                $sender_name,
+                $email_val,
+                $sender_phone,
+                $role,
+                $subject_label,
+                $category,
+                $sender_message
+            ]);
+
+            $ticket_created_num = $ticket_num;
+            set_flash('success', "धन्यवाद $sender_name! आपका संदेश सपोर्ट टिकट #$ticket_num के रूप में दर्ज कर लिया गया है। हमारी टीम 24 घंटे के भीतर संपर्क करेगी।");
+            $sent = true;
+        } catch (Exception $e) {
+            set_flash('error', 'संदेश भेजने में त्रुटि: ' . $e->getMessage());
+        }
     }
 }
 ?>

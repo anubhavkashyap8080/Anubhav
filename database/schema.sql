@@ -169,6 +169,53 @@ CREATE TABLE IF NOT EXISTS `wishlists` (
   UNIQUE KEY `user_product` (`user_id`, `product_id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
+-- 10. BLOGS CMS TABLE
+CREATE TABLE IF NOT EXISTS `blogs` (
+  `id` INT AUTO_INCREMENT PRIMARY KEY,
+  `title` VARCHAR(255) NOT NULL,
+  `hindi_title` VARCHAR(255) DEFAULT NULL,
+  `slug` VARCHAR(255) UNIQUE NOT NULL,
+  `excerpt` TEXT,
+  `content` LONGTEXT,
+  `category` VARCHAR(100) DEFAULT 'Rural Craftsmanship',
+  `author_name` VARCHAR(100) DEFAULT 'Anubhav Kashyap',
+  `image` TEXT,
+  `status` ENUM('published', 'draft') DEFAULT 'published',
+  `views` INT DEFAULT 120,
+  `tags` VARCHAR(255) DEFAULT NULL,
+  `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  `updated_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- 11. SUPPORT TICKETS TABLE
+CREATE TABLE IF NOT EXISTS `tickets` (
+  `id` INT AUTO_INCREMENT PRIMARY KEY,
+  `ticket_number` VARCHAR(50) UNIQUE NOT NULL,
+  `user_id` INT DEFAULT NULL,
+  `name` VARCHAR(100) NOT NULL,
+  `email` VARCHAR(150) NOT NULL,
+  `phone` VARCHAR(50) DEFAULT NULL,
+  `role` ENUM('customer', 'vendor', 'visitor') DEFAULT 'customer',
+  `subject` VARCHAR(255) NOT NULL,
+  `category` VARCHAR(100) DEFAULT 'Order Tracking',
+  `priority` ENUM('Low', 'Medium', 'High', 'Urgent') DEFAULT 'Medium',
+  `status` ENUM('Open', 'In Progress', 'Resolved', 'Closed') DEFAULT 'Open',
+  `message` TEXT NOT NULL,
+  `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  `updated_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- 12. TICKET REPLIES TABLE
+CREATE TABLE IF NOT EXISTS `ticket_replies` (
+  `id` INT AUTO_INCREMENT PRIMARY KEY,
+  `ticket_id` INT NOT NULL,
+  `user_id` INT DEFAULT NULL,
+  `sender_name` VARCHAR(100) NOT NULL,
+  `sender_role` VARCHAR(50) DEFAULT 'admin',
+  `message` TEXT NOT NULL,
+  `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
 
 -- SEED INITIAL DATA
 -- Initial Users: Super Admin (anubhav), Admin (sunil_ops), Seller (ramkishan_artisan), Customer (aarav_buyer)

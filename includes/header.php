@@ -70,6 +70,20 @@ $page_desc = isset($page_desc) ? $page_desc : 'High-durability hand-forged agric
 </head>
 <body class="flex flex-col min-h-screen text-gray-800 antialiased selection:bg-emerald-200">
 
+  <!-- Impersonation Alert Banner -->
+  <?php if (!empty($_SESSION['impersonator_id'])): ?>
+    <div class="bg-amber-500 text-stone-950 px-4 py-2 text-xs font-bold flex flex-wrap items-center justify-between shadow-md z-50 sticky top-0 border-b border-amber-600">
+      <div class="flex items-center gap-2">
+        <i data-lucide="user-check" class="w-4 h-4"></i>
+        <span>आप ग्राहक/यूजर <strong><?= htmlspecialchars($current_user['name'] ?? $_SESSION['user_name']) ?></strong> के रूप में साइट देख रहे हैं। मूल एडमिन: <?= htmlspecialchars($_SESSION['impersonator_name'] ?? 'Super Admin') ?></span>
+      </div>
+      <a href="/admin/impersonate.php?action=exit" class="px-3 py-1 bg-stone-950 text-white rounded-lg hover:bg-black transition flex items-center gap-1.5 shadow-xs text-xs font-bold">
+        <i data-lucide="arrow-right-left" class="w-3.5 h-3.5"></i>
+        एडमिन पैनल पर वापस लौटें (Exit Impersonation)
+      </a>
+    </div>
+  <?php endif; ?>
+
   <!-- 1. Top Announcement Bar -->
   <div class="bg-gradient-to-r from-emerald-950 via-slate-900 to-emerald-900 text-white text-[11px] py-1.5 px-3 sm:px-8 border-b border-emerald-900/40">
     <div class="max-w-7xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-1 text-center sm:text-left">
@@ -256,8 +270,10 @@ $page_desc = isset($page_desc) ? $page_desc : 'High-durability hand-forged agric
               aria-label="Account Menu"
             >
               <div class="w-8 h-8 rounded-full bg-emerald-100 text-brand-green flex items-center justify-center font-bold text-xs ring-2 ring-emerald-600/30 overflow-hidden">
-                <?php if ($current_user): ?>
-                  <?= strtoupper(substr($current_user['name'], 0, 1)) ?>
+                <?php if ($current_user && !empty($current_user['avatar'])): ?>
+                  <img src="<?= htmlspecialchars($current_user['avatar']) ?>" alt="Avatar" class="w-full h-full object-cover">
+                <?php elseif ($current_user): ?>
+                  <?= strtoupper(mb_substr($current_user['name'], 0, 1)) ?>
                 <?php else: ?>
                   <i data-lucide="user" class="w-4 h-4"></i>
                 <?php endif; ?>

@@ -33,6 +33,18 @@ if (is_logged_in()) {
 }
 
 $error = '';
+
+// Fetch Google Auth Settings
+$google_enabled = false;
+$google_client_id = '';
+try {
+    $stmt_g = $pdo->query("SELECT setting_key, setting_value FROM site_settings WHERE setting_key IN ('google_auth_enabled', 'google_client_id')");
+    while ($r = $stmt_g->fetch()) {
+        if ($r['setting_key'] === 'google_auth_enabled') $google_enabled = ($r['setting_value'] == '1');
+        if ($r['setting_key'] === 'google_client_id') $google_client_id = $r['setting_value'];
+    }
+} catch (Exception $e) {}
+
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $identifier = clean_input($_POST['identifier'] ?? '');
     $password = $_POST['password'] ?? '';
@@ -180,6 +192,40 @@ require_once __DIR__ . '/includes/header.php';
           </button>
         </form>
 
+        <!-- Social Sign-in Block (For Shoppers) -->
+        <?php if ($google_enabled): ?>
+          <div id="google-auth-container" class="<?= $active_tab === 'shopper' ? 'block' : 'hidden' ?> mt-5 pt-4 border-t border-gray-100">
+            <div class="relative flex py-2 items-center">
+              <div class="flex-grow border-t border-gray-200"></div>
+              <span class="flex-shrink mx-3 text-[11px] font-bold text-gray-400 uppercase">या Google से लॉगिन करें</span>
+              <div class="flex-grow border-t border-gray-200"></div>
+            </div>
+
+            <div class="mt-2 flex flex-col items-center justify-center space-y-2">
+              <div id="g_id_onload"
+                   data-client_id="<?= htmlspecialchars($google_client_id) ?>"
+                   data-login_uri="/auth/google-callback.php"
+                   data-auto_prompt="false">
+              </div>
+              <div class="g_id_signin w-full flex justify-center"
+                   data-type="standard"
+                   data-size="large"
+                   data-theme="outline"
+                   data-text="sign_in_with"
+                   data-shape="rectangular"
+                   data-logo_alignment="left"
+                   data-width="100%">
+              </div>
+              
+              <a href="https://accounts.google.com/o/oauth2/v2/auth?client_id=<?= urlencode($google_client_id) ?>&redirect_uri=<?= urlencode(((!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') ? 'https://' : 'http://') . ($_SERVER['HTTP_HOST'] ?? 'localhost') . '/auth/google-callback.php') ?>&response_type=code&scope=openid%20profile%20email"
+                 class="w-full py-2.5 px-4 bg-white border border-gray-300 hover:bg-stone-50 text-gray-700 font-bold rounded-xl text-xs transition flex items-center justify-center gap-2 shadow-xs">
+                <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" class="w-4 h-4" alt="Google">
+                <span>Google खाते से सीधा प्रवेश</span>
+              </a>
+            </div>
+          </div>
+        <?php endif; ?>
+
       </div>
 
       <!-- Footer Action Links -->
@@ -236,6 +282,15 @@ function switchLoginTab(tab) {
     btnLabel.innerText = 'लॉगिन करें (Sign In)';
     idLabel.innerText = 'ईमेल पता / मोबाइल नंबर / यूजरनेम';
   }
+
+  const googleBox = document.getElementById('google-auth-container');
+  if (googleBox) {
+    if (tab === 'shopper') {
+      googleBox.classList.remove('hidden');
+    } else {
+      googleBox.classList.add('hidden');
+    }
+  }
 }
 
 function togglePasswordVisibility(inputId, btn) {
@@ -252,5 +307,9 @@ function togglePasswordVisibility(inputId, btn) {
   }
 }
 </script>
+
+<?php if ($google_enabled): ?>
+  <script src="https://accounts.google.com/gsi/client" async defer></script>
+<?php endif; ?>
 
 <?php require_once __DIR__ . '/includes/footer.php'; ?>

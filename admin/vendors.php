@@ -112,6 +112,11 @@ require_once __DIR__ . '/admin_header.php';
             </td>
 
             <td class="px-4 py-3.5 text-right whitespace-nowrap">
+              <a href="/admin/impersonate.php?action=login_as&user_id=<?= $v['user_id'] ?>"
+                class="px-2.5 py-1 bg-amber-500 hover:bg-amber-600 text-stone-950 font-bold text-[11px] rounded-lg shadow-xs transition inline-flex items-center gap-1 mr-1"
+                title="इस कारीगर/विक्रेता के डैशबोर्ड में सीधे प्रवेश करें (Super Admin Clearance)">
+                <i class="fa-solid fa-store text-[10px]"></i> सेलर लॉगिन
+              </a>
               <?php if ($v['kyc_status'] !== 'Verified'): ?>
                 <a href="/admin/vendors.php?vendor_id=<?= $v['id'] ?>&set_kyc=Verified" class="px-2.5 py-1 bg-emerald-600 text-white font-bold rounded text-[11px] hover:bg-emerald-700 transition">
                   सत्यापित करें

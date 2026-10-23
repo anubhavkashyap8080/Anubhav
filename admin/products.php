@@ -76,9 +76,18 @@ require_once __DIR__ . '/admin_header.php';
     </p>
   </div>
 
-  <a href="/seller/products.php?action=new" target="_blank" class="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs rounded-xl shadow transition flex items-center gap-2">
-    <i class="fa-solid fa-plus"></i> नया उत्पाद जोड़ें
-  </a>
+  <div class="flex flex-wrap items-center gap-2">
+    <a href="/admin/export_products.php" class="px-3 py-2 bg-stone-100 hover:bg-stone-200 text-stone-700 font-bold text-xs rounded-xl border border-stone-300 transition flex items-center gap-1.5" title="संपूर्ण कैटलॉग CSV डाउनलोड करें">
+      <i class="fa-solid fa-file-export text-emerald-600"></i> एक्सपोर्ट कैटलॉग
+    </a>
+    <button onclick="document.getElementById('importProductsModal').classList.remove('hidden')"
+      class="px-3 py-2 bg-stone-100 hover:bg-stone-200 text-stone-700 font-bold text-xs rounded-xl border border-stone-300 transition flex items-center gap-1.5" title="CSV फ़ाइल से बल्क उत्पाद अपलोड करें">
+      <i class="fa-solid fa-file-import text-blue-600"></i> बल्क इम्पोर्ट (CSV)
+    </button>
+    <a href="/seller/products.php" target="_blank" class="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs rounded-xl shadow transition flex items-center gap-2">
+      <i class="fa-solid fa-plus"></i> नया उत्पाद जोड़ें
+    </a>
+  </div>
 </div>
 
 <!-- Filters Bar -->
@@ -194,6 +203,44 @@ require_once __DIR__ . '/admin_header.php';
         <?php endforeach; ?>
       </tbody>
     </table>
+  </div>
+</div>
+
+<!-- Import Products CSV Modal -->
+<div id="importProductsModal" class="hidden fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4">
+  <div class="bg-white rounded-3xl border border-gray-200 shadow-2xl max-w-md w-full p-6 sm:p-8">
+    <div class="flex items-center justify-between pb-4 mb-4 border-b border-gray-100">
+      <h3 class="text-base font-bold text-gray-900 flex items-center gap-2">
+        <i class="fa-solid fa-file-import text-blue-600"></i>
+        बल्क उत्पाद अपलोड करें (CSV Import)
+      </h3>
+      <button onclick="document.getElementById('importProductsModal').classList.add('hidden')" class="text-gray-400 hover:text-gray-600 text-lg">
+        <i class="fa-solid fa-xmark"></i>
+      </button>
+    </div>
+
+    <form action="/admin/import_products.php" method="POST" enctype="multipart/form-data" class="space-y-4">
+      <div>
+        <label class="block text-xs font-bold text-gray-700 mb-1">CSV फ़ाइल चुनें (.csv) <span class="text-red-500">*</span></label>
+        <input type="file" name="csv_file" accept=".csv" required
+          class="w-full text-xs text-stone-600 file:mr-3 file:py-2 file:px-4 file:rounded-xl file:border-0 file:text-xs file:font-bold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100 cursor-pointer border border-gray-200 rounded-xl p-2 bg-stone-50">
+        <p class="text-[11px] text-gray-400 mt-1.5">
+          सुझाव: पहले <a href="/admin/export_products.php" class="text-indigo-600 font-bold hover:underline">एक्सपोर्ट कैटलॉग</a> करके प्रारूप (format) देख लें।
+        </p>
+      </div>
+
+      <div class="flex items-center justify-end gap-3 pt-3 border-t border-gray-100">
+        <button type="button" onclick="document.getElementById('importProductsModal').classList.add('hidden')"
+          class="px-4 py-2 bg-stone-100 text-stone-700 font-bold rounded-xl text-xs">
+          रद्द करें
+        </button>
+        <button type="submit"
+          class="px-5 py-2 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-xl text-xs transition flex items-center gap-1.5 shadow-sm">
+          <i class="fa-solid fa-cloud-arrow-up"></i>
+          फ़ाइल प्रोसेस करें (Import)
+        </button>
+      </div>
+    </form>
   </div>
 </div>
 
