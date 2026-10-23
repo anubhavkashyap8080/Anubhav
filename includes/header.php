@@ -23,7 +23,7 @@ $page_title = isset($page_title) ? $page_title . ' — ' . APP_NAME : APP_NAME .
 $page_desc = isset($page_desc) ? $page_desc : 'High-durability hand-forged agricultural tools, unpolished pulses, Banarasi pickles, and authentic handlooms direct from Indian village clusters.';
 ?>
 <!DOCTYPE html>
-<html lang="hi" class="scroll-smooth bg-stone-50">
+<html lang="en" class="scroll-smooth bg-stone-50">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -75,11 +75,11 @@ $page_desc = isset($page_desc) ? $page_desc : 'High-durability hand-forged agric
     <div class="bg-amber-500 text-stone-950 px-4 py-2 text-xs font-bold flex flex-wrap items-center justify-between shadow-md z-50 sticky top-0 border-b border-amber-600">
       <div class="flex items-center gap-2">
         <i data-lucide="user-check" class="w-4 h-4"></i>
-        <span>आप ग्राहक/यूजर <strong><?= htmlspecialchars($current_user['name'] ?? $_SESSION['user_name']) ?></strong> के रूप में साइट देख रहे हैं। मूल एडमिन: <?= htmlspecialchars($_SESSION['impersonator_name'] ?? 'Super Admin') ?></span>
+        <span>Viewing store as customer <strong><?= htmlspecialchars($current_user['name'] ?? $_SESSION['user_name']) ?></strong>. Original Admin: <?= htmlspecialchars($_SESSION['impersonator_name'] ?? 'Super Admin') ?></span>
       </div>
       <a href="/admin/impersonate.php?action=exit" class="px-3 py-1 bg-stone-950 text-white rounded-lg hover:bg-black transition flex items-center gap-1.5 shadow-xs text-xs font-bold">
         <i data-lucide="arrow-right-left" class="w-3.5 h-3.5"></i>
-        एडमिन पैनल पर वापस लौटें (Exit Impersonation)
+        Exit Impersonation (Back to Admin)
       </a>
     </div>
   <?php endif; ?>
@@ -408,7 +408,7 @@ $page_desc = isset($page_desc) ? $page_desc : 'High-durability hand-forged agric
               href="/products.php?category=<?= htmlspecialchars($cat['slug']) ?>"
               class="flex items-center gap-1.5 px-3 py-1.5 rounded-full transition-all shrink-0 <?= $isActive ? 'bg-brand-green text-white font-semibold shadow-xs' : 'hover:bg-amber-50 hover:text-brand-green text-gray-800' ?>"
             >
-              <span><?= htmlspecialchars($cat['hindi_name'] ?? $cat['name']) ?></span>
+              <span><?= htmlspecialchars($cat['name']) ?></span>
               <?php if (strpos($cat['slug'], 'pulses') !== false || strpos($cat['slug'], 'pickle') !== false): ?>
                 <span class="ml-0.5 px-1.5 py-0.2 bg-emerald-100 text-emerald-800 text-[10px] font-bold rounded-full">New</span>
               <?php endif; ?>
@@ -503,20 +503,20 @@ $page_desc = isset($page_desc) ? $page_desc : 'High-durability hand-forged agric
       <div class="w-12 h-12 rounded-2xl bg-amber-100 text-brand-orange flex items-center justify-center mx-auto mb-3 text-lg font-bold">
         <i data-lucide="map-pin" class="w-6 h-6"></i>
       </div>
-      <h3 class="text-base font-bold text-gray-900 mb-1">डिलीवरी पिन कोड दर्ज करें</h3>
-      <p class="text-xs text-gray-500 mb-4">सटीक डिलीवरी समय एवं शिपिंग शुल्क जांचने के लिए 6-अंकीय पिनकोड लिखें।</p>
+      <h3 class="text-base font-bold text-gray-900 mb-1">Enter Delivery PIN Code</h3>
+      <p class="text-xs text-gray-500 mb-4">Check exact delivery charges and India Post estimated arrival time.</p>
       
       <div class="relative mb-4">
-        <input type="text" id="modalPincodeInput" maxlength="6" pattern="[0-9]{6}" placeholder="उदा. 241126 या 110001"
+        <input type="text" id="modalPincodeInput" maxlength="6" pattern="[0-9]{6}" placeholder="e.g. 241126 or 110001"
           class="w-full px-4 py-2.5 text-center font-bold text-base tracking-widest border border-gray-300 rounded-xl focus:border-brand-green focus:outline-none">
       </div>
       
       <div class="flex items-center gap-2">
         <button type="button" onclick="closePincodeModal()" class="flex-1 py-2.5 bg-stone-100 text-stone-700 font-bold rounded-xl text-xs hover:bg-stone-200 transition">
-          रद्द करें
+          Cancel
         </button>
         <button type="button" onclick="applyPincode()" class="flex-1 py-2.5 bg-brand-green text-white font-bold rounded-xl text-xs hover:bg-emerald-800 transition">
-          लागू करें
+          Check & Apply
         </button>
       </div>
     </div>

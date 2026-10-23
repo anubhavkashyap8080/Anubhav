@@ -111,7 +111,7 @@ function ensure_platform_schema($pdo) {
                 'brand_name' => 'गाँव गली हाट (GaunGaliHat)',
                 'company_name' => 'S S Industries',
                 'brand_tagline' => 'Desh ki mitti ka swad | Ganv se ghar tak',
-                'announcement_text' => 'सीधे ग्रामीण कारीगरों व कुटीर उद्योग से • ₹499+ के आर्डर पर पूरे भारत में मुफ्त डिलीवरी!',
+                'announcement_text' => 'Direct from Rural Village Artisans • Free All-India Delivery on Orders ₹499+!',
                 'contact_phone' => '+91 7897492100',
                 'contact_email' => 'namaste@ganvgalihat.com',
                 'factory_address' => 'Madhoganj Baghauli Road, Newada, Hardoi, Uttar Pradesh - 241126',

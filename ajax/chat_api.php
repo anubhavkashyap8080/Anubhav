@@ -23,14 +23,14 @@ function get_or_create_customer_session() {
     $session = $stmt->fetch();
 
     if (!$session) {
-        $user_name = $curr_user['name'] ?? ($_SESSION['chat_guest_name'] ?? 'अतिथि ग्राहक (Visitor)');
+        $user_name = $curr_user['name'] ?? ($_SESSION['chat_guest_name'] ?? 'Guest Customer');
         $user_email = $curr_user['email'] ?? ($_SESSION['chat_guest_email'] ?? null);
         $user_phone = $curr_user['phone'] ?? null;
         $user_id = $curr_user['id'] ?? null;
 
         $stmt_ins = $pdo->prepare("
             INSERT INTO chat_sessions (session_token, user_id, user_name, user_email, user_phone, status, last_message, unread_admin, unread_user, created_at, updated_at)
-            VALUES (?, ?, ?, ?, ?, 'active', 'सत्र प्रारंभ हुआ', 0, 0, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
+            VALUES (?, ?, ?, ?, ?, 'active', 'Chat session started', 0, 0, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
         ");
         $stmt_ins->execute([$token, $user_id, $user_name, $user_email, $user_phone]);
         $session_id = $pdo->lastInsertId();
@@ -38,10 +38,10 @@ function get_or_create_customer_session() {
         $stmt->execute([$token]);
         $session = $stmt->fetch();
 
-        // Send automated welcome message from support
+        // Send automated welcome message from support in English
         $stmt_wel = $pdo->prepare("
             INSERT INTO chat_messages (session_id, sender_type, sender_name, message, is_read, created_at)
-            VALUES (?, 'support', 'गाँव गली हाट सपोर्ट टीम', 'नमस्ते! गाँव गली हाट लाइव सपोर्ट में आपका स्वागत है। हम आपकी किस प्रकार सहायता कर सकते हैं?', 0, CURRENT_TIMESTAMP)
+            VALUES (?, 'support', 'GaunGaliHat Support Desk', 'Hello! Welcome to GaunGaliHat Live Support. How may we assist you today?', 0, CURRENT_TIMESTAMP)
         ");
         $stmt_wel->execute([$session['id']]);
     }
@@ -77,7 +77,7 @@ if ($action === 'customer_poll') {
     exit;
 }
 
-// 2. Customer: Send Message
+// 2. Customer: Send Message (With Double-Submit & Duplicate Spam Debounce)
 if ($action === 'customer_send') {
     $session = get_or_create_customer_session();
     $message = clean_input($_POST['message'] ?? '');
@@ -94,12 +94,30 @@ if ($action === 'customer_send') {
     }
 
     if (!empty($message)) {
+        // Prevent accidental duplicate insert if submitted multiple times within 2 seconds
+        $stmt_chk = $pdo->prepare("
+            SELECT id, message, created_at 
+            FROM chat_messages 
+            WHERE session_id = ? AND sender_type = 'user' 
+            ORDER BY id DESC LIMIT 1
+        ");
+        $stmt_chk->execute([$session['id']]);
+        $last_msg = $stmt_chk->fetch();
+        if ($last_msg && trim($last_msg['message']) === $message) {
+            $time_diff = time() - strtotime($last_msg['created_at']);
+            if ($time_diff <= 2) {
+                echo json_encode(['success' => true, 'debounced' => true, 'message_id' => $last_msg['id']]);
+                exit;
+            }
+        }
+
         $sender_name = $guest_name ?: $session['user_name'];
         $stmt_ins = $pdo->prepare("
             INSERT INTO chat_messages (session_id, sender_type, sender_name, message, is_read, created_at)
             VALUES (?, 'user', ?, ?, 0, CURRENT_TIMESTAMP)
         ");
         $stmt_ins->execute([$session['id'], $sender_name, $message]);
+        $new_msg_id = $pdo->lastInsertId();
 
         // Update session
         $pdo->prepare("
@@ -108,10 +126,30 @@ if ($action === 'customer_send') {
             WHERE id = ?
         ")->execute([$message, $session['id']]);
 
-        echo json_encode(['success' => true]);
+        echo json_encode(['success' => true, 'message_id' => $new_msg_id]);
         exit;
     }
-    echo json_encode(['success' => false, 'error' => 'रिक्त संदेश']);
+    echo json_encode(['success' => false, 'error' => 'Empty message']);
+    exit;
+}
+
+// 2b. Customer: End / Cancel Chat Session
+if ($action === 'customer_end_chat') {
+    if (!empty($_SESSION['chat_token'])) {
+        $token = $_SESSION['chat_token'];
+        $stmt = $pdo->prepare("SELECT id FROM chat_sessions WHERE session_token = ? LIMIT 1");
+        $stmt->execute([$token]);
+        $session = $stmt->fetch();
+        if ($session) {
+            $pdo->prepare("UPDATE chat_sessions SET status = 'resolved', updated_at = CURRENT_TIMESTAMP WHERE id = ?")->execute([$session['id']]);
+            $pdo->prepare("
+                INSERT INTO chat_messages (session_id, sender_type, sender_name, message, is_read, created_at)
+                VALUES (?, 'system', 'System', 'Customer has ended this chat session.', 1, CURRENT_TIMESTAMP)
+            ")->execute([$session['id']]);
+        }
+        unset($_SESSION['chat_token']);
+    }
+    echo json_encode(['success' => true]);
     exit;
 }
 
@@ -189,13 +227,30 @@ if ($action === 'admin_get_thread') {
     exit;
 }
 
-// 5. Admin: Send Reply
+// 5. Admin: Send Reply (With Debounce Check)
 if ($action === 'admin_reply') {
     $session_id = intval($_POST['session_id'] ?? 0);
     $reply_msg = clean_input($_POST['message'] ?? '');
 
     if ($session_id > 0 && !empty($reply_msg)) {
-        $agent_name = $curr_user['name'] . ' (सपोर्ट)';
+        // Prevent duplicate spam within 2 seconds
+        $stmt_chk = $pdo->prepare("
+            SELECT id, message, created_at 
+            FROM chat_messages 
+            WHERE session_id = ? AND sender_type != 'user' 
+            ORDER BY id DESC LIMIT 1
+        ");
+        $stmt_chk->execute([$session_id]);
+        $last_msg = $stmt_chk->fetch();
+        if ($last_msg && trim($last_msg['message']) === $reply_msg) {
+            $time_diff = time() - strtotime($last_msg['created_at']);
+            if ($time_diff <= 2) {
+                echo json_encode(['success' => true, 'debounced' => true]);
+                exit;
+            }
+        }
+
+        $agent_name = $curr_user['name'] . ' (Support)';
         $stmt_ins = $pdo->prepare("
             INSERT INTO chat_messages (session_id, sender_type, sender_name, message, is_read, created_at)
             VALUES (?, 'support', ?, ?, 0, CURRENT_TIMESTAMP)

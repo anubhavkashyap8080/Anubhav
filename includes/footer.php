@@ -106,8 +106,8 @@
 
         <!-- Vertically Arranged Payment Methods (COD, Net Banking, Cards, UPI) -->
         <div>
-          <h4 class="font-bold text-white uppercase tracking-wider text-xs mb-3 font-display">भुगतान विकल्प (Payment Methods)</h4>
-          <p class="text-[11px] text-slate-400 mb-3">स्वीकृत भुगतान माध्यम:</p>
+          <h4 class="font-bold text-white uppercase tracking-wider text-xs mb-3 font-display">Accepted Payment Methods</h4>
+          <p class="text-[11px] text-slate-400 mb-3">Safe & Bank-Grade Options:</p>
           <div class="flex flex-col space-y-2 text-xs text-slate-300">
             
             <!-- 1. Cash on Delivery -->
@@ -115,7 +115,7 @@
               <i data-lucide="banknote" class="w-4 h-4 text-amber-400 shrink-0"></i>
               <div>
                 <span class="font-bold text-white block">Cash on Delivery (COD)</span>
-                <span class="text-[10px] text-slate-400 block">पार्सल मिलने पर भुगतान</span>
+                <span class="text-[10px] text-slate-400 block">Pay with cash at your doorstep</span>
               </div>
             </div>
 
@@ -124,7 +124,7 @@
               <i data-lucide="landmark" class="w-4 h-4 text-emerald-400 shrink-0"></i>
               <div>
                 <span class="font-bold text-white block">Net Banking</span>
-                <span class="text-[10px] text-slate-400 block">सभी प्रमुख भारतीय बैंक</span>
+                <span class="text-[10px] text-slate-400 block">All major Indian banks supported</span>
               </div>
             </div>
 

@@ -15,7 +15,7 @@ if (!$is_support_authorized) {
     exit;
 }
 
-$page_title = 'लाइव चैट सहायता कंसोल (Live Support Desk) — GaunGaliHat';
+$page_title = 'Live Support Desk — GaunGaliHat';
 require_once __DIR__ . '/admin_header.php';
 ?>
 
@@ -24,17 +24,17 @@ require_once __DIR__ . '/admin_header.php';
   <div>
     <h1 class="text-2xl font-black text-gray-900 flex items-center gap-2">
       <i class="fa-solid fa-headset text-brand-green"></i>
-      लाइव ग्राहक सहायता कंसोल (Live Support Desk)
+      Live Customer Support Desk
     </h1>
     <p class="text-xs text-gray-500 mt-1">
-      ग्राहकों व आगंतुकों के साथ रीयल-टाइम वन-ऑन-वन बातचीत करें एवं तत्काल समाधान प्रदान करें
+      Chat real-time one-on-one with shoppers and rural buyers to provide instant resolutions
     </p>
   </div>
 
   <div class="flex items-center gap-2">
     <span class="inline-flex items-center gap-1.5 px-3 py-1 bg-emerald-50 text-emerald-800 border border-emerald-200 rounded-full text-xs font-semibold">
       <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
-      सक्रिय सपोर्ट एजेंट: <strong><?= htmlspecialchars($admin_user['name']) ?></strong> (<?= htmlspecialchars(ucfirst($admin_user['role'])) ?>)
+      Active Support Agent: <strong><?= htmlspecialchars($admin_user['name']) ?></strong> (<?= htmlspecialchars(ucfirst($admin_user['role'])) ?>)
     </span>
   </div>
 </div>
@@ -49,31 +49,31 @@ require_once __DIR__ . '/admin_header.php';
     <div class="p-4 border-b border-gray-200 space-y-3 bg-white">
       <div class="flex items-center justify-between">
         <h3 class="font-bold text-xs text-gray-800 flex items-center gap-1.5">
-          <i class="fa-solid fa-comments text-brand-green"></i> बातचीत सत्र (Chats)
+          <i class="fa-solid fa-comments text-brand-green"></i> Chat Sessions
         </h3>
         <span id="unreadTotalBadge" class="hidden px-2 py-0.5 bg-red-500 text-white rounded-full text-[10px] font-bold">
-          0 नए
+          0 new
         </span>
       </div>
 
       <div class="relative">
-        <input type="text" id="chatSearchInput" onkeyup="filterSessionsList()" placeholder="ग्राहक नाम या फ़ोन से खोजें..."
+        <input type="text" id="chatSearchInput" onkeyup="filterSessionsList()" placeholder="Search by name, phone or email..."
           class="w-full pl-8 pr-3 py-1.5 bg-stone-50 border border-gray-200 rounded-xl text-xs focus:bg-white focus:outline-none focus:border-brand-green">
         <i class="fa-solid fa-magnifying-glass text-gray-400 absolute left-2.5 top-1/2 -translate-y-1/2 text-xs"></i>
       </div>
 
       <!-- Filters -->
       <div class="flex items-center gap-1.5 text-[11px] font-bold">
-        <button type="button" onclick="setSessionFilter('all', this)" class="session-filter-btn px-2.5 py-1 rounded-lg bg-indigo-600 text-white shadow-xs">सभी</button>
-        <button type="button" onclick="setSessionFilter('unread', this)" class="session-filter-btn px-2.5 py-1 rounded-lg text-gray-600 hover:bg-stone-200">अपठित (Unread)</button>
-        <button type="button" onclick="setSessionFilter('active', this)" class="session-filter-btn px-2.5 py-1 rounded-lg text-gray-600 hover:bg-stone-200">सक्रिय (Active)</button>
-        <button type="button" onclick="setSessionFilter('resolved', this)" class="session-filter-btn px-2.5 py-1 rounded-lg text-gray-600 hover:bg-stone-200">हल (Resolved)</button>
+        <button type="button" onclick="setSessionFilter('all', this)" class="session-filter-btn px-2.5 py-1 rounded-lg bg-indigo-600 text-white shadow-xs">All</button>
+        <button type="button" onclick="setSessionFilter('unread', this)" class="session-filter-btn px-2.5 py-1 rounded-lg text-gray-600 hover:bg-stone-200">Unread</button>
+        <button type="button" onclick="setSessionFilter('active', this)" class="session-filter-btn px-2.5 py-1 rounded-lg text-gray-600 hover:bg-stone-200">Active</button>
+        <button type="button" onclick="setSessionFilter('resolved', this)" class="session-filter-btn px-2.5 py-1 rounded-lg text-gray-600 hover:bg-stone-200">Resolved</button>
       </div>
     </div>
 
     <!-- Sessions List (Scrollable) -->
     <div id="sessionsListContainer" class="flex-1 overflow-y-auto divide-y divide-gray-100">
-      <div class="p-8 text-center text-xs text-gray-400">सत्र लोड हो रहे हैं...</div>
+      <div class="p-8 text-center text-xs text-gray-400">Loading chat sessions...</div>
     </div>
 
   </div>
@@ -89,17 +89,17 @@ require_once __DIR__ . '/admin_header.php';
         </div>
         <div>
           <div class="flex items-center gap-2">
-            <h3 id="activeCustomerName" class="font-bold text-sm text-gray-900">कृपया एक चैट सत्र चुनें</h3>
+            <h3 id="activeCustomerName" class="font-bold text-sm text-gray-900">Please select a chat session</h3>
             <span id="activeStatusBadge" class="hidden px-2 py-0.2 rounded-full text-[10px] font-bold">Active</span>
           </div>
-          <p id="activeCustomerContact" class="text-xs text-gray-400 mt-0.5">बाईं सूची से किसी भी बातचीत पर क्लिक करें</p>
+          <p id="activeCustomerContact" class="text-xs text-gray-400 mt-0.5">Click any chat thread from the left panel to begin replying</p>
         </div>
       </div>
 
       <div id="activeHeaderActions" class="hidden flex items-center gap-2">
         <button type="button" id="toggleStatusBtn" onclick="toggleActiveSessionStatus()"
           class="px-3 py-1.5 bg-white border border-gray-200 hover:bg-stone-100 text-gray-700 font-bold text-xs rounded-xl transition flex items-center gap-1.5 shadow-xs">
-          <i class="fa-solid fa-check"></i> <span>मार्क Resolved</span>
+          <i class="fa-solid fa-check"></i> <span>Mark Resolved</span>
         </button>
       </div>
     </div>
@@ -110,33 +110,33 @@ require_once __DIR__ . '/admin_header.php';
         <div class="w-14 h-14 rounded-3xl bg-stone-100 flex items-center justify-center text-2xl text-stone-300">
           <i class="fa-solid fa-comments"></i>
         </div>
-        <p class="font-bold text-sm text-gray-600">कोई चैट चयनित नहीं है</p>
-        <p class="text-xs max-w-xs text-gray-400">ग्राहक के प्रश्नों का तुरंत उत्तर देने के लिए बाईं सूची से सत्र चुनें।</p>
+        <p class="font-bold text-sm text-gray-600">No Chat Selected</p>
+        <p class="text-xs max-w-xs text-gray-400">Select a conversation from the left to view customer inquiries.</p>
       </div>
     </div>
 
     <!-- Canned Quick Responses Bar -->
     <div id="cannedResponseBar" class="hidden px-4 py-2 bg-stone-100 border-t border-gray-200 flex items-center gap-2 text-xs">
       <span class="text-[11px] font-bold text-gray-500 flex items-center gap-1 shrink-0">
-        <i class="fa-solid fa-bolt text-amber-500"></i> त्वरित उत्तर (Canned):
+        <i class="fa-solid fa-bolt text-amber-500"></i> Canned Responses:
       </span>
       <select onchange="insertCannedResponse(this)" class="flex-1 px-2.5 py-1 bg-white border border-gray-200 rounded-lg text-xs outline-none">
-        <option value="">-- त्वरित उत्तर चुनें --</option>
-        <option value="नमस्ते! गाँव गली हाट सपोर्ट में आपका स्वागत है। हम आपकी किस प्रकार सहायता कर सकते हैं?">नमस्ते! गाँव गली हाट सपोर्ट में आपका स्वागत है...</option>
-        <option value="आपके आर्डर की ट्रैकिंग स्थिति भारतीय डाक (India Post) सिस्टम में जांची जा रही है। कृपया 2 मिनट प्रतीक्षा करें।">आर्डर ट्रैकिंग जांच की जा रही है...</option>
-        <option value="₹499 या अधिक के सभी आर्डर्स पर पूरे भारत में डिलीवरी पूरी तरह मुफ़्त है।">मुफ़्त डिलीवरी थ्रेसहोल्ड ₹499 जानकारी...</option>
-        <option value="हमारा सभी सामान सीधे हरदोई की कार्यशालाओं से निर्मित 100% उच्च गुणवत्ता वाला है।">उत्पाद गुणवत्ता एवं वारंटी...</option>
-        <option value="कृपया अपना 6-अंकीय पिनकोड साझा करें ताकि हम सटीक डिलीवरी समय बता सकें।">पिनकोड अनुरोध...</option>
+        <option value="">-- Select quick canned response --</option>
+        <option value="Hello! Welcome to GaunGaliHat Support Desk. How may we assist you today?">Welcome greeting...</option>
+        <option value="Your India Post parcel tracking status is being verified. Please give us 2 minutes.">Checking India Post parcel tracking...</option>
+        <option value="Free all-India shipping is automatically applied on all orders of ₹499 and above.">Free shipping threshold (₹499)...</option>
+        <option value="All our tools and produce are 100% authentic, hand-forged in Hardoi foundries and directly harvested.">Product quality & authenticity assurance...</option>
+        <option value="Please share your 6-digit delivery PIN code so we can calculate exact arrival time.">Request delivery pincode...</option>
       </select>
     </div>
 
     <!-- Admin Reply Input Form -->
     <form id="adminReplyForm" onsubmit="handleSendAdminReply(event)" class="p-3.5 bg-white border-t border-gray-200 flex items-center gap-2">
-      <input type="text" id="adminReplyInput" disabled placeholder="उत्तर देने के लिए पहले एक चैट सत्र चुनें..."
+      <input type="text" id="adminReplyInput" disabled placeholder="Select a chat session first..."
         class="flex-1 px-4 py-2.5 bg-stone-50 border border-gray-200 rounded-xl text-xs focus:bg-white focus:outline-none focus:border-brand-green transition">
       <button type="submit" id="adminSendBtn" disabled
         class="px-5 py-2.5 bg-brand-green hover:bg-emerald-800 disabled:bg-gray-300 disabled:cursor-not-allowed text-white font-bold text-xs rounded-xl transition flex items-center gap-1.5 shadow-md">
-        <i class="fa-solid fa-paper-plane text-xs"></i> <span>भेजें</span>
+        <i class="fa-solid fa-paper-plane text-xs"></i> <span>Send</span>
       </button>
     </form>
 
@@ -265,7 +265,7 @@ function pollThread(fullReload = false) {
         badge.classList.remove('hidden');
 
         const toggleBtn = document.getElementById('toggleStatusBtn');
-        toggleBtn.innerHTML = s.status === 'resolved' ? '<i class="fa-solid fa-rotate-left"></i> पुनः सक्रिय करें' : '<i class="fa-solid fa-check"></i> मार्क Resolved';
+        toggleBtn.innerHTML = s.status === 'resolved' ? '<i class="fa-solid fa-rotate-left"></i> Reopen Session' : '<i class="fa-solid fa-check"></i> Mark Resolved';
 
         const area = document.getElementById('adminChatMessages');
         if (fullReload) {
@@ -273,34 +273,60 @@ function pollThread(fullReload = false) {
         }
 
         if (data.messages && data.messages.length > 0) {
+          let newAppended = false;
           data.messages.forEach(m => {
-            lastAdminMsgId = Math.max(lastAdminMsgId, m.id);
-            const isAgent = (m.sender_type !== 'user');
+            lastAdminMsgId = Math.max(lastAdminMsgId, parseInt(m.id));
 
+            // Strict de-duplication check: avoid double bubbles
+            if (document.getElementById('admin-msg-' + m.id)) {
+              return;
+            }
+
+            const isAgent = (m.sender_type !== 'user');
+            const isSystem = (m.sender_type === 'system');
             const div = document.createElement('div');
-            div.className = isAgent ? 'flex justify-end' : 'flex justify-start';
-            div.innerHTML = `
-              <div class="max-w-[75%] p-3 rounded-2xl ${isAgent ? 'bg-indigo-600 text-white rounded-br-xs shadow-xs' : 'bg-white border border-gray-200 text-gray-800 rounded-bl-xs shadow-xs'}">
-                <div class="flex items-center justify-between gap-3 text-[10px] ${isAgent ? 'text-indigo-200' : 'text-emerald-800'} font-bold mb-1">
-                  <span>${escapeHtml(m.sender_name)}</span>
-                  <span class="${isAgent ? 'text-indigo-200' : 'text-gray-400'}">${formatTime(m.created_at)}</span>
+            div.id = 'admin-msg-' + m.id;
+
+            if (isSystem) {
+              div.className = 'text-center py-1';
+              div.innerHTML = `<span class="text-[10px] text-gray-400 italic bg-white px-2.5 py-0.5 rounded-full border border-gray-200">${escapeHtml(m.message)}</span>`;
+            } else {
+              div.className = isAgent ? 'flex justify-end' : 'flex justify-start';
+              div.innerHTML = `
+                <div class="max-w-[75%] p-3 rounded-2xl ${isAgent ? 'bg-indigo-600 text-white rounded-br-xs shadow-xs' : 'bg-white border border-gray-200 text-gray-800 rounded-bl-xs shadow-xs'}">
+                  <div class="flex items-center justify-between gap-3 text-[10px] ${isAgent ? 'text-indigo-200' : 'text-emerald-800'} font-bold mb-1">
+                    <span>${escapeHtml(m.sender_name)}</span>
+                    <span class="${isAgent ? 'text-indigo-200' : 'text-gray-400'}">${formatTime(m.created_at)}</span>
+                  </div>
+                  <div class="leading-relaxed whitespace-pre-line text-xs">${escapeHtml(m.message)}</div>
                 </div>
-                <div class="leading-relaxed whitespace-pre-line text-xs">${escapeHtml(m.message)}</div>
-              </div>
-            `;
+              `;
+            }
+
             area.appendChild(div);
+            newAppended = true;
           });
-          area.scrollTop = area.scrollHeight;
+
+          if (newAppended) {
+            area.scrollTop = area.scrollHeight;
+          }
         }
       }
     });
 }
 
+let isSendingAdmin = false;
 function handleSendAdminReply(e) {
   e.preventDefault();
+  if (isSendingAdmin) return;
+
   const input = document.getElementById('adminReplyInput');
+  const btn = document.getElementById('adminSendBtn');
   const msg = input.value.trim();
   if (!msg || !currentSessionId) return;
+
+  isSendingAdmin = true;
+  if (btn) btn.disabled = true;
 
   const formData = new FormData();
   formData.append('session_id', currentSessionId);
@@ -318,6 +344,11 @@ function handleSendAdminReply(e) {
       pollThread(false);
       loadAdminSessions();
     }
+  })
+  .finally(() => {
+    isSendingAdmin = false;
+    if (btn) btn.disabled = false;
+    input.focus();
   });
 }
 

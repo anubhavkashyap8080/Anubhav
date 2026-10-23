@@ -135,11 +135,6 @@ if ($hero_theme === 'crimson') {
             </div>
           </div>
         </div>
-              <p class="text-[9px] sm:text-[10px] text-emerald-200 font-medium truncate">Unpolished Dal & Pure Achar</p>
-              <p class="text-xs font-bold text-white truncate">Direct Village Farm Harvest</p>
-            </div>
-          </div>
-        </div>
       </div>
 
     </div>

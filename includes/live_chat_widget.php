@@ -1,14 +1,5 @@
-<!-- GaunGaliHat Real-time Customer Live Chat & WhatsApp Widget -->
+<!-- GaunGaliHat Real-time Customer Live Chat Support Widget -->
 <div id="liveChatWidgetContainer" class="fixed bottom-5 right-4 z-50 flex flex-col items-end gap-2.5 font-sans">
-
-  <!-- WhatsApp Quick Support Floating Button -->
-  <a href="https://wa.me/917897492100?text=नमस्ते%20GaunGaliHat!%20मुझे%20सहायता%20चाहिए।"
-     target="_blank" rel="noopener noreferrer"
-     class="flex items-center gap-2 px-3.5 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-full shadow-lg transition-transform hover:scale-105 text-xs font-bold"
-     title="सीधे व्हाट्सएप पर बात करें">
-    <i class="fa-brands fa-whatsapp text-lg"></i>
-    <span class="hidden sm:inline">WhatsApp सहायता</span>
-  </a>
 
   <!-- Live Chat Trigger Pill -->
   <button type="button" id="openLiveChatBtn"
@@ -16,56 +7,70 @@
     class="flex items-center gap-2.5 px-4 py-2.5 bg-gradient-to-r from-emerald-800 to-brand-green text-white rounded-full shadow-2xl hover:shadow-emerald-900/30 transition-all hover:scale-105 active:scale-95 text-xs font-bold border border-emerald-500/40 relative">
     <span class="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-ping absolute top-2 left-2"></span>
     <i class="fa-solid fa-headset text-base"></i>
-    <span>लाइव चैट (Live Support)</span>
+    <span>Live Chat Support</span>
     <span id="chatCustomerUnread" class="hidden px-1.5 py-0.2 bg-red-500 text-white text-[10px] font-black rounded-full shadow-xs">1</span>
   </button>
 
   <!-- Live Chat Popup Card (Responsive, Never Cut Off) -->
   <div id="liveChatPopupBox"
     class="hidden w-[92vw] sm:w-96 max-w-sm bg-white rounded-3xl border border-gray-200 shadow-2xl flex flex-col overflow-hidden animate-in fade-in slide-in-from-bottom-5 duration-200"
-    style="height: 480px; max-height: 80vh;">
+    style="height: 490px; max-height: 80vh;">
     
-    <!-- Chat Header -->
-    <div class="bg-gradient-to-r from-emerald-950 via-slate-900 to-emerald-900 text-white p-4 flex items-center justify-between">
-      <div class="flex items-center gap-2.5">
-        <div class="w-8 h-8 rounded-xl bg-emerald-800 text-white flex items-center justify-center font-bold text-sm">
+    <!-- Chat Header with Minimize and Cancel Options -->
+    <div class="bg-gradient-to-r from-emerald-950 via-slate-900 to-emerald-900 text-white p-3.5 flex items-center justify-between">
+      <div class="flex items-center gap-2.5 min-w-0">
+        <div class="w-8 h-8 rounded-xl bg-emerald-800 text-white flex items-center justify-center font-bold text-sm shrink-0">
           🌾
         </div>
-        <div>
-          <h4 class="text-xs font-bold">गाँव गली हाट लाइव सहायता</h4>
-          <span class="text-[10px] text-emerald-300 flex items-center gap-1 font-semibold">
-            <span class="w-1.5 h-1.5 rounded-full bg-emerald-400"></span> ऑनलाइन • 2 मिनट में उत्तर
+        <div class="min-w-0">
+          <h4 class="text-xs font-bold truncate">GaunGaliHat Support</h4>
+          <span class="text-[10px] text-emerald-300 flex items-center gap-1 font-semibold truncate">
+            <span class="w-1.5 h-1.5 rounded-full bg-emerald-400"></span> Online • Direct Help Desk
           </span>
         </div>
       </div>
-      <button type="button" onclick="toggleLiveChatBox()" class="text-gray-400 hover:text-white p-1">
-        <i class="fa-solid fa-xmark text-sm"></i>
-      </button>
+
+      <!-- Action Controls: Minimize & Cancel / End Chat -->
+      <div class="flex items-center gap-1 shrink-0">
+        <!-- Minimize Button -->
+        <button type="button" onclick="minimizeLiveChat()"
+          class="p-1.5 text-gray-300 hover:text-white hover:bg-white/10 rounded-lg transition"
+          title="Minimize Chat">
+          <i class="fa-solid fa-minus text-xs"></i>
+        </button>
+
+        <!-- Cancel / End Chat Button -->
+        <button type="button" onclick="cancelLiveChat()"
+          class="p-1.5 text-gray-300 hover:text-red-400 hover:bg-white/10 rounded-lg transition"
+          title="End / Cancel Chat">
+          <i class="fa-solid fa-xmark text-sm"></i>
+        </button>
+      </div>
     </div>
 
     <!-- Messages Container -->
     <div id="chatMessagesArea" class="flex-1 p-3.5 overflow-y-auto space-y-3 bg-stone-50 text-xs">
       <div class="text-center py-2">
-        <span class="text-[10px] text-gray-400 bg-white px-2.5 py-1 rounded-full border border-gray-200">आज की बातचीत</span>
+        <span class="text-[10px] text-gray-400 bg-white px-2.5 py-1 rounded-full border border-gray-200">Today's Conversation</span>
       </div>
     </div>
 
     <!-- Guest Identity Form (If not logged in and first time) -->
     <?php if (!is_logged_in() && empty($_SESSION['chat_guest_name'])): ?>
       <div id="chatGuestFields" class="p-2.5 bg-amber-50 border-t border-amber-100 flex gap-1.5 text-xs">
-        <input type="text" id="chatGuestName" placeholder="आपका नाम *" required
+        <input type="text" id="chatGuestName" placeholder="Your Name *" required
           class="w-1/2 px-2.5 py-1.5 bg-white border border-gray-200 rounded-lg text-xs outline-none focus:border-brand-green">
-        <input type="tel" id="chatGuestPhone" placeholder="मोबाइल नंबर *" required maxlength="10"
+        <input type="tel" id="chatGuestPhone" placeholder="Mobile Number *" required maxlength="10"
           class="w-1/2 px-2.5 py-1.5 bg-white border border-gray-200 rounded-lg text-xs outline-none focus:border-brand-green">
       </div>
     <?php endif; ?>
 
     <!-- Input Box -->
     <form id="liveChatSendForm" onsubmit="handleSendChatMessage(event)" class="p-2.5 bg-white border-t border-gray-200 flex items-center gap-2">
-      <input type="text" id="chatInputMessage" required placeholder="यहाँ अपना संदेश या आर्डर सं. लिखें..."
+      <input type="text" id="chatInputMessage" required placeholder="Type your message or order ID here..."
         class="flex-1 px-3 py-2 bg-stone-50 border border-gray-200 rounded-xl text-xs focus:bg-white focus:outline-none focus:border-brand-green transition">
       <button type="submit" id="chatSendBtn"
-        class="w-9 h-9 bg-brand-green hover:bg-emerald-800 text-white rounded-xl flex items-center justify-center transition shadow-xs">
+        class="w-9 h-9 bg-brand-green hover:bg-emerald-800 disabled:bg-gray-300 disabled:cursor-not-allowed text-white rounded-xl flex items-center justify-center transition shadow-xs">
         <i class="fa-solid fa-paper-plane text-xs"></i>
       </button>
     </form>
@@ -77,6 +82,8 @@
 let lastChatMsgId = 0;
 let chatPollTimer = null;
 let isChatOpen = false;
+let isSendingChat = false;
+let isPollingChat = false;
 
 function toggleLiveChatBox() {
   const box = document.getElementById('liveChatPopupBox');
@@ -88,6 +95,9 @@ function toggleLiveChatBox() {
     if (!chatPollTimer) {
       chatPollTimer = setInterval(pollCustomerChat, 3000);
     }
+    setTimeout(() => {
+      document.getElementById('chatInputMessage')?.focus();
+    }, 150);
   } else {
     box.classList.add('hidden');
     if (chatPollTimer) {
@@ -97,36 +107,107 @@ function toggleLiveChatBox() {
   }
 }
 
+// 1. Minimize live chat (keeps conversation in memory & active)
+function minimizeLiveChat() {
+  const box = document.getElementById('liveChatPopupBox');
+  box.classList.add('hidden');
+  isChatOpen = false;
+  // Polling continues if timer active, keeping state alive
+}
+
+// 2. Cancel / End chat session
+function cancelLiveChat() {
+  if (confirm('Are you sure you want to end this chat session?')) {
+    fetch('/ajax/chat_api.php?action=customer_end_chat', { method: 'POST' })
+      .then(res => res.json())
+      .then(() => {
+        const box = document.getElementById('liveChatPopupBox');
+        box.classList.add('hidden');
+        isChatOpen = false;
+        lastChatMsgId = 0;
+        if (chatPollTimer) {
+          clearInterval(chatPollTimer);
+          chatPollTimer = null;
+        }
+        const area = document.getElementById('chatMessagesArea');
+        if (area) {
+          area.innerHTML = `
+            <div class="text-center py-4">
+              <span class="text-[10px] text-gray-400 bg-white px-2.5 py-1 rounded-full border border-gray-200">Chat session ended</span>
+              <p class="text-[11px] text-gray-500 mt-2">Click below to start a new chat whenever you need assistance.</p>
+            </div>
+          `;
+        }
+      })
+      .catch(() => {
+        const box = document.getElementById('liveChatPopupBox');
+        box.classList.add('hidden');
+        isChatOpen = false;
+      });
+  }
+}
+
+// 3. Poll Customer Chat with strict de-duplication
 function pollCustomerChat() {
+  if (isPollingChat) return;
+  isPollingChat = true;
+
   fetch('/ajax/chat_api.php?action=customer_poll&last_id=' + lastChatMsgId)
     .then(res => res.json())
     .then(data => {
       if (data.success && data.messages && data.messages.length > 0) {
         const area = document.getElementById('chatMessagesArea');
-        data.messages.forEach(m => {
-          lastChatMsgId = Math.max(lastChatMsgId, m.id);
-          const isUser = (m.sender_type === 'user');
-          const row = document.createElement('div');
-          row.className = isUser ? 'flex justify-end' : 'flex justify-start';
+        let newAppended = false;
 
-          row.innerHTML = `
-            <div class="max-w-[82%] p-2.5 rounded-2xl ${isUser ? 'bg-brand-green text-white rounded-br-xs' : 'bg-white border border-gray-200 text-gray-800 rounded-bl-xs shadow-xs'}">
-              ${!isUser ? `<div class="text-[10px] font-bold text-emerald-800 mb-0.5">${escapeHtml(m.sender_name)}</div>` : ''}
-              <div class="leading-relaxed whitespace-pre-line">${escapeHtml(m.message)}</div>
-              <div class="text-[9px] ${isUser ? 'text-emerald-200' : 'text-gray-400'} text-right mt-1">${formatTime(m.created_at)}</div>
-            </div>
-          `;
+        data.messages.forEach(m => {
+          lastChatMsgId = Math.max(lastChatMsgId, parseInt(m.id));
+
+          // Strict de-duplication check: Skip if element with this ID already exists
+          if (document.getElementById('chat-msg-' + m.id)) {
+            return;
+          }
+
+          const isUser = (m.sender_type === 'user');
+          const isSystem = (m.sender_type === 'system');
+          const row = document.createElement('div');
+          row.id = 'chat-msg-' + m.id;
+
+          if (isSystem) {
+            row.className = 'text-center py-1';
+            row.innerHTML = `<span class="text-[10px] text-gray-400 italic bg-white px-2 py-0.5 rounded-full border border-gray-200">${escapeHtml(m.message)}</span>`;
+          } else {
+            row.className = isUser ? 'flex justify-end' : 'flex justify-start';
+            row.innerHTML = `
+              <div class="max-w-[82%] p-2.5 rounded-2xl ${isUser ? 'bg-brand-green text-white rounded-br-xs' : 'bg-white border border-gray-200 text-gray-800 rounded-bl-xs shadow-xs'}">
+                ${!isUser ? `<div class="text-[10px] font-bold text-emerald-800 mb-0.5">${escapeHtml(m.sender_name)}</div>` : ''}
+                <div class="leading-relaxed whitespace-pre-line">${escapeHtml(m.message)}</div>
+                <div class="text-[9px] ${isUser ? 'text-emerald-200' : 'text-gray-400'} text-right mt-1">${formatTime(m.created_at)}</div>
+              </div>
+            `;
+          }
+
           area.appendChild(row);
+          newAppended = true;
         });
-        area.scrollTop = area.scrollHeight;
+
+        if (newAppended) {
+          area.scrollTop = area.scrollHeight;
+        }
       }
     })
-    .catch(err => console.log('Chat poll notice:', err));
+    .catch(err => console.log('Chat poll notice:', err))
+    .finally(() => {
+      isPollingChat = false;
+    });
 }
 
+// 4. Send Customer Chat Message with Anti-Double-Submit Guard
 function handleSendChatMessage(e) {
   e.preventDefault();
+  if (isSendingChat) return;
+
   const input = document.getElementById('chatInputMessage');
+  const btn = document.getElementById('chatSendBtn');
   const msg = input.value.trim();
   if (!msg) return;
 
@@ -137,13 +218,16 @@ function handleSendChatMessage(e) {
   const guestPhoneEl = document.getElementById('chatGuestPhone');
   if (guestNameEl && guestPhoneEl) {
     if (!guestNameEl.value.trim() || !guestPhoneEl.value.trim()) {
-      alert('कृपया पहली बार चैट करने हेतु अपना नाम व फ़ोन नंबर लिखें।');
+      alert('Please enter your name and phone number to start chatting.');
       return;
     }
     formData.append('guest_name', guestNameEl.value.trim());
     formData.append('guest_phone', guestPhoneEl.value.trim());
   }
 
+  // Lock form to avoid double clicks or accidental re-submits
+  isSendingChat = true;
+  if (btn) btn.disabled = true;
   input.value = '';
 
   fetch('/ajax/chat_api.php?action=customer_send', {
@@ -157,6 +241,14 @@ function handleSendChatMessage(e) {
       if (gBox) gBox.style.display = 'none';
       pollCustomerChat();
     }
+  })
+  .catch(err => {
+    console.error('Send error:', err);
+  })
+  .finally(() => {
+    isSendingChat = false;
+    if (btn) btn.disabled = false;
+    input.focus();
   });
 }
 
