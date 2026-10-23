@@ -95,17 +95,30 @@ function get_vendor_for_current_user() {
 function authenticate_user($identifier, $password, $expected_role_group = null) {
     global $pdo;
     $identifier = trim((string)$identifier);
+    
+    // Check if identifier is numeric phone or has digits
     $clean_phone = preg_replace('/[^0-9]/', '', $identifier);
+    $has_valid_phone = (strlen($clean_phone) >= 10);
     if (strlen($clean_phone) > 10) {
         $clean_phone = substr($clean_phone, -10);
     }
 
-    $stmt = $pdo->prepare("
-        SELECT * FROM users 
-        WHERE (LOWER(username) = LOWER(?) OR LOWER(email) = LOWER(?) OR phone = ? OR phone LIKE ?)
-        LIMIT 1
-    ");
-    $stmt->execute([$identifier, $identifier, $identifier, "%$clean_phone%"]);
+    if ($has_valid_phone) {
+        $stmt = $pdo->prepare("
+            SELECT * FROM users 
+            WHERE (LOWER(username) = LOWER(?) OR LOWER(email) = LOWER(?) OR phone = ? OR phone LIKE ?)
+            LIMIT 1
+        ");
+        $stmt->execute([$identifier, $identifier, $identifier, "%$clean_phone"]);
+    } else {
+        $stmt = $pdo->prepare("
+            SELECT * FROM users 
+            WHERE (LOWER(username) = LOWER(?) OR LOWER(email) = LOWER(?))
+            LIMIT 1
+        ");
+        $stmt->execute([$identifier, $identifier]);
+    }
+    
     $user = $stmt->fetch();
 
     if (!$user) {
