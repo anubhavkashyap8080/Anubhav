@@ -20,7 +20,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         }
     } elseif (isset($_POST['remove_coupon'])) {
         remove_applied_coupon();
-        $coupon_msg = 'कूपन हटा दिया गया है।';
+        $coupon_msg = 'Coupon has been removed.';
     }
 }
 
@@ -160,9 +160,9 @@ $final_total = max(0, $cart_subtotal + $shipping['shipping_fee'] - $discount_amo
           <div class="flex items-center justify-between pb-2 border-b border-gray-100">
             <h3 class="font-bold text-sm text-gray-900 font-display flex items-center gap-2">
               <i data-lucide="tag" class="w-4 h-4 text-amber-500"></i>
-              <span>कूपन कोड (Promo Code)</span>
+              <span>Promo / Coupon Code</span>
             </h3>
-            <span class="text-[10px] text-emerald-700 bg-emerald-50 px-2.5 py-0.5 rounded-full font-bold">छूट पाएं</span>
+            <span class="text-[10px] text-emerald-700 bg-emerald-50 px-2.5 py-0.5 rounded-full font-bold">Apply Discount</span>
           </div>
 
           <?php if (!empty($coupon_msg)): ?>
@@ -189,20 +189,20 @@ $final_total = max(0, $cart_subtotal + $shipping['shipping_fee'] - $discount_amo
               <form action="/cart.php" method="POST">
                 <input type="hidden" name="remove_coupon" value="1">
                 <button type="submit" class="text-xs text-red-500 hover:text-red-700 font-bold hover:underline">
-                  हटाएं
+                  Remove
                 </button>
               </form>
             </div>
           <?php else: ?>
             <form action="/cart.php" method="POST" class="flex gap-2">
               <input type="hidden" name="apply_coupon" value="1">
-              <input type="text" name="coupon_code" required placeholder="उदा. WELCOME50, FESTIVAL20"
+              <input type="text" name="coupon_code" required placeholder="e.g. WELCOME50, FESTIVAL20"
                 class="flex-1 px-3 py-2 border border-gray-300 rounded-xl font-mono uppercase text-xs font-bold outline-none focus:border-brand-green">
               <button type="submit" class="px-4 py-2 bg-brand-green hover:bg-emerald-800 text-white font-bold rounded-xl text-xs transition">
-                लागू करें
+                Apply
               </button>
             </form>
-            <p class="text-[10px] text-gray-400">नए ग्राहक पहले आर्डर पर <strong>WELCOME50</strong> का उपयोग कर सकते हैं।</p>
+            <p class="text-[10px] text-gray-400">New buyers can use code <strong>WELCOME50</strong> on their first order.</p>
           <?php endif; ?>
         </div>
 
@@ -219,7 +219,7 @@ $final_total = max(0, $cart_subtotal + $shipping['shipping_fee'] - $discount_amo
               <div class="flex justify-between text-emerald-700 font-semibold bg-emerald-50/60 p-2 rounded-lg">
                 <span class="flex items-center gap-1">
                   <i data-lucide="tag" class="w-3.5 h-3.5"></i>
-                  कूपन छूट (<?= htmlspecialchars($applied_coupon['code']) ?>)
+                  Coupon Discount (<?= htmlspecialchars($applied_coupon['code']) ?>)
                 </span>
                 <span>- <?= format_price($discount_amount) ?></span>
               </div>

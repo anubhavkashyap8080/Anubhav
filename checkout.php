@@ -8,10 +8,10 @@ if (empty($cart)) {
             <div class="w-16 h-16 bg-stone-100 rounded-full flex items-center justify-center mx-auto mb-4 text-stone-400">
                 <i class="fa-solid fa-cart-shopping text-2xl"></i>
             </div>
-            <h2 class="text-2xl font-bold text-gray-800 mb-2">आपकी टोकरी खाली है (Your cart is empty)</h2>
-            <p class="text-sm text-gray-500 mb-6">कृपया आर्डर करने से पहले हस्तशिल्प उत्पाद जोड़ें।</p>
+            <h2 class="text-2xl font-bold text-gray-800 mb-2">Your Shopping Cart is Empty</h2>
+            <p class="text-sm text-gray-500 mb-6">Please add authentic rural artisan tools or farm produce before checking out.</p>
             <a href="/products.php" class="inline-flex items-center gap-2 px-6 py-3 bg-brand-green text-white font-bold rounded-xl hover:bg-emerald-800 transition">
-                उत्पाद देखें (Browse Products) <i class="fa-solid fa-arrow-right"></i>
+                Browse Marketplace <i class="fa-solid fa-arrow-right"></i>
             </a>
           </div>';
     require_once __DIR__ . '/includes/footer.php';
@@ -37,19 +37,19 @@ $grand_total = max(0, $subtotal + $shipping_fee - $discount_amount);
     <div class="mb-6 flex flex-wrap items-center justify-between gap-4">
       <div>
         <nav class="flex items-center gap-2 text-xs text-gray-400 mb-1">
-          <a href="/" class="hover:text-brand-green">होम</a>
+          <a href="/" class="hover:text-brand-green">Home</a>
           <i class="fa-solid fa-chevron-right text-[9px]"></i>
-          <a href="/cart.php" class="hover:text-brand-green">शॉपिंग कार्ट</a>
+          <a href="/cart.php" class="hover:text-brand-green">Shopping Cart</a>
           <i class="fa-solid fa-chevron-right text-[9px]"></i>
-          <span class="text-gray-700 font-semibold">सुरक्षित चेकआउट</span>
+          <span class="text-gray-700 font-semibold">Secure Checkout</span>
         </nav>
         <h1 class="text-2xl sm:text-3xl font-extrabold text-gray-900 flex items-center gap-2">
-          <i class="fa-solid fa-shield-halved text-brand-green"></i> सुरक्षित चेकआउट (Secure Checkout)
+          <i class="fa-solid fa-shield-halved text-brand-green"></i> Secure Checkout
         </h1>
       </div>
       
       <div class="flex items-center gap-3 text-xs text-emerald-800 bg-emerald-50 border border-emerald-200 px-3.5 py-1.5 rounded-full font-semibold">
-        <i class="fa-solid fa-lock"></i> 256-Bit SSL एन्क्रिप्टेड सुरक्षा
+        <i class="fa-solid fa-lock"></i> 256-Bit SSL Encrypted
       </div>
     </div>
 
@@ -64,15 +64,15 @@ $grand_total = max(0, $subtotal + $shipping_fee - $discount_amount);
             <div class="flex items-center justify-between pb-4 mb-5 border-b border-gray-100">
               <h2 class="text-lg font-bold text-gray-900 flex items-center gap-2">
                 <span class="w-7 h-7 rounded-full bg-brand-green text-white flex items-center justify-center text-xs font-bold">1</span>
-                डिलीवरी का पता (Delivery Address)
+                Delivery Address
               </h2>
               <?php if (!$user): ?>
                 <span class="text-xs text-gray-500">
-                  खाता है? <a href="/login.php?redirect=checkout.php" class="text-brand-green font-bold hover:underline">लॉगिन करें</a>
+                  Have an account? <a href="/login.php?redirect=checkout.php" class="text-brand-green font-bold hover:underline">Sign In</a>
                 </span>
               <?php else: ?>
                 <span class="text-xs text-emerald-700 bg-emerald-50 px-2.5 py-1 rounded-full font-medium">
-                  <?= htmlspecialchars($user['name']) ?> (लॉगिन हैं)
+                  <?= htmlspecialchars($user['name']) ?> (Signed In)
                 </span>
               <?php endif; ?>
             </div>
@@ -81,14 +81,14 @@ $grand_total = max(0, $subtotal + $shipping_fee - $discount_amount);
               <!-- Full Name -->
               <div class="sm:col-span-2">
                 <label class="block text-xs font-bold text-gray-700 mb-1">
-                  पूरा नाम (Full Name) <span class="text-red-500">*</span>
+                  Full Name <span class="text-red-500">*</span>
                 </label>
                 <div class="relative">
                   <span class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-gray-400">
                     <i class="fa-regular fa-user text-xs"></i>
                   </span>
                   <input type="text" name="full_name" required value="<?= htmlspecialchars($user['name'] ?? '') ?>"
-                    placeholder="उदा. राहुल कुमार"
+                    placeholder="e.g. Rahul Kumar"
                     class="w-full pl-10 pr-3 py-2.5 bg-stone-50 border border-gray-200 rounded-xl text-sm focus:bg-white focus:border-brand-green focus:outline-none transition">
                 </div>
               </div>
@@ -96,7 +96,7 @@ $grand_total = max(0, $subtotal + $shipping_fee - $discount_amount);
               <!-- Phone Number -->
               <div>
                 <label class="block text-xs font-bold text-gray-700 mb-1">
-                  मोबाइल नंबर (Mobile Number) <span class="text-red-500">*</span>
+                  Mobile Number <span class="text-red-500">*</span>
                 </label>
                 <div class="relative">
                   <span class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-gray-400 font-bold text-xs">
@@ -104,7 +104,7 @@ $grand_total = max(0, $subtotal + $shipping_fee - $discount_amount);
                   </span>
                   <input type="tel" name="phone" required pattern="[0-9]{10}" maxlength="10"
                     value="<?= htmlspecialchars($user['phone'] ?? '') ?>"
-                    placeholder="10-अंकीय नंबर"
+                    placeholder="10-digit mobile"
                     class="w-full pl-12 pr-3 py-2.5 bg-stone-50 border border-gray-200 rounded-xl text-sm focus:bg-white focus:border-brand-green focus:outline-none transition">
                 </div>
               </div>
@@ -112,7 +112,7 @@ $grand_total = max(0, $subtotal + $shipping_fee - $discount_amount);
               <!-- Email (Optional for tracking) -->
               <div>
                 <label class="block text-xs font-bold text-gray-700 mb-1">
-                  ईमेल पता (Email - Receipt & AWB)
+                  Email Address (Receipt & AWB Tracking)
                 </label>
                 <div class="relative">
                   <span class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-gray-400">
@@ -127,17 +127,17 @@ $grand_total = max(0, $subtotal + $shipping_fee - $discount_amount);
               <!-- Street Address / Village -->
               <div class="sm:col-span-2">
                 <label class="block text-xs font-bold text-gray-700 mb-1">
-                  घर/मकान सं., गली, गाँव या कस्बा (Street Address / Village) <span class="text-red-500">*</span>
+                  Street Address / Village Landmark <span class="text-red-500">*</span>
                 </label>
                 <textarea name="street" required rows="2"
-                  placeholder="मकान नंबर, मोहल्ला/टोला, निकटतम लैंडमार्क..."
+                  placeholder="House / Plot number, street, mohalla or village, landmark..."
                   class="w-full px-3.5 py-2.5 bg-stone-50 border border-gray-200 rounded-xl text-sm focus:bg-white focus:border-brand-green focus:outline-none transition"><?= htmlspecialchars($user['address'] ?? '') ?></textarea>
               </div>
 
               <!-- Pincode -->
               <div>
                 <label class="block text-xs font-bold text-gray-700 mb-1">
-                  पिन कोड (PIN Code) <span class="text-red-500">*</span>
+                  PIN Code <span class="text-red-500">*</span>
                 </label>
                 <div class="relative">
                   <span class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-gray-400">
@@ -155,29 +155,29 @@ $grand_total = max(0, $subtotal + $shipping_fee - $discount_amount);
               <!-- City / District -->
               <div>
                 <label class="block text-xs font-bold text-gray-700 mb-1">
-                  शहर / जिला (City / District) <span class="text-red-500">*</span>
+                  City / District <span class="text-red-500">*</span>
                 </label>
-                <input type="text" name="city" required value="हरदोई (Hardoi)"
+                <input type="text" name="city" required value="Hardoi"
                   class="w-full px-3.5 py-2.5 bg-stone-50 border border-gray-200 rounded-xl text-sm focus:bg-white focus:border-brand-green focus:outline-none transition">
               </div>
 
               <!-- State -->
               <div class="sm:col-span-2">
                 <label class="block text-xs font-bold text-gray-700 mb-1">
-                  राज्य (State) <span class="text-red-500">*</span>
+                  State <span class="text-red-500">*</span>
                 </label>
                 <select name="state" class="w-full px-3.5 py-2.5 bg-stone-50 border border-gray-200 rounded-xl text-sm focus:bg-white focus:border-brand-green focus:outline-none transition">
-                  <option value="Uttar Pradesh" selected>उत्तर प्रदेश (Uttar Pradesh)</option>
-                  <option value="Delhi">दिल्ली (Delhi NCR)</option>
-                  <option value="Bihar">बिहार (Bihar)</option>
-                  <option value="Madhya Pradesh">मध्य प्रदेश (Madhya Pradesh)</option>
-                  <option value="Rajasthan">राजस्थान (Rajasthan)</option>
-                  <option value="Haryana">हरियाणा (Haryana)</option>
-                  <option value="Punjab">पंजाब (Punjab)</option>
-                  <option value="Maharashtra">महाराष्ट्र (Maharashtra)</option>
-                  <option value="Gujarat">गुजरात (Gujarat)</option>
-                  <option value="West Bengal">पश्चिम बंगाल (West Bengal)</option>
-                  <option value="Other">अन्य राज्य (Other State)</option>
+                  <option value="Uttar Pradesh" selected>Uttar Pradesh</option>
+                  <option value="Delhi">Delhi NCR</option>
+                  <option value="Bihar">Bihar</option>
+                  <option value="Madhya Pradesh">Madhya Pradesh</option>
+                  <option value="Rajasthan">Rajasthan</option>
+                  <option value="Haryana">Haryana</option>
+                  <option value="Punjab">Punjab</option>
+                  <option value="Maharashtra">Maharashtra</option>
+                  <option value="Gujarat">Gujarat</option>
+                  <option value="West Bengal">West Bengal</option>
+                  <option value="Other">Other State</option>
                 </select>
               </div>
 
@@ -189,9 +189,9 @@ $grand_total = max(0, $subtotal + $shipping_fee - $discount_amount);
             <div class="flex items-center justify-between pb-4 mb-5 border-b border-gray-100">
               <h2 class="text-lg font-bold text-gray-900 flex items-center gap-2">
                 <span class="w-7 h-7 rounded-full bg-brand-green text-white flex items-center justify-center text-xs font-bold">2</span>
-                भुगतान का तरीका (Payment Method)
+                Payment Method
               </h2>
-              <span class="text-xs text-gray-400">100% सुरक्षित भुगतान</span>
+              <span class="text-xs text-gray-400">100% Secure Checkout</span>
             </div>
 
             <div class="space-y-3">
@@ -202,12 +202,12 @@ $grand_total = max(0, $subtotal + $shipping_fee - $discount_amount);
                   <div class="flex items-center justify-between">
                     <span class="font-bold text-sm text-gray-900 flex items-center gap-2">
                       <i class="fa-solid fa-hand-holding-dollar text-brand-green text-base"></i>
-                      कैश ऑन डिलीवरी (Cash on Delivery / COD)
+                      Cash on Delivery (COD)
                     </span>
-                    <span class="text-[11px] font-bold text-emerald-800 bg-emerald-100 px-2 py-0.5 rounded">सर्वाधिक लोकप्रिय</span>
+                    <span class="text-[11px] font-bold text-emerald-800 bg-emerald-100 px-2 py-0.5 rounded">Most Popular</span>
                   </div>
                   <p class="text-xs text-gray-600 mt-1">
-                    पार्सल आपके घर पहुँचने पर डाकिया (India Post) या डिलीवरी एजेंट को नकद या UPI द्वारा भुगतान करें।
+                    Pay with cash or UPI directly to the India Post parcel postman when delivered at your address.
                   </p>
                 </div>
               </label>
@@ -221,10 +221,10 @@ $grand_total = max(0, $subtotal + $shipping_fee - $discount_amount);
                       <i class="fa-solid fa-bolt text-blue-600 text-base"></i>
                       Razorpay — UPI, GPay, PhonePe, Cards, NetBanking
                     </span>
-                    <span class="text-[10px] font-bold text-blue-700 bg-blue-50 px-2 py-0.5 rounded border border-blue-200">इंस्टेंट छूट संभव</span>
+                    <span class="text-[10px] font-bold text-blue-700 bg-blue-50 px-2 py-0.5 rounded border border-blue-200">Instant Online</span>
                   </div>
                   <p class="text-xs text-gray-600 mt-1">
-                    Google Pay, PhonePe, Paytm, BHIM UPI, डेबिट/क्रेडिट कार्ड या नेट बैंकिंग से तत्काल भुगतान।
+                    Instant secure payment via Google Pay, PhonePe, Paytm, BHIM UPI, Debit/Credit Cards or Net Banking.
                   </p>
                 </div>
               </label>
@@ -241,7 +241,7 @@ $grand_total = max(0, $subtotal + $shipping_fee - $discount_amount);
                     <span class="text-[10px] font-bold text-gray-600 bg-stone-100 px-2 py-0.5 rounded">Cards & Wallets</span>
                   </div>
                   <p class="text-xs text-gray-600 mt-1">
-                    PayU सुरक्षित पेमेंट गेटवे — RuPay, Visa, Mastercard, Wallets और नेट बैंकिंग।
+                    PayU Secure Payment Gateway — RuPay, Visa, Mastercard, Wallets & Net Banking.
                   </p>
                 </div>
               </label>
@@ -251,15 +251,15 @@ $grand_total = max(0, $subtotal + $shipping_fee - $discount_amount);
             <div class="mt-6 pt-5 border-t border-gray-100 grid grid-cols-3 gap-3 text-center text-[11px] text-gray-500">
               <div class="flex flex-col items-center gap-1">
                 <i class="fa-solid fa-shield-cat text-brand-green text-lg"></i>
-                <span>कारीगर सीधा संरक्षण</span>
+                <span>Direct Artisan Support</span>
               </div>
               <div class="flex flex-col items-center gap-1">
                 <i class="fa-solid fa-truck-fast text-brand-green text-lg"></i>
-                <span>इंडिया पोस्ट स्पीड पोस्ट</span>
+                <span>India Post Speed Post</span>
               </div>
               <div class="flex flex-col items-center gap-1">
                 <i class="fa-solid fa-rotate-left text-brand-green text-lg"></i>
-                <span>7-दिवसीय आसान वापसी</span>
+                <span>7-Day Easy Returns</span>
               </div>
             </div>
           </div>
@@ -271,8 +271,8 @@ $grand_total = max(0, $subtotal + $shipping_fee - $discount_amount);
           
           <div class="bg-white rounded-2xl border border-gray-200 p-6 shadow-sm">
             <h3 class="text-base font-bold text-gray-900 pb-3 border-b border-gray-100 flex items-center justify-between">
-              <span>आर्डर विवरण (Order Summary)</span>
-              <span class="text-xs font-semibold text-gray-500"><?= count($cart) ?> वस्तुएं</span>
+              <span>Order Summary</span>
+              <span class="text-xs font-semibold text-gray-500"><?= count($cart) ?> items</span>
             </h3>
 
             <!-- Mini Item List -->
@@ -285,7 +285,7 @@ $grand_total = max(0, $subtotal + $shipping_fee - $discount_amount);
                     class="w-12 h-12 object-cover rounded-lg border border-gray-200 bg-stone-100 flex-shrink-0">
                   <div class="flex-1 min-w-0">
                     <h4 class="text-xs font-bold text-gray-900 truncate"><?= htmlspecialchars($p['name']) ?></h4>
-                    <p class="text-[11px] text-gray-500">मात्रा: <?= $item['quantity'] ?> × <?= format_price($p['price']) ?></p>
+                    <p class="text-[11px] text-gray-500">Qty: <?= $item['quantity'] ?> × <?= format_price($p['price']) ?></p>
                   </div>
                   <div class="text-right flex-shrink-0">
                     <span class="text-xs font-bold text-gray-900"><?= format_price($item['subtotal']) ?></span>
@@ -297,24 +297,24 @@ $grand_total = max(0, $subtotal + $shipping_fee - $discount_amount);
             <!-- Price Breakdown -->
             <div class="space-y-2.5 pt-3 border-t border-gray-100 text-xs text-gray-600">
               <div class="flex justify-between">
-                <span>सामान का मूल्य (Subtotal)</span>
+                <span>Items Subtotal</span>
                 <span class="font-bold text-gray-900"><?= format_price($subtotal) ?></span>
               </div>
 
               <div class="flex justify-between">
-                <span>कुल पार्सल भार (Total Weight)</span>
-                <span class="font-bold text-gray-900"><?= number_format($total_weight, 2) ?> किग्रा</span>
+                <span>Total Weight</span>
+                <span class="font-bold text-gray-900"><?= number_format($total_weight, 2) ?> kg</span>
               </div>
 
               <div class="flex justify-between items-center">
                 <span>
-                  डिलीवरी शुल्क (Shipping Fee)
+                  Shipping Fee
                   <span id="shippingZoneLabel" class="block text-[10px] text-gray-400 font-normal">
                     (Zone: <?= htmlspecialchars($shipping['zone_name']) ?>)
                   </span>
                 </span>
                 <span id="shippingFeeDisplay" class="font-bold <?= $shipping_fee == 0 ? 'text-emerald-700' : 'text-gray-900' ?>">
-                  <?= $shipping_fee == 0 ? 'मुफ़्त (FREE)' : format_price($shipping_fee) ?>
+                  <?= $shipping_fee == 0 ? 'FREE' : format_price($shipping_fee) ?>
                 </span>
               </div>
 
@@ -322,7 +322,7 @@ $grand_total = max(0, $subtotal + $shipping_fee - $discount_amount);
                 <div class="flex justify-between items-center text-emerald-800 bg-emerald-50 p-2.5 rounded-xl font-bold text-xs">
                   <span class="flex items-center gap-1.5">
                     <i class="fa-solid fa-ticket text-brand-green"></i>
-                    कूपन छूट (<?= htmlspecialchars($applied_coupon['code']) ?>)
+                    Coupon Discount (<?= htmlspecialchars($applied_coupon['code']) ?>)
                   </span>
                   <span>- <?= format_price($discount_amount) ?></span>
                 </div>
@@ -331,17 +331,17 @@ $grand_total = max(0, $subtotal + $shipping_fee - $discount_amount);
               <?php if ($subtotal < FREE_SHIPPING_THRESHOLD): ?>
                 <div id="freeShippingHint" class="bg-amber-50 text-amber-800 p-2.5 rounded-xl text-[11px] flex items-center gap-2">
                   <i class="fa-solid fa-circle-info"></i>
-                  <span>₹<?= number_format(FREE_SHIPPING_THRESHOLD - $subtotal) ?> की और ख़रीदारी करें एवं <strong>मुफ़्त डिलीवरी</strong> पाएं!</span>
+                  <span>Add ₹<?= number_format(FREE_SHIPPING_THRESHOLD - $subtotal) ?> more to get <strong>FREE Delivery</strong>!</span>
                 </div>
               <?php else: ?>
                 <div class="bg-emerald-50 text-emerald-800 p-2.5 rounded-xl text-[11px] flex items-center gap-2">
                   <i class="fa-solid fa-circle-check"></i>
-                  <span>बधाई! आपका आर्डर <strong>मुफ़्त डिलीवरी (Free Delivery)</strong> के पात्र है।</span>
+                  <span>Congratulations! Your order qualifies for <strong>FREE Delivery</strong>.</span>
                 </div>
               <?php endif; ?>
 
               <div class="pt-3 border-t border-gray-200 flex justify-between items-baseline">
-                <span class="text-sm font-extrabold text-gray-900">कुल भुगतान (Grand Total)</span>
+                <span class="text-sm font-extrabold text-gray-900">Total Payable</span>
                 <span id="grandTotalDisplay" class="text-xl font-extrabold text-brand-green">
                   <?= format_price($grand_total) ?>
                 </span>
@@ -352,12 +352,12 @@ $grand_total = max(0, $subtotal + $shipping_fee - $discount_amount);
             <button type="submit" id="submitOrderBtn"
               class="w-full mt-5 py-3.5 bg-brand-green text-white font-bold rounded-xl shadow-lg hover:bg-emerald-800 active:scale-[0.98] transition flex items-center justify-center gap-2 text-sm">
               <i class="fa-solid fa-shield-halved"></i>
-              <span id="submitBtnText">आर्डर कन्फर्म करें (Place Order — <?= format_price($grand_total) ?>)</span>
+              <span id="submitBtnText">Place Order — <?= format_price($grand_total) ?></span>
             </button>
 
             <p class="text-[11px] text-gray-400 text-center mt-3 flex items-center justify-center gap-1">
               <i class="fa-solid fa-truck-pickup text-emerald-600"></i>
-              सीधे हथकरघा व लोहार कुटीर से प्रेषित
+              Direct village forge & artisan dispatch
             </p>
           </div>
 
@@ -367,8 +367,8 @@ $grand_total = max(0, $subtotal + $shipping_fee - $discount_amount);
               <i class="fa-solid fa-truck"></i>
             </div>
             <div class="text-xs">
-              <h4 class="font-bold text-brand-dark">भारतीय डाक (India Post) आधिकारिक पार्सल पार्टनर</h4>
-              <p class="text-gray-600 text-[11px]">हरदोई मुख्य डाकघर से सीधा स्पीड पोस्ट ट्रैकिंग नंबर प्रदान किया जाएगा।</p>
+              <h4 class="font-bold text-brand-dark">India Post Official Logistics Partner</h4>
+              <p class="text-gray-600 text-[11px]">Direct Speed Post parcel barcode tracking from Hardoi Central Post Office.</p>
             </div>
           </div>
 
@@ -397,11 +397,11 @@ document.querySelectorAll('.payment-option input[type="radio"]').forEach(radio =
     const btnText = document.getElementById('submitBtnText');
     const grandTotal = document.getElementById('grandTotalDisplay').innerText;
     if (method === 'cod') {
-      btnText.innerText = 'आर्डर कन्फर्म करें (Place COD Order — ' + grandTotal + ')';
+      btnText.innerText = 'Place COD Order — ' + grandTotal;
     } else if (method === 'razorpay') {
-      btnText.innerText = 'Razorpay से भुगतान करें (Pay with Razorpay)';
+      btnText.innerText = 'Pay with Razorpay';
     } else if (method === 'payu') {
-      btnText.innerText = 'PayU Gateway पर जाएं (Proceed with PayU)';
+      btnText.innerText = 'Proceed with PayU';
     }
   });
 });
@@ -423,14 +423,14 @@ if (pincodeInput) {
               const subtotal = data.subtotal;
               const grand = data.grand_total;
               
-              document.getElementById('shippingFeeDisplay').innerText = fee === 0 ? 'मुफ़्त (FREE)' : '₹' + fee.toLocaleString('en-IN');
+              document.getElementById('shippingFeeDisplay').innerText = fee === 0 ? 'FREE' : '₹' + fee.toLocaleString('en-IN');
               document.getElementById('shippingZoneLabel').innerText = '(Zone: ' + data.zone_name + ')';
               document.getElementById('grandTotalDisplay').innerText = '₹' + grand.toLocaleString('en-IN');
               document.getElementById('pincodeStatusNote').innerHTML = '<i class="fa-solid fa-circle-check"></i> ' + data.zone_name + ' (' + data.eta + ')';
               
               const activeRadio = document.querySelector('input[name="payment_method"]:checked');
               if (activeRadio && activeRadio.value === 'cod') {
-                document.getElementById('submitBtnText').innerText = 'आर्डर कन्फर्म करें (Place COD Order — ₹' + grand.toLocaleString('en-IN') + ')';
+                document.getElementById('submitBtnText').innerText = 'Place COD Order — ₹' + grand.toLocaleString('en-IN');
               }
             }
           })

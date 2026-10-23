@@ -66,6 +66,7 @@ $page_desc = isset($page_desc) ? $page_desc : 'High-durability hand-forged agric
   <script src="https://unpkg.com/lucide@latest"></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
   <link rel="stylesheet" href="/assets/css/style.css">
 </head>
 <body class="flex flex-col min-h-screen text-gray-800 antialiased selection:bg-emerald-200 overflow-x-hidden">
@@ -342,7 +343,7 @@ $page_desc = isset($page_desc) ? $page_desc : 'High-durability hand-forged agric
                 <!-- Guest visitor state -->
                 <div class="p-3 space-y-2.5">
                   <div class="text-center pb-2 border-b border-gray-100">
-                    <p class="text-xs font-bold text-gray-900">नमस्ते! Welcome to GaunGaliHat</p>
+                    <p class="text-xs font-bold text-gray-900">Welcome to GaunGaliHat</p>
                     <p class="text-[11px] text-gray-500 mt-0.5">Please sign in to access your orders and account</p>
                   </div>
 
@@ -598,7 +599,7 @@ $page_desc = isset($page_desc) ? $page_desc : 'High-durability hand-forged agric
             window.location.reload();
           });
       } else {
-        alert('कृपया 6-अंकीय मान्य भारतीय पिनकोड दर्ज करें।');
+        alert('Please enter a valid 6-digit Indian PIN code.');
       }
     }
   </script>

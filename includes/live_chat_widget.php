@@ -31,19 +31,21 @@
       </div>
 
       <!-- Action Controls: Minimize & Cancel / End Chat -->
-      <div class="flex items-center gap-1 shrink-0">
+      <div class="flex items-center gap-1.5 shrink-0">
         <!-- Minimize Button -->
         <button type="button" onclick="minimizeLiveChat()"
-          class="p-1.5 text-gray-300 hover:text-white hover:bg-white/10 rounded-lg transition"
+          class="flex items-center gap-1 px-2.5 py-1 text-[11px] font-bold text-gray-200 hover:text-white bg-white/10 hover:bg-white/20 rounded-lg transition"
           title="Minimize Chat">
-          <i class="fa-solid fa-minus text-xs"></i>
+          <i class="fa-solid fa-minus text-[10px]"></i>
+          <span>Minimize</span>
         </button>
 
         <!-- Cancel / End Chat Button -->
         <button type="button" onclick="cancelLiveChat()"
-          class="p-1.5 text-gray-300 hover:text-red-400 hover:bg-white/10 rounded-lg transition"
+          class="flex items-center gap-1 px-2.5 py-1 text-[11px] font-bold text-red-200 hover:text-white bg-red-500/20 hover:bg-red-600 rounded-lg transition"
           title="End / Cancel Chat">
-          <i class="fa-solid fa-xmark text-sm"></i>
+          <i class="fa-solid fa-xmark text-xs"></i>
+          <span>Cancel</span>
         </button>
       </div>
     </div>
