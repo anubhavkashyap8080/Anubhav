@@ -510,7 +510,7 @@ if ($hero_theme === 'crimson') {
         
         <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
           <?php foreach ($nearby_products as $np): ?>
-            <div class="bg-white rounded-3xl border border-gray-200 hover:border-emerald-600/50 hover:shadow-xl transition-all duration-300 p-3.5 flex flex-col justify-between group relative">
+            <div class="bg-white rounded-3xl border border-gray-200 hover:border-emerald-600/50 hover:shadow-xl transition-all duration-300 p-3.5 flex flex-col justify-between group relative overflow-hidden">
               
               <!-- Wishlist Button -->
               <button onclick="toggleWishlist(<?= $np['id'] ?>, this, event)" class="absolute top-5 right-5 z-10 w-8 h-8 rounded-full bg-white/90 backdrop-blur-xs border border-gray-200 shadow-sm flex items-center justify-center text-gray-400 hover:text-brand-orange transition-colors cursor-pointer">
@@ -540,17 +540,19 @@ if ($hero_theme === 'crimson') {
                 </div>
               </a>
 
-              <!-- Price & Action -->
-              <div class="pt-2.5 border-t border-gray-100 flex items-center justify-between mt-2.5">
-                <div>
-                  <span class="text-base font-black text-gray-900 font-display"><?= format_price($np['price']) ?></span>
-                  <span class="text-[10px] text-emerald-700 font-bold block">✓ <?= htmlspecialchars($np['dispatch_eta']) ?></span>
+              <!-- Price & Action (Strictly Non-Overflowing Grid) -->
+              <div class="pt-2.5 border-t border-gray-100 mt-2.5 space-y-1">
+                <div class="flex items-center justify-between gap-1.5">
+                  <span class="text-base font-black text-gray-900 font-display truncate"><?= format_price($np['price']) ?></span>
+                  <button onclick="addToCart(<?= $np['id'] ?>, 1, event)" class="px-3 py-1.5 bg-brand-green hover:bg-brand-green-dark text-white rounded-xl text-xs font-bold shadow-xs flex items-center gap-1 shrink-0 cursor-pointer transition-colors active:scale-95">
+                    <i data-lucide="plus" class="w-3.5 h-3.5 shrink-0"></i>
+                    <span>Add</span>
+                  </button>
                 </div>
-
-                <button onclick="addToCart(<?= $np['id'] ?>, 1, event)" class="px-3 py-1.5 bg-brand-green hover:bg-brand-green-dark text-white rounded-xl text-xs font-bold shadow-xs flex items-center gap-1 cursor-pointer transition-colors active:scale-95">
-                  <i data-lucide="plus" class="w-3.5 h-3.5"></i>
-                  <span>Add</span>
-                </button>
+                <div class="text-[10px] text-emerald-700 font-bold truncate flex items-center gap-1">
+                  <span>✓</span>
+                  <span class="truncate"><?= htmlspecialchars($np['dispatch_eta']) ?></span>
+                </div>
               </div>
 
             </div>
@@ -649,25 +651,25 @@ if ($hero_theme === 'crimson') {
           </div>
         </a>
 
-        <!-- Price & Action -->
-        <div class="pt-3 border-t border-gray-100 flex items-center justify-between mt-3">
-          <div>
-            <div class="flex items-baseline gap-1.5">
-              <span class="text-lg font-extrabold text-gray-900 font-display"><?= format_price($p['price']) ?></span>
+        <!-- Price & Action (Strictly Non-Overflowing Grid) -->
+        <div class="pt-3 border-t border-gray-100 mt-3 space-y-1">
+          <div class="flex items-center justify-between gap-1.5">
+            <div class="flex items-baseline gap-1.5 min-w-0 truncate">
+              <span class="text-base sm:text-lg font-extrabold text-gray-900 font-display truncate"><?= format_price($p['price']) ?></span>
               <?php if ($p['original_price'] > $p['price']): ?>
-                <span class="text-xs text-gray-400 line-through"><?= format_price($p['original_price']) ?></span>
+                <span class="text-xs text-gray-400 line-through shrink-0"><?= format_price($p['original_price']) ?></span>
               <?php endif; ?>
             </div>
-            <span class="text-[10px] text-emerald-700 font-bold block">✓ <?= htmlspecialchars($p['stock_status']) ?></span>
-          </div>
 
-          <button 
-            onclick="addToCart(<?= $p['id'] ?>, 1, event)" 
-            class="px-3.5 py-2 bg-brand-green hover:bg-brand-green-dark text-white rounded-xl text-xs font-bold shadow-xs flex items-center gap-1.5 cursor-pointer transition-colors active:scale-95"
-          >
-            <i data-lucide="plus" class="w-3.5 h-3.5"></i>
-            <span>Add</span>
-          </button>
+            <button 
+              onclick="addToCart(<?= $p['id'] ?>, 1, event)" 
+              class="px-3 py-1.5 bg-brand-green hover:bg-brand-green-dark text-white rounded-xl text-xs font-bold shadow-xs flex items-center gap-1 shrink-0 cursor-pointer transition-colors active:scale-95"
+            >
+              <i data-lucide="plus" class="w-3.5 h-3.5 shrink-0"></i>
+              <span>Add</span>
+            </button>
+          </div>
+          <span class="text-[10px] text-emerald-700 font-bold block truncate">✓ <?= htmlspecialchars($p['stock_status']) ?></span>
         </div>
 
       </div>
