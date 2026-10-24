@@ -2,23 +2,41 @@
 # GaunGaliHat Enterprise Web Server Configuration & Security Hardening
 # ==============================================================================
 
+# Ensure index.php is loaded as the primary root document
+DirectoryIndex index.php index.html index.htm
+
 # Disable Directory Browsing
 Options -Indexes
 
 # Prevent Access to Hidden Files, Git, Databases, and Configs
 <FilesMatch "(^\.|\.(sqlite|sql|db|bak|config|env|log|md|json|ts|lock)$)">
-    Order Deny,Allow
-    Deny from all
+    <IfModule mod_authz_core.c>
+        Require all denied
+    </IfModule>
+    <IfModule !mod_authz_core.c>
+        Order Deny,Allow
+        Deny from all
+    </IfModule>
 </FilesMatch>
 
 # Explicitly Protect Sensitive System Files
 <Files "schema.sql">
-    Order Deny,Allow
-    Deny from all
+    <IfModule mod_authz_core.c>
+        Require all denied
+    </IfModule>
+    <IfModule !mod_authz_core.c>
+        Order Deny,Allow
+        Deny from all
+    </IfModule>
 </Files>
 <Files "gaungalihat.sqlite">
-    Order Deny,Allow
-    Deny from all
+    <IfModule mod_authz_core.c>
+        Require all denied
+    </IfModule>
+    <IfModule !mod_authz_core.c>
+        Order Deny,Allow
+        Deny from all
+    </IfModule>
 </Files>
 
 # Security HTTP Response Headers

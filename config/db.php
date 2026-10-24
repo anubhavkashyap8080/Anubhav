@@ -13,76 +13,106 @@ if (session_status() === PHP_SESSION_NONE) {
     session_start();
 }
 
-// Database Credentials (cPanel Production Configuration)
+// Database Credentials (cPanel Production & Local Fallback Configuration)
 define('DB_HOST', getenv('DB_HOST') ?: 'localhost');
 define('DB_PORT', getenv('DB_PORT') ?: '3306');
 define('DB_NAME', getenv('DB_NAME') ?: 'womenvission_gaungali');
-define('DB_USER', getenv('DB_USER') ?: 'admin');
+define('DB_USER', getenv('DB_USER') ?: 'womenvission_admin');
 define('DB_PASS', getenv('DB_PASS') ?: 'Anumi@9935');
 
 $pdo = null;
 $db_driver = 'mysql';
 
-try {
-    $options = [
-        PDO::ATTR_ERRMODE            => PDO::ERRMODE_EXCEPTION,
-        PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
-        PDO::ATTR_EMULATE_PREPARES   => false,
-    ];
-    $dsn_db = "mysql:host=" . DB_HOST . ";port=" . DB_PORT . ";dbname=" . DB_NAME . ";charset=utf8mb4";
+// Candidate connection combinations for resilient cPanel & Local deployment
+$db_hosts = array_unique([DB_HOST, 'localhost', '127.0.0.1']);
+$db_users = array_unique([DB_USER, 'admin', 'womenvission_admin', 'root']);
+$last_mysql_error = null;
 
-    // 1. Attempt direct connection (supports both 'admin' and cPanel-prefixed 'womenvission_admin')
-    try {
-        $pdo = new PDO($dsn_db, DB_USER, DB_PASS, $options);
-    } catch (PDOException $e_user) {
-        $prefixed_user = 'womenvission_' . DB_USER;
+$options = [
+    PDO::ATTR_ERRMODE            => PDO::ERRMODE_EXCEPTION,
+    PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
+    PDO::ATTR_EMULATE_PREPARES   => false,
+];
+
+foreach ($db_hosts as $h) {
+    foreach ($db_users as $u) {
         try {
-            $pdo = new PDO($dsn_db, $prefixed_user, DB_PASS, $options);
-        } catch (PDOException $e_prefix) {
-            // If DB does not exist on local server, try creating it (Local XAMPP / Dev)
-            try {
-                $dsn_server = "mysql:host=" . DB_HOST . ";port=" . DB_PORT . ";charset=utf8mb4";
-                $pdo_server = new PDO($dsn_server, DB_USER, DB_PASS, $options);
-                $pdo_server->exec("CREATE DATABASE IF NOT EXISTS `" . DB_NAME . "` DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci");
-                $pdo = new PDO($dsn_db, DB_USER, DB_PASS, $options);
-            } catch (Exception $e_server) {
-                throw $e_user;
+            $dsn = "mysql:host={$h};port=" . DB_PORT . ";dbname=" . DB_NAME . ";charset=utf8mb4";
+            $pdo = new PDO($dsn, $u, DB_PASS, $options);
+            $db_driver = 'mysql';
+            break 2;
+        } catch (PDOException $e) {
+            $last_mysql_error = $e->getMessage();
+        }
+    }
+}
+
+if ($pdo) {
+    // MySQL Connected Successfully! Verify tables existence safely using fetch()
+    try {
+        $table_check = $pdo->query("SHOW TABLES LIKE 'products'");
+        if (!$table_check || !$table_check->fetch()) {
+            $schemaFile = __DIR__ . '/../database/schema.sql';
+            if (file_exists($schemaFile)) {
+                $sql = file_get_contents($schemaFile);
+                $queries = array_filter(array_map('trim', explode(';', $sql)));
+                foreach ($queries as $q) {
+                    if (!empty($q)) {
+                        try { $pdo->exec($q); } catch (Exception $e_q) {}
+                    }
+                }
             }
         }
-    }
-    
-    // Verify if tables exist, otherwise auto-import schema.sql
-    $stmt = $pdo->query("SHOW TABLES LIKE 'products'");
-    if ($stmt->rowCount() === 0) {
-        $schemaFile = __DIR__ . '/../database/schema.sql';
-        if (file_exists($schemaFile)) {
-            $sql = file_get_contents($schemaFile);
-            $pdo->exec($sql);
-        }
-    }
-} catch (PDOException $e) {
-    // 2. MySQL is not currently running on local machine (e.g. CLI testing)
-    // Seamless fallback to SQLite so site works instantly without 500 errors
-    $db_driver = 'sqlite';
+    } catch (Exception $e_tbl) {}
+} else {
+    // 2. MySQL is not reachable - check if local SQLite fallback can be used
     $sqliteDir = __DIR__ . '/../data';
-    if (!is_dir($sqliteDir)) {
-        mkdir($sqliteDir, 0755, true);
-    }
     $sqliteFile = $sqliteDir . '/gaungalihat.sqlite';
-    $isNewSqlite = !file_exists($sqliteFile);
 
-    try {
-        $pdo = new PDO("sqlite:" . $sqliteFile, null, null, [
-            PDO::ATTR_ERRMODE            => PDO::ERRMODE_EXCEPTION,
-            PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
-        ]);
-        
-        if ($isNewSqlite) {
-            init_sqlite_schema($pdo);
+    if (extension_loaded('pdo_sqlite') && is_dir($sqliteDir) && file_exists($sqliteFile)) {
+        try {
+            $pdo = new PDO("sqlite:" . $sqliteFile, null, null, [
+                PDO::ATTR_ERRMODE            => PDO::ERRMODE_EXCEPTION,
+                PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
+            ]);
+            $db_driver = 'sqlite';
+            ensure_platform_schema($pdo);
+        } catch (Exception $e_sqlite) {
+            $pdo = null;
         }
-        ensure_platform_schema($pdo);
-    } catch (PDOException $e_sqlite) {
-        die("Fatal Database Connection Error: " . $e_sqlite->getMessage());
+    }
+
+    if (!$pdo) {
+        // Output clear diagnostics instead of a blank white screen
+        http_response_code(500);
+        die("<!DOCTYPE html>
+        <html lang='en'>
+        <head>
+          <meta charset='UTF-8'>
+          <title>Database Connection Diagnostic — GaunGaliHat</title>
+          <style>
+            body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: #fdfbf7; color: #1f2937; padding: 40px 20px; }
+            .card { max-width: 600px; margin: 0 auto; background: white; border: 1px solid #e5e7eb; border-radius: 16px; padding: 30px; box-shadow: 0 4px 12px rgba(0,0,0,0.05); }
+            h2 { color: #dc2626; margin-top: 0; font-size: 20px; }
+            p { font-size: 14px; line-height: 1.6; color: #4b5563; }
+            .code { background: #f3f4f6; padding: 12px; border-radius: 8px; font-family: monospace; font-size: 12px; overflow-x: auto; margin: 15px 0; border-left: 4px solid #dc2626; }
+            .tip { background: #ecfdf5; border: 1px solid #a7f3d0; color: #065f46; padding: 12px; border-radius: 8px; font-size: 13px; margin-top: 15px; }
+          </style>
+        </head>
+        <body>
+          <div class='card'>
+            <h2>GaunGaliHat Database Connection Diagnostic</h2>
+            <p>The application could not establish a connection to MySQL with the current configuration.</p>
+            <div class='code'><strong>MySQL Error:</strong> " . htmlspecialchars($last_mysql_error ?: 'Unknown error') . "</div>
+            <div class='tip'>
+              <strong>Quick Fix in cPanel:</strong><br>
+              1. Open <strong>cPanel > MySQL Databases</strong>.<br>
+              2. Ensure user <code>" . htmlspecialchars(DB_USER) . "</code> or <code>admin</code> has been added to database <code>" . htmlspecialchars(DB_NAME) . "</code>.<br>
+              3. Ensure <strong>All Privileges</strong> are granted.
+            </div>
+          </div>
+        </body>
+        </html>");
     }
 }
 
