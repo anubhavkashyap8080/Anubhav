@@ -5,20 +5,24 @@
 
 require_once __DIR__ . '/includes/header.php';
 
-$wishlist_ids = $_SESSION['wishlist'] ?? [];
+$wishlist_ids = array_values(array_filter(array_map('intval', (array)($_SESSION['wishlist'] ?? []))));
 $wishlist_products = [];
 
-if (!empty($wishlist_ids)) {
-    $placeholders = implode(',', array_fill(0, count($wishlist_ids), '?'));
-    $stmt = $pdo->prepare("
-        SELECT p.*, c.name as category_name, v.name as vendor_name 
-        FROM products p 
-        LEFT JOIN categories c ON p.category_id = c.id 
-        LEFT JOIN vendors v ON p.vendor_id = v.id 
-        WHERE p.id IN ($placeholders)
-    ");
-    $stmt->execute($wishlist_ids);
-    $wishlist_products = $stmt->fetchAll();
+if (!empty($wishlist_ids) && $pdo) {
+    try {
+        $placeholders = implode(',', array_fill(0, count($wishlist_ids), '?'));
+        $stmt = $pdo->prepare("
+            SELECT p.*, c.name as category_name, v.name as vendor_name 
+            FROM products p 
+            LEFT JOIN categories c ON p.category_id = c.id 
+            LEFT JOIN vendors v ON p.vendor_id = v.id 
+            WHERE p.id IN ($placeholders)
+        ");
+        $stmt->execute($wishlist_ids);
+        $wishlist_products = $stmt->fetchAll() ?: [];
+    } catch (Throwable $e_wl) {
+        $wishlist_products = [];
+    }
 }
 ?>
 

@@ -446,30 +446,34 @@ if (!isset($_SESSION['cart'])) {
 function get_cart() {
     global $pdo;
     $cart_data = [];
-    if (empty($_SESSION['cart'])) return [];
+    if (empty($_SESSION['cart']) || !is_array($_SESSION['cart']) || !$pdo) return [];
 
-    $product_ids = array_keys($_SESSION['cart']);
+    $product_ids = array_values(array_filter(array_map('intval', array_keys($_SESSION['cart']))));
     if (empty($product_ids)) return [];
 
-    $placeholders = implode(',', array_fill(0, count($product_ids), '?'));
-    $stmt = $pdo->prepare("
-        SELECT p.*, c.name as category_name, v.name as vendor_name, v.location as vendor_location 
-        FROM products p 
-        LEFT JOIN categories c ON p.category_id = c.id 
-        LEFT JOIN vendors v ON p.vendor_id = v.id 
-        WHERE p.id IN ($placeholders)
-    ");
-    $stmt->execute($product_ids);
-    $products = $stmt->fetchAll();
+    try {
+        $placeholders = implode(',', array_fill(0, count($product_ids), '?'));
+        $stmt = $pdo->prepare("
+            SELECT p.*, c.name as category_name, v.name as vendor_name, v.location as vendor_location 
+            FROM products p 
+            LEFT JOIN categories c ON p.category_id = c.id 
+            LEFT JOIN vendors v ON p.vendor_id = v.id 
+            WHERE p.id IN ($placeholders)
+        ");
+        $stmt->execute($product_ids);
+        $products = $stmt->fetchAll() ?: [];
 
-    foreach ($products as $prod) {
-        $qty = $_SESSION['cart'][$prod['id']]['qty'] ?? 1;
-        $cart_data[] = [
-            'product' => $prod,
-            'quantity' => $qty,
-            'subtotal' => $prod['price'] * $qty,
-            'total_weight' => ($prod['weight_kg'] ?? 0.5) * $qty
-        ];
+        foreach ($products as $prod) {
+            $qty = (int)($_SESSION['cart'][$prod['id']]['qty'] ?? 1);
+            $cart_data[] = [
+                'product' => $prod,
+                'quantity' => $qty,
+                'subtotal' => (float)$prod['price'] * $qty,
+                'total_weight' => (float)($prod['weight_kg'] ?? 0.5) * $qty
+            ];
+        }
+    } catch (Throwable $e_cart) {
+        return [];
     }
     return $cart_data;
 }
@@ -557,10 +561,16 @@ function get_wishlist_count() {
 }
 
 function is_in_wishlist($product_id) {
+    if (!isset($_SESSION['wishlist']) || !is_array($_SESSION['wishlist'])) {
+        return false;
+    }
     return in_array((int)$product_id, $_SESSION['wishlist']);
 }
 
 function toggle_wishlist($product_id) {
+    if (!isset($_SESSION['wishlist']) || !is_array($_SESSION['wishlist'])) {
+        $_SESSION['wishlist'] = [];
+    }
     $product_id = (int)$product_id;
     $idx = array_search($product_id, $_SESSION['wishlist']);
     if ($idx !== false) {
@@ -569,6 +579,7 @@ function toggle_wishlist($product_id) {
         return false; // removed
     } else {
         $_SESSION['wishlist'][] = $product_id;
+        $_SESSION['wishlist'] = array_values(array_unique($_SESSION['wishlist']));
         return true; // added
     }
 }
@@ -698,11 +709,16 @@ function get_site_setting($key, $default = '') {
         try {
             $stmt = $pdo->query("SELECT setting_key, setting_value FROM site_settings");
             while ($row = $stmt->fetch()) {
-                $settings_cache[$row['setting_key']] = $row['setting_value'];
+                $val = $row['setting_value'];
+                if (function_exists('fix_utf8_mojibake')) {
+                    $val = fix_utf8_mojibake($val);
+                }
+                $settings_cache[$row['setting_key']] = $val;
             }
-        } catch (Exception $e) {}
+        } catch (Throwable $e) {}
     }
-    return $settings_cache[$key] ?? $default;
+    $res = $settings_cache[$key] ?? $default;
+    return function_exists('fix_utf8_mojibake') ? fix_utf8_mojibake($res) : $res;
 }
 
 /**

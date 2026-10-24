@@ -9,7 +9,7 @@ if (ob_get_level() === 0) {
     ob_start();
 }
 
-if (session_status() === PHP_SESSION_NONE) {
+if (session_status() === PHP_SESSION_NONE && !headers_sent()) {
     session_start();
 }
 
@@ -22,33 +22,50 @@ define('DB_PASS', getenv('DB_PASS') ?: 'Anumi@9935');
 
 $pdo = null;
 $db_driver = 'mysql';
-
-// Candidate connection combinations for resilient cPanel & Local deployment
-$db_hosts = array_unique([DB_HOST, 'localhost', '127.0.0.1']);
-$db_users = array_unique([DB_USER, 'admin', 'womenvission_admin', 'root']);
 $last_mysql_error = null;
 
 $options = [
     PDO::ATTR_ERRMODE            => PDO::ERRMODE_EXCEPTION,
     PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
     PDO::ATTR_EMULATE_PREPARES   => false,
+    PDO::ATTR_TIMEOUT            => 2,
 ];
 
-foreach ($db_hosts as $h) {
-    foreach ($db_users as $u) {
-        try {
-            $dsn = "mysql:host={$h};port=" . DB_PORT . ";dbname=" . DB_NAME . ";charset=utf8mb4";
-            $pdo = new PDO($dsn, $u, DB_PASS, $options);
-            $db_driver = 'mysql';
-            break 2;
-        } catch (PDOException $e) {
-            $last_mysql_error = $e->getMessage();
-        }
+// Set MySQL UTF-8 collation command if constant exists
+if (defined('PDO::MYSQL_ATTR_INIT_COMMAND')) {
+    $options[PDO::MYSQL_ATTR_INIT_COMMAND] = "SET NAMES utf8mb4 COLLATE utf8mb4_unicode_ci";
+}
+
+// Resilient candidate list: tried strictly in sequence with quick 2s timeout
+$candidates = [
+    ['host' => DB_HOST, 'user' => DB_USER, 'pass' => DB_PASS, 'db' => DB_NAME],
+    ['host' => 'localhost', 'user' => 'admin', 'pass' => 'Anumi@9935', 'db' => 'womenvission_gaungali'],
+    ['host' => 'localhost', 'user' => 'womenvission_admin', 'pass' => 'Anumi@9935', 'db' => 'womenvission_gaungali'],
+    ['host' => 'localhost', 'user' => 'root', 'pass' => '', 'db' => 'gaungalihat'],
+];
+
+$tried = [];
+foreach ($candidates as $cand) {
+    $sig = $cand['host'] . ':' . $cand['user'] . ':' . $cand['db'];
+    if (isset($tried[$sig])) continue;
+    $tried[$sig] = true;
+
+    try {
+        $dsn = "mysql:host={$cand['host']};port=" . DB_PORT . ";dbname={$cand['db']};charset=utf8mb4";
+        $pdo = new PDO($dsn, $cand['user'], $cand['pass'], $options);
+        $db_driver = 'mysql';
+        break;
+    } catch (Throwable $e) {
+        $last_mysql_error = $e->getMessage();
     }
 }
 
 if ($pdo) {
-    // MySQL Connected Successfully! Verify tables existence safely using fetch()
+    // MySQL Connected Successfully! Ensure UTF-8 & Verify/migrate platform schema
+    try {
+        $pdo->exec("SET NAMES utf8mb4 COLLATE utf8mb4_unicode_ci");
+    } catch (Throwable $e_utf8) {}
+
     try {
         $table_check = $pdo->query("SHOW TABLES LIKE 'products'");
         if (!$table_check || !$table_check->fetch()) {
@@ -58,14 +75,16 @@ if ($pdo) {
                 $queries = array_filter(array_map('trim', explode(';', $sql)));
                 foreach ($queries as $q) {
                     if (!empty($q)) {
-                        try { $pdo->exec($q); } catch (Exception $e_q) {}
+                        try { $pdo->exec($q); } catch (Throwable $e_q) {}
                     }
                 }
             }
         }
-    } catch (Exception $e_tbl) {}
+        // Ensure all application tables (wishlists, coupons, roles, etc.) exist
+        ensure_platform_schema($pdo);
+    } catch (Throwable $e_tbl) {}
 } else {
-    // 2. MySQL is not reachable - check if local SQLite fallback can be used
+    // 2. MySQL is not reachable - fallback immediately to local SQLite database
     $sqliteDir = __DIR__ . '/../data';
     $sqliteFile = $sqliteDir . '/gaungalihat.sqlite';
 
@@ -77,7 +96,7 @@ if ($pdo) {
             ]);
             $db_driver = 'sqlite';
             ensure_platform_schema($pdo);
-        } catch (Exception $e_sqlite) {
+        } catch (Throwable $e_sqlite) {
             $pdo = null;
         }
     }

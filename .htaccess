@@ -5,6 +5,12 @@
 # Ensure index.php is loaded as the primary root document
 DirectoryIndex index.php index.html index.htm
 
+# Force UTF-8 Encoding globally to eliminate any Mojibake character issues
+AddDefaultCharset UTF-8
+<IfModule mod_mime.c>
+    AddCharset UTF-8 .html .php .js .css .json .xml
+</IfModule>
+
 # Disable Directory Browsing
 Options -Indexes
 

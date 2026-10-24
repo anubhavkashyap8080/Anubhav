@@ -14,7 +14,7 @@ $current_page = basename($_SERVER['PHP_SELF']);
 $flash = get_flash();
 ?>
 <!DOCTYPE html>
-<html lang="hi" class="h-full bg-stone-100">
+<html lang="en" class="h-full bg-stone-100">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">

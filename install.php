@@ -46,7 +46,7 @@ try {
 }
 ?>
 <!DOCTYPE html>
-<html lang="hi">
+<html lang="en">
 <head>
   <meta charset="UTF-8">
   <title>Database Setup & Diagnostic — GaunGaliHat</title>

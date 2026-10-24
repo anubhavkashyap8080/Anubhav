@@ -5,12 +5,34 @@
 
 require_once __DIR__ . '/db.php';
 
+// Helper to normalize any mojibake characters safely
+if (!function_exists('fix_utf8_mojibake')) {
+    function fix_utf8_mojibake($str) {
+        if (!is_string($str) || empty($str)) return $str;
+        $replacements = [
+            'â‚¹' => '₹',
+            'ðŸŒ¾' => '🌾',
+            'ðŸš€' => '🚀',
+            'ðŸ“ ' => '📍',
+            'â€¢' => '•',
+            'â€”' => '—',
+            'â€“' => '–',
+            'â€¦' => '…',
+            'â„¢' => '™',
+            'Â®' => '®',
+            'Â©' => '©',
+            'â˜…' => '★'
+        ];
+        return str_replace(array_keys($replacements), array_values($replacements), $str);
+    }
+}
+
 // Fetch settings from database
 $site_settings = [];
 try {
     $stmt = $pdo->query("SELECT setting_key, setting_value FROM site_settings");
     while ($row = $stmt->fetch()) {
-        $site_settings[$row['setting_key']] = $row['setting_value'];
+        $site_settings[$row['setting_key']] = fix_utf8_mojibake($row['setting_value']);
     }
 } catch (Exception $e) {
     // defaults if not yet seeded
@@ -18,7 +40,8 @@ try {
 
 function get_setting($key, $default = '') {
     global $site_settings;
-    return isset($site_settings[$key]) ? $site_settings[$key] : $default;
+    $val = isset($site_settings[$key]) ? $site_settings[$key] : $default;
+    return fix_utf8_mojibake($val);
 }
 
 // Global Platform Constants

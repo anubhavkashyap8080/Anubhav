@@ -6,6 +6,10 @@
 
 require_once __DIR__ . '/functions.php';
 
+if (!headers_sent()) {
+    header('Content-Type: text/html; charset=UTF-8');
+}
+
 $current_user = get_logged_in_user();
 $cart_count = get_cart_count();
 $wishlist_count = get_wishlist_count();
@@ -166,25 +170,27 @@ $ga4_id = get_site_setting('ga4_measurement_id', get_site_setting('seo_google_an
     </div>
   <?php endif; ?>
 
-  <!-- 1. Top Announcement Bar -->
-  <div class="bg-gradient-to-r from-emerald-950 via-slate-900 to-emerald-900 text-white text-[11px] py-1.5 px-3 sm:px-8 border-b border-emerald-900/40">
-    <div class="max-w-7xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-1 text-center sm:text-left">
-      <div class="flex items-center gap-2">
-        <span class="inline-flex items-center gap-1 font-semibold text-amber-300">
-          <i data-lucide="sparkles" class="w-3.5 h-3.5 text-amber-300"></i>
-          <span><?= htmlspecialchars(APP_COMPANY) ?> Enterprise</span>
-        </span>
-        <span class="hidden md:inline text-gray-400">|</span>
-        <span class="hidden md:inline text-gray-200"><?= htmlspecialchars(get_setting('announcement_text')) ?></span>
+  <!-- 1. Top Announcement Bar (Strictly Single-Line Linear & Fully Responsive across all screens) -->
+  <div class="bg-gradient-to-r from-emerald-950 via-slate-900 to-emerald-900 text-white text-[11px] py-1.5 px-2.5 sm:px-6 border-b border-emerald-900/50 w-full overflow-hidden select-none">
+    <div class="max-w-7xl mx-auto flex items-center justify-between gap-2 sm:gap-4 whitespace-nowrap text-nowrap w-full">
+      <div class="flex items-center gap-1.5 shrink-0 text-amber-300 font-bold text-[10px] sm:text-xs">
+        <i data-lucide="sparkles" class="w-3.5 h-3.5 text-amber-300 shrink-0"></i>
+        <span><?= htmlspecialchars(APP_COMPANY) ?></span>
+        <span class="hidden md:inline text-emerald-400 font-normal">Enterprise</span>
       </div>
-      <div class="flex items-center gap-3 sm:gap-4 text-emerald-200 text-xs">
-        <a href="tel:<?= preg_replace('/\s+/', '', APP_PHONE) ?>" class="hover:text-white flex items-center gap-1">
-          <i data-lucide="phone" class="w-3 h-3 text-amber-300"></i>
-          <span><?= htmlspecialchars(APP_PHONE) ?></span>
+      <div class="flex-1 min-w-0 mx-1 sm:mx-3 text-center overflow-hidden">
+        <p class="truncate text-[10px] sm:text-[11.5px] text-gray-200 font-medium tracking-tight" title="<?= htmlspecialchars(get_setting('announcement_text')) ?>">
+          🌾 <?= htmlspecialchars(get_setting('announcement_text')) ?>
+        </p>
+      </div>
+      <div class="flex items-center gap-2 sm:gap-3 text-emerald-200 text-[10px] sm:text-xs shrink-0">
+        <a href="tel:<?= preg_replace('/\s+/', '', APP_PHONE) ?>" class="hover:text-white flex items-center gap-1 transition-colors" title="Customer Helpline">
+          <i data-lucide="phone" class="w-3 h-3 text-amber-300 shrink-0"></i>
+          <span class="hidden sm:inline font-mono"><?= htmlspecialchars(APP_PHONE) ?></span>
         </a>
-        <span>•</span>
-        <a href="/seller/dashboard.php" class="hover:text-amber-300 flex items-center gap-1 font-bold text-white transition-colors">
-          <i data-lucide="store" class="w-3.5 h-3.5 text-brand-orange"></i>
+        <span class="text-emerald-700 hidden sm:inline">•</span>
+        <a href="/seller/dashboard.php" class="hover:text-amber-300 flex items-center gap-1 font-bold text-white transition-colors" title="Artisan & Seller Hub">
+          <i data-lucide="store" class="w-3.5 h-3.5 text-brand-orange shrink-0"></i>
           <span>Seller Hub</span>
         </a>
       </div>
@@ -600,9 +606,23 @@ $ga4_id = get_site_setting('ga4_measurement_id', get_site_setting('seo_google_an
         <div class="flex-grow border-t border-gray-200"></div>
       </div>
 
-      <div class="relative mb-4">
+      <div class="relative mb-3">
         <input type="text" id="modalPincodeInput" maxlength="6" pattern="[0-9]{6}" placeholder="e.g. 241126 or 110001"
           class="w-full px-4 py-2.5 text-center font-bold text-base tracking-widest border border-gray-300 rounded-xl focus:border-brand-green focus:outline-none">
+        <p id="gpsStatusNotice" class="text-[11px] text-amber-700 font-semibold mt-1 hidden"></p>
+      </div>
+
+      <!-- Quick Region Select Pills -->
+      <div class="mb-4 text-left">
+        <span class="text-[10px] text-gray-400 font-bold uppercase tracking-wider block mb-1.5">Popular Artisan Hubs</span>
+        <div class="flex flex-wrap gap-1.5">
+          <button type="button" onclick="selectQuickPin('241126')" class="px-2 py-1 bg-amber-50 hover:bg-amber-100 text-stone-800 border border-amber-200 rounded-lg text-[11px] font-semibold transition cursor-pointer">🌾 Hardoi (241126)</button>
+          <button type="button" onclick="selectQuickPin('226001')" class="px-2 py-1 bg-stone-50 hover:bg-stone-100 text-stone-700 border border-stone-200 rounded-lg text-[11px] font-semibold transition cursor-pointer">Lucknow (226001)</button>
+          <button type="button" onclick="selectQuickPin('221001')" class="px-2 py-1 bg-stone-50 hover:bg-stone-100 text-stone-700 border border-stone-200 rounded-lg text-[11px] font-semibold transition cursor-pointer">Varanasi (221001)</button>
+          <button type="button" onclick="selectQuickPin('110001')" class="px-2 py-1 bg-stone-50 hover:bg-stone-100 text-stone-700 border border-stone-200 rounded-lg text-[11px] font-semibold transition cursor-pointer">Delhi (110001)</button>
+          <button type="button" onclick="selectQuickPin('208001')" class="px-2 py-1 bg-stone-50 hover:bg-stone-100 text-stone-700 border border-stone-200 rounded-lg text-[11px] font-semibold transition cursor-pointer">Kanpur (208001)</button>
+          <button type="button" onclick="selectQuickPin('201301')" class="px-2 py-1 bg-stone-50 hover:bg-stone-100 text-stone-700 border border-stone-200 rounded-lg text-[11px] font-semibold transition cursor-pointer">Noida (201301)</button>
+        </div>
       </div>
       
       <div class="flex items-center gap-2">
@@ -687,13 +707,24 @@ $ga4_id = get_site_setting('ga4_measurement_id', get_site_setting('seo_google_an
       if (modal) modal.classList.add('hidden');
     }
     
+    function selectQuickPin(pin) {
+      const input = document.getElementById('modalPincodeInput');
+      if (input) input.value = pin;
+      applyPincode();
+    }
+
     function detectGPSLocation(callback) {
+      const notice = document.getElementById('gpsStatusNotice');
+      const btnText = document.getElementById('gpsBtnText');
       if (!navigator.geolocation) {
-        alert('Geolocation is not supported by your browser. Please enter your PIN code manually.');
+        if (notice) {
+          notice.innerText = 'GPS not supported by your browser. Please enter your PIN code.';
+          notice.classList.remove('hidden');
+        }
         return;
       }
-      const btnText = document.getElementById('gpsBtnText');
       if (btnText) btnText.innerText = 'Detecting satellite location...';
+      if (notice) notice.classList.add('hidden');
       
       navigator.geolocation.getCurrentPosition(
         function(pos) {
@@ -714,14 +745,23 @@ $ga4_id = get_site_setting('ga4_measurement_id', get_site_setting('seo_google_an
               }
             })
             .catch(() => {
-              if (btnText) btnText.innerText = 'GPS Detection Failed - Retry';
+              if (btnText) btnText.innerText = 'GPS Auto Detect';
+              if (notice) {
+                notice.innerText = 'Could not reach server. Please enter your PIN code manually.';
+                notice.classList.remove('hidden');
+              }
             });
         },
         function(err) {
-          alert('Location permission denied or unavailable. Please enter your 6-digit PIN code.');
           if (btnText) btnText.innerText = 'Use Current Location (GPS Auto)';
+          if (notice) {
+            notice.innerText = 'Location permission blocked. Please select or enter your 6-digit PIN code.';
+            notice.classList.remove('hidden');
+          }
+          const pinInput = document.getElementById('modalPincodeInput');
+          if (pinInput) pinInput.focus();
         },
-        { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
+        { enableHighAccuracy: true, timeout: 8000, maximumAge: 0 }
       );
     }
 
