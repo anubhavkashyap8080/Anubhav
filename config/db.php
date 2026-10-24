@@ -13,33 +13,43 @@ if (session_status() === PHP_SESSION_NONE) {
     session_start();
 }
 
-// Database Credentials (Standard XAMPP / WAMP / Production MySQL)
-define('DB_HOST', getenv('DB_HOST') ?: '127.0.0.1');
+// Database Credentials (cPanel Production Configuration)
+define('DB_HOST', getenv('DB_HOST') ?: 'localhost');
 define('DB_PORT', getenv('DB_PORT') ?: '3306');
-define('DB_NAME', getenv('DB_NAME') ?: 'gaungalihat');
-define('DB_USER', getenv('DB_USER') ?: 'root');
-define('DB_PASS', getenv('DB_PASS') ?: '');
+define('DB_NAME', getenv('DB_NAME') ?: 'womenvission_gaungali');
+define('DB_USER', getenv('DB_USER') ?: 'admin');
+define('DB_PASS', getenv('DB_PASS') ?: 'Anumi@9935');
 
 $pdo = null;
 $db_driver = 'mysql';
 
 try {
-    // 1. Attempt connection to MySQL server
-    $dsn_server = "mysql:host=" . DB_HOST . ";port=" . DB_PORT . ";charset=utf8mb4";
     $options = [
         PDO::ATTR_ERRMODE            => PDO::ERRMODE_EXCEPTION,
         PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
         PDO::ATTR_EMULATE_PREPARES   => false,
     ];
-
-    $pdo_server = new PDO($dsn_server, DB_USER, DB_PASS, $options);
-    
-    // Ensure database exists
-    $pdo_server->exec("CREATE DATABASE IF NOT EXISTS `" . DB_NAME . "` DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci");
-    
-    // Connect to specific database
     $dsn_db = "mysql:host=" . DB_HOST . ";port=" . DB_PORT . ";dbname=" . DB_NAME . ";charset=utf8mb4";
-    $pdo = new PDO($dsn_db, DB_USER, DB_PASS, $options);
+
+    // 1. Attempt direct connection (supports both 'admin' and cPanel-prefixed 'womenvission_admin')
+    try {
+        $pdo = new PDO($dsn_db, DB_USER, DB_PASS, $options);
+    } catch (PDOException $e_user) {
+        $prefixed_user = 'womenvission_' . DB_USER;
+        try {
+            $pdo = new PDO($dsn_db, $prefixed_user, DB_PASS, $options);
+        } catch (PDOException $e_prefix) {
+            // If DB does not exist on local server, try creating it (Local XAMPP / Dev)
+            try {
+                $dsn_server = "mysql:host=" . DB_HOST . ";port=" . DB_PORT . ";charset=utf8mb4";
+                $pdo_server = new PDO($dsn_server, DB_USER, DB_PASS, $options);
+                $pdo_server->exec("CREATE DATABASE IF NOT EXISTS `" . DB_NAME . "` DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci");
+                $pdo = new PDO($dsn_db, DB_USER, DB_PASS, $options);
+            } catch (Exception $e_server) {
+                throw $e_user;
+            }
+        }
+    }
     
     // Verify if tables exist, otherwise auto-import schema.sql
     $stmt = $pdo->query("SHOW TABLES LIKE 'products'");
@@ -130,6 +140,8 @@ function ensure_platform_schema($pdo) {
                 'payu_mode' => 'test',
                 'cod_enabled' => '1',
                 'commission_rate_default' => '4',
+                'default_language' => 'en',
+                'site_default_language' => 'en',
                 // SEO Settings
                 'seo_meta_title' => 'GaunGaliHat — Desh ki mitti ka swad | Rural Tools & Farm Staples',
                 'seo_meta_description' => 'Direct from Indian village foundries & self-help groups. Authentic hand-forged agricultural sickles, khurpis, unpolished Awadh pulses, and Banarasi achar.',
