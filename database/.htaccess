@@ -1,0 +1,3 @@
+# Strictly Deny All Public Web Access to Database Schemas and Migrations
+Order Deny,Allow
+Deny from all

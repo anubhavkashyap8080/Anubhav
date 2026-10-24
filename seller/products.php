@@ -20,6 +20,7 @@ $categories = $pdo->query("SELECT * FROM categories ORDER BY sort_order ASC, nam
 
 // Handle ADD Product
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['add_product'])) {
+    csrf_protect();
     $name = clean_input($_POST['name'] ?? '');
     $hindi_name = clean_input($_POST['hindi_name'] ?? '');
     $category_id = intval($_POST['category_id'] ?? 0);
@@ -36,7 +37,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['add_product'])) {
     }
 
     $discount = ($original_price > $price) ? round((($original_price - $price) / $original_price) * 100) : 0;
-    $code = 'GGH-' . strtoupper(substr(preg_replace('/[^a-zA-Z]/', '', $name), 0, 3)) . '-' . rand(100, 999);
+    $code = 'GGH-' . strtoupper(substr(preg_replace('/[^a-zA-Z]/', '', $name) . 'PRD', 0, 3)) . '-' . rand(100, 999);
     $slug = strtolower(preg_replace('/[^a-zA-Z0-9]+/', '-', $name)) . '-' . rand(100, 999);
 
     try {
@@ -50,11 +51,68 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['add_product'])) {
             $code, $vendor_id, $category_id, $name, $hindi_name, $slug, $price, $original_price,
             $discount, $weight_kg, $stock, $image_url, $unit, $description
         ]);
+        log_audit_action('seller_product_created', 'products', "Vendor #{$vendor_id} added product {$name} ({$code})");
         set_flash('success', 'नया उत्पाद "' . htmlspecialchars($name) . '" सफलतापूर्वक कैटलॉग में जोड़ा गया!');
         header('Location: /seller/products.php');
         exit;
     } catch (Exception $e) {
         set_flash('error', 'उत्पाद जोड़ने में त्रुटि: ' . $e->getMessage());
+    }
+}
+
+// Handle Bulk CSV Import
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['bulk_import_csv'])) {
+    csrf_protect();
+    if (!isset($_FILES['csv_file']) || $_FILES['csv_file']['error'] !== UPLOAD_ERR_OK) {
+        set_flash('error', 'कृपया एक मान्य CSV फ़ाइल अपलोड करें।');
+    } else {
+        $file_path = $_FILES['csv_file']['tmp_name'];
+        $handle = fopen($file_path, 'r');
+        if ($handle !== false) {
+            $imported_count = 0;
+            $row_idx = 0;
+            while (($data = fgetcsv($handle, 2000, ',')) !== false) {
+                $row_idx++;
+                if ($row_idx === 1) continue; // Skip header
+                if (empty($data[0])) continue;
+
+                $p_name = trim($data[0]);
+                $p_hindi = trim($data[1] ?? '');
+                $p_cat_id = intval($data[2] ?? 1);
+                $p_price = floatval($data[3] ?? 0);
+                $p_orig_price = floatval($data[4] ?? $p_price);
+                $p_weight = floatval($data[5] ?? 0.5);
+                $p_stock = intval($data[6] ?? 50);
+                $p_unit = trim($data[7] ?? 'piece');
+                $p_img = trim($data[8] ?? 'https://images.unsplash.com/photo-1544717305-2782549b5136?auto=format&fit=crop&w=600&q=80');
+                $p_desc = trim($data[9] ?? '');
+
+                if ($p_price <= 0) continue;
+
+                $p_disc = ($p_orig_price > $p_price) ? round((($p_orig_price - $p_price) / $p_orig_price) * 100) : 0;
+                $p_code = 'GGH-' . strtoupper(substr(preg_replace('/[^a-zA-Z]/', '', $p_name) . 'CSV', 0, 3)) . '-' . rand(100, 999);
+                $p_slug = strtolower(preg_replace('/[^a-zA-Z0-9]+/', '-', $p_name)) . '-' . rand(100, 999);
+
+                try {
+                    $stmt_ins = $pdo->prepare("
+                        INSERT INTO products (
+                            code, vendor_id, category_id, name, hindi_name, slug, price, original_price,
+                            discount, weight_kg, stock, stock_status, rating, review_count, image, unit, description
+                        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'In Stock', 5.0, 1, ?, ?, ?)
+                    ");
+                    $stmt_ins->execute([
+                        $p_code, $vendor_id, $p_cat_id, $p_name, $p_hindi, $p_slug, $p_price, $p_orig_price,
+                        $p_disc, $p_weight, $p_stock, $p_img, $p_unit, $p_desc
+                    ]);
+                    $imported_count++;
+                } catch (Exception $e) {}
+            }
+            fclose($handle);
+            log_audit_action('seller_bulk_import', 'products', "Vendor #{$vendor_id} imported {$imported_count} products via CSV");
+            set_flash('success', "सफलतापूर्वक {$imported_count} उत्पाद बल्क में कैटलॉग में जोड़े गए!");
+            header('Location: /seller/products.php');
+            exit;
+        }
     }
 }
 
@@ -67,6 +125,7 @@ if (isset($_GET['toggle_stock'])) {
     if ($curr) {
         $new_status = ($curr === 'In Stock') ? 'Out of Stock' : 'In Stock';
         $pdo->prepare("UPDATE products SET stock_status = ? WHERE id = ? AND vendor_id = ?")->execute([$new_status, $prod_id, $vendor_id]);
+        log_audit_action('seller_stock_toggle', 'products', "Vendor #{$vendor_id} toggled product #{$prod_id} to {$new_status}");
         set_flash('success', 'उत्पाद स्टॉक स्थिति अपडेट की गई।');
     }
     header('Location: /seller/products.php');
@@ -78,6 +137,7 @@ if (isset($_GET['delete_id'])) {
     $del_id = intval($_GET['delete_id']);
     $stmt = $pdo->prepare("DELETE FROM products WHERE id = ? AND vendor_id = ?");
     $stmt->execute([$del_id, $vendor_id]);
+    log_audit_action('seller_product_deleted', 'products', "Vendor #{$vendor_id} deleted product #{$del_id}");
     set_flash('success', 'उत्पाद कैटलॉग से हटा दिया गया।');
     header('Location: /seller/products.php');
     exit;
@@ -108,6 +168,32 @@ $stmt = $pdo->prepare($sql);
 $stmt->execute($params);
 $products = $stmt->fetchAll();
 
+// Handle Products CSV Export
+if (isset($_GET['export']) && $_GET['export'] === 'csv') {
+    header('Content-Type: text/csv; charset=utf-8');
+    header('Content-Disposition: attachment; filename="vendor_catalog_' . $vendor_id . '_' . date('Y_m_d') . '.csv"');
+    $out = fopen('php://output', 'w');
+    fputcsv($out, ['Product ID', 'SKU Code', 'Name', 'Hindi Name', 'Category', 'Price (INR)', 'MRP (INR)', 'Discount %', 'Stock', 'Stock Status', 'Weight (KG)', 'Unit']);
+    foreach ($products as $p) {
+        fputcsv($out, [
+            $p['id'],
+            $p['code'],
+            $p['name'],
+            $p['hindi_name'] ?? '',
+            $p['category_name'] ?? '',
+            $p['price'],
+            $p['original_price'],
+            $p['discount'],
+            $p['stock'],
+            $p['stock_status'],
+            $p['weight_kg'],
+            $p['unit']
+        ]);
+    }
+    fclose($out);
+    exit;
+}
+
 $page_title = 'उत्पाद सूची एवं कैटलॉग (Product Catalog)';
 require_once __DIR__ . '/seller_header.php';
 ?>
@@ -124,10 +210,20 @@ require_once __DIR__ . '/seller_header.php';
     </p>
   </div>
 
-  <button onclick="document.getElementById('addProductModal').classList.remove('hidden')"
-    class="px-4 py-2.5 bg-amber-600 hover:bg-amber-700 text-white font-bold text-xs rounded-xl shadow transition flex items-center gap-2">
-    <i class="fa-solid fa-plus"></i> नया उत्पाद जोड़ें (Add New Product)
-  </button>
+  <div class="flex flex-wrap items-center gap-2">
+    <a href="/seller/products.php?export=csv"
+      class="px-3.5 py-2.5 bg-stone-100 hover:bg-stone-200 text-stone-700 font-bold text-xs rounded-xl border border-stone-300 transition flex items-center gap-1.5 shadow-xs">
+      <i class="fa-solid fa-file-csv text-emerald-600"></i> CSV एक्सपोर्ट
+    </a>
+    <button onclick="document.getElementById('importCsvModal').classList.remove('hidden')"
+      class="px-3.5 py-2.5 bg-stone-100 hover:bg-stone-200 text-stone-700 font-bold text-xs rounded-xl border border-stone-300 transition flex items-center gap-1.5 shadow-xs">
+      <i class="fa-solid fa-file-import text-blue-600"></i> बल्क आयात (CSV Import)
+    </button>
+    <button onclick="document.getElementById('addProductModal').classList.remove('hidden')"
+      class="px-4 py-2.5 bg-amber-600 hover:bg-amber-700 text-white font-bold text-xs rounded-xl shadow transition flex items-center gap-2">
+      <i class="fa-solid fa-plus"></i> नया उत्पाद जोड़ें (Add New)
+    </button>
+  </div>
 </div>
 
 <!-- Category Filter Tabs & Search Bar -->
@@ -267,6 +363,7 @@ require_once __DIR__ . '/seller_header.php';
     </div>
 
     <form action="/seller/products.php" method="POST" class="space-y-4">
+      <?= csrf_field() ?>
       <input type="hidden" name="add_product" value="1">
 
       <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -342,6 +439,50 @@ require_once __DIR__ . '/seller_header.php';
         <button type="submit"
           class="px-5 py-2 bg-amber-600 hover:bg-amber-700 text-white font-bold rounded-xl text-xs transition">
           उत्पाद प्रकाशित करें (Publish SKU)
+        </button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- Bulk CSV Import Modal -->
+<div id="importCsvModal" class="hidden fixed inset-0 z-50 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4 overflow-y-auto">
+  <div class="bg-white rounded-3xl border border-gray-200 shadow-2xl max-w-lg w-full p-6 sm:p-8">
+    <div class="flex items-center justify-between pb-4 mb-4 border-b border-gray-100">
+      <h3 class="text-base font-bold text-gray-900 flex items-center gap-2">
+        <i class="fa-solid fa-file-import text-blue-600"></i>
+        बल्क उत्पाद आयात (Bulk CSV Import)
+      </h3>
+      <button onclick="document.getElementById('importCsvModal').classList.add('hidden')" class="text-gray-400 hover:text-gray-600 text-lg">
+        <i class="fa-solid fa-xmark"></i>
+      </button>
+    </div>
+
+    <form action="/seller/products.php" method="POST" enctype="multipart/form-data" class="space-y-4">
+      <?= csrf_field() ?>
+      <input type="hidden" name="bulk_import_csv" value="1">
+
+      <div class="bg-blue-50 border border-blue-200 rounded-xl p-3 text-xs text-blue-900 space-y-1">
+        <p class="font-bold flex items-center gap-1.5"><i class="fa-solid fa-circle-info"></i> CSV फॉर्मेट निर्देश:</p>
+        <p class="text-[11px] text-blue-800 leading-relaxed">
+          कॉलम्स क्रम: <strong>Name, Hindi Name, Category ID, Price, Original Price, Weight (Kg), Stock, Unit, Image URL, Description</strong>
+        </p>
+      </div>
+
+      <div>
+        <label class="block text-xs font-bold text-gray-700 mb-1">CSV फ़ाइल चुनें (.csv) <span class="text-red-500">*</span></label>
+        <input type="file" name="csv_file" accept=".csv" required
+          class="w-full px-3 py-2 bg-stone-50 border border-gray-200 rounded-xl text-xs focus:outline-none">
+      </div>
+
+      <div class="flex items-center justify-end gap-3 pt-3 border-t border-gray-100">
+        <button type="button" onclick="document.getElementById('importCsvModal').classList.add('hidden')"
+          class="px-4 py-2 bg-stone-100 text-stone-700 font-bold rounded-xl text-xs hover:bg-stone-200 transition">
+          रद्द करें
+        </button>
+        <button type="submit"
+          class="px-5 py-2 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-xl text-xs transition flex items-center gap-1.5">
+          <i class="fa-solid fa-cloud-arrow-up"></i> अपलोड एवं आयात करें
         </button>
       </div>
     </form>

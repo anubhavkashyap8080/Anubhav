@@ -224,4 +224,28 @@ $items = $stmt_items->fetchAll();
   </div>
 </div>
 
+<!-- GA4 Purchase Event Tracking -->
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+  if (typeof gtag === 'function') {
+    gtag('event', 'purchase', {
+      transaction_id: '<?= htmlspecialchars($order['order_number']) ?>',
+      value: <?= (float)$order['total_amount'] ?>,
+      currency: 'INR',
+      shipping: <?= (float)$order['shipping_fee'] ?>,
+      items: [
+        <?php foreach ($items as $item): ?>
+        {
+          item_id: '<?= htmlspecialchars($item['product_code'] ?: ('GGH-' . $item['product_id'])) ?>',
+          item_name: '<?= htmlspecialchars(addslashes($item['product_name'])) ?>',
+          price: <?= (float)$item['price'] ?>,
+          quantity: <?= (int)$item['quantity'] ?>
+        },
+        <?php endforeach; ?>
+      ]
+    });
+  }
+});
+</script>
+
 <?php require_once __DIR__ . '/includes/footer.php'; ?>

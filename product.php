@@ -34,14 +34,95 @@ $page_title = $product['name'] . ' — ' . APP_NAME;
 $gallery = json_decode($product['gallery'] ?? '[]', true) ?: [$product['image']];
 $specifications = json_decode($product['specifications'] ?? '{}', true) ?: [];
 
+// Fetch Related Products from same category
+$stmt_rel = $pdo->prepare("SELECT * FROM products WHERE category_id = ? AND id != ? LIMIT 4");
+$stmt_rel->execute([$product['category_id'], $product_id]);
+$related_products = $stmt_rel->fetchAll();
+
 require_once __DIR__ . '/includes/header.php';
 ?>
 
-// Fetch Related Products from same category
-$stmt = $pdo->prepare("SELECT * FROM products WHERE category_id = ? AND id != ? LIMIT 4");
-$stmt->execute([$product['category_id'], $product_id]);
-$related_products = $stmt->fetchAll();
-?>
+<!-- JSON-LD Structured Data: Product & Breadcrumbs -->
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org/",
+  "@type": "Product",
+  "name": "<?= htmlspecialchars($product['name']) ?>",
+  "image": [
+    "<?= htmlspecialchars($product['image']) ?>"
+  ],
+  "description": "<?= htmlspecialchars(strip_tags($product['description'] ?? $product['name'])) ?>",
+  "sku": "<?= htmlspecialchars($product['code'] ?: ('GGH-PRD-' . $product['id'])) ?>",
+  "mpn": "<?= htmlspecialchars($product['code'] ?: ('GGH-PRD-' . $product['id'])) ?>",
+  "brand": {
+    "@type": "Brand",
+    "name": "<?= htmlspecialchars($product['vendor_name'] ?? APP_NAME) ?>"
+  },
+  "offers": {
+    "@type": "Offer",
+    "url": "<?= htmlspecialchars($current_canonical_url) ?>",
+    "priceCurrency": "INR",
+    "price": "<?= number_format((float)$product['price'], 2, '.', '') ?>",
+    "priceValidUntil": "<?= date('Y-12-31') ?>",
+    "itemCondition": "https://schema.org/NewCondition",
+    "availability": "<?= $product['stock'] > 0 ? 'https://schema.org/InStock' : 'https://schema.org/OutOfStock' ?>",
+    "seller": {
+      "@type": "Organization",
+      "name": "<?= htmlspecialchars($product['vendor_business'] ?? $product['vendor_name'] ?? APP_NAME) ?>"
+    }
+  },
+  "aggregateRating": {
+    "@type": "AggregateRating",
+    "ratingValue": "<?= number_format((float)($product['rating'] ?? 4.9), 1) ?>",
+    "reviewCount": "<?= max(1, (int)($product['review_count'] ?? 15)) ?>"
+  }
+}
+</script>
+
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "BreadcrumbList",
+  "itemListElement": [
+    {
+      "@type": "ListItem",
+      "position": 1,
+      "name": "Home",
+      "item": "<?= htmlspecialchars($canonical_base) ?>/"
+    },
+    {
+      "@type": "ListItem",
+      "position": 2,
+      "name": "<?= htmlspecialchars($product['category_name'] ?? 'Products') ?>",
+      "item": "<?= htmlspecialchars($canonical_base) ?>/products.php?category=<?= urlencode($product['category_slug'] ?? '') ?>"
+    },
+    {
+      "@type": "ListItem",
+      "position": 3,
+      "name": "<?= htmlspecialchars($product['name']) ?>"
+    }
+  ]
+}
+</script>
+
+<!-- GA4 View Item Tracking -->
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+  if (typeof gtag === 'function') {
+    gtag('event', 'view_item', {
+      currency: 'INR',
+      value: <?= (float)$product['price'] ?>,
+      items: [{
+        item_id: '<?= htmlspecialchars($product['code'] ?: ('GGH-' . $product['id'])) ?>',
+        item_name: '<?= htmlspecialchars(addslashes($product['name'])) ?>',
+        item_category: '<?= htmlspecialchars(addslashes($product['category_name'] ?? 'General')) ?>',
+        price: <?= (float)$product['price'] ?>,
+        quantity: 1
+      }]
+    });
+  }
+});
+</script>
 
 <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-10">
   

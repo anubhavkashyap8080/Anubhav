@@ -14,11 +14,22 @@ $vendor_id = $vendor['id'];
 $status_filter = clean_input($_GET['status'] ?? '');
 $view_order_id = intval($_GET['view'] ?? 0);
 
-// Handle Status or Tracking Update
+// Handle Status or Tracking Update (Strict Multi-Tenant Scoping)
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['update_order_status'])) {
+    csrf_protect();
     $order_id = intval($_POST['order_id']);
     $new_status = clean_input($_POST['order_status']);
     $consignment_no = clean_input($_POST['consignment_no']);
+
+    // IDOR Protection: Verify this vendor owns items in this order
+    $stmt_check = $pdo->prepare("SELECT 1 FROM order_items WHERE order_id = ? AND vendor_id = ? LIMIT 1");
+    $stmt_check->execute([$order_id, $vendor_id]);
+    if (!$stmt_check->fetch()) {
+        record_security_event('idor_attempt', "Vendor #{$vendor_id} attempted unauthorized update on order #{$order_id}");
+        set_flash('error', 'अनाधिकृत कार्रवाई: यह आर्डर आपके विक्रेता खाते से संबद्ध नहीं है।');
+        header('Location: /seller/orders.php');
+        exit;
+    }
 
     try {
         $stmt = $pdo->prepare("
@@ -28,6 +39,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['update_order_status']
             WHERE id = ?
         ");
         $stmt->execute([$new_status, $consignment_no, $order_id]);
+        log_audit_action('seller_order_status_update', 'orders', "Vendor #{$vendor_id} updated order #{$order_id} to {$new_status}");
         set_flash('success', 'आर्डर स्थिति एवं इंडिया पोस्ट कंसाइनमेंट नंबर सफलतापूर्वक अपडेट किया गया!');
         header('Location: /seller/orders.php?view=' . $order_id);
         exit;
@@ -57,15 +69,41 @@ $stmt = $pdo->prepare($sql);
 $stmt->execute($params);
 $orders = $stmt->fetchAll();
 
-// If viewing a specific order
+// Handle CSV Export
+if (isset($_GET['export']) && $_GET['export'] === 'csv') {
+    header('Content-Type: text/csv; charset=utf-8');
+    header('Content-Disposition: attachment; filename="seller_orders_' . date('Y_m_d_His') . '.csv"');
+    $out = fopen('php://output', 'w');
+    fputcsv($out, ['Order Number', 'Date', 'Customer Name', 'City', 'Pincode', 'Items Count', 'Vendor Net Subtotal', 'Payment Method', 'Tracking AWB', 'Order Status']);
+    foreach ($orders as $o) {
+        fputcsv($out, [
+            $o['order_number'],
+            $o['created_at'],
+            $o['customer_name'],
+            $o['shipping_city'],
+            $o['shipping_pincode'],
+            $o['vendor_item_count'],
+            $o['vendor_subtotal'],
+            strtoupper($o['payment_method']),
+            $o['tracking_consignment_no'] ?: 'Pending',
+            $o['order_status']
+        ]);
+    }
+    fclose($out);
+    exit;
+}
+
+// If viewing a specific order (IDOR Protection)
 $selected_order = null;
 $selected_items = [];
 if ($view_order_id) {
-    $stmt_sel = $pdo->prepare("SELECT * FROM orders WHERE id = ?");
-    $stmt_sel->execute([$view_order_id]);
-    $selected_order = $stmt_sel->fetch();
+    $stmt_check = $pdo->prepare("SELECT 1 FROM order_items WHERE order_id = ? AND vendor_id = ? LIMIT 1");
+    $stmt_check->execute([$view_order_id, $vendor_id]);
+    if ($stmt_check->fetch()) {
+        $stmt_sel = $pdo->prepare("SELECT * FROM orders WHERE id = ?");
+        $stmt_sel->execute([$view_order_id]);
+        $selected_order = $stmt_sel->fetch();
 
-    if ($selected_order) {
         $stmt_items = $pdo->prepare("
             SELECT oi.*, p.image 
             FROM order_items oi 
@@ -74,6 +112,11 @@ if ($view_order_id) {
         ");
         $stmt_items->execute([$view_order_id, $vendor_id]);
         $selected_items = $stmt_items->fetchAll();
+    } else {
+        record_security_event('idor_attempt', "Vendor #{$vendor_id} tried viewing order #{$view_order_id}");
+        set_flash('error', 'आर्डर नहीं मिला अथवा आपको इसे देखने की अनुमति नहीं है।');
+        header('Location: /seller/orders.php');
+        exit;
     }
 }
 
@@ -95,6 +138,10 @@ require_once __DIR__ . '/seller_header.php';
 
   <!-- Status Filter Pills -->
   <div class="flex items-center gap-1.5 overflow-x-auto text-xs font-bold">
+    <a href="/seller/orders.php<?= !empty($status_filter) ? '?status=' . $status_filter . '&' : '?' ?>export=csv"
+      class="px-3 py-1.5 rounded-lg bg-stone-100 hover:bg-stone-200 text-stone-700 border border-stone-300 transition flex items-center gap-1">
+      <i class="fa-solid fa-file-csv text-emerald-600"></i> CSV एक्सपोर्ट
+    </a>
     <a href="/seller/orders.php"
       class="px-3 py-1.5 rounded-lg transition <?= empty($status_filter) ? 'bg-amber-600 text-white' : 'bg-white text-gray-600 border border-gray-200 hover:bg-stone-50' ?>">
       सभी (All)
@@ -227,6 +274,7 @@ require_once __DIR__ . '/seller_header.php';
 
         <!-- Status & AWB Dispatch Form -->
         <form action="/seller/orders.php" method="POST" class="space-y-4 pt-2 border-t border-gray-100">
+          <?= csrf_field() ?>
           <input type="hidden" name="update_order_status" value="1">
           <input type="hidden" name="order_id" value="<?= $selected_order['id'] ?>">
 

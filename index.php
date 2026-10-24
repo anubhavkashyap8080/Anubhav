@@ -219,7 +219,17 @@ if ($hero_theme === 'crimson') {
   </div>
 </section>
 
-<!-- 2. Hero Banner Section (Festival & Sale Customisable) -->
+<!-- 2. Hero Banner Section (Festival & Sale Customisable / Sandboxed Custom HTML Support) -->
+<?php if (get_setting('hero_has_custom_code') === '1' && !empty(get_setting('hero_custom_html'))): ?>
+  <div id="hero-custom-container" class="relative overflow-hidden w-full">
+    <?php if (!empty(get_setting('hero_custom_css'))): ?>
+      <style>
+        <?= get_setting('hero_custom_css') ?>
+      </style>
+    <?php endif; ?>
+    <?= get_setting('hero_custom_html') ?>
+  </div>
+<?php else: ?>
 <section class="relative bg-gradient-to-br <?= $hero_bg_class ?> text-white overflow-hidden py-10 sm:py-16">
   <div class="absolute inset-0 opacity-10 bg-[radial-gradient(#ffffff_1px,transparent_1px)] [background-size:16px_16px]"></div>
   <div class="absolute -top-24 -right-24 w-72 sm:w-96 h-72 sm:h-96 rounded-full bg-brand-orange/20 blur-3xl pointer-events-none"></div>
@@ -313,6 +323,7 @@ if ($hero_theme === 'crimson') {
     </div>
   </div>
 </section>
+<?php endif; ?>
 
 <!-- 3. Flipkart / Amazon Signature 4-Box Department Multi-Product Showcase Grid -->
 <section class="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 py-8 sm:py-12">

@@ -1,0 +1,42 @@
+# ==============================================================================
+# GaunGaliHat Enterprise Web Server Configuration & Security Hardening
+# ==============================================================================
+
+# Disable Directory Browsing
+Options -Indexes
+
+# Prevent Access to Hidden Files, Git, Databases, and Configs
+<FilesMatch "(^\.|\.(sqlite|sql|db|bak|config|env|log|md|json|ts|lock)$)">
+    Order Deny,Allow
+    Deny from all
+</FilesMatch>
+
+# Explicitly Protect Sensitive System Files
+<Files "schema.sql">
+    Order Deny,Allow
+    Deny from all
+</Files>
+<Files "gaungalihat.sqlite">
+    Order Deny,Allow
+    Deny from all
+</Files>
+
+# Security HTTP Response Headers
+<IfModule mod_headers.c>
+    Header set X-Content-Type-Options "nosniff"
+    Header set X-Frame-Options "SAMEORIGIN"
+    Header set X-XSS-Protection "1; mode=block"
+    Header set Referrer-Policy "strict-origin-when-cross-origin"
+    Header set Permissions-Policy "camera=(), microphone=(), payment=(self)"
+</IfModule>
+
+# URL Rewriting for Sitemaps, Robots, and Static Feeds
+<IfModule mod_rewrite.c>
+    RewriteEngine On
+    RewriteBase /
+
+    # Serve sitemap.xml dynamically from sitemap generator if needed
+    RewriteRule ^sitemap\.xml$ sitemap.php [L]
+    RewriteRule ^sitemap-([a-z]+)\.xml$ sitemap.php?type=$1 [L]
+    RewriteRule ^robots\.txt$ robots.php [L]
+</IfModule>

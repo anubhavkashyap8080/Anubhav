@@ -49,3 +49,14 @@ function require_super_admin($redirect_to = '/login.php?tab=staff') {
         exit;
     }
 }
+
+function require_permission($permission_slug, $redirect_to = '/admin/index.php') {
+    send_no_cache_headers();
+    require_admin();
+    if (!user_has_permission($permission_slug)) {
+        record_security_event('permission_denied', ['permission' => $permission_slug, 'user_role' => $_SESSION['user_role'] ?? '']);
+        set_flash('error', 'अनाधिकृत पहुंच: आपके पास इस क्रिया को निष्पादित करने की अनुमति नहीं है (' . htmlspecialchars($permission_slug) . ')।');
+        header("Location: $redirect_to");
+        exit;
+    }
+}

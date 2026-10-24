@@ -11,13 +11,66 @@ if (!$vendor) {
 }
 $vendor_id = $vendor['id'];
 
+// Total gross sales
+$stmt_sales = $pdo->prepare("SELECT COALESCE(SUM(total), 0) FROM order_items WHERE vendor_id = ?");
+$stmt_sales->execute([$vendor_id]);
+$gross_sales = (float)($stmt_sales->fetchColumn() ?: 0.0);
+
+// Total settled (gross portion)
+$stmt_settled = $pdo->prepare("SELECT COALESCE(SUM(gross_amount), 0) FROM vendor_payouts WHERE vendor_id = ? AND status = 'Settled to Bank'");
+$stmt_settled->execute([$vendor_id]);
+$total_gross_settled = (float)($stmt_settled->fetchColumn() ?: 0.0);
+
+$commission_pct = (float)($vendor['commission_rate'] ?? 4.0);
+$total_commission = round($gross_sales * ($commission_pct / 100), 2);
+$available_balance = max(0, $gross_sales - $total_gross_settled);
+
+// Total net settled received in bank
+$stmt_net = $pdo->prepare("SELECT COALESCE(SUM(net_amount), 0) FROM vendor_payouts WHERE vendor_id = ? AND status = 'Settled to Bank'");
+$stmt_net->execute([$vendor_id]);
+$total_settled = (float)($stmt_net->fetchColumn() ?: 0.0);
+
+// Payouts List
+$stmt_payouts = $pdo->prepare("SELECT * FROM vendor_payouts WHERE vendor_id = ? ORDER BY id DESC");
+$stmt_payouts->execute([$vendor_id]);
+$payouts = $stmt_payouts->fetchAll();
+
+// Handle Statement CSV Export
+if (isset($_GET['export']) && $_GET['export'] === 'statement_csv') {
+    header('Content-Type: text/csv; charset=utf-8');
+    header('Content-Disposition: attachment; filename="vendor_payout_statement_' . $vendor_id . '_' . date('Y_m_d') . '.csv"');
+    $out = fopen('php://output', 'w');
+    fputcsv($out, ['Payout Ref', 'Settled Date', 'Beneficiary', 'Bank Name', 'Account/UPI', 'Gross Amount', 'Platform Fee', 'Net Settled Amount', 'Bank UTR', 'Status']);
+    foreach ($payouts as $p) {
+        fputcsv($out, [
+            $p['payout_ref'],
+            $p['settled_at'],
+            $vendor['bank_beneficiary'] ?? $vendor['name'],
+            $vendor['bank_name'] ?? 'State Bank of India',
+            $vendor['bank_account'] ?? ($vendor['upi_id'] ?? 'N/A'),
+            $p['gross_amount'],
+            $p['commission_amount'],
+            $p['net_amount'],
+            $p['utr_number'],
+            $p['status']
+        ]);
+    }
+    fclose($out);
+    exit;
+}
+
 // Handle Payout Request
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['request_payout'])) {
+    csrf_protect();
     $amount = floatval($_POST['payout_amount'] ?? 0);
-    if ($amount > 500) {
+    if ($amount < 500) {
+        set_flash('error', 'न्यूनतम सेटलमेंट निकासी राशि ₹500 है।');
+    } elseif ($amount > $available_balance) {
+        set_flash('error', 'अनुरोधित राशि (₹' . number_format($amount, 2) . ') आपके उपलब्ध शेष (₹' . number_format($available_balance, 2) . ') से अधिक है।');
+    } else {
         $payout_ref = 'PAY-' . rand(1000, 9999);
         $utr = 'SBIN' . date('ymd') . rand(10000, 99999);
-        $comm = round($amount * 0.04, 2);
+        $comm = round($amount * ($commission_pct / 100), 2);
         $net = $amount - $comm;
 
         $stmt = $pdo->prepare("
@@ -25,32 +78,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['request_payout'])) {
             VALUES (?, ?, ?, ?, ?, ?, 'Settled to Bank')
         ");
         $stmt->execute([$payout_ref, $vendor_id, $amount, $comm, $net, $utr]);
+        log_audit_action('seller_payout_withdrawn', 'payouts', "Vendor #{$vendor_id} withdrawn ₹{$amount} (Net: ₹{$net}, UTR: {$utr})");
         set_flash('success', '₹' . number_format($net, 2) . ' का बैंक सेटलमेंट सफलतापूर्वक प्रक्रियाबद्ध किया गया! बैंक UTR: ' . $utr);
         header('Location: /seller/payments.php');
         exit;
-    } else {
-        set_flash('error', 'न्यूनतम सेटलमेंट निकासी राशि ₹500 है।');
     }
 }
-
-// Total gross sales
-$stmt_sales = $pdo->prepare("SELECT COALESCE(SUM(total), 0) FROM order_items WHERE vendor_id = ?");
-$stmt_sales->execute([$vendor_id]);
-$gross_sales = $stmt_sales->fetchColumn() ?: 0.0;
-
-// Total settled
-$stmt_settled = $pdo->prepare("SELECT COALESCE(SUM(net_amount), 0) FROM vendor_payouts WHERE vendor_id = ? AND status = 'Settled to Bank'");
-$stmt_settled->execute([$vendor_id]);
-$total_settled = $stmt_settled->fetchColumn() ?: 0.0;
-
-$commission_pct = $vendor['commission_rate'] ?? 4.0;
-$total_commission = round($gross_sales * ($commission_pct / 100), 2);
-$available_balance = max(0, ($gross_sales - $total_commission) - $total_settled);
-
-// Payouts List
-$stmt_payouts = $pdo->prepare("SELECT * FROM vendor_payouts WHERE vendor_id = ? ORDER BY id DESC");
-$stmt_payouts->execute([$vendor_id]);
-$payouts = $stmt_payouts->fetchAll();
 
 $page_title = 'भुगतान एवं सेटलमेंट (Payments & UTR Settlements)';
 require_once __DIR__ . '/seller_header.php';
@@ -68,10 +101,16 @@ require_once __DIR__ . '/seller_header.php';
     </p>
   </div>
 
-  <button onclick="document.getElementById('payoutModal').classList.remove('hidden')"
-    class="px-4 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs rounded-xl shadow transition flex items-center gap-2">
-    <i class="fa-solid fa-building-columns"></i> बैंक में निकासी अनुरोध करें (Request Payout)
-  </button>
+  <div class="flex items-center gap-2">
+    <a href="/seller/payments.php?export=statement_csv"
+      class="px-3.5 py-2.5 bg-stone-100 hover:bg-stone-200 text-stone-700 font-bold text-xs rounded-xl border border-stone-300 transition flex items-center gap-1.5 shadow-xs">
+      <i class="fa-solid fa-file-invoice text-emerald-600"></i> स्टेटमेंट डाउनलोड करें (CSV)
+    </a>
+    <button onclick="document.getElementById('payoutModal').classList.remove('hidden')"
+      class="px-4 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs rounded-xl shadow transition flex items-center gap-2">
+      <i class="fa-solid fa-building-columns"></i> बैंक में निकासी अनुरोध करें (Request Payout)
+    </button>
+  </div>
 </div>
 
 <!-- 4 Financial Stat Cards -->
@@ -210,6 +249,7 @@ require_once __DIR__ . '/seller_header.php';
     </div>
 
     <form action="/seller/payments.php" method="POST" class="space-y-4">
+      <?= csrf_field() ?>
       <input type="hidden" name="request_payout" value="1">
 
       <div class="bg-stone-50 p-4 rounded-xl text-xs space-y-1">

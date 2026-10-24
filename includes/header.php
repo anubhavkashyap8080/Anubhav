@@ -21,6 +21,13 @@ try {
 
 $page_title = isset($page_title) ? $page_title . ' — ' . APP_NAME : APP_NAME . ' — Indian Rural Artisan Tools & Farm Produce';
 $page_desc = isset($page_desc) ? $page_desc : 'High-durability hand-forged agricultural tools, unpolished pulses, Banarasi pickles, and authentic handlooms direct from Indian village clusters.';
+
+$canonical_base = get_site_setting('seo_canonical_url', 'https://ganvgalihat.com');
+$current_canonical_url = rtrim($canonical_base, '/') . ($_SERVER['REQUEST_URI'] ?? '/');
+$og_image = get_site_setting('seo_og_image', 'https://images.unsplash.com/photo-1504148455328-c376907d081c?w=1200');
+$twitter_handle = get_site_setting('seo_twitter_handle', '@ganvgalihat');
+$gsc_tag = get_site_setting('seo_google_console', '');
+$ga4_id = get_site_setting('ga4_measurement_id', get_site_setting('seo_google_analytics', ''));
 ?>
 <!DOCTYPE html>
 <html lang="en" class="scroll-smooth bg-stone-50">
@@ -29,9 +36,83 @@ $page_desc = isset($page_desc) ? $page_desc : 'High-durability hand-forged agric
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title><?= htmlspecialchars($page_title) ?></title>
   <meta name="description" content="<?= htmlspecialchars($page_desc) ?>">
+  <link rel="canonical" href="<?= htmlspecialchars($current_canonical_url) ?>">
   <link rel="icon" type="image/x-icon" href="/favicon.ico">
   <link rel="icon" type="image/png" sizes="32x32" href="/favicon.png">
   <link rel="apple-touch-icon" href="/apple-touch-icon.png">
+
+  <?php if (!empty($gsc_tag)): ?>
+    <?php if (str_starts_with($gsc_tag, '<meta')): ?>
+      <?= $gsc_tag ?>
+    <?php else: ?>
+      <meta name="google-site-verification" content="<?= htmlspecialchars(str_replace('google-site-verification=', '', $gsc_tag)) ?>">
+    <?php endif; ?>
+  <?php endif; ?>
+
+  <!-- Open Graph / Social Cards -->
+  <meta property="og:type" content="website">
+  <meta property="og:url" content="<?= htmlspecialchars($current_canonical_url) ?>">
+  <meta property="og:title" content="<?= htmlspecialchars($page_title) ?>">
+  <meta property="og:description" content="<?= htmlspecialchars($page_desc) ?>">
+  <meta property="og:image" content="<?= htmlspecialchars($og_image) ?>">
+  <meta property="og:site_name" content="<?= htmlspecialchars(APP_NAME) ?>">
+
+  <!-- Twitter Card -->
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:site" content="<?= htmlspecialchars($twitter_handle) ?>">
+  <meta name="twitter:title" content="<?= htmlspecialchars($page_title) ?>">
+  <meta name="twitter:description" content="<?= htmlspecialchars($page_desc) ?>">
+  <meta name="twitter:image" content="<?= htmlspecialchars($og_image) ?>">
+
+  <!-- JSON-LD Structured Data: Organization & WebSite Search -->
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@graph": [
+      {
+        "@type": "Organization",
+        "@id": "<?= htmlspecialchars($canonical_base) ?>/#organization",
+        "name": "<?= htmlspecialchars(APP_NAME) ?>",
+        "url": "<?= htmlspecialchars($canonical_base) ?>",
+        "logo": "<?= htmlspecialchars($canonical_base) ?>/assets/images/logo.png",
+        "description": "Indian Rural Artisan Marketplace & Traditional Foundry Tools",
+        "sameAs": [
+          "https://www.facebook.com/ganvgalihat",
+          "https://twitter.com/ganvgalihat",
+          "https://www.instagram.com/ganvgalihat"
+        ]
+      },
+      {
+        "@type": "WebSite",
+        "@id": "<?= htmlspecialchars($canonical_base) ?>/#website",
+        "url": "<?= htmlspecialchars($canonical_base) ?>",
+        "name": "<?= htmlspecialchars(APP_NAME) ?>",
+        "potentialAction": {
+          "@type": "SearchAction",
+          "target": {
+            "@type": "EntryPoint",
+            "urlTemplate": "<?= htmlspecialchars($canonical_base) ?>/products.php?q={search_term_string}"
+          },
+          "query-input": "required name=search_term_string"
+        }
+      }
+    ]
+  }
+  </script>
+
+  <?php if (!empty($ga4_id)): ?>
+    <!-- Google Analytics 4 (GA4) -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=<?= htmlspecialchars($ga4_id) ?>"></script>
+    <script>
+      window.dataLayer = window.dataLayer || [];
+      function gtag(){dataLayer.push(arguments);}
+      gtag('js', new Date());
+      gtag('config', '<?= htmlspecialchars($ga4_id) ?>', {
+        'send_page_view': true,
+        'cookie_flags': 'SameSite=None;Secure'
+      });
+    </script>
+  <?php endif; ?>
   
   <!-- Tailwind CSS CDN -->
   <script src="https://cdn.tailwindcss.com"></script>

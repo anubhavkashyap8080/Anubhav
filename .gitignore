@@ -30,4 +30,6 @@ dist-ssr
 .ggh_data
 data/*.sqlite
 data/*.db
+data/backups/*.sqlite
+data/backups/*.db
 

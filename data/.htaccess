@@ -1,0 +1,3 @@
+# Strictly Deny All Public Web Access to SQLite Database and Backups
+Order Deny,Allow
+Deny from all

@@ -512,6 +512,167 @@ function ensure_platform_schema($pdo) {
             ");
         }
     } catch (Exception $e) {}
+
+    // 8. Run Enterprise Version-Controlled Migrations
+    run_enterprise_migrations($pdo);
+}
+
+/**
+ * Enterprise Version-Controlled Migration Runner (Dual Engine: MySQL & SQLite)
+ */
+function run_enterprise_migrations($pdo) {
+    if (!$pdo) return;
+    $is_sqlite = ($pdo->getAttribute(PDO::ATTR_DRIVER_NAME) === 'sqlite');
+
+    // Ensure migrations table exists
+    try {
+        if ($is_sqlite) {
+            $pdo->exec("
+                CREATE TABLE IF NOT EXISTS migrations (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    migration TEXT UNIQUE NOT NULL,
+                    executed_at DATETIME DEFAULT CURRENT_TIMESTAMP
+                )
+            ");
+        } else {
+            $pdo->exec("
+                CREATE TABLE IF NOT EXISTS `migrations` (
+                    `id` INT AUTO_INCREMENT PRIMARY KEY,
+                    `migration` VARCHAR(255) UNIQUE NOT NULL,
+                    `executed_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+                ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+            ");
+        }
+    } catch (Exception $e) {
+        return;
+    }
+
+    $migrationsDir = __DIR__ . '/../database/migrations';
+    if (!is_dir($migrationsDir)) {
+        return;
+    }
+
+    $files = glob($migrationsDir . '/*.sql');
+    sort($files);
+
+    foreach ($files as $file) {
+        $migName = basename($file);
+        $chk = $pdo->prepare("SELECT id FROM migrations WHERE migration = ? LIMIT 1");
+        $chk->execute([$migName]);
+        if ($chk->fetch()) {
+            continue; // Already migrated
+        }
+
+        $rawSql = file_get_contents($file);
+        if ($is_sqlite) {
+            $sql = preg_replace('/ENGINE=InnoDB.*?;/i', ';', $rawSql);
+            $sql = preg_replace('/AUTO_INCREMENT/i', 'AUTOINCREMENT', $sql);
+            $sql = preg_replace('/INT AUTOINCREMENT PRIMARY KEY/i', 'INTEGER PRIMARY KEY AUTOINCREMENT', $sql);
+            $sql = preg_replace('/ENUM\(.*?\)/i', 'TEXT', $sql);
+            $sql = preg_replace('/TINYINT\(1\)/i', 'INTEGER', $sql);
+            $sql = preg_replace('/COLLATE utf8mb4_unicode_ci/i', '', $sql);
+            $sql = preg_replace('/DEFAULT CHARACTER SET utf8mb4/i', '', $sql);
+            $sql = preg_replace('/DATETIME DEFAULT NULL ON UPDATE CURRENT_TIMESTAMP/i', 'DATETIME DEFAULT CURRENT_TIMESTAMP', $sql);
+            $sql = preg_replace('/TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP/i', 'DATETIME DEFAULT CURRENT_TIMESTAMP', $sql);
+            $sql = preg_replace('/ON UPDATE CURRENT_TIMESTAMP/i', '', $sql);
+        } else {
+            $sql = $rawSql;
+        }
+
+        $queries = explode(';', $sql);
+        foreach ($queries as $q) {
+            $trimmed = trim($q);
+            if (!empty($trimmed)) {
+                try {
+                    $pdo->exec($trimmed);
+                } catch (Exception $ex) {
+                    // ignore non-fatal schema warnings
+                }
+            }
+        }
+
+        // Record migration
+        $ins = $pdo->prepare("INSERT INTO migrations (migration) VALUES (?)");
+        $ins->execute([$migName]);
+    }
+
+    // Seed Initial RBAC Roles & System Permissions if empty
+    seed_rbac_and_templates($pdo);
+}
+
+/**
+ * Seed Default RBAC Roles, Permissions, and Notification Templates
+ */
+function seed_rbac_and_templates($pdo) {
+    if (!$pdo) return;
+    try {
+        $cnt = $pdo->query("SELECT COUNT(*) FROM roles")->fetchColumn();
+        if ($cnt == 0) {
+            $roles = [
+                ['Super Administrator', 'super_admin', 'Full platform access and root governance', 1],
+                ['Marketplace Administrator', 'marketplace_admin', 'Moderation of products, vendors, categories and site operations', 1],
+                ['Seller Support Executive', 'seller_support', 'Vendor onboarding, verification and support ticket handling', 1],
+                ['Order Manager', 'order_manager', 'Order tracking, packaging dispatch, logistics and cancellation handling', 1],
+                ['Finance & Settlement Manager', 'finance_manager', 'Vendor payouts, refunds, banking settlements and financial ledgers', 1],
+                ['SEO Manager', 'seo_manager', 'Search engine optimization, sitemaps, robots.txt and metadata', 1],
+                ['Content Editor', 'content_editor', 'Blog management, articles, editorial and rich media', 1],
+                ['Marketing Manager', 'marketing_manager', 'Coupons, promotions, festival campaigns and hero customizer', 1],
+                ['Technical Administrator', 'technical_admin', 'API integrations, security center, backups and system settings', 1],
+                ['Read-Only Analyst', 'readonly_analyst', 'Analytics, performance reports and view-only operational visibility', 1],
+            ];
+            $ins = $pdo->prepare("INSERT INTO roles (name, slug, description, is_system) VALUES (?, ?, ?, ?)");
+            foreach ($roles as $r) {
+                $ins->execute($r);
+            }
+        }
+
+        // Seed Core Permissions
+        $p_cnt = $pdo->query("SELECT COUNT(*) FROM permissions")->fetchColumn();
+        if ($p_cnt == 0) {
+            $perms = [
+                ['orders', 'View Orders', 'orders.view', 'View customer orders and shipment status'],
+                ['orders', 'Modify Orders', 'orders.edit', 'Update order and fulfillment statuses'],
+                ['orders', 'Cancel Orders', 'orders.cancel', 'Process customer order cancellations'],
+                ['products', 'View Products', 'products.view', 'Browse product catalog'],
+                ['products', 'Moderate Products', 'products.moderate', 'Approve or reject vendor products'],
+                ['products', 'Edit Products', 'products.edit', 'Create or edit product specifications'],
+                ['products', 'Delete Products', 'products.delete', 'Remove products from catalog'],
+                ['sellers', 'View Sellers', 'sellers.view', 'Inspect vendor profiles and KYC'],
+                ['sellers', 'Approve Sellers', 'sellers.approve', 'Approve vendor registration and KYC documents'],
+                ['sellers', 'Suspend Sellers', 'sellers.suspend', 'Suspend or ban non-compliant sellers'],
+                ['sellers', 'Commission Rules', 'sellers.commission', 'Configure custom vendor commission rates'],
+                ['payouts', 'View Settlements', 'payouts.view', 'Inspect vendor earnings and balances'],
+                ['payouts', 'Approve Payouts', 'payouts.approve', 'Authorize bank transfers and UTR generation'],
+                ['coupons', 'Manage Coupons', 'coupons.manage', 'Create, edit, and deactivate discount codes'],
+                ['campaigns', 'Manage Hero Campaigns', 'campaigns.manage', 'Build festival themes and scheduled banners'],
+                ['campaigns', 'Custom HTML Hero', 'campaigns.html_custom', 'Edit and deploy sandboxed custom HTML/CSS hero markup'],
+                ['blogs', 'Manage Articles', 'blogs.manage', 'Draft, edit, and publish blog content'],
+                ['seo', 'Manage SEO', 'seo.manage', 'Configure metadata, sitemaps, and 301 redirects'],
+                ['integrations', 'Manage Integrations', 'integrations.manage', 'Configure GA4, GSC, Firebase, and Gateways'],
+                ['security', 'Security Center Access', 'security.view', 'Inspect security audit logs and rate-limiting'],
+                ['users', 'Manage Admin Users', 'users.manage', 'Create staff accounts and assign roles'],
+            ];
+            $ins_p = $pdo->prepare("INSERT INTO permissions (module, name, slug, description) VALUES (?, ?, ?, ?)");
+            foreach ($perms as $p) {
+                $ins_p->execute($p);
+            }
+        }
+
+        // Seed Core Notification Templates
+        $n_cnt = $pdo->query("SELECT COUNT(*) FROM notification_templates")->fetchColumn();
+        if ($n_cnt == 0) {
+            $ntemplates = [
+                ['order_confirmed', 'Order Confirmation', 'Your GaunGaliHat Order #{order_number} is Confirmed!', 'Namaste {customer_name}, your order of {total_amount} has been received and sent to village workshops for dispatch.'],
+                ['order_dispatched', 'Order Dispatched', 'Your Order #{order_number} has been Dispatched via India Post', 'Your parcel tracking number is {tracking_consignment_no}. Estimated delivery in 2-4 business days.'],
+                ['vendor_kyc_approved', 'Artisan Store Approved', 'Welcome to GaunGaliHat Artisan Network!', 'Congratulations! Your workshop profile has been verified. You can now list products and receive nationwide orders.'],
+                ['payout_settled', 'Bank Settlement Completed', 'Payout Ref #{payout_ref} Settled to Your Bank Account', 'Amount of {net_amount} has been credited to your bank account with UTR: {utr_number}.'],
+            ];
+            $ins_n = $pdo->prepare("INSERT INTO notification_templates (slug, name, subject, body_template) VALUES (?, ?, ?, ?)");
+            foreach ($ntemplates as $nt) {
+                $ins_n->execute($nt);
+            }
+        }
+    } catch (Exception $e) {}
 }
 
 /**

@@ -439,6 +439,25 @@ if (pincodeInput) {
     }
   });
 }
+
+// GA4 Begin Checkout Tracking
+if (typeof gtag === 'function') {
+  gtag('event', 'begin_checkout', {
+    currency: 'INR',
+    value: <?= (float)$grand_total ?>,
+    coupon: '<?= htmlspecialchars($applied_coupon['code'] ?? '') ?>',
+    items: [
+      <?php foreach ($cart as $ci): ?>
+      {
+        item_id: '<?= htmlspecialchars($ci['product']['code'] ?: ('GGH-' . $ci['product']['id'])) ?>',
+        item_name: '<?= htmlspecialchars(addslashes($ci['product']['name'])) ?>',
+        price: <?= (float)$ci['product']['price'] ?>,
+        quantity: <?= (int)$ci['quantity'] ?>
+      },
+      <?php endforeach; ?>
+    ]
+  });
+}
 </script>
 
 <?php require_once __DIR__ . '/includes/footer.php'; ?>

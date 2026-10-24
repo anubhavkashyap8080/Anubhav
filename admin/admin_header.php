@@ -170,6 +170,11 @@ $flash = get_flash();
           <i class="fa-solid fa-magnifying-glass-chart"></i> SEO सेटिंग्स
         </a>
 
+        <a href="/admin/seo_redirects.php"
+          class="px-3 py-2 rounded-lg transition whitespace-nowrap flex items-center gap-1.5 <?= $current_page === 'seo_redirects.php' ? 'bg-indigo-600 text-white' : 'text-indigo-200 hover:text-white hover:bg-indigo-800' ?>">
+          <i class="fa-solid fa-route text-amber-300"></i> रीडायरेक्ट्स व 404
+        </a>
+
         <a href="/admin/social_auth.php"
           class="px-3 py-2 rounded-lg transition whitespace-nowrap flex items-center gap-1.5 <?= $current_page === 'social_auth.php' ? 'bg-indigo-600 text-white' : 'text-indigo-200 hover:text-white hover:bg-indigo-800' ?>">
           <i class="fa-brands fa-google"></i> सोशल लॉगिन
@@ -188,6 +193,21 @@ $flash = get_flash();
         <a href="/admin/merchant_feed.php"
           class="px-3 py-2 rounded-lg transition whitespace-nowrap flex items-center gap-1.5 <?= $current_page === 'merchant_feed.php' ? 'bg-indigo-600 text-white' : 'text-indigo-200 hover:text-white hover:bg-indigo-800' ?>">
           <i class="fa-brands fa-google text-amber-300"></i> मर्चेंट XML फ़ीड (GMC)
+        </a>
+
+        <a href="/admin/integrations.php"
+          class="px-3 py-2 rounded-lg transition whitespace-nowrap flex items-center gap-1.5 <?= $current_page === 'integrations.php' ? 'bg-indigo-600 text-white' : 'text-indigo-200 hover:text-white hover:bg-indigo-800' ?>">
+          <i class="fa-solid fa-network-wired text-amber-300"></i> इंटीग्रेशन्स हब
+        </a>
+
+        <a href="/admin/security_center.php"
+          class="px-3 py-2 rounded-lg transition whitespace-nowrap flex items-center gap-1.5 <?= $current_page === 'security_center.php' ? 'bg-indigo-600 text-white' : 'text-indigo-200 hover:text-white hover:bg-indigo-800' ?>">
+          <i class="fa-solid fa-shield-halved text-emerald-400"></i> सुरक्षा केंद्र
+        </a>
+
+        <a href="/admin/audit_logs.php"
+          class="px-3 py-2 rounded-lg transition whitespace-nowrap flex items-center gap-1.5 <?= $current_page === 'audit_logs.php' ? 'bg-indigo-600 text-white' : 'text-indigo-200 hover:text-white hover:bg-indigo-800' ?>">
+          <i class="fa-solid fa-clipboard-check text-indigo-300"></i> ऑडिट लॉग्स
         </a>
       </div>
     </div>
