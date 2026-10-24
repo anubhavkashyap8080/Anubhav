@@ -60,6 +60,46 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['add_product'])) {
     }
 }
 
+// Handle EDIT Product (Scoped strictly to current vendor)
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['edit_product'])) {
+    csrf_protect();
+    $pid = intval($_POST['edit_product_id'] ?? 0);
+    $name = clean_input($_POST['name'] ?? '');
+    $hindi_name = clean_input($_POST['hindi_name'] ?? '');
+    $category_id = intval($_POST['category_id'] ?? 0);
+    $price = floatval($_POST['price'] ?? 0);
+    $original_price = floatval($_POST['original_price'] ?? $price);
+    $weight_kg = floatval($_POST['weight_kg'] ?? 0.5);
+    $stock = intval($_POST['stock'] ?? 50);
+    $unit = clean_input($_POST['unit'] ?? 'piece');
+    $image_url = clean_input($_POST['image_url'] ?? '');
+    $description = clean_input($_POST['description'] ?? '');
+
+    if ($pid > 0 && !empty($name) && $price > 0) {
+        $discount = ($original_price > $price) ? round((($original_price - $price) / $original_price) * 100) : 0;
+        try {
+            $sql_up = "UPDATE products SET name = ?, hindi_name = ?, category_id = ?, price = ?, original_price = ?, discount = ?, weight_kg = ?, stock = ?, unit = ?, description = ?";
+            $params = [$name, $hindi_name, $category_id, $price, $original_price, $discount, $weight_kg, $stock, $unit, $description];
+            if (!empty($image_url)) {
+                $sql_up .= ", image = ?";
+                $params[] = $image_url;
+            }
+            $sql_up .= " WHERE id = ? AND vendor_id = ?";
+            $params[] = $pid;
+            $params[] = $vendor_id;
+
+            $stmt = $pdo->prepare($sql_up);
+            $stmt->execute($params);
+            log_audit_action('seller_product_updated', 'products', "Vendor #{$vendor_id} updated product #{$pid} ({$name})");
+            set_flash('success', 'उत्पाद "' . htmlspecialchars($name) . '" सफलतापूर्वक अपडेट किया गया!');
+            header('Location: /seller/products.php');
+            exit;
+        } catch (Exception $e) {
+            set_flash('error', 'उत्पाद अपडेट करने में त्रुटि: ' . $e->getMessage());
+        }
+    }
+}
+
 // Handle Bulk CSV Import
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['bulk_import_csv'])) {
     csrf_protect();
@@ -333,6 +373,22 @@ require_once __DIR__ . '/seller_header.php';
 
               <!-- Actions -->
               <td class="px-4 py-3 text-right space-x-1 whitespace-nowrap">
+                <button type="button" onclick='openSellerEditProductModal(<?= json_encode([
+                    "id" => $p["id"],
+                    "name" => $p["name"],
+                    "hindi_name" => $p["hindi_name"] ?? "",
+                    "category_id" => $p["category_id"],
+                    "price" => $p["price"],
+                    "original_price" => $p["original_price"],
+                    "weight_kg" => $p["weight_kg"],
+                    "stock" => $p["stock"],
+                    "unit" => $p["unit"] ?? "piece",
+                    "image" => $p["image"],
+                    "description" => $p["description"] ?? ""
+                ], JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_HEX_AMP) ?>)'
+                  class="p-1.5 text-stone-500 hover:text-amber-600 rounded hover:bg-amber-50 transition cursor-pointer" title="संपादित करें">
+                  <i class="fa-solid fa-pen-to-square"></i>
+                </button>
                 <a href="/product.php?id=<?= $p['id'] ?>" target="_blank" class="p-1.5 text-stone-400 hover:text-stone-700 rounded hover:bg-stone-100 transition" title="लाइव उत्पाद देखें">
                   <i class="fa-solid fa-arrow-up-right-from-square"></i>
                 </a>
@@ -488,5 +544,120 @@ require_once __DIR__ . '/seller_header.php';
     </form>
   </div>
 </div>
+
+<!-- Edit Product Modal -->
+<div id="sellerEditProductModal" class="hidden fixed inset-0 z-50 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4 overflow-y-auto">
+  <div class="bg-white rounded-3xl border border-gray-200 shadow-2xl max-w-2xl w-full p-6 sm:p-8 max-h-[90vh] overflow-y-auto">
+    <div class="flex items-center justify-between pb-4 mb-4 border-b border-gray-100">
+      <h3 class="text-base font-bold text-gray-900 flex items-center gap-2">
+        <i class="fa-solid fa-pen-to-square text-amber-600"></i>
+        उत्पाद संपादित करें (Edit Product)
+      </h3>
+      <button type="button" onclick="document.getElementById('sellerEditProductModal').classList.add('hidden')" class="text-gray-400 hover:text-gray-600 text-lg">
+        <i class="fa-solid fa-xmark"></i>
+      </button>
+    </div>
+
+    <form action="/seller/products.php" method="POST" class="space-y-4">
+      <?= csrf_field() ?>
+      <input type="hidden" name="edit_product" value="1">
+      <input type="hidden" name="edit_product_id" id="s_edit_pid" value="">
+
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <div>
+          <label class="block text-xs font-bold text-gray-700 mb-1">उत्पाद का नाम (English) <span class="text-red-500">*</span></label>
+          <input type="text" name="name" id="s_edit_name" required
+            class="w-full px-3.5 py-2.5 bg-stone-50 border border-gray-200 rounded-xl text-xs focus:bg-white focus:outline-none focus:border-amber-500 transition">
+        </div>
+        <div>
+          <label class="block text-xs font-bold text-gray-700 mb-1">हिंदी नाम (Hindi Name)</label>
+          <input type="text" name="hindi_name" id="s_edit_hindi"
+            class="w-full px-3.5 py-2.5 bg-stone-50 border border-gray-200 rounded-xl text-xs focus:bg-white focus:outline-none focus:border-amber-500 transition">
+        </div>
+      </div>
+
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <div>
+          <label class="block text-xs font-bold text-gray-700 mb-1">श्रेणी (Category) <span class="text-red-500">*</span></label>
+          <select name="category_id" id="s_edit_cat" required class="w-full px-3.5 py-2.5 bg-stone-50 border border-gray-200 rounded-xl text-xs font-semibold focus:bg-white focus:outline-none focus:border-amber-500 transition">
+            <?php foreach ($categories as $cat): ?>
+              <option value="<?= $cat['id'] ?>"><?= htmlspecialchars($cat['hindi_name'] ?? $cat['name']) ?></option>
+            <?php endforeach; ?>
+          </select>
+        </div>
+        <div>
+          <label class="block text-xs font-bold text-gray-700 mb-1">इकाई (Unit)</label>
+          <input type="text" name="unit" id="s_edit_unit" value="piece"
+            class="w-full px-3.5 py-2.5 bg-stone-50 border border-gray-200 rounded-xl text-xs focus:bg-white focus:outline-none focus:border-amber-500 transition">
+        </div>
+      </div>
+
+      <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+        <div>
+          <label class="block text-xs font-bold text-gray-700 mb-1">विक्रय मूल्य (₹) <span class="text-red-500">*</span></label>
+          <input type="number" step="0.01" name="price" id="s_edit_price" required
+            class="w-full px-3 py-2 bg-stone-50 border border-gray-200 rounded-xl text-xs font-bold focus:bg-white focus:outline-none focus:border-amber-500 transition">
+        </div>
+        <div>
+          <label class="block text-xs font-bold text-gray-700 mb-1">MRP मूल्य (₹)</label>
+          <input type="number" step="0.01" name="original_price" id="s_edit_orig_price"
+            class="w-full px-3 py-2 bg-stone-50 border border-gray-200 rounded-xl text-xs focus:bg-white focus:outline-none focus:border-amber-500 transition">
+        </div>
+        <div>
+          <label class="block text-xs font-bold text-gray-700 mb-1">वजन (kg)</label>
+          <input type="number" step="0.01" name="weight_kg" id="s_edit_weight"
+            class="w-full px-3 py-2 bg-stone-50 border border-gray-200 rounded-xl text-xs focus:bg-white focus:outline-none focus:border-amber-500 transition">
+        </div>
+      </div>
+
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <div>
+          <label class="block text-xs font-bold text-gray-700 mb-1">स्टॉक मात्रा (Stock Units) <span class="text-red-500">*</span></label>
+          <input type="number" name="stock" id="s_edit_stock" min="0" required
+            class="w-full px-3.5 py-2.5 bg-stone-50 border border-gray-200 rounded-xl text-xs focus:bg-white focus:outline-none focus:border-amber-500 transition">
+        </div>
+        <div>
+          <label class="block text-xs font-bold text-gray-700 mb-1">चित्र URL (Image URL)</label>
+          <input type="url" name="image_url" id="s_edit_img" placeholder="https://..."
+            class="w-full px-3.5 py-2.5 bg-stone-50 border border-gray-200 rounded-xl text-xs focus:bg-white focus:outline-none focus:border-amber-500 transition">
+        </div>
+      </div>
+
+      <div>
+        <label class="block text-xs font-bold text-gray-700 mb-1">विवरण (Description)</label>
+        <textarea name="description" id="s_edit_desc" rows="3"
+          class="w-full px-3.5 py-2.5 bg-stone-50 border border-gray-200 rounded-xl text-xs focus:bg-white focus:outline-none focus:border-amber-500 transition"></textarea>
+      </div>
+
+      <div class="flex items-center justify-end gap-3 pt-3 border-t border-gray-100">
+        <button type="button" onclick="document.getElementById('sellerEditProductModal').classList.add('hidden')"
+          class="px-4 py-2 bg-stone-100 text-stone-700 font-bold rounded-xl text-xs hover:bg-stone-200 transition">
+          रद्द करें
+        </button>
+        <button type="submit"
+          class="px-5 py-2 bg-amber-600 hover:bg-amber-700 text-white font-bold rounded-xl text-xs transition">
+          अपडेट सहेजें (Save Changes)
+        </button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<script>
+function openSellerEditProductModal(p) {
+  document.getElementById('s_edit_pid').value = p.id || '';
+  document.getElementById('s_edit_name').value = p.name || '';
+  document.getElementById('s_edit_hindi').value = p.hindi_name || '';
+  document.getElementById('s_edit_cat').value = p.category_id || 1;
+  document.getElementById('s_edit_unit').value = p.unit || 'piece';
+  document.getElementById('s_edit_price').value = p.price || '';
+  document.getElementById('s_edit_orig_price').value = p.original_price || p.price || '';
+  document.getElementById('s_edit_weight').value = p.weight_kg || 0.5;
+  document.getElementById('s_edit_stock').value = p.stock || 50;
+  document.getElementById('s_edit_img').value = p.image || '';
+  document.getElementById('s_edit_desc').value = p.description || '';
+  document.getElementById('sellerEditProductModal').classList.remove('hidden');
+}
+</script>
 
 <?php require_once __DIR__ . '/seller_footer.php'; ?>

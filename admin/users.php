@@ -46,6 +46,60 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['add_user'])) {
     }
 }
 
+// Handle EDIT USER
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['edit_user'])) {
+    $user_id = intval($_POST['edit_user_id'] ?? 0);
+    $name = clean_input($_POST['name'] ?? '');
+    $username = strtolower(clean_input($_POST['username'] ?? ''));
+    $email = strtolower(clean_input($_POST['email'] ?? ''));
+    $phone = clean_input($_POST['phone'] ?? '');
+    $role = clean_input($_POST['role'] ?? 'customer');
+    $department = clean_input($_POST['department'] ?? 'Operations');
+    $status = clean_input($_POST['status'] ?? 'active');
+    $new_password = $_POST['new_password'] ?? '';
+
+    if ($user_id <= 0 || empty($name) || empty($username) || empty($email)) {
+        set_flash('error', 'कृपया नाम, यूजरनेम एवं ईमेल अनिवार्य रूप से भरें।');
+    } else {
+        // Check uniqueness excluding this user
+        $stmt_chk = $pdo->prepare("SELECT id FROM users WHERE (username = ? OR email = ?) AND id != ?");
+        $stmt_chk->execute([$username, $email, $user_id]);
+        if ($stmt_chk->fetch()) {
+            set_flash('error', 'यह यूजरनेम या ईमेल पहले से ही किसी अन्य खाते में दर्ज है।');
+        } else {
+            try {
+                if (!empty($new_password)) {
+                    if (strlen($new_password) < 6) {
+                        set_flash('error', 'पासवर्ड कम से कम 6 अक्षरों का होना चाहिए।');
+                        header('Location: /admin/users.php');
+                        exit;
+                    }
+                    $hashed = password_hash($new_password, PASSWORD_BCRYPT);
+                    $stmt_up = $pdo->prepare("
+                        UPDATE users 
+                        SET name = ?, username = ?, email = ?, phone = ?, role = ?, department = ?, status = ?, password = ?
+                        WHERE id = ?
+                    ");
+                    $stmt_up->execute([$name, $username, $email, $phone, $role, $department, $status, $hashed, $user_id]);
+                } else {
+                    $stmt_up = $pdo->prepare("
+                        UPDATE users 
+                        SET name = ?, username = ?, email = ?, phone = ?, role = ?, department = ?, status = ?
+                        WHERE id = ?
+                    ");
+                    $stmt_up->execute([$name, $username, $email, $phone, $role, $department, $status, $user_id]);
+                }
+                log_audit_action('admin_edit_user', 'users', "User #{$user_id} updated by Admin #{$admin_user['id']}");
+                set_flash('success', 'उपयोगकर्ता जानकारी (' . htmlspecialchars($username) . ') सफलतापूर्वक अपडेट की गई!');
+                header('Location: /admin/users.php');
+                exit;
+            } catch (Exception $e) {
+                set_flash('error', 'त्रुटि: ' . $e->getMessage());
+            }
+        }
+    }
+}
+
 // Handle PASSWORD RESET
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['reset_user_password'])) {
     $target_user_id = intval($_POST['target_user_id']);
@@ -226,6 +280,20 @@ require_once __DIR__ . '/admin_header.php';
 
             <!-- Actions -->
             <td class="px-4 py-3.5 text-right whitespace-nowrap">
+              <button type="button" onclick='openEditUserModal(<?= json_encode([
+                  "id" => $u["id"],
+                  "name" => $u["name"],
+                  "username" => $u["username"],
+                  "email" => $u["email"],
+                  "phone" => $u["phone"] ?? "",
+                  "role" => $u["role"],
+                  "department" => $u["department"] ?? "",
+                  "status" => $u["status"]
+              ], JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_HEX_AMP) ?>)'
+                class="px-2 py-1 bg-stone-100 hover:bg-stone-200 text-stone-700 font-bold text-[10px] rounded-lg border border-stone-300 transition inline-flex items-center gap-1 mr-1 cursor-pointer"
+                title="यूजर विवरण संपादित करें">
+                <i class="fa-solid fa-pen-to-square text-[9px] text-indigo-600"></i> एडिट
+              </button>
               <?php if ($u['id'] !== $admin_user['id']): ?>
                 <a href="/admin/impersonate.php?action=login_as&user_id=<?= $u['id'] ?>"
                   class="px-2.5 py-1 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 font-bold text-[10px] rounded-lg border border-indigo-200 transition inline-flex items-center gap-1 mr-1"
@@ -237,7 +305,7 @@ require_once __DIR__ . '/admin_header.php';
                   <i class="fa-regular fa-trash-can"></i>
                 </a>
               <?php else: ?>
-                <span class="text-[10px] text-gray-400 font-semibold italic">वर्तमान सत्र</span>
+                <span class="text-[10px] text-emerald-600 font-semibold italic">आप (Admin)</span>
               <?php endif; ?>
             </td>
           </tr>
@@ -422,7 +490,119 @@ require_once __DIR__ . '/admin_header.php';
   </div>
 </div>
 
+<!-- Edit User Modal -->
+<div id="editUserModal" class="hidden fixed inset-0 z-50 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4 overflow-y-auto">
+  <div class="bg-white rounded-3xl border border-gray-200 shadow-2xl max-w-lg w-full p-6 sm:p-8 max-h-[90vh] overflow-y-auto">
+    <div class="flex items-center justify-between pb-4 mb-4 border-b border-gray-100">
+      <h3 class="text-base font-bold text-gray-900 flex items-center gap-2">
+        <i class="fa-solid fa-user-pen text-indigo-600"></i>
+        यूजर विवरण संपादित करें (Edit User)
+      </h3>
+      <button type="button" onclick="document.getElementById('editUserModal').classList.add('hidden')" class="text-gray-400 hover:text-gray-600 text-lg">
+        <i class="fa-solid fa-xmark"></i>
+      </button>
+    </div>
+
+    <form action="/admin/users.php" method="POST" class="space-y-4">
+      <input type="hidden" name="edit_user" value="1">
+      <input type="hidden" name="edit_user_id" id="edit_user_id" value="">
+
+      <div>
+        <label class="block text-xs font-bold text-gray-700 mb-1">पूरा नाम (Full Name) <span class="text-red-500">*</span></label>
+        <input type="text" name="name" id="edit_name" required
+          class="w-full px-3.5 py-2.5 bg-stone-50 border border-gray-200 rounded-xl text-xs focus:bg-white focus:outline-none focus:border-indigo-600 transition">
+      </div>
+
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <div>
+          <label class="block text-xs font-bold text-gray-700 mb-1">यूजरनेम (Username) <span class="text-red-500">*</span></label>
+          <input type="text" name="username" id="edit_username" required
+            class="w-full px-3.5 py-2.5 bg-stone-50 border border-gray-200 rounded-xl text-xs font-mono focus:bg-white focus:outline-none focus:border-indigo-600 transition">
+        </div>
+
+        <div>
+          <label class="block text-xs font-bold text-gray-700 mb-1">रोल (Role) <span class="text-red-500">*</span></label>
+          <select name="role" id="edit_role" class="w-full px-3.5 py-2.5 bg-stone-50 border border-gray-200 rounded-xl text-xs font-semibold focus:bg-white focus:outline-none focus:border-indigo-600 transition">
+            <option value="admin">Admin (प्रशासनिक स्टाफ)</option>
+            <option value="super_admin">Super Admin (सर्वोच्च नियंत्रण)</option>
+            <option value="vendor">Vendor (कारीगर / विक्रेता)</option>
+            <option value="customer">Customer (ग्राहक)</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <div>
+          <label class="block text-xs font-bold text-gray-700 mb-1">ईमेल (Email) <span class="text-red-500">*</span></label>
+          <input type="email" name="email" id="edit_email" required
+            class="w-full px-3.5 py-2.5 bg-stone-50 border border-gray-200 rounded-xl text-xs focus:bg-white focus:outline-none focus:border-indigo-600 transition">
+        </div>
+
+        <div>
+          <label class="block text-xs font-bold text-gray-700 mb-1">फ़ोन नंबर (Mobile)</label>
+          <input type="tel" name="phone" id="edit_phone"
+            class="w-full px-3.5 py-2.5 bg-stone-50 border border-gray-200 rounded-xl text-xs focus:bg-white focus:outline-none focus:border-indigo-600 transition">
+        </div>
+      </div>
+
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <div>
+          <label class="block text-xs font-bold text-gray-700 mb-1">विभाग / पद (Department)</label>
+          <input type="text" name="department" id="edit_department"
+            class="w-full px-3.5 py-2.5 bg-stone-50 border border-gray-200 rounded-xl text-xs focus:bg-white focus:outline-none focus:border-indigo-600 transition">
+        </div>
+
+        <div>
+          <label class="block text-xs font-bold text-gray-700 mb-1">खाता स्थिति (Status) <span class="text-red-500">*</span></label>
+          <select name="status" id="edit_status" class="w-full px-3.5 py-2.5 bg-stone-50 border border-gray-200 rounded-xl text-xs font-semibold focus:bg-white focus:outline-none focus:border-indigo-600 transition">
+            <option value="active">Active (सक्रिय)</option>
+            <option value="suspended">Suspended (निलंबित)</option>
+          </select>
+        </div>
+      </div>
+
+      <div>
+        <label class="block text-xs font-bold text-gray-700 mb-1">
+          नया पासवर्ड बदलें (वैकल्पिक - छोड़ें यदि नहीं बदलना हो)
+        </label>
+        <div class="relative">
+          <input type="password" name="new_password" id="edit_user_password" minlength="6" placeholder="पासवर्ड नहीं बदलना हो तो खाली छोड़ें"
+            class="w-full pl-3.5 pr-10 py-2.5 bg-stone-50 border border-gray-200 rounded-xl text-xs focus:bg-white focus:outline-none focus:border-indigo-600 transition">
+          <button type="button" onclick="togglePasswordVisibility('edit_user_password', this)"
+            class="absolute inset-y-0 right-0 pr-3.5 flex items-center text-gray-400 hover:text-gray-600">
+            <i class="fa-regular fa-eye text-xs"></i>
+          </button>
+        </div>
+      </div>
+
+      <div class="flex items-center justify-end gap-3 pt-3 border-t border-gray-100">
+        <button type="button" onclick="document.getElementById('editUserModal').classList.add('hidden')"
+          class="px-4 py-2 bg-stone-100 text-stone-700 font-bold rounded-xl text-xs">
+          रद्द करें
+        </button>
+        <button type="submit"
+          class="px-5 py-2 bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-xl text-xs transition">
+          अपडेट सहेजें (Save Changes)
+        </button>
+      </div>
+    </form>
+  </div>
+</div>
+
 <script>
+function openEditUserModal(u) {
+  document.getElementById('edit_user_id').value = u.id || '';
+  document.getElementById('edit_name').value = u.name || '';
+  document.getElementById('edit_username').value = u.username || '';
+  document.getElementById('edit_email').value = u.email || '';
+  document.getElementById('edit_phone').value = u.phone || '';
+  document.getElementById('edit_role').value = u.role || 'customer';
+  document.getElementById('edit_department').value = u.department || '';
+  document.getElementById('edit_status').value = u.status || 'active';
+  document.getElementById('edit_user_password').value = '';
+  document.getElementById('editUserModal').classList.remove('hidden');
+}
+
 function openResetPasswordModal(userId, username, name) {
   document.getElementById('reset_user_id').value = userId;
   document.getElementById('reset_user_label').innerText = name + ' (@' + username + ')';

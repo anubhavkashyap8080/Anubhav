@@ -153,8 +153,15 @@ $ga4_id = get_site_setting('ga4_measurement_id', get_site_setting('seo_google_an
 
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
   <link rel="stylesheet" href="/assets/css/style.css">
+  <script src="/assets/js/main.js"></script>
 </head>
 <body class="flex flex-col min-h-screen text-gray-800 antialiased selection:bg-emerald-200 overflow-x-hidden">
+
+  <!-- Global Cart Popup Modal (Bottom on mobile / Top-Right on desktop) -->
+  <div id="cartPopupModal" class="hidden fixed z-[9999] pointer-events-auto transition-all duration-300 transform bottom-3 inset-x-3 sm:bottom-auto sm:inset-x-auto sm:top-5 sm:right-5 sm:max-w-md sm:w-96"></div>
+
+  <!-- Global Toast Notification Container (Bottom on mobile / Top-Right on desktop) -->
+  <div id="toast-container" class="fixed z-[99999] pointer-events-none flex flex-col gap-2.5 bottom-4 inset-x-4 sm:bottom-auto sm:inset-x-auto sm:top-5 sm:right-5 sm:max-w-sm w-auto"></div>
 
   <!-- Impersonation Alert Banner -->
   <?php if (!empty($_SESSION['impersonator_id'])): ?>

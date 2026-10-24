@@ -517,18 +517,28 @@ function add_to_cart($product_id, $qty = 1) {
     $product_id = (int)$product_id;
     $qty = max(1, (int)$qty);
 
-    $stmt = $pdo->prepare("SELECT id, name, price, stock FROM products WHERE id = ?");
-    $stmt->execute([$product_id]);
-    $prod = $stmt->fetch();
-
-    if ($prod) {
-        if (!isset($_SESSION['cart'][$product_id])) {
-            $_SESSION['cart'][$product_id] = ['qty' => 0];
-        }
-        $new_qty = $_SESSION['cart'][$product_id]['qty'] + $qty;
-        $_SESSION['cart'][$product_id]['qty'] = min($prod['stock'], $new_qty);
-        return true;
+    if (!$pdo) {
+        return false;
     }
+
+    try {
+        $stmt = $pdo->prepare("SELECT id, name, price, original_price, stock, image FROM products WHERE id = ?");
+        $stmt->execute([$product_id]);
+        $prod = $stmt->fetch();
+
+        if ($prod) {
+            if (!isset($_SESSION['cart']) || !is_array($_SESSION['cart'])) {
+                $_SESSION['cart'] = [];
+            }
+            if (!isset($_SESSION['cart'][$product_id])) {
+                $_SESSION['cart'][$product_id] = ['qty' => 0];
+            }
+            $stock = max(1, (int)($prod['stock'] ?? 50));
+            $new_qty = (int)$_SESSION['cart'][$product_id]['qty'] + $qty;
+            $_SESSION['cart'][$product_id]['qty'] = min($stock, $new_qty);
+            return $prod;
+        }
+    } catch (Throwable $e) {}
     return false;
 }
 
@@ -557,7 +567,7 @@ function clear_cart() {
 
 function get_cart_count() {
     $count = 0;
-    if (!empty($_SESSION['cart'])) {
+    if (!empty($_SESSION['cart']) && is_array($_SESSION['cart'])) {
         foreach ($_SESSION['cart'] as $item) {
             $count += (int)($item['qty'] ?? 1);
         }
@@ -569,7 +579,7 @@ function get_cart_subtotal() {
     $items = get_cart();
     $total = 0.0;
     foreach ($items as $it) {
-        $total += $it['subtotal'];
+        $total += (float)($it['subtotal'] ?? 0);
     }
     return $total;
 }
@@ -578,7 +588,7 @@ function get_cart_total_weight() {
     $items = get_cart();
     $weight = 0.0;
     foreach ($items as $it) {
-        $weight += $it['total_weight'];
+        $weight += (float)($it['total_weight'] ?? 0);
     }
     return max(0.5, $weight);
 }
@@ -586,12 +596,12 @@ function get_cart_total_weight() {
 // ==========================================
 // WISHLIST FUNCTIONS
 // ==========================================
-if (!isset($_SESSION['wishlist'])) {
+if (!isset($_SESSION['wishlist']) || !is_array($_SESSION['wishlist'])) {
     $_SESSION['wishlist'] = [];
 }
 
 function get_wishlist_count() {
-    return count($_SESSION['wishlist']);
+    return (!empty($_SESSION['wishlist']) && is_array($_SESSION['wishlist'])) ? count($_SESSION['wishlist']) : 0;
 }
 
 function is_in_wishlist($product_id) {

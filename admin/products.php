@@ -25,6 +25,40 @@ if (isset($_GET['delete_id'])) {
     exit;
 }
 
+// Handle Edit Product
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['edit_product'])) {
+    $pid = intval($_POST['edit_product_id'] ?? 0);
+    $name = clean_input($_POST['name'] ?? '');
+    $hindi_name = clean_input($_POST['hindi_name'] ?? '');
+    $cat_id = intval($_POST['category_id'] ?? 1);
+    $vendor_id = intval($_POST['vendor_id'] ?? 1);
+    $price = floatval($_POST['price'] ?? 0);
+    $orig_price = floatval($_POST['original_price'] ?? $price);
+    $stock = intval($_POST['stock'] ?? 50);
+    $stock_status = clean_input($_POST['stock_status'] ?? 'In Stock');
+    $weight_kg = floatval($_POST['weight_kg'] ?? 0.5);
+    $image = clean_input($_POST['image'] ?? '');
+
+    if ($pid > 0 && !empty($name) && $price > 0) {
+        $discount = ($orig_price > $price) ? round((($orig_price - $price) / $orig_price) * 100) : 0;
+        try {
+            $stmt = $pdo->prepare("
+                UPDATE products 
+                SET name = ?, hindi_name = ?, category_id = ?, vendor_id = ?, price = ?, original_price = ?,
+                    discount = ?, stock = ?, stock_status = ?, weight_kg = ?, image = ?
+                WHERE id = ?
+            ");
+            $stmt->execute([$name, $hindi_name, $cat_id, $vendor_id, $price, $orig_price, $discount, $stock, $stock_status, $weight_kg, $image, $pid]);
+            log_audit_action('admin_edit_product', 'products', "Product #{$pid} edited by admin");
+            set_flash('success', 'उत्पाद विवरण सफलतापूर्वक अपडेट किया गया!');
+            header('Location: /admin/products.php');
+            exit;
+        } catch (Exception $e) {
+            set_flash('error', 'त्रुटि: ' . $e->getMessage());
+        }
+    }
+}
+
 // Fetch categories & vendors for dropdowns
 $categories = $pdo->query("SELECT * FROM categories ORDER BY name ASC")->fetchAll();
 $vendors = $pdo->query("SELECT id, name, business_name, district FROM vendors ORDER BY name ASC")->fetchAll();
@@ -191,6 +225,22 @@ require_once __DIR__ . '/admin_header.php';
             </td>
 
             <td class="px-4 py-3 text-right space-x-1 whitespace-nowrap">
+              <button type="button" onclick='openEditProductModal(<?= json_encode([
+                  "id" => $p["id"],
+                  "name" => $p["name"],
+                  "hindi_name" => $p["hindi_name"] ?? "",
+                  "category_id" => $p["category_id"],
+                  "vendor_id" => $p["vendor_id"],
+                  "price" => $p["price"],
+                  "original_price" => $p["original_price"],
+                  "stock" => $p["stock"],
+                  "stock_status" => $p["stock_status"],
+                  "weight_kg" => $p["weight_kg"],
+                  "image" => $p["image"]
+              ], JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_HEX_AMP) ?>)'
+                class="p-1.5 text-stone-500 hover:text-indigo-600 rounded hover:bg-indigo-50 transition cursor-pointer" title="संपादित करें">
+                <i class="fa-solid fa-pen-to-square"></i>
+              </button>
               <a href="/product.php?id=<?= $p['id'] ?>" target="_blank" class="p-1.5 text-gray-400 hover:text-gray-700 rounded hover:bg-stone-100 transition" title="देखें">
                 <i class="fa-solid fa-arrow-up-right-from-square"></i>
               </a>
@@ -243,5 +293,127 @@ require_once __DIR__ . '/admin_header.php';
     </form>
   </div>
 </div>
+
+<!-- Edit Product Modal -->
+<div id="editProductModal" class="hidden fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4 overflow-y-auto">
+  <div class="bg-white rounded-3xl border border-gray-200 shadow-2xl max-w-lg w-full p-6 sm:p-8 max-h-[90vh] overflow-y-auto">
+    <div class="flex items-center justify-between pb-4 mb-4 border-b border-gray-100">
+      <h3 class="text-base font-bold text-gray-900 flex items-center gap-2">
+        <i class="fa-solid fa-pen-to-square text-indigo-600"></i>
+        उत्पाद विवरण संपादित करें (Edit Product)
+      </h3>
+      <button type="button" onclick="document.getElementById('editProductModal').classList.add('hidden')" class="text-gray-400 hover:text-gray-600 text-lg">
+        <i class="fa-solid fa-xmark"></i>
+      </button>
+    </div>
+
+    <form action="/admin/products.php" method="POST" class="space-y-4">
+      <input type="hidden" name="edit_product" value="1">
+      <input type="hidden" name="edit_product_id" id="edit_pid" value="">
+
+      <div>
+        <label class="block text-xs font-bold text-gray-700 mb-1">उत्पाद का नाम (English) <span class="text-red-500">*</span></label>
+        <input type="text" name="name" id="edit_p_name" required
+          class="w-full px-3.5 py-2.5 bg-stone-50 border border-gray-200 rounded-xl text-xs focus:bg-white focus:outline-none focus:border-indigo-600 transition">
+      </div>
+
+      <div>
+        <label class="block text-xs font-bold text-gray-700 mb-1">हिंदी नाम (Hindi Name)</label>
+        <input type="text" name="hindi_name" id="edit_p_hindi"
+          class="w-full px-3.5 py-2.5 bg-stone-50 border border-gray-200 rounded-xl text-xs focus:bg-white focus:outline-none focus:border-indigo-600 transition">
+      </div>
+
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <div>
+          <label class="block text-xs font-bold text-gray-700 mb-1">श्रेणी (Category) <span class="text-red-500">*</span></label>
+          <select name="category_id" id="edit_p_cat" class="w-full px-3.5 py-2.5 bg-stone-50 border border-gray-200 rounded-xl text-xs font-semibold focus:bg-white focus:outline-none focus:border-indigo-600 transition">
+            <?php foreach ($categories as $c): ?>
+              <option value="<?= $c['id'] ?>"><?= htmlspecialchars($c['name']) ?></option>
+            <?php endforeach; ?>
+          </select>
+        </div>
+
+        <div>
+          <label class="block text-xs font-bold text-gray-700 mb-1">विक्रेता (Vendor) <span class="text-red-500">*</span></label>
+          <select name="vendor_id" id="edit_p_vendor" class="w-full px-3.5 py-2.5 bg-stone-50 border border-gray-200 rounded-xl text-xs font-semibold focus:bg-white focus:outline-none focus:border-indigo-600 transition">
+            <?php foreach ($vendors as $v): ?>
+              <option value="<?= $v['id'] ?>"><?= htmlspecialchars($v['name']) ?> (<?= htmlspecialchars($v['district']) ?>)</option>
+            <?php endforeach; ?>
+          </select>
+        </div>
+      </div>
+
+      <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+        <div>
+          <label class="block text-xs font-bold text-gray-700 mb-1">विक्रय मूल्य (₹) <span class="text-red-500">*</span></label>
+          <input type="number" step="0.01" name="price" id="edit_p_price" required
+            class="w-full px-3 py-2 bg-stone-50 border border-gray-200 rounded-xl text-xs font-bold focus:bg-white focus:outline-none focus:border-indigo-600 transition">
+        </div>
+
+        <div>
+          <label class="block text-xs font-bold text-gray-700 mb-1">MRP मूल्य (₹)</label>
+          <input type="number" step="0.01" name="original_price" id="edit_p_orig_price"
+            class="w-full px-3 py-2 bg-stone-50 border border-gray-200 rounded-xl text-xs focus:bg-white focus:outline-none focus:border-indigo-600 transition">
+        </div>
+
+        <div>
+          <label class="block text-xs font-bold text-gray-700 mb-1">वजन (kg)</label>
+          <input type="number" step="0.01" name="weight_kg" id="edit_p_weight"
+            class="w-full px-3 py-2 bg-stone-50 border border-gray-200 rounded-xl text-xs focus:bg-white focus:outline-none focus:border-indigo-600 transition">
+        </div>
+      </div>
+
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <div>
+          <label class="block text-xs font-bold text-gray-700 mb-1">स्टॉक मात्रा (Stock)</label>
+          <input type="number" name="stock" id="edit_p_stock" min="0" required
+            class="w-full px-3.5 py-2.5 bg-stone-50 border border-gray-200 rounded-xl text-xs focus:bg-white focus:outline-none focus:border-indigo-600 transition">
+        </div>
+
+        <div>
+          <label class="block text-xs font-bold text-gray-700 mb-1">स्टॉक स्थिति</label>
+          <select name="stock_status" id="edit_p_stock_status" class="w-full px-3.5 py-2.5 bg-stone-50 border border-gray-200 rounded-xl text-xs font-semibold focus:bg-white focus:outline-none focus:border-indigo-600 transition">
+            <option value="In Stock">In Stock (उपलब्ध)</option>
+            <option value="Out of Stock">Out of Stock (समाप्त)</option>
+          </select>
+        </div>
+      </div>
+
+      <div>
+        <label class="block text-xs font-bold text-gray-700 mb-1">चित्र URL (Image URL)</label>
+        <input type="url" name="image" id="edit_p_image" placeholder="https://..."
+          class="w-full px-3.5 py-2.5 bg-stone-50 border border-gray-200 rounded-xl text-xs focus:bg-white focus:outline-none focus:border-indigo-600 transition">
+      </div>
+
+      <div class="flex items-center justify-end gap-3 pt-3 border-t border-gray-100">
+        <button type="button" onclick="document.getElementById('editProductModal').classList.add('hidden')"
+          class="px-4 py-2 bg-stone-100 text-stone-700 font-bold rounded-xl text-xs">
+          रद्द करें
+        </button>
+        <button type="submit"
+          class="px-5 py-2 bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-xl text-xs transition">
+          अपडेट सहेजें (Save Changes)
+        </button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<script>
+function openEditProductModal(p) {
+  document.getElementById('edit_pid').value = p.id || '';
+  document.getElementById('edit_p_name').value = p.name || '';
+  document.getElementById('edit_p_hindi').value = p.hindi_name || '';
+  document.getElementById('edit_p_cat').value = p.category_id || 1;
+  document.getElementById('edit_p_vendor').value = p.vendor_id || 1;
+  document.getElementById('edit_p_price').value = p.price || '';
+  document.getElementById('edit_p_orig_price').value = p.original_price || p.price || '';
+  document.getElementById('edit_p_weight').value = p.weight_kg || 0.5;
+  document.getElementById('edit_p_stock').value = p.stock || 50;
+  document.getElementById('edit_p_stock_status').value = p.stock_status || 'In Stock';
+  document.getElementById('edit_p_image').value = p.image || '';
+  document.getElementById('editProductModal').classList.remove('hidden');
+}
+</script>
 
 <?php require_once __DIR__ . '/admin_footer.php'; ?>

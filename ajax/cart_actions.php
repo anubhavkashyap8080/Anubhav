@@ -25,11 +25,20 @@ switch ($action) {
         if ($product_id <= 0) {
             send_json_cart_response(['success' => false, 'message' => 'Invalid product identifier.']);
         }
-        $added = add_to_cart($product_id, $qty);
-        if ($added) {
+        $prod = add_to_cart($product_id, $qty);
+        if ($prod) {
+            $current_cart_qty = (int)($_SESSION['cart'][$product_id]['qty'] ?? $qty);
             send_json_cart_response([
                 'success' => true,
                 'message' => 'Product successfully added to your shopping cart!',
+                'product' => [
+                    'id' => (int)$prod['id'],
+                    'name' => $prod['name'],
+                    'price' => format_price($prod['price']),
+                    'original_price' => !empty($prod['original_price']) ? format_price($prod['original_price']) : '',
+                    'image' => !empty($prod['image']) ? $prod['image'] : '/logo.png',
+                    'qty' => $current_cart_qty
+                ],
                 'cart_count' => get_cart_count(),
                 'cart_subtotal' => format_price(get_cart_subtotal())
             ]);

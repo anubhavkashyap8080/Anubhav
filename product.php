@@ -7,7 +7,11 @@ require_once __DIR__ . '/includes/functions.php';
 
 $product_id = (int)($_GET['id'] ?? 0);
 if ($product_id <= 0) {
-    header('Location: /products.php');
+    if (!headers_sent()) {
+        header('Location: /products.php');
+    } else {
+        echo '<script>window.location="/products.php";</script>';
+    }
     exit;
 }
 

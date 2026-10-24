@@ -10,14 +10,15 @@ require_once __DIR__ . '/admin_header.php';
 // 1. Date Filter Handling (All time, Today, This Week, This Month, Custom)
 $date_filter = $_GET['range'] ?? 'all';
 $where_orders = "1=1";
-$params_orders = [];
 
 if ($date_filter === 'today') {
-    $where_orders = "DATE(created_at) = CURRENT_DATE";
+    $where_orders = "created_at >= '" . date('Y-m-d 00:00:00') . "'";
 } elseif ($date_filter === 'week') {
-    $where_orders = "created_at >= " . (($is_sqlite ?? true) ? "DATETIME('now', '-7 days')" : "DATE_SUB(NOW(), INTERVAL 7 DAY)");
+    $time_7d = date('Y-m-d H:i:s', time() - (7 * 86400));
+    $where_orders = "created_at >= '$time_7d'";
 } elseif ($date_filter === 'month') {
-    $where_orders = "created_at >= " . (($is_sqlite ?? true) ? "DATETIME('now', '-30 days')" : "DATE_SUB(NOW(), INTERVAL 30 DAY)");
+    $time_30d = date('Y-m-d H:i:s', time() - (30 * 86400));
+    $where_orders = "created_at >= '$time_30d'";
 }
 
 // 2. CSV Financial Export Handler
@@ -27,51 +28,98 @@ if (isset($_GET['export']) && $_GET['export'] === 'csv') {
     $out = fopen('php://output', 'w');
     fputcsv($out, ['Order Number', 'Date', 'Customer Name', 'City', 'Pincode', 'Subtotal', 'Shipping', 'Total GMV', 'Payment Method', 'Payment Status', 'Order Status']);
     
-    $export_stmt = $pdo->query("SELECT * FROM orders ORDER BY id DESC");
-    while ($row = $export_stmt->fetch()) {
-        fputcsv($out, [
-            $row['order_number'],
-            $row['created_at'],
-            $row['customer_name'],
-            $row['shipping_city'],
-            $row['shipping_pincode'],
-            $row['subtotal'],
-            $row['shipping_fee'],
-            $row['total_amount'],
-            $row['payment_method'],
-            $row['payment_status'],
-            $row['order_status']
-        ]);
+    if ($pdo) {
+        try {
+            $export_stmt = $pdo->query("SELECT * FROM orders ORDER BY id DESC");
+            while ($row = $export_stmt->fetch()) {
+                fputcsv($out, [
+                    $row['order_number'] ?? '',
+                    $row['created_at'] ?? '',
+                    $row['customer_name'] ?? '',
+                    $row['shipping_city'] ?? '',
+                    $row['shipping_pincode'] ?? '',
+                    $row['subtotal'] ?? 0,
+                    $row['shipping_fee'] ?? 0,
+                    $row['total_amount'] ?? 0,
+                    $row['payment_method'] ?? '',
+                    $row['payment_status'] ?? '',
+                    $row['order_status'] ?? ''
+                ]);
+            }
+        } catch (Throwable $e) {}
     }
     fclose($out);
     exit;
 }
 
-// 3. Financial Metrics & Accounting
-$total_gmv = (float)$pdo->query("SELECT COALESCE(SUM(total_amount), 0) FROM orders WHERE $where_orders AND (payment_status = 'completed' OR payment_method = 'cod')")->fetchColumn();
-$total_orders = (int)$pdo->query("SELECT COUNT(*) FROM orders WHERE $where_orders")->fetchColumn();
-$total_subtotal = (float)$pdo->query("SELECT COALESCE(SUM(subtotal), 0) FROM orders WHERE $where_orders AND (payment_status = 'completed' OR payment_method = 'cod')")->fetchColumn();
-$total_shipping = (float)$pdo->query("SELECT COALESCE(SUM(shipping_fee), 0) FROM orders WHERE $where_orders AND (payment_status = 'completed' OR payment_method = 'cod')")->fetchColumn();
+// 3. Financial Metrics & Accounting (Protected with safe defaults)
+$total_gmv = 0.0;
+$total_orders = 0;
+$total_subtotal = 0.0;
+$total_shipping = 0.0;
+$total_settled_payouts = 0.0;
+$total_coupons_saved = 0.0;
 
-// Marketplace Commission & Seller Settlements (Distinguish platform revenue vs seller payout)
+if ($pdo) {
+    try {
+        $total_gmv = (float)$pdo->query("SELECT COALESCE(SUM(total_amount), 0) FROM orders WHERE $where_orders AND (payment_status = 'completed' OR payment_method = 'cod')")->fetchColumn();
+    } catch (Throwable $e) {}
+    try {
+        $total_orders = (int)$pdo->query("SELECT COUNT(*) FROM orders WHERE $where_orders")->fetchColumn();
+    } catch (Throwable $e) {}
+    try {
+        $total_subtotal = (float)$pdo->query("SELECT COALESCE(SUM(subtotal), 0) FROM orders WHERE $where_orders AND (payment_status = 'completed' OR payment_method = 'cod')")->fetchColumn();
+    } catch (Throwable $e) {}
+    try {
+        $total_shipping = (float)$pdo->query("SELECT COALESCE(SUM(shipping_fee), 0) FROM orders WHERE $where_orders AND (payment_status = 'completed' OR payment_method = 'cod')")->fetchColumn();
+    } catch (Throwable $e) {}
+    try {
+        $total_settled_payouts = (float)$pdo->query("SELECT COALESCE(SUM(net_amount), 0) FROM vendor_payouts WHERE status = 'Settled to Bank'")->fetchColumn();
+    } catch (Throwable $e) {}
+    try {
+        $total_coupons_saved = (float)$pdo->query("SELECT COALESCE(SUM(discount_amount), 0) FROM coupon_usages")->fetchColumn();
+    } catch (Throwable $e) {}
+}
+
+// Marketplace Commission & Seller Settlements
 $default_comm_rate = floatval(get_setting('commission_rate_default', '4.0'));
 $platform_commission = round($total_subtotal * ($default_comm_rate / 100), 2);
 $seller_net_earnings = round($total_subtotal - $platform_commission, 2);
-
-$total_settled_payouts = (float)$pdo->query("SELECT COALESCE(SUM(net_amount), 0) FROM vendor_payouts WHERE status = 'Settled to Bank'")->fetchColumn();
 $pending_payouts = max(0, $seller_net_earnings - $total_settled_payouts);
 
-// Total Dispatched Discounts
-$total_coupons_saved = (float)$pdo->query("SELECT COALESCE(SUM(discount_amount), 0) FROM coupon_usages")->fetchColumn();
-
 // 4. Operational Pipeline Counts
-$pending_kyc = (int)$pdo->query("SELECT COUNT(*) FROM vendors WHERE kyc_status = 'Pending'")->fetchColumn();
-$total_vendors = (int)$pdo->query("SELECT COUNT(*) FROM vendors")->fetchColumn();
-$total_products = (int)$pdo->query("SELECT COUNT(*) FROM products")->fetchColumn();
-$low_stock_count = (int)$pdo->query("SELECT COUNT(*) FROM products WHERE stock <= 10")->fetchColumn();
-$open_tickets = (int)$pdo->query("SELECT COUNT(*) FROM tickets WHERE status IN ('Open', 'In Progress')")->fetchColumn();
-$active_chats = (int)$pdo->query("SELECT COUNT(*) FROM chat_sessions WHERE status = 'active'")->fetchColumn();
-$security_alerts = (int)$pdo->query("SELECT COUNT(*) FROM security_logs WHERE created_at >= " . (($is_sqlite ?? true) ? "DATETIME('now', '-24 hours')" : "DATE_SUB(NOW(), INTERVAL 24 HOUR)"))->fetchColumn();
+$pending_kyc = 0;
+$total_vendors = 0;
+$total_products = 0;
+$low_stock_count = 0;
+$open_tickets = 0;
+$active_chats = 0;
+$security_alerts = 0;
+
+if ($pdo) {
+    try {
+        $pending_kyc = (int)$pdo->query("SELECT COUNT(*) FROM vendors WHERE kyc_status = 'Pending'")->fetchColumn();
+    } catch (Throwable $e) {}
+    try {
+        $total_vendors = (int)$pdo->query("SELECT COUNT(*) FROM vendors")->fetchColumn();
+    } catch (Throwable $e) {}
+    try {
+        $total_products = (int)$pdo->query("SELECT COUNT(*) FROM products")->fetchColumn();
+    } catch (Throwable $e) {}
+    try {
+        $low_stock_count = (int)$pdo->query("SELECT COUNT(*) FROM products WHERE stock <= 10")->fetchColumn();
+    } catch (Throwable $e) {}
+    try {
+        $open_tickets = (int)$pdo->query("SELECT COUNT(*) FROM tickets WHERE status IN ('Open', 'In Progress')")->fetchColumn();
+    } catch (Throwable $e) {}
+    try {
+        $active_chats = (int)$pdo->query("SELECT COUNT(*) FROM chat_sessions WHERE status = 'active'")->fetchColumn();
+    } catch (Throwable $e) {}
+    try {
+        $time_24h = date('Y-m-d H:i:s', time() - 86400);
+        $security_alerts = (int)$pdo->query("SELECT COUNT(*) FROM security_logs WHERE created_at >= '$time_24h'")->fetchColumn();
+    } catch (Throwable $e) {}
+}
 
 // 5. Order Status Breakdown
 $status_counts = [
@@ -81,20 +129,34 @@ $status_counts = [
     'Delivered' => 0,
     'Cancelled' => 0
 ];
-$stmt_sc = $pdo->query("SELECT order_status, COUNT(*) as cnt FROM orders GROUP BY order_status");
-while ($r = $stmt_sc->fetch()) {
-    if (isset($status_counts[$r['order_status']])) {
-        $status_counts[$r['order_status']] = (int)$r['cnt'];
-    }
+if ($pdo) {
+    try {
+        $stmt_sc = $pdo->query("SELECT order_status, COUNT(*) as cnt FROM orders GROUP BY order_status");
+        while ($r = $stmt_sc->fetch()) {
+            if (isset($status_counts[$r['order_status']])) {
+                $status_counts[$r['order_status']] = (int)$r['cnt'];
+            }
+        }
+    } catch (Throwable $e) {}
 }
 
 // 6. Recent Platform Orders
-$stmt_orders = $pdo->query("SELECT * FROM orders ORDER BY id DESC LIMIT 6");
-$recent_orders = $stmt_orders->fetchAll();
+$recent_orders = [];
+if ($pdo) {
+    try {
+        $stmt_orders = $pdo->query("SELECT * FROM orders ORDER BY id DESC LIMIT 6");
+        $recent_orders = $stmt_orders->fetchAll() ?: [];
+    } catch (Throwable $e) {}
+}
 
 // 7. Recent Security & Audit Events
-$stmt_recent_audit = $pdo->query("SELECT * FROM admin_audit_logs ORDER BY id DESC LIMIT 5");
-$recent_audits = $stmt_recent_audit->fetchAll();
+$recent_audits = [];
+if ($pdo) {
+    try {
+        $stmt_recent_audit = $pdo->query("SELECT * FROM admin_audit_logs ORDER BY id DESC LIMIT 5");
+        $recent_audits = $stmt_recent_audit->fetchAll() ?: [];
+    } catch (Throwable $e) {}
+}
 ?>
 
 <!-- Title & Filter Bar -->

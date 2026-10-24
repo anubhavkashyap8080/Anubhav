@@ -8,10 +8,15 @@ document.addEventListener('DOMContentLoaded', function () {
   initMobileDrawer();
 });
 
-// Toast notification helper
+// Toast notification helper (Bottom on phone, Top-Right on desktop)
 function showToast(type, message) {
-  const container = document.getElementById('toast-container');
-  if (!container) return;
+  let container = document.getElementById('toast-container');
+  if (!container) {
+    container = document.createElement('div');
+    container.id = 'toast-container';
+    container.className = 'fixed z-[99999] pointer-events-none flex flex-col gap-2.5 bottom-4 inset-x-4 sm:bottom-auto sm:inset-x-auto sm:top-5 sm:right-5 sm:max-w-sm w-auto';
+    document.body.appendChild(container);
+  }
 
   const toast = document.createElement('div');
   const isErr = type === 'error';
@@ -136,10 +141,94 @@ function initLiveSearch() {
 }
 
 // ==========================================
-// 2. AJAX CART & WISHLIST HANDLERS
+// 2. AJAX CART & WISHLIST HANDLERS + RESPONSIVE POPUP
+// (Pops up at BOTTOM on phone screen & TOP on desktop screen)
 // ==========================================
+let cartPopupTimer = null;
+
+function showCartPopup(product, cartCount, cartSubtotal) {
+  let modal = document.getElementById('cartPopupModal');
+  if (!modal) {
+    modal = document.createElement('div');
+    modal.id = 'cartPopupModal';
+    // Position: Bottom on phone (< sm), Top-Right on desktop (>= sm)
+    modal.className = 'fixed z-[9999] pointer-events-auto transition-all duration-300 transform hidden ' +
+      'bottom-3 inset-x-3 sm:bottom-auto sm:inset-x-auto sm:top-5 sm:right-5 sm:max-w-md sm:w-96';
+    document.body.appendChild(modal);
+  }
+
+  const pName = product ? (product.name || 'Artisan Produce') : 'Artisan Produce';
+  const pImg = (product && product.image) ? product.image : '/logo.png';
+  const pPrice = product ? (product.price || '') : '';
+  const pQty = product ? (product.qty || 1) : 1;
+  const subtotalStr = cartSubtotal || '';
+  const countStr = cartCount !== undefined ? cartCount : 1;
+
+  modal.innerHTML = `
+    <div class="bg-stone-900/95 backdrop-blur-md text-white rounded-2xl shadow-2xl border border-stone-700/80 p-4 transition-all">
+      <!-- Header Row -->
+      <div class="flex items-center justify-between pb-2.5 mb-2.5 border-b border-stone-800">
+        <div class="flex items-center gap-2 text-emerald-400 font-bold text-xs">
+          <span class="w-5 h-5 rounded-full bg-emerald-500/20 text-emerald-400 flex items-center justify-center text-xs font-bold">✓</span>
+          <span>Added to Shopping Bag!</span>
+        </div>
+        <button type="button" onclick="closeCartPopup()" class="text-stone-400 hover:text-white p-1 rounded-lg transition-colors cursor-pointer text-sm leading-none" aria-label="Close">
+          ✕
+        </button>
+      </div>
+
+      <!-- Item Row -->
+      <div class="flex items-center gap-3 mb-3">
+        <img src="${pImg}" alt="${pName}" class="w-14 h-14 object-cover rounded-xl border border-stone-700 bg-stone-800 shrink-0">
+        <div class="flex-1 min-w-0">
+          <h4 class="font-bold text-xs sm:text-sm text-stone-100 truncate">${pName}</h4>
+          <div class="flex items-center gap-2 mt-0.5 text-xs">
+            <span class="font-black text-amber-400">${pPrice}</span>
+            <span class="text-[11px] text-stone-400 bg-stone-800 px-1.5 py-0.5 rounded font-mono">Qty: ${pQty}</span>
+          </div>
+          <p class="text-[11px] text-stone-300 mt-1">Bag Total: <strong class="text-white">${subtotalStr}</strong> <span class="text-stone-400">(${countStr} items)</span></p>
+        </div>
+      </div>
+
+      <!-- Action Buttons -->
+      <div class="grid grid-cols-2 gap-2 pt-1">
+        <button type="button" onclick="closeCartPopup()" class="w-full py-2.5 px-3 bg-stone-800 hover:bg-stone-700 text-stone-200 text-xs font-bold rounded-xl transition cursor-pointer text-center">
+          Keep Shopping
+        </button>
+        <a href="/cart.php" class="w-full py-2.5 px-3 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold rounded-xl shadow-md transition flex items-center justify-center gap-1.5 cursor-pointer text-center">
+          <span>View Bag</span>
+          <span>→</span>
+        </a>
+      </div>
+    </div>
+  `;
+
+  modal.classList.remove('hidden');
+
+  // Auto-dismiss after 4.5 seconds
+  clearTimeout(cartPopupTimer);
+  cartPopupTimer = setTimeout(() => {
+    closeCartPopup();
+  }, 4500);
+
+  // Pause timer on hover
+  modal.onmouseenter = () => clearTimeout(cartPopupTimer);
+  modal.onmouseleave = () => {
+    cartPopupTimer = setTimeout(() => {
+      closeCartPopup();
+    }, 2500);
+  };
+}
+
+function closeCartPopup() {
+  const modal = document.getElementById('cartPopupModal');
+  if (modal) {
+    modal.classList.add('hidden');
+  }
+}
+
 function addToCart(productId, qty = 1, e = null) {
-  if (e) e.preventDefault();
+  if (e && typeof e.preventDefault === 'function') e.preventDefault();
   
   const formData = new FormData();
   formData.append('action', 'add');
@@ -153,18 +242,23 @@ function addToCart(productId, qty = 1, e = null) {
     .then(res => res.json())
     .then(data => {
       if (data.success) {
-        showToast('success', data.message);
-        updateCartBadge(data.cart_count);
+        showCartPopup(data.product, data.cart_count, data.cart_subtotal);
+        updateCartBadge(data.cart_count, data.cart_subtotal);
+        showToast('success', data.message || 'Product added to your cart!');
       } else {
         showToast('error', data.message || 'Failed to add product.');
       }
     })
-    .catch(() => showToast('error', 'Network error adding to cart.'));
+    .catch(err => {
+      console.error(err);
+      showToast('error', 'Network error adding to cart.');
+    });
 }
 
-function updateCartBadge(count) {
+function updateCartBadge(count, subtotal = null) {
   const headerBadge = document.getElementById('header-cart-count');
   const mobileBadge = document.getElementById('mobile-cart-count');
+  const headerTotal = document.getElementById('header-cart-total');
   
   if (headerBadge) {
     headerBadge.innerText = count;
@@ -174,10 +268,13 @@ function updateCartBadge(count) {
     mobileBadge.innerText = count;
     mobileBadge.classList.toggle('hidden', count === 0);
   }
+  if (headerTotal && subtotal) {
+    headerTotal.innerText = subtotal;
+  }
 }
 
 function toggleWishlist(productId, btn = null, e = null) {
-  if (e) e.preventDefault();
+  if (e && typeof e.preventDefault === 'function') e.preventDefault();
 
   const formData = new FormData();
   formData.append('product_id', productId);
@@ -203,8 +300,22 @@ function toggleWishlist(productId, btn = null, e = null) {
 
         if (btn) {
           btn.classList.toggle('text-brand-orange', data.in_wishlist);
+          btn.classList.toggle('text-red-500', data.in_wishlist);
           btn.classList.toggle('text-gray-400', !data.in_wishlist);
+
+          const svg = btn.querySelector('svg');
+          if (svg) {
+            if (data.in_wishlist) {
+              svg.setAttribute('fill', '#ea580c');
+              svg.style.color = '#ea580c';
+            } else {
+              svg.setAttribute('fill', 'none');
+              svg.style.color = '';
+            }
+          }
         }
+      } else {
+        showToast('error', data.message || 'Wishlist update failed.');
       }
     })
     .catch(() => showToast('error', 'Wishlist update failed.'));

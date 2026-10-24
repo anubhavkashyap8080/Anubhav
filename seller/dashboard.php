@@ -4,61 +4,82 @@ require_once __DIR__ . '/seller_header.php';
 
 $vendor_id = $vendor['id'];
 
-// 1. Calculate Metrics from Database
-// Total Orders & Revenue for this vendor
-$stmt_metrics = $pdo->prepare("
-    SELECT 
-        COUNT(DISTINCT oi.order_id) as total_orders,
-        COALESCE(SUM(oi.total), 0) as total_sales,
-        COALESCE(SUM(CASE WHEN o.order_status IN ('Order Placed', 'Processing', 'Confirmed') THEN 1 ELSE 0 END), 0) as pending_dispatch
-    FROM order_items oi
-    JOIN orders o ON oi.order_id = o.id
-    WHERE oi.vendor_id = ?
-");
-$stmt_metrics->execute([$vendor_id]);
-$metrics = $stmt_metrics->fetch();
+$total_orders = 0;
+$total_sales = 0.0;
+$pending_dispatch = 0;
+$active_products = 0;
+$total_settled = 0.0;
+$pending_payout = 0.0;
+$recent_orders = [];
+$low_stock_items = [];
 
-$total_orders = $metrics['total_orders'] ?? 0;
-$total_sales = $metrics['total_sales'] ?? 0.0;
-$pending_dispatch = $metrics['pending_dispatch'] ?? 0;
+if ($pdo) {
+    try {
+        // 1. Calculate Metrics from Database
+        $stmt_metrics = $pdo->prepare("
+            SELECT 
+                COUNT(DISTINCT oi.order_id) as total_orders,
+                COALESCE(SUM(oi.total), 0) as total_sales,
+                COALESCE(SUM(CASE WHEN o.order_status IN ('Order Placed', 'Processing', 'Confirmed') THEN 1 ELSE 0 END), 0) as pending_dispatch
+            FROM order_items oi
+            JOIN orders o ON oi.order_id = o.id
+            WHERE oi.vendor_id = ?
+        ");
+        $stmt_metrics->execute([$vendor_id]);
+        $metrics = $stmt_metrics->fetch();
 
-// Active Products Count
-$stmt_prod_count = $pdo->prepare("SELECT COUNT(*) FROM products WHERE vendor_id = ?");
-$stmt_prod_count->execute([$vendor_id]);
-$active_products = $stmt_prod_count->fetchColumn() ?: 0;
+        $total_orders = (int)($metrics['total_orders'] ?? 0);
+        $total_sales = (float)($metrics['total_sales'] ?? 0.0);
+        $pending_dispatch = (int)($metrics['pending_dispatch'] ?? 0);
+    } catch (Throwable $e) {}
 
-// Payouts Settled
-$stmt_payouts = $pdo->prepare("
-    SELECT COALESCE(SUM(net_amount), 0) as total_settled 
-    FROM vendor_payouts 
-    WHERE vendor_id = ? AND status = 'Settled to Bank'
-");
-$stmt_payouts->execute([$vendor_id]);
-$total_settled = $stmt_payouts->fetchColumn() ?: 0.0;
-$commission_rate = $vendor['commission_rate'] ?? 4.0;
-$pending_payout = max(0, ($total_sales * (1 - ($commission_rate / 100))) - $total_settled);
+    try {
+        // Active Products Count
+        $stmt_prod_count = $pdo->prepare("SELECT COUNT(*) FROM products WHERE vendor_id = ?");
+        $stmt_prod_count->execute([$vendor_id]);
+        $active_products = (int)($stmt_prod_count->fetchColumn() ?: 0);
+    } catch (Throwable $e) {}
 
-// 2. Recent Orders for this Vendor
-$is_sqlite = ($pdo->getAttribute(PDO::ATTR_DRIVER_NAME) === 'sqlite');
-$concat_expr = $is_sqlite ? "GROUP_CONCAT(product_name, ', ')" : "GROUP_CONCAT(product_name SEPARATOR ', ')";
+    try {
+        // Payouts Settled
+        $stmt_payouts = $pdo->prepare("
+            SELECT COALESCE(SUM(net_amount), 0) as total_settled 
+            FROM vendor_payouts 
+            WHERE vendor_id = ? AND status = 'Settled to Bank'
+        ");
+        $stmt_payouts->execute([$vendor_id]);
+        $total_settled = (float)($stmt_payouts->fetchColumn() ?: 0.0);
+    } catch (Throwable $e) {}
 
-$stmt_recent = $pdo->prepare("
-    SELECT DISTINCT o.*, 
-           (SELECT $concat_expr FROM order_items WHERE order_id = o.id AND vendor_id = ?) as vendor_products,
-           (SELECT SUM(total) FROM order_items WHERE order_id = o.id AND vendor_id = ?) as vendor_item_total
-    FROM orders o
-    JOIN order_items oi ON o.id = oi.order_id
-    WHERE oi.vendor_id = ?
-    ORDER BY o.id DESC
-    LIMIT 6
-");
-$stmt_recent->execute([$vendor_id, $vendor_id, $vendor_id]);
-$recent_orders = $stmt_recent->fetchAll();
+    $commission_rate = (float)($vendor['commission_rate'] ?? 4.0);
+    $pending_payout = max(0, ($total_sales * (1 - ($commission_rate / 100))) - $total_settled);
 
-// 3. Low stock alerts
-$stmt_low_stock = $pdo->prepare("SELECT id, name, stock, code FROM products WHERE vendor_id = ? AND stock <= 10 ORDER BY stock ASC LIMIT 4");
-$stmt_low_stock->execute([$vendor_id]);
-$low_stock_items = $stmt_low_stock->fetchAll();
+    try {
+        // 2. Recent Orders for this Vendor
+        $is_sqlite = ($pdo->getAttribute(PDO::ATTR_DRIVER_NAME) === 'sqlite');
+        $concat_expr = $is_sqlite ? "GROUP_CONCAT(product_name, ', ')" : "GROUP_CONCAT(product_name SEPARATOR ', ')";
+
+        $stmt_recent = $pdo->prepare("
+            SELECT DISTINCT o.*, 
+                   (SELECT $concat_expr FROM order_items WHERE order_id = o.id AND vendor_id = ?) as vendor_products,
+                   (SELECT SUM(total) FROM order_items WHERE order_id = o.id AND vendor_id = ?) as vendor_item_total
+            FROM orders o
+            JOIN order_items oi ON o.id = oi.order_id
+            WHERE oi.vendor_id = ?
+            ORDER BY o.id DESC
+            LIMIT 6
+        ");
+        $stmt_recent->execute([$vendor_id, $vendor_id, $vendor_id]);
+        $recent_orders = $stmt_recent->fetchAll() ?: [];
+    } catch (Throwable $e) {}
+
+    try {
+        // 3. Low stock alerts
+        $stmt_low_stock = $pdo->prepare("SELECT id, name, stock, code FROM products WHERE vendor_id = ? AND stock <= 10 ORDER BY stock ASC LIMIT 4");
+        $stmt_low_stock->execute([$vendor_id]);
+        $low_stock_items = $stmt_low_stock->fetchAll() ?: [];
+    } catch (Throwable $e) {}
+}
 ?>
 
 <!-- Welcome Banner -->
