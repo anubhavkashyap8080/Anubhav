@@ -10,9 +10,14 @@ $category_slug = trim($_GET['category'] ?? '');
 $sort = trim($_GET['sort'] ?? 'newest');
 $in_stock_only = !empty($_GET['in_stock']);
 
-// Load all categories for filter sidebar
-$stmt = $pdo->query("SELECT * FROM categories ORDER BY sort_order ASC");
-$all_categories = $stmt->fetchAll();
+// Load all categories for filter sidebar safely
+$all_categories = [];
+if ($pdo) {
+    try {
+        $stmt = $pdo->query("SELECT * FROM categories ORDER BY sort_order ASC");
+        $all_categories = $stmt->fetchAll() ?: [];
+    } catch (Throwable $e_cat) {}
+}
 
 // Build query
 $sql = "
@@ -62,9 +67,14 @@ switch ($sort) {
         break;
 }
 
-$stmt = $pdo->prepare($sql);
-$stmt->execute($params);
-$products = $stmt->fetchAll();
+$products = [];
+if ($pdo) {
+    try {
+        $stmt = $pdo->prepare($sql);
+        $stmt->execute($params);
+        $products = $stmt->fetchAll() ?: [];
+    } catch (Throwable $e_p) {}
+}
 
 // Get active category details if selected
 $active_category = null;

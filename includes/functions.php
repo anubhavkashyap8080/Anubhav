@@ -11,6 +11,40 @@ require_once __DIR__ . '/../config/db.php';
 require_once __DIR__ . '/../config/settings.php';
 require_once __DIR__ . '/../config/shipping.php';
 
+// PHP 7.x/8.x Cross-Version Polyfills for cPanel Hosting
+if (!function_exists('str_starts_with')) {
+    function str_starts_with($haystack, $needle) {
+        return (string)$needle !== '' && strncmp((string)$haystack, (string)$needle, strlen((string)$needle)) === 0;
+    }
+}
+if (!function_exists('str_ends_with')) {
+    function str_ends_with($haystack, $needle) {
+        return (string)$needle === '' || (string)$needle === substr((string)$haystack, -strlen((string)$needle));
+    }
+}
+if (!function_exists('str_contains')) {
+    function str_contains($haystack, $needle) {
+        return (string)$needle !== '' && mb_strpos((string)$haystack, (string)$needle) !== false;
+    }
+}
+
+// Client IP Resolver
+if (!function_exists('get_client_ip')) {
+    function get_client_ip() {
+        $headers = ['HTTP_CF_CONNECTING_IP', 'HTTP_X_FORWARDED_FOR', 'HTTP_CLIENT_IP', 'REMOTE_ADDR'];
+        foreach ($headers as $h) {
+            if (!empty($_SERVER[$h])) {
+                $ips = explode(',', $_SERVER[$h]);
+                $ip = trim($ips[0]);
+                if (filter_var($ip, FILTER_VALIDATE_IP)) {
+                    return $ip;
+                }
+            }
+        }
+        return $_SERVER['REMOTE_ADDR'] ?? '127.0.0.1';
+    }
+}
+
 // Sanitize user inputs
 function clean_input($data) {
     if (is_array($data)) {
@@ -727,25 +761,27 @@ function get_site_setting($key, $default = '') {
  */
 function handle_seo_redirects() {
     global $pdo;
-    if (php_sapi_name() === 'cli' || empty($_SERVER['REQUEST_URI'])) {
+    if (php_sapi_name() === 'cli' || empty($_SERVER['REQUEST_URI']) || !$pdo) {
         return;
     }
     
-    $uri = parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH);
-    if (empty($uri) || $uri === '/' || str_starts_with($uri, '/admin/') || str_starts_with($uri, '/seller/')) {
-        return;
-    }
-
     try {
+        $uri = parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH);
+        if (empty($uri) || $uri === '/' || substr($uri, 0, 7) === '/admin/' || substr($uri, 0, 8) === '/seller/' || substr($uri, 0, 6) === '/ajax/') {
+            return;
+        }
+
         $stmt = $pdo->prepare("SELECT id, target_url, status_code FROM seo_redirects WHERE source_path = ? AND status = 'active' LIMIT 1");
         $stmt->execute([$uri]);
         $rule = $stmt->fetch();
         if ($rule) {
-            $pdo->prepare("UPDATE seo_redirects SET hits = hits + 1 WHERE id = ?")->execute([$rule['id']]);
+            try {
+                $pdo->prepare("UPDATE seo_redirects SET hits = hits + 1 WHERE id = ?")->execute([$rule['id']]);
+            } catch (Throwable $e_up) {}
             header("Location: " . $rule['target_url'], true, (int)$rule['status_code']);
             exit;
         }
-    } catch (Exception $e) {}
+    } catch (Throwable $e) {}
 }
 
 /**
@@ -753,14 +789,14 @@ function handle_seo_redirects() {
  */
 function record_404_hit($path = null) {
     global $pdo;
-    if (php_sapi_name() === 'cli') return;
-    $path = $path ?: parse_url($_SERVER['REQUEST_URI'] ?? '', PHP_URL_PATH);
-    if (empty($path)) return;
-    $ip = get_client_ip();
-    $referrer = $_SERVER['HTTP_REFERER'] ?? null;
-    $ua = $_SERVER['HTTP_USER_AGENT'] ?? null;
-
+    if (php_sapi_name() === 'cli' || !$pdo) return;
     try {
+        $path = $path ?: parse_url($_SERVER['REQUEST_URI'] ?? '', PHP_URL_PATH);
+        if (empty($path)) return;
+        $ip = get_client_ip();
+        $referrer = $_SERVER['HTTP_REFERER'] ?? null;
+        $ua = $_SERVER['HTTP_USER_AGENT'] ?? null;
+
         $stmt = $pdo->prepare("SELECT id FROM seo_404_logs WHERE request_path = ? AND resolved = 0 LIMIT 1");
         $stmt->execute([$path]);
         $exist = $stmt->fetch();
@@ -770,7 +806,7 @@ function record_404_hit($path = null) {
             $stmt_ins = $pdo->prepare("INSERT INTO seo_404_logs (request_path, referrer, ip_address, user_agent, hit_count, resolved) VALUES (?, ?, ?, ?, 1, 0)");
             $stmt_ins->execute([$path, $referrer, $ip, $ua]);
         }
-    } catch (Exception $e) {}
+    } catch (Throwable $e) {}
 }
 
 // Automatically check active SEO redirects on page load

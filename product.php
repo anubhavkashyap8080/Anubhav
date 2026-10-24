@@ -11,18 +11,25 @@ if ($product_id <= 0) {
     exit;
 }
 
-$stmt = $pdo->prepare("
-    SELECT p.*, c.name as category_name, c.slug as category_slug, 
-           v.id as vendor_id, v.name as vendor_name, v.business_name as vendor_business, v.avatar as vendor_avatar, 
-           v.location as vendor_location, v.district as vendor_district, v.state as vendor_state, 
-           v.story as vendor_story, v.verified as vendor_verified, v.rating as vendor_rating
-    FROM products p 
-    LEFT JOIN categories c ON p.category_id = c.id 
-    LEFT JOIN vendors v ON p.vendor_id = v.id 
-    WHERE p.id = ? LIMIT 1
-");
-$stmt->execute([$product_id]);
-$product = $stmt->fetch();
+$product = null;
+if ($pdo) {
+    try {
+        $stmt = $pdo->prepare("
+            SELECT p.*, c.name as category_name, c.slug as category_slug, 
+                   v.id as vendor_id, v.name as vendor_name, v.business_name as vendor_business, v.avatar as vendor_avatar, 
+                   v.location as vendor_location, v.district as vendor_district, v.state as vendor_state, 
+                   v.story as vendor_story, v.verified as vendor_verified, v.rating as vendor_rating
+            FROM products p 
+            LEFT JOIN categories c ON p.category_id = c.id 
+            LEFT JOIN vendors v ON p.vendor_id = v.id 
+            WHERE p.id = ? LIMIT 1
+        ");
+        $stmt->execute([$product_id]);
+        $product = $stmt->fetch();
+    } catch (Throwable $e_prod) {
+        $product = null;
+    }
+}
 
 if (!$product) {
     set_flash('error', 'Product not found.');

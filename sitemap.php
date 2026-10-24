@@ -64,7 +64,7 @@ if ($type === 'products') {
             $loc = htmlspecialchars($base_url . '/product.php?id=' . $row['id'], ENT_XML1, 'UTF-8');
             $lastmod = !empty($row['created_at']) ? date('c', strtotime($row['created_at'])) : $today_iso;
             $img = trim((string)($row['image'] ?? ''));
-            if (!empty($img) && !str_starts_with($img, 'http')) {
+            if (!empty($img) && strpos($img, 'http') !== 0) {
                 $img = $base_url . '/' . ltrim($img, '/');
             }
             

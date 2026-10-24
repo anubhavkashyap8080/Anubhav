@@ -46,7 +46,7 @@ $ga4_id = get_site_setting('ga4_measurement_id', get_site_setting('seo_google_an
   <link rel="apple-touch-icon" href="/apple-touch-icon.png">
 
   <?php if (!empty($gsc_tag)): ?>
-    <?php if (str_starts_with($gsc_tag, '<meta')): ?>
+    <?php if (strpos((string)$gsc_tag, '<meta') === 0): ?>
       <?= $gsc_tag ?>
     <?php else: ?>
       <meta name="google-site-verification" content="<?= htmlspecialchars(str_replace('google-site-verification=', '', $gsc_tag)) ?>">
