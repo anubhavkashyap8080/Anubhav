@@ -90,6 +90,26 @@ require_once __DIR__ . '/admin_header.php';
   </p>
 </div>
 
+<!-- Quick Links Navigation Banner for SEO -->
+<div class="mb-6 p-4 bg-gradient-to-r from-indigo-50 via-purple-50 to-amber-50 rounded-2xl border border-indigo-100 flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-xs">
+  <div class="flex items-center gap-3">
+    <div class="w-10 h-10 rounded-xl bg-indigo-600 text-white flex items-center justify-center font-bold text-sm shrink-0 shadow-sm">
+      <i class="fa-solid fa-magnifying-glass-chart"></i>
+    </div>
+    <div>
+      <h4 class="text-xs font-black text-gray-900 flex items-center gap-2">
+        होमपेज टाइटल एवं ऑन-पेज SEO (Homepage Title & On-Page SEO)
+      </h4>
+      <p class="text-[11px] text-gray-600 mt-0.5">
+        होमपेज का ब्राउज़र टाइटल (&lt;title&gt;), मेटा विवरण, कीवर्ड्स, Google सर्च स्निपेट प्रिव्यू एवं सोशल कार्ड्स कॉन्फ़िगर करें।
+      </p>
+    </div>
+  </div>
+  <a href="/admin/seo_settings.php" class="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold rounded-xl transition flex items-center gap-1.5 shrink-0 shadow-xs">
+    <i class="fa-solid fa-gear"></i> On-Page SEO सेटिंग्स खोलें
+  </a>
+</div>
+
 <form action="/admin/site_settings.php" method="POST" enctype="multipart/form-data" class="space-y-8">
   <input type="hidden" name="save_settings" value="1">
 

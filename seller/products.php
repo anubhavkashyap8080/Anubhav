@@ -42,14 +42,21 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['add_product'])) {
 
     try {
         $stmt = $pdo->prepare("
+            $seo_title = clean_input($_POST['seo_title'] ?? '');
+        $seo_description = clean_input($_POST['seo_description'] ?? '');
+        $seo_keywords = clean_input($_POST['seo_keywords'] ?? '');
+
+        $stmt = $pdo->prepare("
             INSERT INTO products (
                 code, vendor_id, category_id, name, hindi_name, slug, price, original_price,
-                discount, weight_kg, stock, stock_status, rating, review_count, image, unit, description
-            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'In Stock', 5.0, 1, ?, ?, ?)
+                discount, weight_kg, stock, stock_status, rating, review_count, image, unit, description,
+                seo_title, seo_description, seo_keywords
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'In Stock', 5.0, 1, ?, ?, ?, ?, ?, ?)
         ");
         $stmt->execute([
             $code, $vendor_id, $category_id, $name, $hindi_name, $slug, $price, $original_price,
-            $discount, $weight_kg, $stock, $image_url, $unit, $description
+            $discount, $weight_kg, $stock, $image_url, $unit, $description,
+            $seo_title, $seo_description, $seo_keywords
         ]);
         log_audit_action('seller_product_created', 'products', "Vendor #{$vendor_id} added product {$name} ({$code})");
         set_flash('success', 'नया उत्पाद "' . htmlspecialchars($name) . '" सफलतापूर्वक कैटलॉग में जोड़ा गया!');
@@ -78,8 +85,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['edit_product'])) {
     if ($pid > 0 && !empty($name) && $price > 0) {
         $discount = ($original_price > $price) ? round((($original_price - $price) / $original_price) * 100) : 0;
         try {
-            $sql_up = "UPDATE products SET name = ?, hindi_name = ?, category_id = ?, price = ?, original_price = ?, discount = ?, weight_kg = ?, stock = ?, unit = ?, description = ?";
-            $params = [$name, $hindi_name, $category_id, $price, $original_price, $discount, $weight_kg, $stock, $unit, $description];
+            $seo_title = clean_input($_POST['seo_title'] ?? '');
+            $seo_description = clean_input($_POST['seo_description'] ?? '');
+            $seo_keywords = clean_input($_POST['seo_keywords'] ?? '');
+
+            $sql_up = "UPDATE products SET name = ?, hindi_name = ?, category_id = ?, price = ?, original_price = ?, discount = ?, weight_kg = ?, stock = ?, unit = ?, description = ?, seo_title = ?, seo_description = ?, seo_keywords = ?";
+            $params = [$name, $hindi_name, $category_id, $price, $original_price, $discount, $weight_kg, $stock, $unit, $description, $seo_title, $seo_description, $seo_keywords];
             if (!empty($image_url)) {
                 $sql_up .= ", image = ?";
                 $params[] = $image_url;
@@ -384,7 +395,10 @@ require_once __DIR__ . '/seller_header.php';
                     "stock" => $p["stock"],
                     "unit" => $p["unit"] ?? "piece",
                     "image" => $p["image"],
-                    "description" => $p["description"] ?? ""
+                    "description" => $p["description"] ?? "",
+                    "seo_title" => $p["seo_title"] ?? "",
+                    "seo_description" => $p["seo_description"] ?? "",
+                    "seo_keywords" => $p["seo_keywords"] ?? ""
                 ], JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_HEX_AMP) ?>)'
                   class="p-1.5 text-stone-500 hover:text-amber-600 rounded hover:bg-amber-50 transition cursor-pointer" title="संपादित करें">
                   <i class="fa-solid fa-pen-to-square"></i>
@@ -656,6 +670,9 @@ function openSellerEditProductModal(p) {
   document.getElementById('s_edit_stock').value = p.stock || 50;
   document.getElementById('s_edit_img').value = p.image || '';
   document.getElementById('s_edit_desc').value = p.description || '';
+  document.getElementById('s_edit_seo_title').value = p.seo_title || '';
+  document.getElementById('s_edit_seo_description').value = p.seo_description || '';
+  document.getElementById('s_edit_seo_keywords').value = p.seo_keywords || '';
   document.getElementById('sellerEditProductModal').classList.remove('hidden');
 }
 </script>

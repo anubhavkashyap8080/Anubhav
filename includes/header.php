@@ -23,12 +23,30 @@ try {
     $header_categories = $stmt->fetchAll();
 } catch (Exception $e) {}
 
-$page_title = isset($page_title) ? $page_title . ' — ' . APP_NAME : APP_NAME . ' — Indian Rural Artisan Tools & Farm Produce';
-$page_desc = isset($page_desc) ? $page_desc : 'High-durability hand-forged agricultural tools, unpolished pulses, Banarasi pickles, and authentic handlooms direct from Indian village clusters.';
+// Dynamic SEO & Title Resolution Engine
+$site_seo_title = get_site_setting('homepage_title', get_site_setting('seo_meta_title', APP_NAME . ' — Desh ki mitti ka swad | Rural Tools & Farm Staples'));
+$site_seo_desc = get_site_setting('seo_meta_description', 'High-durability hand-forged agricultural tools, unpolished pulses, Banarasi pickles, and authentic handlooms direct from Indian village clusters.');
+$site_seo_keywords = get_site_setting('seo_meta_keywords', 'farming tools, sickle, hansiya, khurpi, unpolished dal, banarasi achar, rural artisans, Hardoi foundries');
+$robots_meta = get_site_setting('seo_robots_meta', 'index, follow');
+
+if ($current_page === 'index.php' || empty($page_title)) {
+    $page_title = $site_seo_title;
+} elseif (strpos($page_title, APP_NAME) === false) {
+    $page_title = $page_title . ' — ' . APP_NAME;
+}
+
+if (empty($page_desc)) {
+    $page_desc = $site_seo_desc;
+}
+if (empty($page_keywords)) {
+    $page_keywords = $site_seo_keywords;
+}
 
 $canonical_base = get_site_setting('seo_canonical_url', 'https://ganvgalihat.com');
 $current_canonical_url = rtrim($canonical_base, '/') . ($_SERVER['REQUEST_URI'] ?? '/');
-$og_image = get_site_setting('seo_og_image', 'https://images.unsplash.com/photo-1504148455328-c376907d081c?w=1200');
+if (empty($og_image)) {
+    $og_image = get_site_setting('seo_og_image', 'https://images.unsplash.com/photo-1504148455328-c376907d081c?w=1200');
+}
 $twitter_handle = get_site_setting('seo_twitter_handle', '@ganvgalihat');
 $gsc_tag = get_site_setting('seo_google_console', '');
 $ga4_id = get_site_setting('ga4_measurement_id', get_site_setting('seo_google_analytics', ''));
@@ -52,6 +70,8 @@ $active_site_logo = ($use_gif_logo && !empty($logo_gif_url)) ? $logo_gif_url : $
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title><?= htmlspecialchars($page_title) ?></title>
   <meta name="description" content="<?= htmlspecialchars($page_desc) ?>">
+  <meta name="keywords" content="<?= htmlspecialchars($page_keywords) ?>">
+  <meta name="robots" content="<?= htmlspecialchars($robots_meta) ?>">
   <link rel="canonical" href="<?= htmlspecialchars($current_canonical_url) ?>">
   <link rel="icon" type="image/x-icon" href="/favicon.ico">
   <link rel="icon" type="image/png" sizes="32x32" href="/favicon.png">

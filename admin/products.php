@@ -38,6 +38,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['edit_product'])) {
     $stock_status = clean_input($_POST['stock_status'] ?? 'In Stock');
     $weight_kg = floatval($_POST['weight_kg'] ?? 0.5);
     $image = clean_input($_POST['image'] ?? '');
+    $seo_title = clean_input($_POST['seo_title'] ?? '');
+    $seo_description = clean_input($_POST['seo_description'] ?? '');
+    $seo_keywords = clean_input($_POST['seo_keywords'] ?? '');
 
     if ($pid > 0 && !empty($name) && $price > 0) {
         $discount = ($orig_price > $price) ? round((($orig_price - $price) / $orig_price) * 100) : 0;
@@ -45,10 +48,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['edit_product'])) {
             $stmt = $pdo->prepare("
                 UPDATE products 
                 SET name = ?, hindi_name = ?, category_id = ?, vendor_id = ?, price = ?, original_price = ?,
-                    discount = ?, stock = ?, stock_status = ?, weight_kg = ?, image = ?
+                    discount = ?, stock = ?, stock_status = ?, weight_kg = ?, image = ?,
+                    seo_title = ?, seo_description = ?, seo_keywords = ?
                 WHERE id = ?
             ");
-            $stmt->execute([$name, $hindi_name, $cat_id, $vendor_id, $price, $orig_price, $discount, $stock, $stock_status, $weight_kg, $image, $pid]);
+            $stmt->execute([$name, $hindi_name, $cat_id, $vendor_id, $price, $orig_price, $discount, $stock, $stock_status, $weight_kg, $image, $seo_title, $seo_description, $seo_keywords, $pid]);
             log_audit_action('admin_edit_product', 'products', "Product #{$pid} edited by admin");
             set_flash('success', 'उत्पाद विवरण सफलतापूर्वक अपडेट किया गया!');
             header('Location: /admin/products.php');
@@ -236,7 +240,10 @@ require_once __DIR__ . '/admin_header.php';
                   "stock" => $p["stock"],
                   "stock_status" => $p["stock_status"],
                   "weight_kg" => $p["weight_kg"],
-                  "image" => $p["image"]
+                  "image" => $p["image"],
+                  "seo_title" => $p["seo_title"] ?? "",
+                  "seo_description" => $p["seo_description"] ?? "",
+                  "seo_keywords" => $p["seo_keywords"] ?? ""
               ], JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_HEX_AMP) ?>)'
                 class="p-1.5 text-stone-500 hover:text-indigo-600 rounded hover:bg-indigo-50 transition cursor-pointer" title="संपादित करें">
                 <i class="fa-solid fa-pen-to-square"></i>
@@ -385,6 +392,36 @@ require_once __DIR__ . '/admin_header.php';
           class="w-full px-3.5 py-2.5 bg-stone-50 border border-gray-200 rounded-xl text-xs focus:bg-white focus:outline-none focus:border-indigo-600 transition">
       </div>
 
+      <!-- Dedicated Product On-Page SEO Section -->
+      <div class="p-4 bg-gradient-to-br from-indigo-50/60 to-purple-50/60 rounded-2xl border border-indigo-200/80 space-y-3">
+        <div class="flex items-center justify-between">
+          <h4 class="text-xs font-black text-indigo-900 uppercase tracking-wider flex items-center gap-1.5">
+            <i class="fa-solid fa-magnifying-glass-chart text-indigo-600"></i>
+            उत्पाद ऑन-पेज SEO (Product On-Page SEO Data)
+          </h4>
+          <span class="text-[10px] font-bold text-indigo-700 bg-white px-2 py-0.5 rounded-full border border-indigo-200">Google SERP Ready</span>
+        </div>
+
+        <div>
+          <label class="block text-xs font-bold text-gray-800 mb-1">SEO Title Tag (सर्च रिजल्ट शीर्षक)</label>
+          <input type="text" name="seo_title" id="edit_p_seo_title" maxlength="70" placeholder="उदा. Buy Heavy Forged Kulhadi Online | GaunGaliHat"
+            class="w-full px-3.5 py-2 bg-white border border-indigo-200 rounded-xl text-xs focus:outline-none focus:border-indigo-600 transition">
+          <p class="text-[10px] text-gray-500 mt-0.5">खाली रहने पर स्वतः '[Product Name] — GaunGaliHat' उपयोग होगा।</p>
+        </div>
+
+        <div>
+          <label class="block text-xs font-bold text-gray-800 mb-1">SEO Meta Description (गूगल स्निपेट विवरण)</label>
+          <textarea name="seo_description" id="edit_p_seo_description" rows="2" maxlength="250" placeholder="गूगल सर्च रिजल्ट में दिखने वाला 140-160 अक्षरों का संक्षिप्त विवरण..."
+            class="w-full px-3.5 py-2 bg-white border border-indigo-200 rounded-xl text-xs focus:outline-none focus:border-indigo-600 transition"></textarea>
+        </div>
+
+        <div>
+          <label class="block text-xs font-bold text-gray-800 mb-1">SEO Keywords (सर्च कीवर्ड्स, Comma Separated)</label>
+          <input type="text" name="seo_keywords" id="edit_p_seo_keywords" placeholder="उदा. sickle, desi hansiya, farm sickle, hand forged tools"
+            class="w-full px-3.5 py-2 bg-white border border-indigo-200 rounded-xl text-xs focus:outline-none focus:border-indigo-600 transition">
+        </div>
+      </div>
+
       <div class="flex items-center justify-end gap-3 pt-3 border-t border-gray-100">
         <button type="button" onclick="document.getElementById('editProductModal').classList.add('hidden')"
           class="px-4 py-2 bg-stone-100 text-stone-700 font-bold rounded-xl text-xs">
@@ -412,6 +449,9 @@ function openEditProductModal(p) {
   document.getElementById('edit_p_stock').value = p.stock || 50;
   document.getElementById('edit_p_stock_status').value = p.stock_status || 'In Stock';
   document.getElementById('edit_p_image').value = p.image || '';
+  document.getElementById('edit_p_seo_title').value = p.seo_title || '';
+  document.getElementById('edit_p_seo_description').value = p.seo_description || '';
+  document.getElementById('edit_p_seo_keywords').value = p.seo_keywords || '';
   document.getElementById('editProductModal').classList.remove('hidden');
 }
 </script>

@@ -41,7 +41,12 @@ if (!$product) {
     exit;
 }
 
-$page_title = $product['name'] . ' — ' . APP_NAME;
+$page_title = !empty($product['seo_title']) ? $product['seo_title'] : ($product['name'] . ' — ' . APP_NAME);
+$page_desc = !empty($product['seo_description']) ? $product['seo_description'] : mb_substr(strip_tags($product['description'] ?? ''), 0, 160);
+$page_keywords = !empty($product['seo_keywords']) ? $product['seo_keywords'] : ($product['name'] . ', ' . ($product['category_name'] ?? '') . ', buy online, ' . APP_NAME);
+if (!empty($product['image'])) {
+    $og_image = $product['image'];
+}
 $gallery = json_decode($product['gallery'] ?? '[]', true) ?: [$product['image']];
 $specifications = json_decode($product['specifications'] ?? '{}', true) ?: [];
 

@@ -192,6 +192,35 @@ function ensure_platform_schema($pdo) {
     $driver = $pdo->getAttribute(PDO::ATTR_DRIVER_NAME);
     $is_sqlite = ($driver === 'sqlite');
 
+    // Auto-migrate SEO columns in products table (seo_title, seo_description, seo_keywords)
+    try {
+        if ($is_sqlite) {
+            $cols = $pdo->query("PRAGMA table_info(products)")->fetchAll(PDO::FETCH_COLUMN, 1);
+            if (!in_array('seo_title', $cols)) {
+                $pdo->exec("ALTER TABLE products ADD COLUMN seo_title TEXT DEFAULT NULL");
+            }
+            if (!in_array('seo_description', $cols)) {
+                $pdo->exec("ALTER TABLE products ADD COLUMN seo_description TEXT DEFAULT NULL");
+            }
+            if (!in_array('seo_keywords', $cols)) {
+                $pdo->exec("ALTER TABLE products ADD COLUMN seo_keywords TEXT DEFAULT NULL");
+            }
+        } else {
+            $col_t = $pdo->query("SHOW COLUMNS FROM `products` LIKE 'seo_title'")->fetch();
+            if (!$col_t) {
+                $pdo->exec("ALTER TABLE `products` ADD COLUMN `seo_title` VARCHAR(255) DEFAULT NULL");
+            }
+            $col_d = $pdo->query("SHOW COLUMNS FROM `products` LIKE 'seo_description'")->fetch();
+            if (!$col_d) {
+                $pdo->exec("ALTER TABLE `products` ADD COLUMN `seo_description` TEXT DEFAULT NULL");
+            }
+            $col_k = $pdo->query("SHOW COLUMNS FROM `products` LIKE 'seo_keywords'")->fetch();
+            if (!$col_k) {
+                $pdo->exec("ALTER TABLE `products` ADD COLUMN `seo_keywords` VARCHAR(255) DEFAULT NULL");
+            }
+        }
+    } catch (Throwable $e_seo_mig) {}
+
     // 1. site_settings
     if ($is_sqlite) {
         $pdo->exec("

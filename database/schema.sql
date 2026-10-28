@@ -99,6 +99,9 @@ CREATE TABLE IF NOT EXISTS `products` (
   `is_featured` TINYINT(1) DEFAULT 0,
   `is_women_made` TINYINT(1) DEFAULT 0,
   `is_tool` TINYINT(1) DEFAULT 0,
+  `seo_title` VARCHAR(255) DEFAULT NULL,
+  `seo_description` TEXT DEFAULT NULL,
+  `seo_keywords` VARCHAR(255) DEFAULT NULL,
   `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
@@ -322,7 +325,9 @@ INSERT IGNORE INTO `site_settings` (`setting_key`, `setting_value`) VALUES
 ('logo_height_desktop', '48'),
 ('site_logo_url', '/logo.png'),
 ('use_gif_logo', '0'),
-('logo_gif_url', '');
+('logo_gif_url', ''),
+('homepage_title', 'GaunGaliHat — Desh ki mitti ka swad | Rural Tools & Farm Staples'),
+('seo_robots_meta', 'index, follow');
 
 
 -- ==========================================================================
