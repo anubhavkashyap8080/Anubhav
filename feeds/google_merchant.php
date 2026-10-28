@@ -9,9 +9,8 @@ require_once __DIR__ . '/../includes/functions.php';
 require_once __DIR__ . '/../config/shipping.php';
 
 // Canonical base URL
-$protocol = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') ? 'https' : 'http';
-$host = $_SERVER['HTTP_HOST'] ?? 'localhost:8000';
-$site_url = rtrim(get_setting('seo_canonical_url', "$protocol://$host"), '/');
+$default_base = defined('SITE_URL') ? rtrim(SITE_URL, '/') : 'https://gaungalihat.womenvission.in';
+$site_url = rtrim(get_setting('seo_canonical_url', $default_base), '/');
 
 // Fetch all active products with category and vendor details
 $stmt = $pdo->query("

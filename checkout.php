@@ -54,6 +54,7 @@ $grand_total = max(0, $subtotal + $shipping_fee - $discount_amount);
     </div>
 
     <form id="checkoutForm" action="/payments/process.php" method="POST">
+      <input type="hidden" name="csrf_token" value="<?= csrf_token() ?>">
       <div class="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
         
         <!-- Left: Address & Payment Selection (7 cols) -->
@@ -347,6 +348,9 @@ $grand_total = max(0, $subtotal + $shipping_fee - $discount_amount);
                 </span>
               </div>
             </div>
+
+            <!-- Security CAPTCHA Verification -->
+            <?= render_turnstile_widget() ?>
 
             <!-- Submit Button -->
             <button type="submit" id="submitOrderBtn"

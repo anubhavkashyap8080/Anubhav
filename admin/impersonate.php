@@ -1,53 +1,92 @@
 <?php
 /**
  * GaunGaliHat Administrative Impersonation Gateway
- * Allows Super Admin and Admin to inspect any user / seller account directly
+ * Security Hardened:
+ * 1. Strictly restricted to 'super_admin' role only
+ * 2. Mandatory POST + CSRF validation (all GET endpoints disabled)
+ * 3. Never permits impersonating another 'super_admin'
+ * 4. Comprehensive audit logging for impersonate_start and impersonate_stop
+ * 5. Session regeneration on privilege switch
  */
 
 require_once __DIR__ . '/../includes/functions.php';
 require_once __DIR__ . '/../includes/auth_check.php';
 
-// Only authorized administrators or active impersonators can use this gateway
-if (!is_admin() && empty($_SESSION['impersonator_id'])) {
-    set_flash('error', 'प्रशासनिक विशेषाधिकार आवश्यक हैं। (Administrative clearance required)');
-    header('Location: /login.php');
+// 1. Strict POST Request Method Enforcement
+if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+    http_response_code(405);
+    set_flash('error', 'केवल POST अनुरोध स्वीकार्य हैं। (Method Not Allowed)');
+    header('Location: /admin/users.php');
     exit;
 }
 
-$action = clean_input($_GET['action'] ?? 'login_as');
+// 2. Strict CSRF Token Verification
+if (!verify_csrf($_POST['csrf_token'] ?? '')) {
+    log_audit_action('impersonate_csrf_failed', 'users', 'CSRF token mismatch on impersonation gateway');
+    set_flash('error', 'CSRF सुरक्षा सत्यापन विफल रहा। (Invalid CSRF Token)');
+    header('Location: /admin/users.php');
+    exit;
+}
 
-// 1. EXIT IMPERSONATION: Restore original administrator session
+$action = trim((string)($_POST['action'] ?? ''));
+
+// =========================================================================
+// ACTION: EXIT IMPERSONATION (Restore Original Super Admin Session)
+// =========================================================================
 if ($action === 'exit') {
-    if (!empty($_SESSION['impersonator_id'])) {
-        $orig_id = intval($_SESSION['impersonator_id']);
-        $stmt = $pdo->prepare("SELECT * FROM users WHERE id = ? AND status = 'active' LIMIT 1");
-        $stmt->execute([$orig_id]);
-        $orig_admin = $stmt->fetch();
-
-        if ($orig_admin) {
-            $_SESSION['user_id'] = $orig_admin['id'];
-            $_SESSION['user_name'] = $orig_admin['name'];
-            $_SESSION['user_role'] = $orig_admin['role'];
-            $_SESSION['user_email'] = $orig_admin['email'];
-
-            unset($_SESSION['impersonator_id']);
-            unset($_SESSION['impersonator_name']);
-            unset($_SESSION['impersonator_role']);
-
-            set_flash('success', 'नमस्ते ' . htmlspecialchars($orig_admin['name']) . ', आप केंद्रीय प्रशासनिक नियंत्रण में वापस लौट आए हैं।');
-            header('Location: /admin/index.php');
-            exit;
-        }
+    if (empty($_SESSION['impersonator_id'])) {
+        header('Location: /admin/index.php');
+        exit;
     }
-    header('Location: /admin/index.php');
-    exit;
+
+    $orig_id = intval($_SESSION['impersonator_id']);
+    $current_impersonated_id = intval($_SESSION['user_id'] ?? 0);
+
+    $stmt = $pdo->prepare("SELECT * FROM users WHERE id = ? AND role = 'super_admin' AND status = 'active' LIMIT 1");
+    $stmt->execute([$orig_id]);
+    $orig_admin = $stmt->fetch();
+
+    if ($orig_admin) {
+        // Regenerate Session ID to prevent session hijacking
+        session_regenerate_id(true);
+
+        $_SESSION['user_id'] = $orig_admin['id'];
+        $_SESSION['user_name'] = $orig_admin['name'];
+        $_SESSION['user_role'] = $orig_admin['role'];
+        $_SESSION['user_email'] = $orig_admin['email'];
+        $_SESSION['last_activity'] = time();
+
+        unset($_SESSION['impersonator_id']);
+        unset($_SESSION['impersonator_name']);
+        unset($_SESSION['impersonator_role']);
+
+        log_audit_action(
+            'impersonate_stop',
+            'users',
+            "Super Admin #{$orig_admin['id']} ({$orig_admin['email']}) exited impersonation of user #{$current_impersonated_id}"
+        );
+
+        set_flash('success', 'नमस्ते ' . htmlspecialchars($orig_admin['name'], ENT_QUOTES, 'UTF-8') . ', आप केंद्रीय सुपर एडमिन नियंत्रण में वापस लौट आए हैं।');
+        header('Location: /admin/users.php');
+        exit;
+    } else {
+        log_audit_action('impersonate_exit_failed', 'users', "Original super admin #{$orig_id} not found or inactive on exit attempt");
+        session_destroy();
+        header('Location: /login.php');
+        exit;
+    }
 }
 
-// 2. LOGIN AS USER / SELLER
+// =========================================================================
+// ACTION: LOGIN AS USER / SELLER (Start Impersonation)
+// =========================================================================
 if ($action === 'login_as') {
-    $target_user_id = intval($_GET['user_id'] ?? 0);
+    // Only super_admin may initiate an impersonation session
+    require_super_admin();
+
+    $target_user_id = intval($_POST['target_user_id'] ?? 0);
     if ($target_user_id <= 0) {
-        set_flash('error', 'अमान्य खाता पहचानकर्ता (Invalid User ID).');
+        set_flash('error', 'अमान्य खाता पहचानकर्ता।');
         header('Location: /admin/users.php');
         exit;
     }
@@ -62,25 +101,54 @@ if ($action === 'login_as') {
         exit;
     }
 
-    // Save current admin identity if not already stored
-    if (empty($_SESSION['impersonator_id'])) {
-        $_SESSION['impersonator_id'] = $_SESSION['user_id'];
-        $_SESSION['impersonator_name'] = $_SESSION['user_name'];
-        $_SESSION['impersonator_role'] = $_SESSION['user_role'];
+    // SECURITY RULE: Never allow impersonating another super_admin!
+    if ($target_user['role'] === 'super_admin') {
+        log_audit_action(
+            'impersonate_super_admin_blocked',
+            'users',
+            "Super Admin #{$_SESSION['user_id']} was blocked from impersonating another Super Admin #{$target_user_id}"
+        );
+        set_flash('error', 'सुरक्षा प्रतिबंध: किसी अन्य सुपर एडमिन खाते का प्रतिरूपण (Impersonation) सख्त वर्जित है।');
+        header('Location: /admin/users.php');
+        exit;
     }
 
-    // Switch session to target user
-    $_SESSION['user_id'] = $target_user['id'];
-    $_SESSION['user_name'] = $target_user['name'];
-    $_SESSION['user_role'] = $target_user['role'];
-    $_SESSION['user_email'] = $target_user['email'];
+    if ($target_user['id'] === $_SESSION['user_id']) {
+        set_flash('error', 'आप पहले से ही स्वयं के सुपर एडमिन खाते में सक्रिय हैं।');
+        header('Location: /admin/users.php');
+        exit;
+    }
 
-    set_flash('success', 'सुरक्षित प्रशासनिक स्विच: अब आप ' . htmlspecialchars($target_user['name']) . ' (' . htmlspecialchars($target_user['role']) . ') के रूप में कार्य कर रहे हैं।');
+    // Save original super admin identity
+    $current_admin_id = $_SESSION['user_id'];
+    $current_admin_name = $_SESSION['user_name'];
+    $current_admin_role = $_SESSION['user_role'];
+
+    // Switch session context to target user
+    session_regenerate_id(true);
+
+    $_SESSION['impersonator_id']   = $current_admin_id;
+    $_SESSION['impersonator_name'] = $current_admin_name;
+    $_SESSION['impersonator_role'] = $current_admin_role;
+
+    $_SESSION['user_id']       = $target_user['id'];
+    $_SESSION['user_name']     = $target_user['name'];
+    $_SESSION['user_role']     = $target_user['role'];
+    $_SESSION['user_email']    = $target_user['email'];
+    $_SESSION['last_activity'] = time();
+
+    log_audit_action(
+        'impersonate_start',
+        'users',
+        "Super Admin #{$current_admin_id} started impersonating {$target_user['role']} #{$target_user['id']} ({$target_user['email']})"
+    );
+
+    set_flash('success', 'सुरक्षित प्रशासनिक स्विच: अब आप ' . htmlspecialchars($target_user['name'], ENT_QUOTES, 'UTF-8') . ' (' . htmlspecialchars($target_user['role'], ENT_QUOTES, 'UTF-8') . ') के रूप में कार्य कर रहे हैं।');
 
     if ($target_user['role'] === 'vendor') {
         header('Location: /seller/dashboard.php');
         exit;
-    } elseif (in_array($target_user['role'], ['admin', 'super_admin'])) {
+    } elseif ($target_user['role'] === 'admin') {
         header('Location: /admin/index.php');
         exit;
     } else {
@@ -88,3 +156,7 @@ if ($action === 'login_as') {
         exit;
     }
 }
+
+// Fallback
+header('Location: /admin/users.php');
+exit;

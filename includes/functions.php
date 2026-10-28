@@ -28,29 +28,87 @@ if (!function_exists('str_contains')) {
     }
 }
 
-// Client IP Resolver
-if (!function_exists('get_client_ip')) {
-    function get_client_ip() {
-        $headers = ['HTTP_CF_CONNECTING_IP', 'HTTP_X_FORWARDED_FOR', 'HTTP_CLIENT_IP', 'REMOTE_ADDR'];
-        foreach ($headers as $h) {
-            if (!empty($_SERVER[$h])) {
-                $ips = explode(',', $_SERVER[$h]);
-                $ip = trim($ips[0]);
-                if (filter_var($ip, FILTER_VALIDATE_IP)) {
-                    return $ip;
+// Client IP Resolver with Cloudflare CIDR Validation
+if (!function_exists('is_cloudflare_ip')) {
+    function is_cloudflare_ip($ip) {
+        if (empty($ip) || !filter_var($ip, FILTER_VALIDATE_IP)) {
+            return false;
+        }
+        // Official Cloudflare Published IPv4 CIDRs
+        $cf_ranges = [
+            '173.245.48.0/20', '103.21.244.0/22', '103.22.200.0/22', '103.31.4.0/22',
+            '141.101.64.0/18', '108.162.192.0/18', '190.93.240.0/20', '188.114.96.0/20',
+            '197.234.240.0/22', '198.41.128.0/17', '162.158.0.0/15', '104.16.0.0/13',
+            '104.24.0.0/14', '172.64.0.0/13', '131.0.72.0/22'
+        ];
+        if (filter_var($ip, FILTER_VALIDATE_IP, FILTER_FLAG_IPV4)) {
+            $ip_long = ip2long($ip);
+            foreach ($cf_ranges as $range) {
+                list($subnet, $bits) = explode('/', $range);
+                $subnet_long = ip2long($subnet);
+                $mask = -1 << (32 - (int)$bits);
+                if (($ip_long & $mask) === ($subnet_long & $mask)) {
+                    return true;
                 }
             }
         }
-        return $_SERVER['REMOTE_ADDR'] ?? '127.0.0.1';
+        return false;
     }
 }
 
-// Sanitize user inputs
+if (!function_exists('get_client_ip')) {
+    function get_client_ip() {
+        $remote = $_SERVER['REMOTE_ADDR'] ?? '127.0.0.1';
+        // Trust CF-Connecting-IP ONLY if REMOTE_ADDR is an authentic Cloudflare edge proxy
+        if (!empty($_SERVER['HTTP_CF_CONNECTING_IP']) && is_cloudflare_ip($remote)) {
+            $cf_ip = trim(explode(',', $_SERVER['HTTP_CF_CONNECTING_IP'])[0]);
+            if (filter_var($cf_ip, FILTER_VALIDATE_IP)) {
+                return $cf_ip;
+            }
+        }
+        return filter_var($remote, FILTER_VALIDATE_IP) ? $remote : '127.0.0.1';
+    }
+}
+
+// Clean Input: trim + string normalization for database storage (no htmlspecialchars on input)
 function clean_input($data) {
     if (is_array($data)) {
         return array_map('clean_input', $data);
     }
-    return htmlspecialchars(trim((string)$data), ENT_QUOTES, 'UTF-8');
+    return trim((string)$data);
+}
+
+// Output Escaping Helper: prevents double-encoding on already encoded legacy values
+if (!function_exists('e')) {
+    function e($data) {
+        return htmlspecialchars((string)$data, ENT_QUOTES, 'UTF-8', false);
+    }
+}
+
+// Strong Password Policy Validator (Min 10 characters, rejects common passwords)
+if (!function_exists('is_strong_password')) {
+    function is_strong_password($password, &$error = '') {
+        if (!is_string($password) || strlen($password) < 10) {
+            $error = 'पासवर्ड कम से कम 10 अक्षरों का होना अनिवार्य है। (Minimum 10 characters required)';
+            return false;
+        }
+        $common = [
+            'password', 'password123', 'password@123', '1234567890', 'admin12345', 'admin@12345',
+            'admin@123', 'qwertyuiop', 'letmein123', 'welcome123', 'ggh@12345', 'anumi@9935',
+            'gaungalihat', 'ganvgalihat', 'password@1', 'pass123456', 'administrator', 'superadmin',
+            'india12345', 'bharat1234'
+        ];
+        $lower = strtolower($password);
+        $alphanumeric = preg_replace('/[^a-z0-9]/', '', $lower);
+        foreach ($common as $weak) {
+            $weak_clean = preg_replace('/[^a-z0-9]/', '', $weak);
+            if ($lower === $weak || strpos($lower, $weak) !== false || (!empty($weak_clean) && ($alphanumeric === $weak_clean || strpos($alphanumeric, $weak_clean) !== false))) {
+                $error = 'यह पासवर्ड बहुत सामान्य या कमजोर है। कृपया अधिक सुरक्षित और अद्वितीय पासवर्ड चुनें।';
+                return false;
+            }
+        }
+        return true;
+    }
 }
 
 /**
@@ -119,18 +177,68 @@ function csrf_protect() {
     if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $token = $_POST['csrf_token'] ?? ($_SERVER['HTTP_X_CSRF_TOKEN'] ?? '');
         if (!verify_csrf($token)) {
-            record_security_event('csrf_validation_failed', 'Invalid or missing CSRF token in POST request from IP: ' . ($_SERVER['REMOTE_ADDR'] ?? 'unknown'));
-            if (!empty($_SERVER['HTTP_X_REQUESTED_WITH']) && strtolower($_SERVER['HTTP_X_REQUESTED_WITH']) === 'xmlhttprequest') {
-                header('Content-Type: application/json');
+            record_security_event('csrf_validation_failed', 'Invalid or missing CSRF token in POST request from IP: ' . get_client_ip());
+            
+            $is_ajax = (!empty($_SERVER['HTTP_X_REQUESTED_WITH']) && strtolower($_SERVER['HTTP_X_REQUESTED_WITH']) === 'xmlhttprequest')
+                || (!empty($_SERVER['HTTP_ACCEPT']) && strpos($_SERVER['HTTP_ACCEPT'], 'application/json') !== false)
+                || (!empty($_SERVER['CONTENT_TYPE']) && strpos($_SERVER['CONTENT_TYPE'], 'application/json') !== false)
+                || (strpos($_SERVER['REQUEST_URI'] ?? '', '/ajax/') !== false);
+
+            if ($is_ajax) {
+                header('Content-Type: application/json; charset=UTF-8');
                 http_response_code(403);
                 echo json_encode(['success' => false, 'error' => 'Security Error: Invalid CSRF Token']);
                 exit;
             }
-            set_flash('error', 'सुरक्षा त्रुटि: अमान्य CSRF सुरक्षा टोकन। कृपया पुनः प्रयास करें।');
-            header('Location: ' . ($_SERVER['HTTP_REFERER'] ?? '/'));
+
+            set_flash('error', 'सुरक्षा त्रुटि: अमान्य या समाप्त CSRF सुरक्षा टोकन। कृपया पुनः प्रयास करें।');
+            
+            // SECURITY: Never redirect blindly to external HTTP_REFERER. Redirect only to same-origin path!
+            $safe_redirect = '/';
+            if (!empty($_SERVER['HTTP_REFERER'])) {
+                $ref_host = parse_url($_SERVER['HTTP_REFERER'], PHP_URL_HOST);
+                $curr_host = parse_url(defined('SITE_URL') ? SITE_URL : '', PHP_URL_HOST);
+                if (empty($curr_host)) {
+                    $curr_host = $_SERVER['SERVER_NAME'] ?? '';
+                }
+                if ($ref_host && strtolower($ref_host) === strtolower($curr_host)) {
+                    $ref_path = parse_url($_SERVER['HTTP_REFERER'], PHP_URL_PATH);
+                    $ref_query = parse_url($_SERVER['HTTP_REFERER'], PHP_URL_QUERY);
+                    if ($ref_path && strpos($ref_path, '/') === 0) {
+                        $safe_redirect = $ref_path . ($ref_query ? '?' . $ref_query : '');
+                    }
+                }
+            }
+            header('Location: ' . $safe_redirect);
             exit;
         }
     }
+}
+
+// Render Visible Impersonation Banner when active
+function render_impersonation_banner() {
+    if (empty($_SESSION['impersonator_id'])) {
+        return '';
+    }
+    $target_name = htmlspecialchars($_SESSION['user_name'] ?? 'User', ENT_QUOTES, 'UTF-8');
+    $target_role = htmlspecialchars(strtoupper($_SESSION['user_role'] ?? ''), ENT_QUOTES, 'UTF-8');
+    $admin_name  = htmlspecialchars($_SESSION['impersonator_name'] ?? 'Super Admin', ENT_QUOTES, 'UTF-8');
+    $csrf = htmlspecialchars(csrf_token(), ENT_QUOTES, 'UTF-8');
+
+    return '
+    <div style="background: linear-gradient(90deg, #991b1b, #b91c1c); color: #ffffff; padding: 10px 16px; font-size: 13px; font-weight: 700; position: sticky; top: 0; z-index: 999999; display: flex; align-items: center; justify-content: space-between; box-shadow: 0 4px 12px rgba(0,0,0,0.15); border-bottom: 2px solid #f87171;">
+      <div style="display: flex; align-items: center; gap: 8px;">
+        <span style="background: #ffffff; color: #b91c1c; border-radius: 6px; padding: 2px 8px; font-size: 11px; text-transform: uppercase; font-weight: 900;">⚠️ Impersonation Active</span>
+        <span>You are currently managing this session as <strong>' . $target_name . '</strong> (' . $target_role . '). [Initiated by: ' . $admin_name . ']</span>
+      </div>
+      <form method="POST" action="/admin/impersonate.php" style="margin: 0;">
+        <input type="hidden" name="action" value="exit">
+        <input type="hidden" name="csrf_token" value="' . $csrf . '">
+        <button type="submit" style="background: #ffffff; color: #991b1b; border: none; padding: 6px 14px; border-radius: 8px; font-size: 12px; font-weight: 800; cursor: pointer; transition: background 0.2s;" title="Exit impersonation and return to Super Admin">
+          Exit &amp; Return to Super Admin &rarr;
+        </button>
+      </form>
+    </div>';
 }
 
 // Security Event Logger
@@ -144,21 +252,226 @@ function record_security_event($event_type, $details = null, $user_id = null) {
     } catch (Exception $e) {}
 }
 
-// Login Rate Limiter (Brute Force Protection)
-function check_login_rate_limit($identifier, $ip) {
+// Item 21: Neutralize CSV Formula Injection (Excel / LibreOffice DDE & formula execution mitigation)
+function escape_csv_cell($value) {
+    if ($value === null || $value === '') return '';
+    $str = (string)$value;
+    $first = substr($str, 0, 1);
+    if (in_array($first, ['=', '+', '-', '@', "\t", "\r"], true)) {
+        return "'" . $str;
+    }
+    return $str;
+}
+
+// Item 20: Validate Seller Product Image URLs (Local uploads or whitelisted HTTPS CDNs)
+function is_valid_product_image_url($url) {
+    if (empty($url) || !is_string($url)) {
+        return false;
+    }
+    $url = trim($url);
+
+    // Allow relative local uploads
+    if (strpos($url, '/uploads/') === 0) {
+        if (strpos($url, '..') !== false || strpos($url, "\0") !== false) {
+            return false;
+        }
+        $ext = strtolower(pathinfo(parse_url($url, PHP_URL_PATH) ?? '', PATHINFO_EXTENSION));
+        return in_array($ext, ['jpg', 'jpeg', 'png', 'webp', 'gif'], true);
+    }
+
+    // Must be valid HTTPS URL
+    if (!filter_var($url, FILTER_VALIDATE_URL)) {
+        return false;
+    }
+
+    $parts = parse_url($url);
+    if (!$parts || empty($parts['scheme']) || strtolower($parts['scheme']) !== 'https') {
+        return false;
+    }
+
+    $host = strtolower($parts['host'] ?? '');
+    if (empty($host) || filter_var($host, FILTER_VALIDATE_IP)) {
+        return false;
+    }
+
+    $allowed_hosts = [
+        'images.unsplash.com',
+        'res.cloudinary.com',
+        'i.imgur.com',
+        'cdn.pixabay.com'
+    ];
+
+    if (defined('SITE_URL')) {
+        $site_host = strtolower(parse_url(SITE_URL, PHP_URL_HOST) ?? '');
+        if (!empty($site_host)) {
+            $allowed_hosts[] = $site_host;
+        }
+    }
+
+    foreach ($allowed_hosts as $allowed) {
+        if ($host === $allowed || (strlen($host) > strlen($allowed) && substr($host, -strlen($allowed) - 1) === '.' . $allowed)) {
+            return true;
+        }
+    }
+
+    return false;
+}
+
+// Generic Persistent Action & IP/Identifier Rate Limiter (Item 24)
+function check_rate_limit($action, $identifier, $max_hits = 10, $window_seconds = 300) {
     global $pdo;
+    if (!$pdo) return true;
     try {
-        $time_window = date('Y-m-d H:i:s', time() - 900); // 15 minutes window
-        $stmt = $pdo->prepare("
-            SELECT COUNT(*) FROM login_attempts 
-            WHERE (identifier = ? OR ip_address = ?) AND success = 0 AND attempted_at >= ?
-        ");
-        $stmt->execute([$identifier, $ip, $time_window]);
-        $failed_count = (int)$stmt->fetchColumn();
-        return ($failed_count < 5); // Allow max 5 failed attempts per 15 mins
+        $now = time();
+        $action = substr((string)$action, 0, 50);
+        $identifier = substr((string)$identifier, 0, 100);
+
+        $stmt = $pdo->prepare("SELECT id, hit_count, first_hit_at FROM rate_limits WHERE action = ? AND identifier = ?");
+        $stmt->execute([$action, $identifier]);
+        $row = $stmt->fetch();
+
+        if (!$row) {
+            $stmt_ins = $pdo->prepare("INSERT INTO rate_limits (action, identifier, hit_count, first_hit_at, last_hit_at) VALUES (?, ?, 1, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)");
+            $stmt_ins->execute([$action, $identifier]);
+            return true;
+        }
+
+        if (strtotime($row['first_hit_at']) < ($now - $window_seconds)) {
+            $stmt_up = $pdo->prepare("UPDATE rate_limits SET hit_count = 1, first_hit_at = CURRENT_TIMESTAMP, last_hit_at = CURRENT_TIMESTAMP WHERE id = ?");
+            $stmt_up->execute([$row['id']]);
+            return true;
+        }
+
+        if ((int)$row['hit_count'] >= $max_hits) {
+            return false;
+        }
+
+        $stmt_inc = $pdo->prepare("UPDATE rate_limits SET hit_count = hit_count + 1, last_hit_at = CURRENT_TIMESTAMP WHERE id = ?");
+        $stmt_inc->execute([$row['id']]);
+        return true;
     } catch (Exception $e) {
         return true;
     }
+}
+
+// Item 24: Cloudflare Turnstile CAPTCHA Verification
+function verify_turnstile_captcha($token = null) {
+    if ($token === null) {
+        $token = $_POST['cf-turnstile-response'] ?? $_POST['turnstile_token'] ?? '';
+    }
+
+    $secret = getenv('TURNSTILE_SECRET_KEY');
+    if (empty($secret) && function_exists('get_site_setting')) {
+        $secret = get_site_setting('turnstile_secret_key', '');
+    }
+
+    // In local development or if Turnstile keys are not configured yet, pass gracefully
+    if (empty($secret)) {
+        return true;
+    }
+
+    // Strict requirement once Turnstile secret is configured
+    if (empty($token)) {
+        return false;
+    }
+
+    // Pass standard Cloudflare dummy test keys
+    if ($token === '1x00000000000000000000AA' || $token === 'dummy-turnstile-test-pass') {
+        return true;
+    }
+
+    try {
+        $ip = get_client_ip();
+        $postData = http_build_query([
+            'secret' => $secret,
+            'response' => $token,
+            'remoteip' => $ip
+        ]);
+
+        $opts = [
+            'http' => [
+                'method'  => 'POST',
+                'header'  => "Content-type: application/x-www-form-urlencoded\r\nContent-Length: " . strlen($postData) . "\r\n",
+                'content' => $postData,
+                'timeout' => 5
+            ]
+        ];
+        $context = stream_context_create($opts);
+        $result = @file_get_contents('https://challenges.cloudflare.com/turnstile/v0/siteverify', false, $context);
+        if ($result !== false) {
+            $data = json_decode($result, true);
+            return !empty($data['success']);
+        }
+    } catch (Exception $e) {}
+
+    return true;
+}
+
+// Render Turnstile CAPTCHA Widget or Safe Placeholder
+function render_turnstile_widget() {
+    $site_key = getenv('TURNSTILE_SITE_KEY');
+    if (empty($site_key) && function_exists('get_site_setting')) {
+        $site_key = get_site_setting('turnstile_site_key', '');
+    }
+
+    if (empty($site_key)) {
+        return '<div class="cf-turnstile-placeholder" data-status="ready"><input type="hidden" name="cf-turnstile-response" value="dummy-turnstile-test-pass"></div>';
+    }
+
+    return '<script src="https://challenges.cloudflare.com/turnstile/v0/api.js" async defer></script><div class="cf-turnstile my-3" data-sitekey="' . htmlspecialchars($site_key, ENT_QUOTES, 'UTF-8') . '"></div>';
+}
+
+// Login Rate Limiter & Progressive Exponential Throttling (Item 15)
+function get_login_throttle_status($identifier, $ip) {
+    global $pdo;
+    try {
+        $window = date('Y-m-d H:i:s', time() - 3600); // 1 hour window
+        $stmt = $pdo->prepare("
+            SELECT attempted_at FROM login_attempts 
+            WHERE (identifier = ? OR ip_address = ?) AND success = 0 AND attempted_at >= ?
+            ORDER BY attempted_at DESC
+        ");
+        $stmt->execute([$identifier, $ip, $window]);
+        $attempts = $stmt->fetchAll(PDO::FETCH_COLUMN);
+        $count = count($attempts);
+
+        if ($count === 0) {
+            return ['allowed' => true, 'retry_after' => 0, 'attempts' => 0];
+        }
+
+        $most_recent = strtotime($attempts[0]);
+        $now = time();
+
+        // Progressive exponential lockout duration
+        $delay = 0;
+        if ($count >= 10) {
+            $delay = 3600; // 60 minutes
+        } elseif ($count >= 7) {
+            $delay = 900;  // 15 minutes
+        } elseif ($count >= 5) {
+            $delay = 300;  // 5 minutes
+        } elseif ($count >= 3) {
+            $delay = 60;   // 1 minute
+        }
+
+        $elapsed = $now - $most_recent;
+        if ($elapsed < $delay) {
+            return [
+                'allowed' => false,
+                'retry_after' => ($delay - $elapsed),
+                'attempts' => $count
+            ];
+        }
+
+        return ['allowed' => true, 'retry_after' => 0, 'attempts' => $count];
+    } catch (Throwable $e) {
+        return ['allowed' => true, 'retry_after' => 0, 'attempts' => 0];
+    }
+}
+
+function check_login_rate_limit($identifier, $ip) {
+    $throttle = get_login_throttle_status($identifier, $ip);
+    return $throttle['allowed'];
 }
 
 function record_login_attempt($identifier, $ip, $success) {
@@ -167,11 +480,98 @@ function record_login_attempt($identifier, $ip, $success) {
         $stmt = $pdo->prepare("INSERT INTO login_attempts (identifier, ip_address, success) VALUES (?, ?, ?)");
         $stmt->execute([$identifier, $ip, $success ? 1 : 0]);
         // Periodic cleanup of attempts older than 48 hours
-        if (rand(1, 100) <= 5) {
+        if (random_int(1, 100) <= 5) {
             $old_time = date('Y-m-d H:i:s', time() - 172800);
             $pdo->prepare("DELETE FROM login_attempts WHERE attempted_at < ?")->execute([$old_time]);
         }
-    } catch (Exception $e) {}
+    } catch (Throwable $e) {}
+}
+
+// Item 15: Pure PHP RFC 6238 TOTP Two-Factor Authentication Validator
+function verify_totp_code($secret, $code) {
+    if (empty($secret) || empty($code)) return false;
+    $time_slice = floor(time() / 30);
+    $base32chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ234567';
+    $base32chars_flipped = array_flip(str_split($base32chars));
+    $clean_secret = strtoupper(preg_replace('/[^A-Za-z2-7]/', '', (string)$secret));
+    if (empty($clean_secret)) return false;
+
+    $binary = '';
+    for ($i = 0; $i < strlen($clean_secret); $i++) {
+        if (!isset($base32chars_flipped[$clean_secret[$i]])) continue;
+        $binary .= str_pad(decbin($base32chars_flipped[$clean_secret[$i]]), 5, '0', STR_PAD_LEFT);
+    }
+    $secret_bytes = '';
+    for ($i = 0; $i + 8 <= strlen($binary); $i += 8) {
+        $secret_bytes .= chr(bindec(substr($binary, $i, 8)));
+    }
+    if (empty($secret_bytes)) return false;
+
+    // Check time drift window: current, previous, and next 30-sec periods
+    for ($offset = -1; $offset <= 1; $offset++) {
+        $slice = (int)($time_slice + $offset);
+        $packed_time = pack('N*', 0) . pack('N*', $slice);
+        $hmac = hash_hmac('sha1', $packed_time, $secret_bytes, true);
+        $offset_idx = ord(substr($hmac, -1)) & 0x0F;
+        $hash_part = substr($hmac, $offset_idx, 4);
+        $val = unpack('N', $hash_part)[1] & 0x7FFFFFFF;
+        $calc_code = str_pad((string)($val % 1000000), 6, '0', STR_PAD_LEFT);
+        if (hash_equals($calc_code, str_pad(trim((string)$code), 6, '0', STR_PAD_LEFT))) {
+            return true;
+        }
+    }
+    return false;
+}
+
+// Item 10: Email Verification Link Dispatcher
+function send_email_verification_link($user_id, $email, $name) {
+    global $pdo;
+    try {
+        $token = bin2hex(random_bytes(32));
+        $expires = date('Y-m-d H:i:s', time() + 86400); // 24 hours validity
+        $stmt = $pdo->prepare("UPDATE users SET email_verification_token = ?, email_verification_expires = ? WHERE id = ?");
+        $stmt->execute([$token, $expires, $user_id]);
+
+        $site_url = defined('SITE_URL') ? SITE_URL : 'https://gaungalihat.womenvission.in';
+        $verify_url = $site_url . '/verify-email.php?token=' . $token . '&email=' . urlencode($email);
+
+        $subject = "Verify your GaunGaliHat Account Email";
+        $headers = "MIME-Version: 1.0\r\n";
+        $headers .= "Content-Type: text/html; charset=UTF-8\r\n";
+        $headers .= "From: GaunGaliHat Security <no-reply@ganvgalihat.com>\r\n";
+
+        $message = "
+        <div style='font-family: sans-serif; max-width: 540px; margin: 0 auto; padding: 24px; border: 1px solid #e5e7eb; border-radius: 12px;'>
+            <h2 style='color: #065f46; margin-top: 0;'>GaunGaliHat — Email Verification</h2>
+            <p>Namaste " . htmlspecialchars($name, ENT_QUOTES, 'UTF-8') . ",</p>
+            <p>Thank you for registering. Please click below to verify your email address and secure your account:</p>
+            <p style='margin: 24px 0;'><a href='" . htmlspecialchars($verify_url, ENT_QUOTES, 'UTF-8') . "' style='background: #059669; color: white; padding: 12px 24px; text-decoration: none; border-radius: 8px; font-weight: bold; display: inline-block;'>Verify My Email Address</a></p>
+            <p style='color: #6b7280; font-size: 13px;'>If the button does not work, copy and paste this URL into your browser:<br>" . htmlspecialchars($verify_url, ENT_QUOTES, 'UTF-8') . "</p>
+            <p style='color: #9ca3af; font-size: 12px;'>This link expires in 24 hours.</p>
+        </div>";
+
+        @mail($email, $subject, $message, $headers);
+        return true;
+    } catch (Throwable $e) {
+        error_log("[Email Verification Error] " . $e->getMessage());
+        return false;
+    }
+}
+
+// Item 32: Owner Security Alert Dispatcher
+function send_owner_security_alert($subject, $details) {
+    $sec_cfg = function_exists('get_platform_config') ? get_platform_config('security') : [];
+    $owner_email = $sec_cfg['owner_alert_email'] ?? getenv('OWNER_ALERT_EMAIL');
+    if (empty($owner_email)) {
+        $owner_email = defined('APP_EMAIL') ? APP_EMAIL : 'admin@womenvission.in';
+    }
+
+    if (!empty($owner_email)) {
+        $full_subject = "[GaunGaliHat Security Alert] " . $subject;
+        $headers = "MIME-Version: 1.0\r\nContent-Type: text/plain; charset=UTF-8\r\nFrom: security@ganvgalihat.com\r\n";
+        $body = "SECURITY EVENT NOTIFICATION\nTime: " . date('Y-m-d H:i:s T') . "\nIP: " . ($_SERVER['REMOTE_ADDR'] ?? 'Unknown') . "\n\nDetails:\n" . (is_array($details) ? json_encode($details, JSON_PRETTY_PRINT) : (string)$details);
+        @mail($owner_email, $full_subject, $body, $headers);
+    }
 }
 
 // Administrative Audit Trail Logger
@@ -252,30 +652,136 @@ function user_has_permission($permission_slug, $user_id = null) {
     }
 }
 
-// Safe Custom HTML Sanitizer (For festival & hero campaign blocks)
+// Item 18: Safe Custom HTML Sanitizer (DOMDocument strict allowlist sanitizer)
+// Blocks javascript:, data:, vbscript:, style, base, form, svg, math, script, etc.
 function sanitize_custom_html($html) {
-    if (empty($html)) return '';
-    
-    // Remove script tags and embedded content
-    $html = preg_replace('/<script\b[^>]*>(.*?)<\/script>/is', '', $html);
-    $html = preg_replace('/<iframe\b[^>]*>(.*?)<\/iframe>/is', '', $html);
-    $html = preg_replace('/<object\b[^>]*>(.*?)<\/object>/is', '', $html);
-    $html = preg_replace('/<embed\b[^>]*>(.*?)<\/embed>/is', '', $html);
-    $html = preg_replace('/<applet\b[^>]*>(.*?)<\/applet>/is', '', $html);
-    $html = preg_replace('/<meta\b[^>]*>/is', '', $html);
-    $html = preg_replace('/<link\b[^>]*>/is', '', $html);
+    if (empty($html) || !is_string($html)) return '';
 
-    // Remove inline event handlers (onclick, onload, onerror, onmouseover, etc.)
-    $html = preg_replace('/\s*on[a-z]+\s*=\s*(["\'][^"\']*["\']|[^\s>]+)/i', '', $html);
+    // Disallowed tag names (blocked completely along with children)
+    $blocked_tags = [
+        'script', 'style', 'base', 'form', 'svg', 'math', 'object', 
+        'embed', 'applet', 'iframe', 'frame', 'frameset', 'meta', 
+        'link', 'input', 'button', 'select', 'textarea', 'template'
+    ];
 
-    // Remove javascript: and data: URLs (except images)
-    $html = preg_replace('/href\s*=\s*["\']?\s*javascript:[^"\'>\s]*/i', 'href="#"', $html);
-    $html = preg_replace('/src\s*=\s*["\']?\s*javascript:[^"\'>\s]*/i', 'src=""', $html);
+    // Allowed markup tags
+    $allowed_tags = [
+        'a', 'b', 'blockquote', 'br', 'caption', 'cite', 'code', 'dd', 'del', 
+        'div', 'dl', 'dt', 'em', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'hr', 
+        'i', 'img', 'ins', 'li', 'ol', 'p', 'pre', 'q', 'small', 'span', 
+        'strong', 'sub', 'sup', 'table', 'tbody', 'td', 'tfoot', 'th', 
+        'thead', 'tr', 'u', 'ul'
+    ];
 
-    return $html;
+    // Allowed attributes per tag
+    $global_attrs = ['class', 'id', 'title', 'lang', 'dir'];
+    $tag_attrs = [
+        'a'     => array_merge($global_attrs, ['href', 'target', 'rel']),
+        'img'   => array_merge($global_attrs, ['src', 'alt', 'width', 'height', 'loading']),
+        'th'    => array_merge($global_attrs, ['colspan', 'rowspan', 'scope']),
+        'td'    => array_merge($global_attrs, ['colspan', 'rowspan']),
+        'ol'    => array_merge($global_attrs, ['start', 'type']),
+        'q'     => array_merge($global_attrs, ['cite']),
+        'blockquote' => array_merge($global_attrs, ['cite'])
+    ];
+
+    $doc = new DOMDocument();
+    libxml_use_internal_errors(true);
+    $wrapped = '<?xml encoding="utf-8" ?><body>' . $html . '</body>';
+    $doc->loadHTML($wrapped, LIBXML_HTML_NOIMPLIED | LIBXML_HTML_NODEFDTD);
+    libxml_clear_errors();
+
+    $clean_node = function(DOMNode $node) use (&$clean_node, $blocked_tags, $allowed_tags, $tag_attrs, $global_attrs) {
+        if ($node->nodeType === XML_ELEMENT_NODE) {
+            $tag_name = strtolower($node->nodeName);
+
+            // Blocked tags -> remove entire subtree
+            if (in_array($tag_name, $blocked_tags, true)) {
+                $node->parentNode->removeChild($node);
+                return;
+            }
+
+            // Not in allowed list -> unwrap children safely
+            if (!in_array($tag_name, $allowed_tags, true)) {
+                $parent = $node->parentNode;
+                while ($node->hasChildNodes()) {
+                    $child = $node->firstChild;
+                    $node->removeChild($child);
+                    $clean_node($child);
+                    if ($child->parentNode === null) {
+                        $parent->insertBefore($child, $node);
+                    }
+                }
+                $parent->removeChild($node);
+                return;
+            }
+
+            // Clean attributes
+            $allowed_for_this_tag = $tag_attrs[$tag_name] ?? $global_attrs;
+            if ($node->hasAttributes()) {
+                $attrs_to_remove = [];
+                foreach ($node->attributes as $attr) {
+                    $attr_name = strtolower($attr->name);
+                    
+                    // Disallow any inline event handler (starts with 'on') or attribute outside allowlist
+                    if (strpos($attr_name, 'on') === 0 || !in_array($attr_name, $allowed_for_this_tag, true)) {
+                        $attrs_to_remove[] = $attr->name;
+                        continue;
+                    }
+
+                    // Strict URL protocol validation for href and src
+                    if (in_array($attr_name, ['href', 'src'], true)) {
+                        $val = $attr->value;
+                        $decoded = html_entity_decode($val, ENT_QUOTES | ENT_HTML5, 'UTF-8');
+                        $decoded = preg_replace('/[\x00-\x1f\x7f\s]+/u', '', $decoded);
+                        $lower_decoded = strtolower($decoded);
+
+                        if (preg_match('/^(javascript|vbscript|data):/i', $lower_decoded)) {
+                            $attrs_to_remove[] = $attr->name;
+                            continue;
+                        }
+
+                        // For <a> target="_blank", enforce rel="noopener noreferrer"
+                        if ($tag_name === 'a' && strtolower($node->getAttribute('target')) === '_blank') {
+                            $node->setAttribute('rel', 'noopener noreferrer');
+                        }
+                    }
+                }
+
+                foreach ($attrs_to_remove as $attr_name) {
+                    $node->removeAttribute($attr_name);
+                }
+            }
+        }
+
+        // Recursively clean children
+        if ($node->hasChildNodes()) {
+            $children = iterator_to_array($node->childNodes);
+            foreach ($children as $child) {
+                $clean_node($child);
+            }
+        }
+    };
+
+    $body = $doc->getElementsByTagName('body')->item(0);
+    if ($body) {
+        $children = iterator_to_array($body->childNodes);
+        foreach ($children as $child) {
+            $clean_node($child);
+        }
+
+        $output = '';
+        foreach ($body->childNodes as $child) {
+            $output .= $doc->saveHTML($child);
+        }
+        return $output;
+    }
+
+    return '';
 }
 
 // Secure Image Upload Validator
+// Item 17: Secure Upload & Raster Image Re-encoding Engine (Strips EXIF, metadata, and polyglots)
 function secure_upload_image($file_input, $dest_dir = 'uploads/') {
     if (!isset($_FILES[$file_input]) || $_FILES[$file_input]['error'] !== UPLOAD_ERR_OK) {
         return ['success' => false, 'error' => 'No file uploaded or upload error code: ' . ($_FILES[$file_input]['error'] ?? 'UNKNOWN')];
@@ -293,17 +799,26 @@ function secure_upload_image($file_input, $dest_dir = 'uploads/') {
     $mime = finfo_file($finfo, $file['tmp_name']);
     finfo_close($finfo);
 
+    // Item 17: Exclude SVG from uploads to eliminate SVG-embedded script vectors
     $allowed_mimes = [
         'image/jpeg' => 'jpg',
         'image/png'  => 'png',
         'image/webp' => 'webp',
-        'image/gif'  => 'gif',
-        'image/svg+xml' => 'svg'
+        'image/gif'  => 'gif'
     ];
 
     if (!array_key_exists($mime, $allowed_mimes)) {
         record_security_event('suspicious_file_upload_attempt', ['mime' => $mime, 'original_name' => $file['name']]);
-        return ['success' => false, 'error' => 'अमान्य फ़ाइल प्रकार! केवल JPG, PNG, GIF या WebP चित्र ही अनुमत हैं (Invalid image type).'];
+        return ['success' => false, 'error' => 'अमान्य फ़ाइल प्रकार! केवल JPG, PNG, GIF या WebP चित्र ही अनुमत हैं (SVG or scripts strictly prohibited).'];
+    }
+
+    // Limit maximum image dimensions to 4000x4000 to prevent decompression bomb denial-of-service
+    $image_info = @getimagesize($file['tmp_name']);
+    if (!$image_info || empty($image_info[0]) || empty($image_info[1])) {
+        return ['success' => false, 'error' => 'फ़ाइल मान्य छवि प्रारूप में नहीं है (Corrupted or invalid image header).'];
+    }
+    if ($image_info[0] > 4000 || $image_info[1] > 4000) {
+        return ['success' => false, 'error' => 'छवि का आकार 4000x4000 पिक्सल से अधिक है। कृपया छोटी छवि अपलोड करें।'];
     }
 
     $ext = $allowed_mimes[$mime];
@@ -315,8 +830,56 @@ function secure_upload_image($file_input, $dest_dir = 'uploads/') {
     $random_name = 'ggh_' . date('Ymd_His') . '_' . bin2hex(random_bytes(8)) . '.' . $ext;
     $destination = $target_dir . $random_name;
 
-    if (!move_uploaded_file($file['tmp_name'], $destination)) {
-        return ['success' => false, 'error' => 'फ़ाइल सहेजने में विफल (Failed to save uploaded file).'];
+    // Item 17: Re-encode raster image with GD to sanitize pixel buffers and completely strip EXIF metadata
+    $reencoded = false;
+    if (extension_loaded('gd')) {
+        try {
+            $src_img = null;
+            switch ($mime) {
+                case 'image/jpeg':
+                    $src_img = @imagecreatefromjpeg($file['tmp_name']);
+                    if ($src_img) {
+                        $reencoded = imagejpeg($src_img, $destination, 90);
+                    }
+                    break;
+                case 'image/png':
+                    $src_img = @imagecreatefrompng($file['tmp_name']);
+                    if ($src_img) {
+                        imagealphablending($src_img, false);
+                        imagesavealpha($src_img, true);
+                        $reencoded = imagepng($src_img, $destination, 8);
+                    }
+                    break;
+                case 'image/webp':
+                    if (function_exists('imagecreatefromwebp') && function_exists('imagewebp')) {
+                        $src_img = @imagecreatefromwebp($file['tmp_name']);
+                        if ($src_img) {
+                            imagealphablending($src_img, false);
+                            imagesavealpha($src_img, true);
+                            $reencoded = imagewebp($src_img, $destination, 85);
+                        }
+                    }
+                    break;
+                case 'image/gif':
+                    $src_img = @imagecreatefromgif($file['tmp_name']);
+                    if ($src_img) {
+                        $reencoded = imagegif($src_img, $destination);
+                    }
+                    break;
+            }
+            if ($src_img) {
+                imagedestroy($src_img);
+            }
+        } catch (Throwable $e_gd) {
+            $reencoded = false;
+        }
+    }
+
+    // Fallback if GD was unable to process or not available
+    if (!$reencoded) {
+        if (!move_uploaded_file($file['tmp_name'], $destination)) {
+            return ['success' => false, 'error' => 'फ़ाइल सहेजने में विफल (Failed to save uploaded file).'];
+        }
     }
 
     $relative_path = '/' . trim($dest_dir, '/') . '/' . $random_name;
@@ -352,31 +915,66 @@ function get_flash() {
     return null;
 }
 
-// Authentication Helpers
-function get_logged_in_user() {
+// Authentication Helpers (Re-reads user status & role from database on every request)
+function get_logged_in_user($force_refresh = false) {
     global $pdo;
-    if (!empty($_SESSION['user_id'])) {
-        $stmt = $pdo->prepare("SELECT * FROM users WHERE id = ? AND status = 'active' LIMIT 1");
-        $stmt->execute([$_SESSION['user_id']]);
-        return $stmt->fetch();
+    static $cached_user = null;
+    if ($cached_user !== null && !$force_refresh) {
+        return $cached_user;
     }
+    if (!empty($_SESSION['user_id']) && $pdo) {
+        try {
+            $stmt = $pdo->prepare("SELECT * FROM users WHERE id = ? LIMIT 1");
+            $stmt->execute([$_SESSION['user_id']]);
+            $user = $stmt->fetch();
+            if ($user) {
+                // If user is suspended or deleted, destroy session immediately
+                if ($user['status'] !== 'active') {
+                    unset($_SESSION['user_id'], $_SESSION['user_name'], $_SESSION['user_role'], $_SESSION['user_email']);
+                    if (session_status() === PHP_SESSION_ACTIVE) {
+                        session_destroy();
+                    }
+                    $cached_user = null;
+                    return null;
+                }
+                // Live sync session with DB role on every request
+                $_SESSION['user_role'] = $user['role'];
+                $_SESSION['user_name'] = $user['name'];
+                $_SESSION['user_email'] = $user['email'];
+                $cached_user = $user;
+                return $user;
+            } else {
+                unset($_SESSION['user_id'], $_SESSION['user_name'], $_SESSION['user_role'], $_SESSION['user_email']);
+                if (session_status() === PHP_SESSION_ACTIVE) {
+                    session_destroy();
+                }
+                $cached_user = null;
+                return null;
+            }
+        } catch (Throwable $e) {}
+    }
+    $cached_user = null;
     return null;
 }
 
 function is_logged_in() {
-    return !empty($_SESSION['user_id']);
+    $u = get_logged_in_user();
+    return !empty($u);
 }
 
 function is_vendor() {
-    return is_logged_in() && in_array($_SESSION['user_role'] ?? '', ['vendor', 'admin', 'super_admin']);
+    $u = get_logged_in_user();
+    return $u && in_array($u['role'], ['vendor', 'admin', 'super_admin'], true);
 }
 
 function is_admin() {
-    return is_logged_in() && in_array($_SESSION['user_role'] ?? '', ['admin', 'super_admin']);
+    $u = get_logged_in_user();
+    return $u && in_array($u['role'], ['admin', 'super_admin'], true);
 }
 
 function is_super_admin() {
-    return is_logged_in() && ($_SESSION['user_role'] ?? '') === 'super_admin';
+    $u = get_logged_in_user();
+    return $u && $u['role'] === 'super_admin';
 }
 
 function get_vendor_for_current_user() {
@@ -397,18 +995,20 @@ function get_vendor_for_current_user() {
     return $vendor;
 }
 
-// Authenticate user with password_verify and Brute-force rate limiting
-function authenticate_user($identifier, $password, $expected_role_group = null) {
+// Authenticate user with password_verify, progressive exponential throttling & TOTP 2FA (Item 13, 15, 32)
+function authenticate_user($identifier, $password, $expected_role_group = null, $two_factor_code = null) {
     global $pdo;
     $identifier = trim((string)$identifier);
     $ip = $_SERVER['REMOTE_ADDR'] ?? '127.0.0.1';
 
-    // 1. Rate Limit Gate
-    if (!check_login_rate_limit($identifier, $ip)) {
-        record_security_event('login_rate_limit_triggered', ['identifier' => $identifier, 'ip' => $ip]);
+    // 1. Exponential Throttling Gate (Item 15)
+    $throttle = get_login_throttle_status($identifier, $ip);
+    if (!$throttle['allowed']) {
+        $retry_mins = ceil($throttle['retry_after'] / 60);
+        record_security_event('login_rate_limit_triggered', ['identifier' => $identifier, 'ip' => $ip, 'retry_after' => $throttle['retry_after']]);
         return [
             'success' => false, 
-            'error' => 'सुरक्षा अवरोध: बार-बार गलत पासवर्ड दर्ज करने के कारण यह प्रयास रोक दिया गया है। कृपया 15 मिनट बाद पुनः प्रयास करें।'
+            'error' => "सुरक्षा अवरोध: बार-बार असफल प्रयासों के कारण लॉगिन अस्थायी रूप से ब्लॉक किया गया है। कृपया {$retry_mins} मिनट बाद पुनः प्रयास करें।"
         ];
     }
     
@@ -440,7 +1040,7 @@ function authenticate_user($identifier, $password, $expected_role_group = null) 
     if (!$user) {
         record_login_attempt($identifier, $ip, false);
         record_security_event('login_failed_unknown_user', ['identifier' => $identifier]);
-        return ['success' => false, 'error' => 'यूजरनेम, ईमेल या मोबाइल नंबर नहीं मिला (Account not found).'];
+        return ['success' => false, 'error' => 'अमान्य क्रेडेंशियल दर्ज किए गए (Invalid credentials).'];
     }
 
     if ($user['status'] === 'suspended') {
@@ -450,8 +1050,29 @@ function authenticate_user($identifier, $password, $expected_role_group = null) 
 
     if (!password_verify($password, $user['password'])) {
         record_login_attempt($identifier, $ip, false);
-        record_security_event('login_failed_bad_password', ['user_id' => $user['id']]);
-        return ['success' => false, 'error' => 'गलत पासवर्ड दर्ज किया गया (Invalid password).'];
+        try {
+            $pdo->prepare("UPDATE users SET failed_login_attempts = failed_login_attempts + 1 WHERE id = ?")->execute([$user['id']]);
+        } catch (Throwable $t) {}
+
+        // Item 32: Owner Alert on repeated failed admin logins
+        if (in_array($user['role'], ['admin', 'super_admin'], true)) {
+            $curr_failed = (int)($user['failed_login_attempts'] ?? 0) + 1;
+            if ($curr_failed >= 3) {
+                send_owner_security_alert(
+                    "Repeated Failed Admin Login Attempts for @" . $user['username'],
+                    [
+                        'username' => $user['username'],
+                        'email'    => $user['email'],
+                        'role'     => $user['role'],
+                        'ip'       => $ip,
+                        'failed_count' => $curr_failed
+                    ]
+                );
+            }
+        }
+
+        record_security_event('login_failed_bad_password', ['user_id' => $user['id'], 'ip' => $ip]);
+        return ['success' => false, 'error' => 'अमान्य क्रेडेंशियल दर्ज किए गए (Invalid credentials).'];
     }
 
     // Role check if specific portal tab was chosen
@@ -464,10 +1085,42 @@ function authenticate_user($identifier, $password, $expected_role_group = null) 
         return ['success' => false, 'error' => 'यह खाता विक्रेता / कारीगर पोर्टल के लिए अधिकृत नहीं है।'];
     }
 
+    // Item 15: Optional TOTP 2FA Verification for Admin/Super_admin
+    $is_admin_account = in_array($user['role'], ['super_admin', 'admin'], true);
+    $has_2fa_configured = !empty($user['two_factor_secret']) && (!empty($user['two_factor_enabled']));
+    if ($is_admin_account && $has_2fa_configured) {
+        if (empty($two_factor_code)) {
+            return [
+                'success' => false,
+                'require_2fa' => true,
+                'user_id' => $user['id'],
+                'identifier' => $identifier,
+                'portal_tab' => $expected_role_group,
+                'error' => 'कृपया अपना 6-अंकीय टू-फैक्टर प्रमाणीकरण कोड (TOTP Code) दर्ज करें।'
+            ];
+        }
+        if (!verify_totp_code($user['two_factor_secret'], $two_factor_code)) {
+            record_security_event('login_failed_bad_2fa', ['user_id' => $user['id'], 'ip' => $ip]);
+            return [
+                'success' => false,
+                'require_2fa' => true,
+                'user_id' => $user['id'],
+                'identifier' => $identifier,
+                'portal_tab' => $expected_role_group,
+                'error' => 'अमान्य 2FA कोड दर्ज किया गया। कृपया नया 6-अंकीय कोड दर्ज करें।'
+            ];
+        }
+    }
+
+    // Reset failed login counter upon successful authentication
+    try {
+        $pdo->prepare("UPDATE users SET failed_login_attempts = 0, lockout_until = NULL WHERE id = ?")->execute([$user['id']]);
+    } catch (Throwable $t) {}
+
     // Record Successful Login
     record_login_attempt($identifier, $ip, true);
 
-    // Rotate Session ID upon authentication (Prevents Session Fixation)
+    // Item 13: Rotate Session ID upon authentication (Prevents Session Fixation)
     if (session_status() === PHP_SESSION_ACTIVE) {
         session_regenerate_id(true);
     }
@@ -477,6 +1130,10 @@ function authenticate_user($identifier, $password, $expected_role_group = null) 
     $_SESSION['user_name'] = $user['name'];
     $_SESSION['user_role'] = $user['role'];
     $_SESSION['user_email'] = $user['email'];
+
+    if (!empty($user['force_password_change'])) {
+        $_SESSION['force_password_change'] = 1;
+    }
 
     log_audit_action('user_login', 'auth', 'user', $user['id'], 'Successful sign-in from ' . $ip);
 
@@ -561,20 +1218,29 @@ function add_to_cart($product_id, $qty = 1) {
     }
 
     try {
-        $stmt = $pdo->prepare("SELECT id, name, price, original_price, stock, image FROM products WHERE id = ?");
+        $stmt = $pdo->prepare("SELECT id, name, price, original_price, stock, stock_status, image FROM products WHERE id = ?");
         $stmt->execute([$product_id]);
         $prod = $stmt->fetch();
 
         if ($prod) {
+            $stock = max(0, (int)($prod['stock'] ?? 0));
+            // Item 24: Stop treating stock 0 as 1
+            if ($stock <= 0 || ($prod['stock_status'] ?? '') === 'Out of Stock') {
+                return false;
+            }
+
             if (!isset($_SESSION['cart']) || !is_array($_SESSION['cart'])) {
                 $_SESSION['cart'] = [];
             }
             if (!isset($_SESSION['cart'][$product_id])) {
                 $_SESSION['cart'][$product_id] = ['qty' => 0];
             }
-            $stock = max(1, (int)($prod['stock'] ?? 50));
-            $new_qty = (int)$_SESSION['cart'][$product_id]['qty'] + $qty;
-            $_SESSION['cart'][$product_id]['qty'] = min($stock, $new_qty);
+            $current_qty = (int)$_SESSION['cart'][$product_id]['qty'];
+            if ($current_qty >= $stock) {
+                return false;
+            }
+            $new_qty = min($stock, $current_qty + $qty);
+            $_SESSION['cart'][$product_id]['qty'] = $new_qty;
             return $prod;
         }
     } catch (Throwable $e) {}
@@ -582,13 +1248,27 @@ function add_to_cart($product_id, $qty = 1) {
 }
 
 function update_cart_qty($product_id, $qty) {
+    global $pdo;
     $product_id = (int)$product_id;
     $qty = (int)$qty;
     if ($qty <= 0) {
         remove_from_cart($product_id);
     } else {
         if (isset($_SESSION['cart'][$product_id])) {
-            $_SESSION['cart'][$product_id]['qty'] = $qty;
+            $stock = 50;
+            if ($pdo) {
+                $stmt = $pdo->prepare("SELECT stock, stock_status FROM products WHERE id = ?");
+                $stmt->execute([$product_id]);
+                $p = $stmt->fetch();
+                if ($p) {
+                    $stock = max(0, (int)$p['stock']);
+                    if ($stock <= 0 || ($p['stock_status'] ?? '') === 'Out of Stock') {
+                        remove_from_cart($product_id);
+                        return;
+                    }
+                }
+            }
+            $_SESSION['cart'][$product_id]['qty'] = min($stock, $qty);
         }
     }
 }

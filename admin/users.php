@@ -6,20 +6,42 @@ require_admin();
 $admin_user = get_logged_in_user();
 $is_super = is_super_admin();
 
-// Handle ADD USER
+// Allowed roles based on administrator privilege
+$allowed_roles = $is_super ? ['customer', 'vendor', 'admin', 'super_admin'] : ['customer', 'vendor'];
+
+// 1. Handle ADD USER (POST + CSRF)
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['add_user'])) {
+    if (!verify_csrf($_POST['csrf_token'] ?? '')) {
+        set_flash('error', 'CSRF सुरक्षा सत्यापन विफल रहा। (Invalid CSRF Token)');
+        header('Location: /admin/users.php');
+        exit;
+    }
+
     $name = clean_input($_POST['name'] ?? '');
     $username = strtolower(clean_input($_POST['username'] ?? ''));
     $email = strtolower(clean_input($_POST['email'] ?? ''));
     $phone = clean_input($_POST['phone'] ?? '');
-    $role = clean_input($_POST['role'] ?? 'customer');
+    $raw_role = clean_input($_POST['role'] ?? 'customer');
     $department = clean_input($_POST['department'] ?? 'Operations');
     $password = $_POST['password'] ?? '';
 
+    // Only super_admin may create 'admin' or 'super_admin' roles
+    if (!$is_super && in_array($raw_role, ['admin', 'super_admin'], true)) {
+        log_audit_action('admin_unauthorized_role_create', 'users', "Admin #{$admin_user['id']} attempted to create privileged user with role '{$raw_role}'");
+        set_flash('error', 'अनाधिकृत प्रयास: केवल सुपर एडमिन ही प्रशासनिक अथवा सुपर एडमिन खाते बना सकते हैं।');
+        header('Location: /admin/users.php');
+        exit;
+    }
+
+    $role = in_array($raw_role, $allowed_roles, true) ? $raw_role : 'customer';
+
+    $pass_err = '';
     if (empty($name) || empty($username) || empty($email) || empty($password)) {
         set_flash('error', 'कृपया नाम, यूजरनेम, ईमेल एवं पासवर्ड अनिवार्य रूप से भरें।');
-    } elseif (strlen($password) < 6) {
-        set_flash('error', 'पासवर्ड कम से कम 6 अक्षरों का होना चाहिए।');
+    } elseif (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
+        set_flash('error', 'कृपया एक वैध ईमेल पता दर्ज करें।');
+    } elseif (!is_strong_password($password, $pass_err)) {
+        set_flash('error', $pass_err);
     } else {
         // Check uniqueness
         $stmt_chk = $pdo->prepare("SELECT id FROM users WHERE username = ? OR email = ?");
@@ -27,122 +49,335 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['add_user'])) {
         if ($stmt_chk->fetch()) {
             set_flash('error', 'यह यूजरनेम या ईमेल पहले से ही किसी अन्य खाते में दर्ज है।');
         } else {
-            $unique_code = 'GGH-USR-' . rand(100, 999);
+            $unique_code = 'GGH-USR-' . bin2hex(random_bytes(3));
             $hashed_password = password_hash($password, PASSWORD_BCRYPT);
 
             try {
                 $insert = $pdo->prepare("
-                    INSERT INTO users (unique_code, name, username, email, phone, password, role, department, status)
-                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'active')
+                    INSERT INTO users (unique_code, name, username, email, phone, password, role, department, status, created_at)
+                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'active', CURRENT_TIMESTAMP)
                 ");
                 $insert->execute([$unique_code, $name, $username, $email, $phone, $hashed_password, $role, $department]);
-                set_flash('success', 'नया यूजर (' . htmlspecialchars($username) . ') Bcrypt सुरक्षा एन्क्रिप्शन के साथ सफलतापूर्वक बनाया गया!');
+                $new_uid = $pdo->lastInsertId();
+                log_audit_action('admin_create_user', 'users', "Created new {$role} account '{$username}' (#{$new_uid})");
+
+                // Item 32: Owner Alert on administrative role creation
+                if (in_array($role, ['admin', 'super_admin'], true)) {
+                    send_owner_security_alert(
+                        "New Administrative Account Created: @{$username} ({$role})",
+                        [
+                            'created_by' => $admin_user['username'],
+                            'created_by_id' => $admin_user['id'],
+                            'target_username' => $username,
+                            'target_email' => $email,
+                            'target_role' => $role,
+                            'ip' => get_client_ip()
+                        ]
+                    );
+                }
+
+                set_flash('success', 'नया यूजर (' . htmlspecialchars($username, ENT_QUOTES, 'UTF-8') . ') सुरक्षित Bcrypt एन्क्रिप्शन के साथ सफलतापूर्वक बनाया गया!');
                 header('Location: /admin/users.php');
                 exit;
             } catch (Exception $e) {
-                set_flash('error', 'त्रुटि: ' . $e->getMessage());
+                error_log("Error creating user: " . $e->getMessage());
+                set_flash('error', 'उपयोगकर्ता बनाने में डेटाबेस त्रुटि हुई।');
             }
         }
     }
 }
 
-// Handle EDIT USER
+// 2. Handle EDIT USER (POST + CSRF)
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['edit_user'])) {
+    if (!verify_csrf($_POST['csrf_token'] ?? '')) {
+        set_flash('error', 'CSRF सुरक्षा सत्यापन विफल रहा। (Invalid CSRF Token)');
+        header('Location: /admin/users.php');
+        exit;
+    }
+
     $user_id = intval($_POST['edit_user_id'] ?? 0);
     $name = clean_input($_POST['name'] ?? '');
     $username = strtolower(clean_input($_POST['username'] ?? ''));
     $email = strtolower(clean_input($_POST['email'] ?? ''));
     $phone = clean_input($_POST['phone'] ?? '');
-    $role = clean_input($_POST['role'] ?? 'customer');
+    $raw_role = clean_input($_POST['role'] ?? 'customer');
     $department = clean_input($_POST['department'] ?? 'Operations');
     $status = clean_input($_POST['status'] ?? 'active');
     $new_password = $_POST['new_password'] ?? '';
 
-    if ($user_id <= 0 || empty($name) || empty($username) || empty($email)) {
+    // Fetch existing target user to enforce role boundaries
+    $stmt_tgt = $pdo->prepare("SELECT * FROM users WHERE id = ? LIMIT 1");
+    $stmt_tgt->execute([$user_id]);
+    $target_user = $stmt_tgt->fetch();
+
+    if (!$target_user || $user_id <= 0 || empty($name) || empty($username) || empty($email)) {
         set_flash('error', 'कृपया नाम, यूजरनेम एवं ईमेल अनिवार्य रूप से भरें।');
+        header('Location: /admin/users.php');
+        exit;
+    }
+
+    // SECURITY CHECK: Only super_admin may edit a super_admin account!
+    if ($target_user['role'] === 'super_admin' && !$is_super) {
+        log_audit_action('admin_unauthorized_edit', 'users', "Admin #{$admin_user['id']} attempted to edit Super Admin #{$user_id}");
+        set_flash('error', 'सुरक्षा प्रतिबंध: केवल सुपर एडमिन ही सुपर एडमिन खातों को संपादित कर सकते हैं।');
+        header('Location: /admin/users.php');
+        exit;
+    }
+
+    // SECURITY CHECK: Admins can only manage customer and vendor accounts
+    if (!$is_super && in_array($target_user['role'], ['admin', 'super_admin'], true) && $admin_user['id'] !== $target_user['id']) {
+        log_audit_action('admin_unauthorized_staff_edit', 'users', "Admin #{$admin_user['id']} attempted to edit staff account #{$user_id}");
+        set_flash('error', 'सुरक्षा प्रतिबंध: सामान्य व्यवस्थापक केवल ग्राहक व विक्रेता खातों का प्रबंधन कर सकते हैं।');
+        header('Location: /admin/users.php');
+        exit;
+    }
+
+    // SECURITY CHECK: Changing role to super_admin or admin requires super_admin clearance
+    if (!$is_super && in_array($raw_role, ['admin', 'super_admin'], true)) {
+        set_flash('error', 'सुरक्षा प्रतिबंध: आपके पास प्रशासनिक पद आवंटित करने की अनुमति नहीं है।');
+        header('Location: /admin/users.php');
+        exit;
+    }
+
+    // SECURITY CHECK: Prevent removing the last super_admin
+    if ($target_user['role'] === 'super_admin' && $raw_role !== 'super_admin') {
+        $other_supers = (int)$pdo->query("SELECT COUNT(*) FROM users WHERE role = 'super_admin' AND id != {$user_id}")->fetchColumn();
+        if ($other_supers <= 0) {
+            set_flash('error', 'सुरक्षा अवरोध: सिस्टम में कम से कम एक सुपर एडमिन होना अनिवार्य है। अंतिम सुपर एडमिन की भूमिका नहीं बदली जा सकती।');
+            header('Location: /admin/users.php');
+            exit;
+        }
+    }
+
+    $role = in_array($raw_role, $allowed_roles, true) ? $raw_role : $target_user['role'];
+    $status = in_array($status, ['active', 'suspended', 'pending'], true) ? $status : 'active';
+
+    // Prevent suspending the last super admin
+    if ($target_user['role'] === 'super_admin' && $status === 'suspended') {
+        $other_active_supers = (int)$pdo->query("SELECT COUNT(*) FROM users WHERE role = 'super_admin' AND status = 'active' AND id != {$user_id}")->fetchColumn();
+        if ($other_active_supers <= 0) {
+            set_flash('error', 'सुरक्षा अवरोध: अंतिम सक्रिय सुपर एडमिन को निलंबित नहीं किया जा सकता।');
+            header('Location: /admin/users.php');
+            exit;
+        }
+    }
+
+    // Check uniqueness excluding this user
+    $stmt_chk = $pdo->prepare("SELECT id FROM users WHERE (username = ? OR email = ?) AND id != ?");
+    $stmt_chk->execute([$username, $email, $user_id]);
+    if ($stmt_chk->fetch()) {
+        set_flash('error', 'यह यूजरनेम या ईमेल पहले से ही किसी अन्य खाते में दर्ज है।');
     } else {
-        // Check uniqueness excluding this user
-        $stmt_chk = $pdo->prepare("SELECT id FROM users WHERE (username = ? OR email = ?) AND id != ?");
-        $stmt_chk->execute([$username, $email, $user_id]);
-        if ($stmt_chk->fetch()) {
-            set_flash('error', 'यह यूजरनेम या ईमेल पहले से ही किसी अन्य खाते में दर्ज है।');
-        } else {
-            try {
-                if (!empty($new_password)) {
-                    if (strlen($new_password) < 6) {
-                        set_flash('error', 'पासवर्ड कम से कम 6 अक्षरों का होना चाहिए।');
-                        header('Location: /admin/users.php');
-                        exit;
-                    }
-                    $hashed = password_hash($new_password, PASSWORD_BCRYPT);
-                    $stmt_up = $pdo->prepare("
-                        UPDATE users 
-                        SET name = ?, username = ?, email = ?, phone = ?, role = ?, department = ?, status = ?, password = ?
-                        WHERE id = ?
-                    ");
-                    $stmt_up->execute([$name, $username, $email, $phone, $role, $department, $status, $hashed, $user_id]);
-                } else {
-                    $stmt_up = $pdo->prepare("
-                        UPDATE users 
-                        SET name = ?, username = ?, email = ?, phone = ?, role = ?, department = ?, status = ?
-                        WHERE id = ?
-                    ");
-                    $stmt_up->execute([$name, $username, $email, $phone, $role, $department, $status, $user_id]);
+        try {
+            if (!empty($new_password)) {
+                $pass_err = '';
+                if (!is_strong_password($new_password, $pass_err)) {
+                    set_flash('error', $pass_err);
+                    header('Location: /admin/users.php');
+                    exit;
                 }
-                log_audit_action('admin_edit_user', 'users', "User #{$user_id} updated by Admin #{$admin_user['id']}");
-                set_flash('success', 'उपयोगकर्ता जानकारी (' . htmlspecialchars($username) . ') सफलतापूर्वक अपडेट की गई!');
-                header('Location: /admin/users.php');
-                exit;
-            } catch (Exception $e) {
-                set_flash('error', 'त्रुटि: ' . $e->getMessage());
+                $hashed = password_hash($new_password, PASSWORD_BCRYPT);
+                $stmt_up = $pdo->prepare("
+                    UPDATE users 
+                    SET name = ?, username = ?, email = ?, phone = ?, role = ?, department = ?, status = ?, password = ?
+                    WHERE id = ?
+                ");
+                $stmt_up->execute([$name, $username, $email, $phone, $role, $department, $status, $hashed, $user_id]);
+            } else {
+                $stmt_up = $pdo->prepare("
+                    UPDATE users 
+                    SET name = ?, username = ?, email = ?, phone = ?, role = ?, department = ?, status = ?
+                    WHERE id = ?
+                ");
+                $stmt_up->execute([$name, $username, $email, $phone, $role, $department, $status, $user_id]);
             }
+            log_audit_action('admin_edit_user', 'users', "User #{$user_id} ({$username}) updated by Admin #{$admin_user['id']}");
+
+            // Item 32: Owner Alert on role escalation
+            if ($target_user['role'] !== $role && in_array($role, ['admin', 'super_admin'], true)) {
+                send_owner_security_alert(
+                    "Administrative Role Escalation for @{$username} ({$target_user['role']} -> {$role})",
+                    [
+                        'escalated_by' => $admin_user['username'],
+                        'escalated_by_id' => $admin_user['id'],
+                        'target_username' => $username,
+                        'target_id' => $user_id,
+                        'previous_role' => $target_user['role'],
+                        'new_role' => $role,
+                        'ip' => get_client_ip()
+                    ]
+                );
+            }
+
+            set_flash('success', 'उपयोगकर्ता जानकारी (' . htmlspecialchars($username, ENT_QUOTES, 'UTF-8') . ') सफलतापूर्वक अपडेट की गई!');
+            header('Location: /admin/users.php');
+            exit;
+        } catch (Exception $e) {
+            error_log("Error updating user: " . $e->getMessage());
+            set_flash('error', 'डेटाबेस अपडेट में त्रुटि हुई।');
         }
     }
 }
 
-// Handle PASSWORD RESET
+// 3. Handle PASSWORD RESET (POST + CSRF)
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['reset_user_password'])) {
-    $target_user_id = intval($_POST['target_user_id']);
+    if (!verify_csrf($_POST['csrf_token'] ?? '')) {
+        set_flash('error', 'CSRF सुरक्षा सत्यापन विफल रहा। (Invalid CSRF Token)');
+        header('Location: /admin/users.php');
+        exit;
+    }
+
+    $target_user_id = intval($_POST['target_user_id'] ?? 0);
     $new_password = $_POST['new_password'] ?? '';
 
-    if (empty($new_password) || strlen($new_password) < 6) {
-        set_flash('error', 'नया पासवर्ड कम से कम 6 अक्षरों का होना अनिवार्य है।');
+    $stmt_tgt = $pdo->prepare("SELECT * FROM users WHERE id = ? LIMIT 1");
+    $stmt_tgt->execute([$target_user_id]);
+    $target_user = $stmt_tgt->fetch();
+
+    if (!$target_user) {
+        set_flash('error', 'उपयोगकर्ता खाता नहीं मिला।');
+        header('Location: /admin/users.php');
+        exit;
+    }
+
+    // SECURITY CHECK: Only super_admin may reset a super_admin's password
+    if ($target_user['role'] === 'super_admin' && !$is_super) {
+        log_audit_action('admin_unauthorized_pwd_reset', 'users', "Admin #{$admin_user['id']} attempted to reset password of Super Admin #{$target_user_id}");
+        set_flash('error', 'सुरक्षा प्रतिबंध: केवल सुपर एडमिन ही सुपर एडमिन का पासवर्ड रीसेट कर सकते हैं।');
+        header('Location: /admin/users.php');
+        exit;
+    }
+
+    // Admins can only reset customers/vendors
+    if (!$is_super && in_array($target_user['role'], ['admin', 'super_admin'], true)) {
+        set_flash('error', 'सुरक्षा प्रतिबंध: सामान्य व्यवस्थापक केवल ग्राहक व विक्रेता खातों का पासवर्ड रीसेट कर सकते हैं।');
+        header('Location: /admin/users.php');
+        exit;
+    }
+
+    $pass_err = '';
+    if (!is_strong_password($new_password, $pass_err)) {
+        set_flash('error', $pass_err);
     } else {
         $hashed = password_hash($new_password, PASSWORD_BCRYPT);
         $stmt_up = $pdo->prepare("UPDATE users SET password = ? WHERE id = ?");
         $stmt_up->execute([$hashed, $target_user_id]);
+        log_audit_action('admin_password_reset', 'users', "Password for user #{$target_user_id} was reset by Admin #{$admin_user['id']}");
         set_flash('success', 'यूजर का पासवर्ड सुरक्षित Bcrypt एन्क्रिप्शन के साथ सफलतापूर्वक रीसेट कर दिया गया!');
         header('Location: /admin/users.php');
         exit;
     }
 }
 
-// Handle Toggle Status (Active / Suspended)
-if (isset($_GET['toggle_status'])) {
-    $target_id = intval($_GET['toggle_status']);
-    if ($target_id !== $admin_user['id']) {
-        $stmt_cur = $pdo->prepare("SELECT status FROM users WHERE id = ?");
-        $stmt_cur->execute([$target_id]);
-        $cur_stat = $stmt_cur->fetchColumn();
-        $new_stat = ($cur_stat === 'active') ? 'suspended' : 'active';
-        $pdo->prepare("UPDATE users SET status = ? WHERE id = ?")->execute([$new_stat, $target_id]);
-        set_flash('success', 'उपयोगकर्ता खाता स्थिति अपडेट की गई: ' . $new_stat);
-    } else {
-        set_flash('error', 'आप स्वयं के सुपर एडमिन खाते को निलंबित नहीं कर सकते।');
+// 4. Handle TOGGLE STATUS (POST + CSRF - GET is strictly blocked)
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['toggle_status'])) {
+    if (!verify_csrf($_POST['csrf_token'] ?? '')) {
+        set_flash('error', 'CSRF सुरक्षा सत्यापन विफल रहा। (Invalid CSRF Token)');
+        header('Location: /admin/users.php');
+        exit;
     }
+
+    $target_id = intval($_POST['target_user_id'] ?? 0);
+    $stmt_cur = $pdo->prepare("SELECT * FROM users WHERE id = ? LIMIT 1");
+    $stmt_cur->execute([$target_id]);
+    $target_user = $stmt_cur->fetch();
+
+    if (!$target_user) {
+        set_flash('error', 'उपयोगकर्ता नहीं मिला।');
+        header('Location: /admin/users.php');
+        exit;
+    }
+
+    if ($target_id === $admin_user['id']) {
+        set_flash('error', 'आप स्वयं के खाते को निलंबित नहीं कर सकते।');
+        header('Location: /admin/users.php');
+        exit;
+    }
+
+    if ($target_user['role'] === 'super_admin' && !$is_super) {
+        log_audit_action('admin_unauthorized_suspend', 'users', "Admin #{$admin_user['id']} attempted to suspend Super Admin #{$target_id}");
+        set_flash('error', 'सुरक्षा प्रतिबंध: केवल सुपर एडमिन ही सुपर एडमिन की स्थिति बदल सकते हैं।');
+        header('Location: /admin/users.php');
+        exit;
+    }
+
+    if (!$is_super && in_array($target_user['role'], ['admin', 'super_admin'], true)) {
+        set_flash('error', 'सुरक्षा प्रतिबंध: सामान्य व्यवस्थापक केवल ग्राहक व विक्रेता खातों की स्थिति बदल सकते हैं।');
+        header('Location: /admin/users.php');
+        exit;
+    }
+
+    $new_stat = ($target_user['status'] === 'active') ? 'suspended' : 'active';
+
+    // Prevent suspending the last active super_admin
+    if ($target_user['role'] === 'super_admin' && $new_stat === 'suspended') {
+        $other_active = (int)$pdo->query("SELECT COUNT(*) FROM users WHERE role = 'super_admin' AND status = 'active' AND id != {$target_id}")->fetchColumn();
+        if ($other_active <= 0) {
+            set_flash('error', 'सुरक्षा अवरोध: अंतिम सक्रिय सुपर एडमिन को निलंबित नहीं किया जा सकता।');
+            header('Location: /admin/users.php');
+            exit;
+        }
+    }
+
+    $pdo->prepare("UPDATE users SET status = ? WHERE id = ?")->execute([$new_stat, $target_id]);
+    log_audit_action('admin_toggle_status', 'users', "User #{$target_id} status changed to '{$new_stat}' by Admin #{$admin_user['id']}");
+    set_flash('success', 'उपयोगकर्ता खाता स्थिति अपडेट की गई: ' . $new_stat);
     header('Location: /admin/users.php');
     exit;
 }
 
-// Handle Delete User
-if (isset($_GET['delete_id'])) {
-    $del_id = intval($_GET['delete_id']);
-    if ($del_id !== $admin_user['id']) {
-        $pdo->prepare("DELETE FROM users WHERE id = ?")->execute([$del_id]);
-        set_flash('success', 'उपयोगकर्ता सफलतापूर्वक हटा दिया गया।');
-    } else {
-        set_flash('error', 'आप स्वयं के खाते को डिलीट नहीं कर सकते।');
+// 5. Handle DELETE USER (POST + CSRF - GET is strictly blocked)
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['delete_user'])) {
+    if (!verify_csrf($_POST['csrf_token'] ?? '')) {
+        set_flash('error', 'CSRF सुरक्षा सत्यापन विफल रहा। (Invalid CSRF Token)');
+        header('Location: /admin/users.php');
+        exit;
     }
+
+    $del_id = intval($_POST['target_user_id'] ?? 0);
+    $stmt_tgt = $pdo->prepare("SELECT * FROM users WHERE id = ? LIMIT 1");
+    $stmt_tgt->execute([$del_id]);
+    $target_user = $stmt_tgt->fetch();
+
+    if (!$target_user) {
+        set_flash('error', 'उपयोगकर्ता खाता नहीं मिला।');
+        header('Location: /admin/users.php');
+        exit;
+    }
+
+    if ($del_id === $admin_user['id']) {
+        set_flash('error', 'आप स्वयं के खाते को डिलीट नहीं कर सकते।');
+        header('Location: /admin/users.php');
+        exit;
+    }
+
+    if ($target_user['role'] === 'super_admin' && !$is_super) {
+        log_audit_action('admin_unauthorized_delete', 'users', "Admin #{$admin_user['id']} attempted to delete Super Admin #{$del_id}");
+        set_flash('error', 'सुरक्षा प्रतिबंध: केवल सुपर एडमिन ही सुपर एडमिन को हटा सकते हैं।');
+        header('Location: /admin/users.php');
+        exit;
+    }
+
+    if (!$is_super && in_array($target_user['role'], ['admin', 'super_admin'], true)) {
+        set_flash('error', 'सुरक्षा प्रतिबंध: सामान्य व्यवस्थापक केवल ग्राहक व विक्रेता खातों को हटा सकते हैं।');
+        header('Location: /admin/users.php');
+        exit;
+    }
+
+    // SECURITY REQUIREMENT: Prevent deleting the last super admin!
+    if ($target_user['role'] === 'super_admin') {
+        $super_count = (int)$pdo->query("SELECT COUNT(*) FROM users WHERE role = 'super_admin' AND id != {$del_id}")->fetchColumn();
+        if ($super_count <= 0) {
+            log_audit_action('admin_delete_last_super_blocked', 'users', "Blocked attempt to delete the last Super Admin #{$del_id}");
+            set_flash('error', 'सुरक्षा अवरोध: सिस्टम में कम से कम एक सुपर एडमिन खाता रहना अनिवार्य है। अंतिम सुपर एडमिन को हटाया नहीं जा सकता।');
+            header('Location: /admin/users.php');
+            exit;
+        }
+    }
+
+    $pdo->prepare("DELETE FROM users WHERE id = ?")->execute([$del_id]);
+    log_audit_action('admin_delete_user', 'users', "User #{$del_id} ({$target_user['username']}, {$target_user['role']}) deleted by Admin #{$admin_user['id']}");
+    set_flash('success', 'उपयोगकर्ता सफलतापूर्वक हटा दिया गया।');
     header('Location: /admin/users.php');
     exit;
 }
@@ -268,42 +503,71 @@ require_once __DIR__ . '/admin_header.php';
               </div>
             </td>
 
-            <!-- Status -->
+            <!-- Status (POST + CSRF) -->
             <td class="px-4 py-3.5">
-              <a href="/admin/users.php?toggle_status=<?= $u['id'] ?>"
-                class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-bold <?= $u['status'] === 'active' ? 'bg-emerald-100 text-emerald-800 hover:bg-emerald-200' : 'bg-red-100 text-red-800 hover:bg-red-200' ?>"
-                title="क्लिक करके स्थिति बदलें">
-                <span class="w-1.5 h-1.5 rounded-full <?= $u['status'] === 'active' ? 'bg-emerald-600' : 'bg-red-600' ?>"></span>
-                <?= ucfirst($u['status']) ?>
-              </a>
+              <?php if ($u['id'] !== $admin_user['id'] && ($is_super || !in_array($u['role'], ['admin', 'super_admin'], true))): ?>
+                <form method="POST" action="/admin/users.php" class="inline">
+                  <input type="hidden" name="csrf_token" value="<?= csrf_token() ?>">
+                  <input type="hidden" name="toggle_status" value="1">
+                  <input type="hidden" name="target_user_id" value="<?= $u['id'] ?>">
+                  <button type="submit" class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-bold cursor-pointer transition <?= $u['status'] === 'active' ? 'bg-emerald-100 text-emerald-800 hover:bg-emerald-200' : 'bg-red-100 text-red-800 hover:bg-red-200' ?>"
+                    title="स्थिति बदलें (POST + CSRF)">
+                    <span class="w-1.5 h-1.5 rounded-full <?= $u['status'] === 'active' ? 'bg-emerald-600' : 'bg-red-600' ?>"></span>
+                    <?= ucfirst($u['status']) ?>
+                  </button>
+                </form>
+              <?php else: ?>
+                <span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-bold <?= $u['status'] === 'active' ? 'bg-emerald-100 text-emerald-800' : 'bg-red-100 text-red-800' ?>">
+                  <span class="w-1.5 h-1.5 rounded-full <?= $u['status'] === 'active' ? 'bg-emerald-600' : 'bg-red-600' ?>"></span>
+                  <?= ucfirst($u['status']) ?>
+                </span>
+              <?php endif; ?>
             </td>
 
-            <!-- Actions -->
+            <!-- Actions (Strictly POST + CSRF) -->
             <td class="px-4 py-3.5 text-right whitespace-nowrap">
-              <button type="button" onclick='openEditUserModal(<?= json_encode([
-                  "id" => $u["id"],
-                  "name" => $u["name"],
-                  "username" => $u["username"],
-                  "email" => $u["email"],
-                  "phone" => $u["phone"] ?? "",
-                  "role" => $u["role"],
-                  "department" => $u["department"] ?? "",
-                  "status" => $u["status"]
-              ], JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_HEX_AMP) ?>)'
-                class="px-2 py-1 bg-stone-100 hover:bg-stone-200 text-stone-700 font-bold text-[10px] rounded-lg border border-stone-300 transition inline-flex items-center gap-1 mr-1 cursor-pointer"
-                title="यूजर विवरण संपादित करें">
-                <i class="fa-solid fa-pen-to-square text-[9px] text-indigo-600"></i> एडिट
-              </button>
+              <?php if ($is_super || !in_array($u['role'], ['admin', 'super_admin'], true) || $u['id'] === $admin_user['id']): ?>
+                <button type="button" onclick='openEditUserModal(<?= json_encode([
+                    "id" => $u["id"],
+                    "name" => $u["name"],
+                    "username" => $u["username"],
+                    "email" => $u["email"],
+                    "phone" => $u["phone"] ?? "",
+                    "role" => $u["role"],
+                    "department" => $u["department"] ?? "",
+                    "status" => $u["status"]
+                ], JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_HEX_AMP) ?>)'
+                  class="px-2 py-1 bg-stone-100 hover:bg-stone-200 text-stone-700 font-bold text-[10px] rounded-lg border border-stone-300 transition inline-flex items-center gap-1 mr-1 cursor-pointer"
+                  title="यूजर विवरण संपादित करें">
+                  <i class="fa-solid fa-pen-to-square text-[9px] text-indigo-600"></i> एडिट
+                </button>
+              <?php endif; ?>
+
               <?php if ($u['id'] !== $admin_user['id']): ?>
-                <a href="/admin/impersonate.php?action=login_as&user_id=<?= $u['id'] ?>"
-                  class="px-2.5 py-1 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 font-bold text-[10px] rounded-lg border border-indigo-200 transition inline-flex items-center gap-1 mr-1"
-                  title="इस खाते में सीधे लॉगिन करें (Login as User)">
-                  <i class="fa-solid fa-right-to-bracket text-[9px]"></i> लॉगिन
-                </a>
-                <a href="/admin/users.php?delete_id=<?= $u['id'] ?>" onclick="return confirm('क्या आप वाकई इस यूजर को हटाना चाहते हैं?')"
-                  class="p-1.5 text-gray-400 hover:text-red-600 rounded hover:bg-red-50 transition" title="हटाएं">
-                  <i class="fa-regular fa-trash-can"></i>
-                </a>
+                <!-- Impersonation: Super Admin Only, never on another Super Admin -->
+                <?php if ($is_super && $u['role'] !== 'super_admin'): ?>
+                  <form method="POST" action="/admin/impersonate.php" class="inline">
+                    <input type="hidden" name="csrf_token" value="<?= csrf_token() ?>">
+                    <input type="hidden" name="action" value="login_as">
+                    <input type="hidden" name="target_user_id" value="<?= $u['id'] ?>">
+                    <button type="submit" class="px-2.5 py-1 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 font-bold text-[10px] rounded-lg border border-indigo-200 transition inline-flex items-center gap-1 mr-1 cursor-pointer"
+                      title="इस खाते में सुरक्षित लॉगिन करें (POST + CSRF)">
+                      <i class="fa-solid fa-right-to-bracket text-[9px]"></i> लॉगिन
+                    </button>
+                  </form>
+                <?php endif; ?>
+
+                <!-- Delete User: Only Super Admin can delete admin/super_admin; POST + CSRF -->
+                <?php if ($is_super || !in_array($u['role'], ['admin', 'super_admin'], true)): ?>
+                  <form method="POST" action="/admin/users.php" class="inline" onsubmit="return confirm('क्या आप वाकई इस यूजर को हटाना चाहते हैं?');">
+                    <input type="hidden" name="csrf_token" value="<?= csrf_token() ?>">
+                    <input type="hidden" name="delete_user" value="1">
+                    <input type="hidden" name="target_user_id" value="<?= $u['id'] ?>">
+                    <button type="submit" class="p-1.5 text-gray-400 hover:text-red-600 rounded hover:bg-red-50 transition cursor-pointer" title="हटाएं (POST + CSRF)">
+                      <i class="fa-regular fa-trash-can"></i>
+                    </button>
+                  </form>
+                <?php endif; ?>
               <?php else: ?>
                 <span class="text-[10px] text-emerald-600 font-semibold italic">आप (Admin)</span>
               <?php endif; ?>
@@ -315,7 +579,7 @@ require_once __DIR__ . '/admin_header.php';
   </div>
 </div>
 
-<!-- Add User Modal with Username, Role, & Password -->
+<!-- Add User Modal with Role Whitelisting & Strong Password -->
 <div id="addUserModal" class="hidden fixed inset-0 z-50 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4 overflow-y-auto">
   <div class="bg-white rounded-3xl border border-gray-200 shadow-2xl max-w-lg w-full p-6 sm:p-8 max-h-[90vh] overflow-y-auto">
     <div class="flex items-center justify-between pb-4 mb-4 border-b border-gray-100">
@@ -329,6 +593,7 @@ require_once __DIR__ . '/admin_header.php';
     </div>
 
     <form action="/admin/users.php" method="POST" class="space-y-4">
+      <input type="hidden" name="csrf_token" value="<?= csrf_token() ?>">
       <input type="hidden" name="add_user" value="1">
 
       <div>
@@ -347,10 +612,12 @@ require_once __DIR__ . '/admin_header.php';
         <div>
           <label class="block text-xs font-bold text-gray-700 mb-1">रोल (Role) <span class="text-red-500">*</span></label>
           <select name="role" class="w-full px-3.5 py-2.5 bg-stone-50 border border-gray-200 rounded-xl text-xs font-semibold focus:bg-white focus:outline-none focus:border-indigo-600 transition">
-            <option value="admin">Admin (प्रशासनिक स्टाफ)</option>
-            <option value="super_admin">Super Admin (सर्वोच्च नियंत्रण)</option>
+            <?php if ($is_super): ?>
+              <option value="admin">Admin (प्रशासनिक स्टाफ)</option>
+              <option value="super_admin">Super Admin (सर्वोच्च नियंत्रण)</option>
+            <?php endif; ?>
             <option value="vendor">Vendor (कारीगर / विक्रेता)</option>
-            <option value="customer">Customer (ग्राहक)</option>
+            <option value="customer" selected>Customer (ग्राहक)</option>
           </select>
         </div>
       </div>
@@ -378,17 +645,17 @@ require_once __DIR__ . '/admin_header.php';
       <!-- Secure Password with Eye Toggle -->
       <div>
         <label class="block text-xs font-bold text-gray-700 mb-1">
-          लॉगिन पासवर्ड बनाएं (Password) <span class="text-red-500">*</span>
+          लॉगिन पासवर्ड बनाएं (Password - न्यूनतम 10 अक्षर) <span class="text-red-500">*</span>
         </label>
         <div class="relative">
-          <input type="password" name="password" id="new_user_password" required minlength="6" placeholder="न्यूनतम 6 अक्षर"
+          <input type="password" name="password" id="new_user_password" required minlength="10" placeholder="न्यूनतम 10 अक्षर (मजबूत पासवर्ड)"
             class="w-full pl-3.5 pr-10 py-2.5 bg-stone-50 border border-gray-200 rounded-xl text-xs focus:bg-white focus:outline-none focus:border-indigo-600 transition">
           <button type="button" onclick="togglePasswordVisibility('new_user_password', this)"
             class="absolute inset-y-0 right-0 pr-3.5 flex items-center text-gray-400 hover:text-gray-600">
             <i class="fa-regular fa-eye text-xs"></i>
           </button>
         </div>
-        <p class="text-[11px] text-gray-400 mt-1">पासवर्ड को सुरक्षित Bcrypt हैश में एन्क्रिप्ट किया जाएगा।</p>
+        <p class="text-[11px] text-gray-400 mt-1">पासवर्ड कम से कम 10 अक्षरों का होना चाहिए तथा इसे Bcrypt द्वारा एन्क्रिप्ट किया जाएगा।</p>
       </div>
 
       <div class="flex items-center justify-end gap-3 pt-3 border-t border-gray-100">
@@ -405,7 +672,7 @@ require_once __DIR__ . '/admin_header.php';
   </div>
 </div>
 
-<!-- Reset Password Modal -->
+<!-- Reset Password Modal (POST + CSRF) -->
 <div id="resetPasswordModal" class="hidden fixed inset-0 z-50 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4">
   <div class="bg-white rounded-3xl border border-gray-200 shadow-2xl max-w-sm w-full p-6">
     <div class="flex items-center justify-between pb-3 mb-4 border-b border-gray-100">
@@ -419,6 +686,7 @@ require_once __DIR__ . '/admin_header.php';
     </div>
 
     <form action="/admin/users.php" method="POST" class="space-y-4">
+      <input type="hidden" name="csrf_token" value="<?= csrf_token() ?>">
       <input type="hidden" name="reset_user_password" value="1">
       <input type="hidden" name="target_user_id" id="reset_user_id">
 
@@ -427,9 +695,9 @@ require_once __DIR__ . '/admin_header.php';
       </div>
 
       <div>
-        <label class="block text-xs font-bold text-gray-700 mb-1">नया पासवर्ड (New Password)</label>
+        <label class="block text-xs font-bold text-gray-700 mb-1">नया पासवर्ड (New Password - न्यूनतम 10 अक्षर)</label>
         <div class="relative">
-          <input type="password" name="new_password" id="reset_new_password" required minlength="6" placeholder="न्यूनतम 6 अक्षर"
+          <input type="password" name="new_password" id="reset_new_password" required minlength="10" placeholder="न्यूनतम 10 अक्षर"
             class="w-full pl-3.5 pr-10 py-2.5 bg-stone-50 border border-gray-200 rounded-xl text-xs focus:bg-white focus:outline-none focus:border-indigo-600 transition">
           <button type="button" onclick="togglePasswordVisibility('reset_new_password', this)"
             class="absolute inset-y-0 right-0 pr-3.5 flex items-center text-gray-400 hover:text-gray-600">
@@ -466,12 +734,13 @@ require_once __DIR__ . '/admin_header.php';
     </div>
 
     <form action="/admin/import_users.php" method="POST" enctype="multipart/form-data" class="space-y-4">
+      <input type="hidden" name="csrf_token" value="<?= csrf_token() ?>">
       <div>
         <label class="block text-xs font-bold text-gray-700 mb-1">CSV फ़ाइल चुनें (.csv) <span class="text-red-500">*</span></label>
         <input type="file" name="csv_file" accept=".csv" required
           class="w-full text-xs text-stone-600 file:mr-3 file:py-2 file:px-4 file:rounded-xl file:border-0 file:text-xs file:font-bold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100 cursor-pointer border border-gray-200 rounded-xl p-2 bg-stone-50">
         <p class="text-[11px] text-gray-400 mt-1.5">
-          सुझाव: पहले <a href="/admin/export_users.php" class="text-indigo-600 font-bold hover:underline">एक्सपोर्ट CSV</a> करके कॉलम प्रारूप देख लें।
+          सुरक्षा: सभी इम्पोर्टेड उपयोगकर्ताओं के लिए सुरक्षित यादृच्छिक पासवर्ड बनाया जाएगा।
         </p>
       </div>
 
@@ -504,6 +773,7 @@ require_once __DIR__ . '/admin_header.php';
     </div>
 
     <form action="/admin/users.php" method="POST" class="space-y-4">
+      <input type="hidden" name="csrf_token" value="<?= csrf_token() ?>">
       <input type="hidden" name="edit_user" value="1">
       <input type="hidden" name="edit_user_id" id="edit_user_id" value="">
 
@@ -523,8 +793,10 @@ require_once __DIR__ . '/admin_header.php';
         <div>
           <label class="block text-xs font-bold text-gray-700 mb-1">रोल (Role) <span class="text-red-500">*</span></label>
           <select name="role" id="edit_role" class="w-full px-3.5 py-2.5 bg-stone-50 border border-gray-200 rounded-xl text-xs font-semibold focus:bg-white focus:outline-none focus:border-indigo-600 transition">
-            <option value="admin">Admin (प्रशासनिक स्टाफ)</option>
-            <option value="super_admin">Super Admin (सर्वोच्च नियंत्रण)</option>
+            <?php if ($is_super): ?>
+              <option value="super_admin">Super Admin (सर्वोच्च नियंत्रण)</option>
+              <option value="admin">Admin (प्रशासनिक स्टाफ)</option>
+            <?php endif; ?>
             <option value="vendor">Vendor (कारीगर / विक्रेता)</option>
             <option value="customer">Customer (ग्राहक)</option>
           </select>
@@ -563,10 +835,31 @@ require_once __DIR__ . '/admin_header.php';
 
       <div>
         <label class="block text-xs font-bold text-gray-700 mb-1">
-          नया पासवर्ड बदलें (वैकल्पिक - छोड़ें यदि नहीं बदलना हो)
+          नया पासवर्ड बदलें (वैकल्पिक - छोड़ें यदि नहीं बदलना हो, न्यूनतम 10 अक्षर)
         </label>
         <div class="relative">
-          <input type="password" name="new_password" id="edit_user_password" minlength="6" placeholder="पासवर्ड नहीं बदलना हो तो खाली छोड़ें"
+          <input type="password" name="new_password" id="edit_user_password" minlength="10" placeholder="पासवर्ड नहीं बदलना हो तो खाली छोड़ें"
+            class="w-full pl-3.5 pr-10 py-2.5 bg-stone-50 border border-gray-200 rounded-xl text-xs focus:bg-white focus:outline-none focus:border-indigo-600 transition">
+          <button type="button" onclick="togglePasswordVisibility('edit_user_password', this)"
+            class="absolute inset-y-0 right-0 pr-3.5 flex items-center text-gray-400 hover:text-gray-600">
+            <i class="fa-regular fa-eye text-xs"></i>
+          </button>
+        </div>
+      </div>
+
+      <div class="flex items-center justify-end gap-3 pt-3 border-t border-gray-100">
+        <button type="button" onclick="document.getElementById('editUserModal').classList.add('hidden')"
+          class="px-4 py-2 bg-stone-100 text-stone-700 font-bold rounded-xl text-xs">
+          रद्द करें
+        </button>
+        <button type="submit"
+          class="px-5 py-2 bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-xl text-xs transition">
+          अपडेट सहेजें (Save Changes)
+        </button>
+      </div>
+    </form>
+  </div>
+</div>
             class="w-full pl-3.5 pr-10 py-2.5 bg-stone-50 border border-gray-200 rounded-xl text-xs focus:bg-white focus:outline-none focus:border-indigo-600 transition">
           <button type="button" onclick="togglePasswordVisibility('edit_user_password', this)"
             class="absolute inset-y-0 right-0 pr-3.5 flex items-center text-gray-400 hover:text-gray-600">

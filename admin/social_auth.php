@@ -45,8 +45,7 @@ function get_soc_val($key, $default = '') {
 }
 
 // Current Host URL for display
-$protocol = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') ? "https://" : "http://";
-$current_host = $protocol . ($_SERVER['HTTP_HOST'] ?? 'localhost');
+$current_host = defined('SITE_URL') ? rtrim(SITE_URL, '/') : 'https://gaungalihat.womenvission.in';
 
 $page_title = 'सोशल लॉगिन एकीकरण (Social Auth Integration) — Super Admin';
 require_once __DIR__ . '/admin_header.php';

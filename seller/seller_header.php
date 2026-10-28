@@ -9,6 +9,11 @@ require_once __DIR__ . '/../includes/auth_check.php';
 // Strict Vendor Authorization Check
 require_vendor();
 
+// Item 16: Central CSRF Protection for all Seller POST actions
+if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    csrf_protect();
+}
+
 $user = get_logged_in_user();
 $vendor = get_vendor_for_current_user();
 
@@ -54,22 +59,12 @@ $flash = get_flash();
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   
   <link rel="stylesheet" href="/assets/css/style.css">
+  <meta name="csrf-token" content="<?= htmlspecialchars(csrf_token(), ENT_QUOTES, 'UTF-8') ?>">
 </head>
 <body class="h-full flex flex-col font-sans text-gray-800 antialiased bg-stone-100">
 
-  <!-- Impersonation Notice Banner -->
-  <?php if (!empty($_SESSION['impersonator_id'])): ?>
-    <div class="bg-amber-500 text-stone-950 px-4 py-2 text-xs font-bold flex flex-wrap items-center justify-between shadow-md z-50 sticky top-0 border-b border-amber-600">
-      <div class="flex items-center gap-2">
-        <i class="fa-solid fa-user-secret text-base"></i>
-        <span>आप <strong><?= htmlspecialchars($vendor['business_name'] ?? $user['name']) ?></strong> के विक्रेता पोर्टल में हैं। मूल एडमिन: <?= htmlspecialchars($_SESSION['impersonator_name'] ?? 'Super Admin') ?></span>
-      </div>
-      <a href="/admin/impersonate.php?action=exit" class="px-3 py-1 bg-stone-950 text-white rounded-lg hover:bg-black transition flex items-center gap-1.5 shadow-xs text-xs font-bold">
-        <i class="fa-solid fa-arrow-right-from-bracket"></i>
-        Back to Admin Panel (एडमिन पैनल पर वापस लौटें)
-      </a>
-    </div>
-  <?php endif; ?>
+  <!-- Item 7: Impersonation Notice Banner with POST + CSRF exit -->
+  <?= function_exists('render_impersonation_banner') ? render_impersonation_banner() : '' ?>
 
   <!-- Top Seller Central Bar -->
   <header class="bg-stone-900 text-white border-b border-stone-800 sticky top-0 z-40">

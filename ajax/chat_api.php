@@ -23,6 +23,12 @@ function get_or_create_customer_session() {
     $session = $stmt->fetch();
 
     if (!$session) {
+        $ip = get_client_ip();
+        if (!check_rate_limit('chat_init_ip', $ip, 10, 900)) {
+            echo json_encode(['success' => false, 'error' => 'Too many chat requests. Please wait a few minutes before starting a new chat session.']);
+            exit;
+        }
+
         $user_name = $curr_user['name'] ?? ($_SESSION['chat_guest_name'] ?? 'Guest Customer');
         $user_email = $curr_user['email'] ?? ($_SESSION['chat_guest_email'] ?? null);
         $user_phone = $curr_user['phone'] ?? null;
@@ -170,20 +176,28 @@ if ($action === 'customer_end_chat') {
 }
 
 // ==========================================
-// ADMIN & SUPPORT TEAM ENDPOINTS
+// ADMIN & SUPPORT TEAM ENDPOINTS (Item 9: Role-based only, strictly super_admin/admin/support)
 // ==========================================
 $is_support_authorized = false;
-if ($curr_user && (
-    in_array($curr_user['role'], ['super_admin', 'admin', 'support']) ||
-    strpos(strtolower($curr_user['department'] ?? ''), 'support') !== false
-)) {
+if ($curr_user && in_array($curr_user['role'], ['super_admin', 'admin', 'support'], true)) {
     $is_support_authorized = true;
 }
 
 if (!$is_support_authorized) {
+    http_response_code(403);
     echo json_encode(['success' => false, 'error' => 'अनधिकृत पहुंच (Support clearance required)']);
     exit;
 }
+
+// Helper: Check CSRF for state-changing admin actions
+$verify_admin_csrf = function() {
+    $token = $_POST['csrf_token'] ?? $_SERVER['HTTP_X_CSRF_TOKEN'] ?? '';
+    if (empty($token) || empty($_SESSION['csrf_token']) || !hash_equals($_SESSION['csrf_token'], (string)$token)) {
+        http_response_code(403);
+        echo json_encode(['success' => false, 'error' => 'CSRF verification failed']);
+        exit;
+    }
+};
 
 // 3. Admin: List All Sessions
 if ($action === 'admin_sessions') {
@@ -243,8 +257,9 @@ if ($action === 'admin_get_thread') {
     exit;
 }
 
-// 5. Admin: Send Reply (With Debounce Check)
+// 5. Admin: Send Reply (With Debounce Check & CSRF Protection)
 if ($action === 'admin_reply') {
+    $verify_admin_csrf();
     $session_id = intval($_POST['session_id'] ?? 0);
     $reply_msg = clean_input($_POST['message'] ?? '');
 
@@ -286,8 +301,9 @@ if ($action === 'admin_reply') {
     exit;
 }
 
-// 6. Admin: Toggle Resolved / Active Status
+// 6. Admin: Toggle Resolved / Active Status (With CSRF Protection)
 if ($action === 'admin_toggle_status') {
+    $verify_admin_csrf();
     $session_id = intval($_POST['session_id'] ?? 0);
     $new_status = clean_input($_POST['status'] ?? 'resolved');
     $pdo->prepare("UPDATE chat_sessions SET status = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?")->execute([$new_status, $session_id]);

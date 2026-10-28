@@ -3,87 +3,111 @@ require_once __DIR__ . '/includes/functions.php';
 
 $error = '';
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    $shop_name = clean_input($_POST['shop_name'] ?? '');
-    $owner_name = clean_input($_POST['owner_name'] ?? '');
-    $phone = clean_input($_POST['phone'] ?? '');
-    $email = clean_input($_POST['email'] ?? '');
-    $vendor_type = clean_input($_POST['vendor_type'] ?? 'Artisan');
-    $village = clean_input($_POST['village'] ?? '');
-    $district = clean_input($_POST['district'] ?? 'Hardoi');
-    $pincode = clean_input($_POST['pincode'] ?? '241126');
-    $password = $_POST['password'] ?? '';
-    $confirm_password = $_POST['confirm_password'] ?? '';
-    $upi_id = clean_input($_POST['upi_id'] ?? '');
-    $bank_name = clean_input($_POST['bank_name'] ?? '');
-    $bank_account = clean_input($_POST['bank_account'] ?? '');
-    $bank_ifsc = clean_input($_POST['bank_ifsc'] ?? '');
-    $story = clean_input($_POST['story'] ?? '');
-
-    if (empty($shop_name) || empty($owner_name) || empty($phone) || empty($email) || empty($password)) {
-        $error = 'कृपया सभी आवश्यक फ़ील्ड भरें।';
-    } elseif ($password !== $confirm_password) {
-        $error = 'पासवर्ड और पुष्टि पासवर्ड मेल नहीं खाते।';
-    } elseif (strlen($password) < 6) {
-        $error = 'पासवर्ड कम से कम 6 अक्षरों का होना चाहिए।';
+    // Item 15: CSRF Token Check
+    $csrf = $_POST['csrf_token'] ?? '';
+    if (!csrf_check($csrf)) {
+        $error = 'सुरक्षा टोकन अमान्य है। कृपया पृष्ठ रीफ़्रेश करके पुनः प्रयास करें। (Invalid security token)';
     } else {
-        try {
-            $pdo->beginTransaction();
+        $shop_name = clean_input($_POST['shop_name'] ?? '');
+        $owner_name = clean_input($_POST['owner_name'] ?? '');
+        $phone = clean_input($_POST['phone'] ?? '');
+        $email = clean_input($_POST['email'] ?? '');
+        $vendor_type = clean_input($_POST['vendor_type'] ?? 'Artisan');
+        $village = clean_input($_POST['village'] ?? '');
+        $district = clean_input($_POST['district'] ?? 'Hardoi');
+        $pincode = clean_input($_POST['pincode'] ?? '241126');
+        $password = $_POST['password'] ?? '';
+        $confirm_password = $_POST['confirm_password'] ?? '';
+        $upi_id = clean_input($_POST['upi_id'] ?? '');
+        $bank_name = clean_input($_POST['bank_name'] ?? '');
+        $bank_account = clean_input($_POST['bank_account'] ?? '');
+        $bank_ifsc = clean_input($_POST['bank_ifsc'] ?? '');
+        $story = clean_input($_POST['story'] ?? '');
 
-            // Check duplicate user
-            $stmt = $pdo->prepare("SELECT id FROM users WHERE email = ? OR phone = ?");
-            $stmt->execute([$email, $phone]);
-            if ($stmt->fetch()) {
-                $error = 'इस ईमेल या फ़ोन नंबर से पहले से उपयोगकर्ता पंजीकृत है।';
-                $pdo->rollBack();
-            } else {
-                $base_username = strtolower(preg_replace('/[^a-zA-Z0-9]/', '', explode('@', $email)[0]));
-                $username = $base_username . rand(10, 99);
-                $unique_code = 'GGH-ART-' . rand(10000, 99999);
-                $hashed_password = password_hash($password, PASSWORD_BCRYPT);
+        $pwd_err = '';
+        $client_ip = get_client_ip();
+        if (!check_rate_limit('seller_register_ip', $client_ip, 5, 3600) || !check_rate_limit('seller_register_phone', $phone, 3, 3600)) {
+            $error = 'बहुत अधिक पंजीकरण प्रयास। कृपया 1 घंटे बाद पुनः प्रयास करें। (Rate limit exceeded)';
+        } elseif (!verify_turnstile_captcha()) {
+            $error = 'CAPTCHA सुरक्षा सत्यापन विफल रहा। कृपया पुनः प्रयास करें।';
+        } elseif (empty($shop_name) || empty($owner_name) || empty($phone) || empty($email) || empty($password)) {
+            $error = 'कृपया सभी आवश्यक फ़ील्ड भरें।';
+        } elseif (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
+            $error = 'कृपया एक मान्य ईमेल पता दर्ज करें।';
+        } elseif ($password !== $confirm_password) {
+            $error = 'पासवर्ड और पुष्टि पासवर्ड मेल नहीं खाते।';
+        } elseif (!is_strong_password($password, $pwd_err)) {
+            // Item 22: Strong Password Policy Enforcement
+            $error = $pwd_err;
+        } else {
+            try {
+                $pdo->beginTransaction();
 
-                // Insert User
-                $insert_user = $pdo->prepare("
-                    INSERT INTO users (unique_code, name, username, email, phone, password, role, department, city, pincode, status)
-                    VALUES (?, ?, ?, ?, ?, ?, 'vendor', ?, ?, ?, 'active')
-                ");
-                $insert_user->execute([
-                    $unique_code, $owner_name, $username, $email, $phone, $hashed_password,
-                    $shop_name . ' (' . $vendor_type . ')', $district, $pincode
-                ]);
-                $user_id = $pdo->lastInsertId();
+                // Check duplicate user
+                $stmt = $pdo->prepare("SELECT id FROM users WHERE email = ? OR phone = ?");
+                $stmt->execute([$email, $phone]);
+                if ($stmt->fetch()) {
+                    $error = 'इस ईमेल या फ़ोन नंबर से पहले से उपयोगकर्ता पंजीकृत है।';
+                    $pdo->rollBack();
+                } else {
+                    // Item 11: Cryptographically secure random identifiers
+                    $base_username = strtolower(preg_replace('/[^a-zA-Z0-9]/', '', explode('@', $email)[0]));
+                    $username = $base_username . random_int(10, 99);
+                    $unique_code = 'GGH-ART-' . random_int(10000, 99999);
+                    $hashed_password = password_hash($password, PASSWORD_BCRYPT);
 
-                // Create slug for vendor
-                $slug = strtolower(preg_replace('/[^a-zA-Z0-9]+/', '-', $shop_name)) . '-' . rand(10, 99);
+                    // Insert User
+                    $insert_user = $pdo->prepare("
+                        INSERT INTO users (unique_code, name, username, email, phone, password, role, department, city, pincode, status)
+                        VALUES (?, ?, ?, ?, ?, ?, 'vendor', ?, ?, ?, 'active')
+                    ");
+                    $insert_user->execute([
+                        $unique_code, $owner_name, $username, $email, $phone, $hashed_password,
+                        $shop_name . ' (' . $vendor_type . ')', $district, $pincode
+                    ]);
+                    $user_id = $pdo->lastInsertId();
 
-                // Insert Vendor
-                $insert_vendor = $pdo->prepare("
-                    INSERT INTO vendors (
-                        user_id, name, business_name, slug, type, village, district, state,
-                        pincode, phone, whatsapp, email, story, bank_beneficiary,
-                        bank_name, bank_account, bank_ifsc, upi_id, verified, kyc_status, commission_rate
-                    ) VALUES (?, ?, ?, ?, ?, ?, ?, 'Uttar Pradesh', ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 1, 'Verified', 4.00)
-                ");
-                $insert_vendor->execute([
-                    $user_id, $owner_name, $shop_name, $slug, $vendor_type, $village, $district,
-                    $pincode, $phone, $phone, $email, $story, $owner_name,
-                    $bank_name, $bank_account, $bank_ifsc, $upi_id
-                ]);
+                    // Create slug for vendor
+                    $slug = strtolower(preg_replace('/[^a-zA-Z0-9]+/', '-', $shop_name)) . '-' . random_int(10, 99);
 
-                $pdo->commit();
+                    // Insert Vendor
+                    $insert_vendor = $pdo->prepare("
+                        INSERT INTO vendors (
+                            user_id, name, business_name, slug, type, village, district, state,
+                            pincode, phone, whatsapp, email, story, bank_beneficiary,
+                            bank_name, bank_account, bank_ifsc, upi_id, verified, kyc_status, commission_rate
+                        ) VALUES (?, ?, ?, ?, ?, ?, ?, 'Uttar Pradesh', ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 1, 'Verified', 4.00)
+                    ");
+                    $insert_vendor->execute([
+                        $user_id, $owner_name, $shop_name, $slug, $vendor_type, $village, $district,
+                        $pincode, $phone, $phone, $email, $story, $owner_name,
+                        $bank_name, $bank_account, $bank_ifsc, $upi_id
+                    ]);
 
-                // Login
-                $_SESSION['user_id'] = $user_id;
-                $_SESSION['user_name'] = $owner_name;
-                $_SESSION['user_role'] = 'vendor';
-                $_SESSION['user_email'] = $email;
+                    $pdo->commit();
 
-                set_flash('success', 'विक्रेता खाता सफलतापूर्वक बना! विक्रेता डैशबोर्ड में आपका स्वागत है।');
-                header('Location: /seller/dashboard.php');
-                exit;
+                    // Item 10: Dispatch email verification link
+                    send_email_verification_link($user_id, $email, $owner_name);
+
+                    // Item 13: Session rotation upon sign-in
+                    if (session_status() === PHP_SESSION_ACTIVE) {
+                        session_regenerate_id(true);
+                    }
+
+                    // Login
+                    $_SESSION['user_id'] = $user_id;
+                    $_SESSION['user_name'] = $owner_name;
+                    $_SESSION['user_role'] = 'vendor';
+                    $_SESSION['user_email'] = $email;
+
+                    set_flash('success', 'विक्रेता खाता सफलतापूर्वक बना! सत्यापन लिंक आपके ईमेल पर भेज दिया गया है।');
+                    header('Location: /seller/dashboard.php');
+                    exit;
+                }
+            } catch (Exception $e) {
+                if ($pdo->inTransaction()) $pdo->rollBack();
+                $error = 'पंजीकरण त्रुटि: ' . $e->getMessage();
             }
-        } catch (Exception $e) {
-            if ($pdo->inTransaction()) $pdo->rollBack();
-            $error = 'पंजीकरण त्रुटि: ' . $e->getMessage();
         }
     }
 }
@@ -118,6 +142,7 @@ require_once __DIR__ . '/includes/header.php';
       <?php endif; ?>
 
       <form action="/seller-register.php" method="POST" class="space-y-6">
+        <?= csrf_field() ?>
         
         <!-- Step 1: Basic Information -->
         <div>
@@ -191,13 +216,13 @@ require_once __DIR__ . '/includes/header.php';
 
             <div>
               <label class="block text-xs font-bold text-gray-700 mb-1">पासवर्ड बनाएं <span class="text-red-500">*</span></label>
-              <input type="password" name="password" required minlength="6" placeholder="न्यूनतम 6 अक्षर"
+              <input type="password" name="password" required minlength="10" placeholder="न्यूनतम 10 अक्षर (मजबूत पासवर्ड)"
                 class="w-full px-3.5 py-2.5 bg-stone-50 border border-gray-200 rounded-xl text-sm focus:bg-white focus:border-amber-600 focus:outline-none transition">
             </div>
 
             <div>
               <label class="block text-xs font-bold text-gray-700 mb-1">पासवर्ड दोबारा लिखें <span class="text-red-500">*</span></label>
-              <input type="password" name="confirm_password" required minlength="6" placeholder="दोबारा लिखें"
+              <input type="password" name="confirm_password" required minlength="10" placeholder="दोबारा लिखें"
                 class="w-full px-3.5 py-2.5 bg-stone-50 border border-gray-200 rounded-xl text-sm focus:bg-white focus:border-amber-600 focus:outline-none transition">
             </div>
           </div>
@@ -243,6 +268,9 @@ require_once __DIR__ . '/includes/header.php';
           <textarea name="story" rows="3" placeholder="आप कितने वर्षों से यह कार्य कर रहे हैं? आपके उत्पाद की क्या विशेषता है? (उदा. हाथ से कुटा हुआ लोहे का हंसिया, 100% शुद्ध सरसों तेल का अचार...)"
             class="w-full px-3.5 py-2.5 bg-stone-50 border border-gray-200 rounded-xl text-sm focus:bg-white focus:border-amber-600 focus:outline-none transition"></textarea>
         </div>
+
+        <!-- Security CAPTCHA -->
+        <?= render_turnstile_widget() ?>
 
         <button type="submit"
           class="w-full py-3.5 bg-amber-600 hover:bg-amber-700 text-white font-bold rounded-xl shadow-lg active:scale-[0.98] transition flex items-center justify-center gap-2 text-sm">

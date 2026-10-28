@@ -15,10 +15,10 @@ $db_canonical = trim((string)$stmt_set->fetchColumn());
 
 if (!empty($db_canonical)) {
     $base_url = rtrim($db_canonical, '/');
+} elseif (defined('SITE_URL')) {
+    $base_url = rtrim(SITE_URL, '/');
 } else {
-    $protocol = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') || ($_SERVER['SERVER_PORT'] ?? 80) == 443 ? 'https://' : 'http://';
-    $host = $_SERVER['HTTP_HOST'] ?? 'ganvgalihat.com';
-    $base_url = $protocol . $host;
+    $base_url = 'https://gaungalihat.womenvission.in';
 }
 
 $type = trim($_GET['type'] ?? '');

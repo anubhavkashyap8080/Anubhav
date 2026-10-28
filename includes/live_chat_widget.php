@@ -118,7 +118,11 @@ function minimizeLiveChat() {
 // 2. Cancel / End chat session
 function cancelLiveChat() {
   if (confirm('Are you sure you want to end this chat session?')) {
-    fetch('/ajax/chat_api.php?action=customer_end_chat', { method: 'POST' })
+    const csrf = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '';
+    fetch('/ajax/chat_api.php?action=customer_end_chat', {
+      method: 'POST',
+      headers: { 'X-CSRF-Token': csrf }
+    })
       .then(res => res.json())
       .then(() => {
         const box = document.getElementById('liveChatPopupBox');
@@ -225,6 +229,9 @@ function handleSendChatMessage(e) {
     formData.append('guest_phone', guestPhoneEl.value.trim());
   }
 
+  const csrf = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '';
+  if (csrf) formData.append('csrf_token', csrf);
+
   // Lock form to avoid double clicks or accidental re-submits
   isSendingChat = true;
   if (btn) btn.disabled = true;
@@ -232,6 +239,7 @@ function handleSendChatMessage(e) {
 
   fetch('/ajax/chat_api.php?action=customer_send', {
     method: 'POST',
+    headers: { 'X-CSRF-Token': csrf },
     body: formData
   })
   .then(res => res.json())

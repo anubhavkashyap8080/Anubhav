@@ -9,163 +9,217 @@ $active_tab = clean_input($_GET['tab'] ?? 'orders');
 $success_msg = '';
 $error_msg = '';
 
-// Handle Profile & Avatar Update
-if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['update_profile'])) {
-    $name = clean_input($_POST['name'] ?? '');
-    $phone = clean_input($_POST['phone'] ?? '');
-    $city = clean_input($_POST['city'] ?? '');
-    $pincode = clean_input($_POST['pincode'] ?? '');
-    $address = clean_input($_POST['address'] ?? '');
-    $avatar_url = $user['avatar'] ?? null;
-
-    // Handle File Upload if provided
-    if (isset($_FILES['avatar_file']) && $_FILES['avatar_file']['error'] === UPLOAD_ERR_OK) {
-        $file = $_FILES['avatar_file'];
-        $allowed = ['jpg', 'jpeg', 'png', 'webp', 'gif'];
-        $ext = strtolower(pathinfo($file['name'], PATHINFO_EXTENSION));
-
-        if (in_array($ext, $allowed) && $file['size'] <= 5 * 1024 * 1024) {
-            $finfo = finfo_open(FILEINFO_MIME_TYPE);
-            $mime = finfo_file($finfo, $file['tmp_name']);
-            finfo_close($finfo);
-
-            $valid_mimes = ['image/jpeg', 'image/png', 'image/webp', 'image/gif'];
-            if (in_array($mime, $valid_mimes)) {
-                $target_dir = __DIR__ . '/uploads/avatars/';
-                if (!is_dir($target_dir)) {
-                    mkdir($target_dir, 0755, true);
-                }
-                $filename = 'user_' . $user['id'] . '_' . time() . '.' . $ext;
-                $dest = $target_dir . $filename;
-                if (move_uploaded_file($file['tmp_name'], $dest)) {
-                    $avatar_url = '/uploads/avatars/' . $filename;
-                }
-            } else {
-                $error_msg = 'केवल JPG, PNG या WebP छवियां स्वीकार्य हैं।';
-            }
-        } else {
-            $error_msg = 'फ़ाइल का आकार 5MB से कम होना चाहिए।';
-        }
-    } elseif (!empty($_POST['avatar_url_input'])) {
-        $avatar_url = clean_input($_POST['avatar_url_input']);
-    }
-
-    if (empty($error_msg) && !empty($name) && !empty($phone)) {
-        try {
-            $stmt = $pdo->prepare("UPDATE users SET name = ?, phone = ?, city = ?, pincode = ?, address = ?, avatar = ? WHERE id = ?");
-            $stmt->execute([$name, $phone, $city, $pincode, $address, $avatar_url, $user['id']]);
-            $success_msg = 'प्रोफ़ाइल एवं अवतार सफलतापूर्वक अपडेट कर दिया गया।';
-            $user = get_logged_in_user(); // refresh
-            $active_tab = 'profile';
-        } catch (Exception $e) {
-            $error_msg = 'त्रुटि: ' . $e->getMessage();
+// Item 10: Resend Verification Email
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['resend_verification'])) {
+    if (!csrf_check($_POST['csrf_token'] ?? '')) {
+        $error_msg = 'सुरक्षा टोकन अमान्य है। (Invalid CSRF Token)';
+    } else {
+        if (!empty($user['email'])) {
+            send_email_verification_link($user['id'], $user['email'], $user['name']);
+            $success_msg = 'सत्यापन लिंक आपके ईमेल (' . htmlspecialchars($user['email'], ENT_QUOTES, 'UTF-8') . ') पर पुनः भेज दिया गया है। कृपया अपना इनबॉक्स देखें।';
         }
     }
 }
 
-// Handle Password Change
-if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['change_password'])) {
-    $current_pass = $_POST['current_password'] ?? '';
-    $new_pass = $_POST['new_password'] ?? '';
-    $confirm_pass = $_POST['confirm_password'] ?? '';
+// Handle Profile & Avatar Update
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['update_profile'])) {
+    if (!csrf_check($_POST['csrf_token'] ?? '')) {
+        $error_msg = 'सुरक्षा टोकन अमान्य है। कृपया पृष्ठ रीफ़्रेश करें। (Invalid CSRF Token)';
+        $active_tab = 'profile';
+    } else {
+        $name = clean_input($_POST['name'] ?? '');
+        $phone = clean_input($_POST['phone'] ?? '');
+        $city = clean_input($_POST['city'] ?? '');
+        $pincode = clean_input($_POST['pincode'] ?? '');
+        $address = clean_input($_POST['address'] ?? '');
+        $avatar_url = $user['avatar'] ?? null;
 
-    if (!password_verify($current_pass, $user['password'])) {
-        $error_msg = 'वर्तमान पासवर्ड गलत है।';
-        $active_tab = 'security';
-    } elseif ($new_pass !== $confirm_pass) {
-        $error_msg = 'नया पासवर्ड और पुष्टि पासवर्ड मेल नहीं खाते।';
-        $active_tab = 'security';
-    } elseif (strlen($new_pass) < 6) {
-        $error_msg = 'पासवर्ड कम से कम 6 अक्षरों का होना चाहिए।';
+        // Handle File Upload if provided
+        if (isset($_FILES['avatar_file']) && $_FILES['avatar_file']['error'] === UPLOAD_ERR_OK) {
+            $file = $_FILES['avatar_file'];
+            $allowed = ['jpg', 'jpeg', 'png', 'webp'];
+            $ext = strtolower(pathinfo($file['name'], PATHINFO_EXTENSION));
+
+            if (in_array($ext, $allowed) && $file['size'] <= 5 * 1024 * 1024) {
+                $finfo = finfo_open(FILEINFO_MIME_TYPE);
+                $mime = finfo_file($finfo, $file['tmp_name']);
+                finfo_close($finfo);
+
+                $valid_mimes = ['image/jpeg', 'image/png', 'image/webp'];
+                if (in_array($mime, $valid_mimes)) {
+                    $target_dir = __DIR__ . '/uploads/avatars/';
+                    if (!is_dir($target_dir)) {
+                        mkdir($target_dir, 0755, true);
+                    }
+                    $filename = 'user_' . $user['id'] . '_' . time() . '_' . bin2hex(random_bytes(4)) . '.' . $ext;
+                    $dest = $target_dir . $filename;
+                    if (move_uploaded_file($file['tmp_name'], $dest)) {
+                        $avatar_url = '/uploads/avatars/' . $filename;
+                    }
+                } else {
+                    $error_msg = 'केवल JPG, PNG या WebP छवियां स्वीकार्य हैं।';
+                }
+            } else {
+                $error_msg = 'फ़ाइल का आकार 5MB से कम होना चाहिए।';
+            }
+        } elseif (!empty($_POST['avatar_url_input'])) {
+            $avatar_url = clean_input($_POST['avatar_url_input']);
+        }
+
+        if (empty($error_msg) && !empty($name) && !empty($phone)) {
+            try {
+                $stmt = $pdo->prepare("UPDATE users SET name = ?, phone = ?, city = ?, pincode = ?, address = ?, avatar = ? WHERE id = ?");
+                $stmt->execute([$name, $phone, $city, $pincode, $address, $avatar_url, $user['id']]);
+                $success_msg = 'प्रोफ़ाइल एवं अवतार सफलतापूर्वक अपडेट कर दिया गया।';
+                $user = get_logged_in_user(); // refresh
+                $active_tab = 'profile';
+            } catch (Exception $e) {
+                $error_msg = 'त्रुटि: ' . $e->getMessage();
+            }
+        }
+    }
+}
+
+// Handle Password Change (Item 22: Strong Password Policy)
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['change_password'])) {
+    if (!csrf_check($_POST['csrf_token'] ?? '')) {
+        $error_msg = 'सुरक्षा टोकन अमान्य है। (Invalid CSRF Token)';
         $active_tab = 'security';
     } else {
-        try {
-            $hashed = password_hash($new_pass, PASSWORD_BCRYPT);
-            $stmt = $pdo->prepare("UPDATE users SET password = ? WHERE id = ?");
-            $stmt->execute([$hashed, $user['id']]);
-            $success_msg = 'पासवर्ड सफलतापूर्वक बदल दिया गया है।';
+        $current_pass = $_POST['current_password'] ?? '';
+        $new_pass = $_POST['new_password'] ?? '';
+        $confirm_pass = $_POST['confirm_password'] ?? '';
+
+        $pwd_err = '';
+        if (!password_verify($current_pass, $user['password'])) {
+            $error_msg = 'वर्तमान पासवर्ड गलत है।';
             $active_tab = 'security';
-        } catch (Exception $e) {
-            $error_msg = 'त्रुटि: ' . $e->getMessage();
+        } elseif ($new_pass !== $confirm_pass) {
+            $error_msg = 'नया पासवर्ड और पुष्टि पासवर्ड मेल नहीं खाते।';
+            $active_tab = 'security';
+        } elseif (!is_strong_password($new_pass, $pwd_err)) {
+            $error_msg = $pwd_err;
+            $active_tab = 'security';
+        } else {
+            try {
+                $hashed = password_hash($new_pass, PASSWORD_BCRYPT);
+                $stmt = $pdo->prepare("UPDATE users SET password = ?, force_password_change = 0 WHERE id = ?");
+                $stmt->execute([$hashed, $user['id']]);
+                unset($_SESSION['force_password_change']);
+                $success_msg = 'पासवर्ड सफलतापूर्वक बदल दिया गया है।';
+                $active_tab = 'security';
+            } catch (Exception $e) {
+                $error_msg = 'त्रुटि: ' . $e->getMessage();
+            }
         }
     }
 }
 
 // Handle New Support Ticket Submission
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['create_ticket'])) {
-    $subject = clean_input($_POST['subject'] ?? '');
-    $category = clean_input($_POST['category'] ?? 'Order Tracking');
-    $priority = clean_input($_POST['priority'] ?? 'Medium');
-    $message = clean_input($_POST['message'] ?? '');
-
-    if (!empty($subject) && !empty($message)) {
-        try {
-            $ticket_num = 'TKT-' . date('ymd') . '-' . rand(1000, 9999);
-            $stmt_tkt = $pdo->prepare("
-                INSERT INTO tickets (ticket_number, user_id, name, email, phone, role, subject, category, priority, status, message, created_at)
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 'Open', ?, CURRENT_TIMESTAMP)
-            ");
-            $stmt_tkt->execute([
-                $ticket_num,
-                $user['id'],
-                $user['name'],
-                $user['email'],
-                $user['phone'],
-                $user['role'],
-                $subject,
-                $category,
-                $priority,
-                $message
-            ]);
-            $success_msg = "सपोर्ट टिकट #$ticket_num सफलतापूर्वक दर्ज कर दिया गया है। हमारी टीम शीघ्र उत्तर देगी।";
-            $active_tab = 'tickets';
-        } catch (Exception $e) {
-            $error_msg = 'टिकट दर्ज करने में त्रुटि: ' . $e->getMessage();
-        }
+    if (!csrf_check($_POST['csrf_token'] ?? '')) {
+        $error_msg = 'सुरक्षा टोकन अमान्य है।';
+        $active_tab = 'tickets';
     } else {
-        $error_msg = 'कृपया विषय और संदेश दोनों भरें।';
+        $subject = clean_input($_POST['subject'] ?? '');
+        $category = clean_input($_POST['category'] ?? 'Order Tracking');
+        $priority = clean_input($_POST['priority'] ?? 'Medium');
+        $message = clean_input($_POST['message'] ?? '');
+
+        if (!empty($subject) && !empty($message)) {
+            try {
+                // Item 11: Cryptographically secure random ticket number
+                $ticket_num = 'TKT-' . date('ymd') . '-' . random_int(1000, 9999);
+                $stmt_tkt = $pdo->prepare("
+                    INSERT INTO tickets (ticket_number, user_id, name, email, phone, role, subject, category, priority, status, message, created_at)
+                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 'Open', ?, CURRENT_TIMESTAMP)
+                ");
+                $stmt_tkt->execute([
+                    $ticket_num,
+                    $user['id'],
+                    $user['name'],
+                    $user['email'],
+                    $user['phone'],
+                    $user['role'],
+                    $subject,
+                    $category,
+                    $priority,
+                    $message
+                ]);
+                $success_msg = "सपोर्ट टिकट #$ticket_num सफलतापूर्वक दर्ज कर दिया गया है। हमारी टीम शीघ्र उत्तर देगी।";
+                $active_tab = 'tickets';
+            } catch (Exception $e) {
+                $error_msg = 'टिकट दर्ज करने में त्रुटि: ' . $e->getMessage();
+            }
+        } else {
+            $error_msg = 'कृपया विषय और संदेश दोनों भरें।';
+        }
     }
 }
 
 // Handle Ticket Reply from Customer
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['reply_ticket'])) {
-    $ticket_id = (int)($_POST['ticket_id'] ?? 0);
-    $reply_msg = clean_input($_POST['reply_message'] ?? '');
+    if (!csrf_check($_POST['csrf_token'] ?? '')) {
+        $error_msg = 'सुरक्षा टोकन अमान्य है।';
+        $active_tab = 'tickets';
+    } else {
+        $ticket_id = (int)($_POST['ticket_id'] ?? 0);
+        $reply_msg = clean_input($_POST['reply_message'] ?? '');
 
-    if ($ticket_id > 0 && !empty($reply_msg)) {
-        try {
-            // Check ticket ownership
-            $stmt_check = $pdo->prepare("SELECT id FROM tickets WHERE id = ? AND (user_id = ? OR email = ?)");
-            $stmt_check->execute([$ticket_id, $user['id'], $user['email']]);
-            if ($stmt_check->fetch()) {
-                $stmt_ins = $pdo->prepare("
-                    INSERT INTO ticket_replies (ticket_id, user_id, sender_name, sender_role, message, created_at)
-                    VALUES (?, ?, ?, ?, ?, CURRENT_TIMESTAMP)
-                ");
-                $stmt_ins->execute([$ticket_id, $user['id'], $user['name'], 'customer', $reply_msg]);
-                
-                // Update ticket status to In Progress
-                $pdo->prepare("UPDATE tickets SET status = 'In Progress' WHERE id = ? AND status != 'Resolved'")->execute([$ticket_id]);
-                
-                $success_msg = 'आपका संदेश टिकट में जोड़ दिया गया है।';
-                $active_tab = 'tickets';
-            } else {
-                $error_msg = 'अमान्य टिकट अनुरोध।';
+        if ($ticket_id > 0 && !empty($reply_msg)) {
+            try {
+                // Item 10: Check ticket ownership (Allow email match ONLY if email is verified)
+                $is_email_verified = !empty($user['email_verified_at']);
+                if ($is_email_verified && !empty($user['email'])) {
+                    $stmt_check = $pdo->prepare("SELECT id FROM tickets WHERE id = ? AND (user_id = ? OR email = ?)");
+                    $stmt_check->execute([$ticket_id, $user['id'], $user['email']]);
+                } else {
+                    $stmt_check = $pdo->prepare("SELECT id FROM tickets WHERE id = ? AND user_id = ?");
+                    $stmt_check->execute([$ticket_id, $user['id']]);
+                }
+
+                if ($stmt_check->fetch()) {
+                    $stmt_ins = $pdo->prepare("
+                        INSERT INTO ticket_replies (ticket_id, user_id, sender_name, sender_role, message, created_at)
+                        VALUES (?, ?, ?, ?, ?, CURRENT_TIMESTAMP)
+                    ");
+                    $stmt_ins->execute([$ticket_id, $user['id'], $user['name'], 'customer', $reply_msg]);
+                    
+                    // Update ticket status to In Progress
+                    $pdo->prepare("UPDATE tickets SET status = 'In Progress' WHERE id = ? AND status != 'Resolved'")->execute([$ticket_id]);
+                    
+                    $success_msg = 'आपका संदेश टिकट में जोड़ दिया गया है।';
+                    $active_tab = 'tickets';
+                } else {
+                    $error_msg = 'अमान्य टिकट अनुरोध।';
+                }
+            } catch (Exception $e) {
+                $error_msg = 'उत्तर दर्ज करने में त्रुटि: ' . $e->getMessage();
             }
-        } catch (Exception $e) {
-            $error_msg = 'उत्तर दर्ज करने में त्रुटि: ' . $e->getMessage();
         }
     }
 }
 
-// Fetch User Orders
-$stmt_orders = $pdo->prepare("SELECT * FROM orders WHERE user_id = ? OR customer_email = ? ORDER BY id DESC");
-$stmt_orders->execute([$user['id'], $user['email']]);
+// Item 10: Fetch User Orders (Match by email ONLY if email is verified)
+$is_email_verified = !empty($user['email_verified_at']);
+
+if ($is_email_verified && !empty($user['email'])) {
+    $stmt_orders = $pdo->prepare("SELECT * FROM orders WHERE user_id = ? OR customer_email = ? ORDER BY id DESC");
+    $stmt_orders->execute([$user['id'], $user['email']]);
+} else {
+    $stmt_orders = $pdo->prepare("SELECT * FROM orders WHERE user_id = ? ORDER BY id DESC");
+    $stmt_orders->execute([$user['id']]);
+}
 $user_orders = $stmt_orders->fetchAll();
 
-// Fetch User Support Tickets
-$stmt_tkts = $pdo->prepare("SELECT * FROM tickets WHERE user_id = ? OR email = ? ORDER BY id DESC");
-$stmt_tkts->execute([$user['id'], $user['email']]);
+// Item 10: Fetch User Support Tickets (Match by email ONLY if email is verified)
+if ($is_email_verified && !empty($user['email'])) {
+    $stmt_tkts = $pdo->prepare("SELECT * FROM tickets WHERE user_id = ? OR email = ? ORDER BY id DESC");
+    $stmt_tkts->execute([$user['id'], $user['email']]);
+} else {
+    $stmt_tkts = $pdo->prepare("SELECT * FROM tickets WHERE user_id = ? ORDER BY id DESC");
+    $stmt_tkts->execute([$user['id']]);
+}
 $user_tickets = $stmt_tkts->fetchAll();
 
 $page_title = 'मेरा खाता (My Account) — GaunGaliHat';
@@ -192,9 +246,22 @@ require_once __DIR__ . '/includes/header.php';
           <p class="text-xs text-gray-500 mt-0.5">
             <?= htmlspecialchars($user['email']) ?> • +91 <?= htmlspecialchars($user['phone']) ?>
           </p>
-          <span class="inline-block mt-1 text-[11px] font-bold text-emerald-800 bg-emerald-50 px-2.5 py-0.5 rounded-full border border-emerald-200">
-            सत्यापित ग्राहक (Verified Shopper)
-          </span>
+          <?php if (!empty($user['email_verified_at'])): ?>
+            <span class="inline-block mt-1 text-[11px] font-bold text-emerald-800 bg-emerald-50 px-2.5 py-0.5 rounded-full border border-emerald-200">
+              <i class="fa-solid fa-check-circle"></i> सत्यापित ग्राहक (Verified Shopper)
+            </span>
+          <?php else: ?>
+            <form method="POST" action="/account.php" class="inline-flex items-center gap-2 mt-1">
+              <?= csrf_field() ?>
+              <input type="hidden" name="resend_verification" value="1">
+              <span class="text-[11px] font-bold text-amber-800 bg-amber-50 px-2.5 py-0.5 rounded-full border border-amber-300">
+                <i class="fa-solid fa-triangle-exclamation"></i> ईमेल असत्यापित (Unverified)
+              </span>
+              <button type="submit" class="text-[11px] text-brand-green font-bold hover:underline">
+                सत्यापन लिंक भेजें (Resend Verification)
+              </button>
+            </form>
+          <?php endif; ?>
         </div>
       </div>
 
@@ -354,6 +421,7 @@ require_once __DIR__ . '/includes/header.php';
             </h2>
 
             <form action="/account.php?tab=profile" method="POST" enctype="multipart/form-data" class="space-y-6">
+              <?= csrf_field() ?>
               <input type="hidden" name="update_profile" value="1">
 
               <!-- Avatar Uploader & Preview -->
@@ -450,6 +518,7 @@ require_once __DIR__ . '/includes/header.php';
               </h3>
 
               <form action="/account.php?tab=tickets" method="POST" class="space-y-4">
+                <?= csrf_field() ?>
                 <input type="hidden" name="create_ticket" value="1">
 
                 <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
@@ -573,6 +642,7 @@ require_once __DIR__ . '/includes/header.php';
                       <?php if ($tkt['status'] !== 'Resolved'): ?>
                         <div class="mt-4 pt-3 border-t border-gray-100">
                           <form action="/account.php?tab=tickets" method="POST" class="flex gap-2">
+                            <?= csrf_field() ?>
                             <input type="hidden" name="reply_ticket" value="1">
                             <input type="hidden" name="ticket_id" value="<?= $tkt['id'] ?>">
                             <input type="text" name="reply_message" required placeholder="यहाँ उत्तर लिखें..."
@@ -601,6 +671,7 @@ require_once __DIR__ . '/includes/header.php';
             </h2>
 
             <form action="/account.php?tab=security" method="POST" class="space-y-4 max-w-md">
+              <?= csrf_field() ?>
               <input type="hidden" name="change_password" value="1">
 
               <div>
@@ -610,14 +681,14 @@ require_once __DIR__ . '/includes/header.php';
               </div>
 
               <div>
-                <label class="block text-xs font-bold text-gray-700 mb-1">नया पासवर्ड (New Password - Min 6 chars)</label>
-                <input type="password" name="new_password" required minlength="6"
+                <label class="block text-xs font-bold text-gray-700 mb-1">नया पासवर्ड (New Password - Min 10 chars, मजबूत पासवर्ड)</label>
+                <input type="password" name="new_password" required minlength="10"
                   class="w-full px-3.5 py-2.5 bg-stone-50 border border-gray-200 rounded-xl text-sm focus:bg-white focus:border-brand-green focus:outline-none transition">
               </div>
 
               <div>
                 <label class="block text-xs font-bold text-gray-700 mb-1">नया पासवर्ड दोबारा लिखें (Confirm New Password)</label>
-                <input type="password" name="confirm_password" required minlength="6"
+                <input type="password" name="confirm_password" required minlength="10"
                   class="w-full px-3.5 py-2.5 bg-stone-50 border border-gray-200 rounded-xl text-sm focus:bg-white focus:border-brand-green focus:outline-none transition">
               </div>
 

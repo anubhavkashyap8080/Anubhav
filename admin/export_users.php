@@ -21,7 +21,7 @@ fputcsv($output, [
 
 $stmt = $pdo->query("SELECT * FROM users ORDER BY id ASC");
 while ($u = $stmt->fetch()) {
-    fputcsv($output, [
+    fputcsv($output, array_map('escape_csv_cell', [
         $u['id'],
         $u['unique_code'] ?? '',
         $u['name'],
@@ -34,7 +34,7 @@ while ($u = $stmt->fetch()) {
         $u['pincode'] ?? '',
         $u['status'],
         $u['created_at'] ?? ''
-    ]);
+    ]));
 }
 
 fclose($output);

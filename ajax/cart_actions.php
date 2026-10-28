@@ -20,6 +20,11 @@ $action = $_POST['action'] ?? $_GET['action'] ?? '';
 $product_id = (int)($_POST['product_id'] ?? $_GET['product_id'] ?? 0);
 $qty = (int)($_POST['quantity'] ?? 1);
 
+// Item 16: Central CSRF Protection for state-changing cart actions
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && in_array($action, ['add', 'update', 'remove', 'clear'], true)) {
+    csrf_protect();
+}
+
 switch ($action) {
     case 'add':
         if ($product_id <= 0) {

@@ -14,56 +14,82 @@ try {
 
 $error = '';
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    $name = clean_input($_POST['name'] ?? '');
-    $phone = clean_input($_POST['phone'] ?? '');
-    $email = clean_input($_POST['email'] ?? '');
-    $password = $_POST['password'] ?? '';
-    $confirm_password = $_POST['confirm_password'] ?? '';
-    $city = clean_input($_POST['city'] ?? 'Hardoi');
-    $pincode = clean_input($_POST['pincode'] ?? '241001');
-    $address = clean_input($_POST['address'] ?? '');
-
-    if (empty($name) || empty($phone) || empty($email) || empty($password)) {
-        $error = 'कृपया सभी आवश्यक फ़ील्ड भरें।';
-    } elseif ($password !== $confirm_password) {
-        $error = 'पासवर्ड और पुष्टि पासवर्ड मेल नहीं खाते।';
-    } elseif (strlen($password) < 6) {
-        $error = 'पासवर्ड कम से कम 6 अक्षरों का होना चाहिए।';
+    // Item 15: CSRF Token Check
+    $csrf = $_POST['csrf_token'] ?? '';
+    if (!csrf_check($csrf)) {
+        $error = 'सुरक्षा टोकन अमान्य है। कृपया पृष्ठ रीफ़्रेश करके पुनः प्रयास करें। (Invalid security token)';
     } else {
-        try {
-            // Check existing user
-            $stmt = $pdo->prepare("SELECT id FROM users WHERE email = ? OR phone = ?");
-            $stmt->execute([$email, $phone]);
-            if ($stmt->fetch()) {
-                $error = 'इस ईमेल या मोबाइल नंबर से पहले से ही एक खाता मौजूद है। कृपया लॉगिन करें।';
+        $name = clean_input($_POST['name'] ?? '');
+        $phone = clean_input($_POST['phone'] ?? '');
+        $email = clean_input($_POST['email'] ?? '');
+        $password = $_POST['password'] ?? '';
+        $confirm_password = $_POST['confirm_password'] ?? '';
+        $city = clean_input($_POST['city'] ?? 'Hardoi');
+        $pincode = clean_input($_POST['pincode'] ?? '241001');
+        $address = clean_input($_POST['address'] ?? '');
+
+        // Item 24: Rate limiting and CAPTCHA
+        $client_ip = get_client_ip();
+        if (!check_rate_limit('register_ip', $client_ip, 5, 3600) || !check_rate_limit('register_phone', $phone, 3, 3600)) {
+            $error = 'बहुत अधिक पंजीकरण प्रयास। कृपया 1 घंटे बाद पुनः प्रयास करें। (Rate limit exceeded)';
+        } elseif (!verify_turnstile_captcha()) {
+            $error = 'CAPTCHA सुरक्षा सत्यापन विफल रहा। कृपया पुनः प्रयास करें।';
+        } else {
+            $pwd_err = '';
+            if (empty($name) || empty($phone) || empty($email) || empty($password)) {
+                $error = 'कृपया सभी आवश्यक फ़ील्ड भरें।';
+            } elseif (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
+                $error = 'कृपया एक मान्य ईमेल पता दर्ज करें।';
+            } elseif ($password !== $confirm_password) {
+                $error = 'पासवर्ड और पुष्टि पासवर्ड मेल नहीं खाते।';
+            } elseif (!is_strong_password($password, $pwd_err)) {
+                // Item 22: Strong Password Policy Enforcement
+                $error = $pwd_err;
             } else {
-                // Generate username and unique code
-                $base_username = strtolower(preg_replace('/[^a-zA-Z0-9]/', '', explode('@', $email)[0]));
-                $username = $base_username . rand(10, 99);
-                $unique_code = 'GGH-CUST-' . rand(10000, 99999);
-                $hashed_password = password_hash($password, PASSWORD_BCRYPT);
+            try {
+                // Check existing user
+                $stmt = $pdo->prepare("SELECT id FROM users WHERE email = ? OR phone = ?");
+                $stmt->execute([$email, $phone]);
+                if ($stmt->fetch()) {
+                    $error = 'इस ईमेल या मोबाइल नंबर से पहले से ही एक खाता मौजूद है। कृपया लॉगिन करें।';
+                } else {
+                    // Item 11: Cryptographically secure random generation
+                    $base_username = strtolower(preg_replace('/[^a-zA-Z0-9]/', '', explode('@', $email)[0]));
+                    $username = $base_username . random_int(10, 99);
+                    $unique_code = 'GGH-CUST-' . random_int(10000, 99999);
+                    $hashed_password = password_hash($password, PASSWORD_BCRYPT);
 
-                $insert = $pdo->prepare("
-                    INSERT INTO users (unique_code, name, username, email, phone, password, role, city, pincode, address, status)
-                    VALUES (?, ?, ?, ?, ?, ?, 'customer', ?, ?, ?, 'active')
-                ");
-                $insert->execute([$unique_code, $name, $username, $email, $phone, $hashed_password, $city, $pincode, $address]);
-                $user_id = $pdo->lastInsertId();
+                    $insert = $pdo->prepare("
+                        INSERT INTO users (unique_code, name, username, email, phone, password, role, city, pincode, address, status)
+                        VALUES (?, ?, ?, ?, ?, ?, 'customer', ?, ?, ?, 'active')
+                    ");
+                    $insert->execute([$unique_code, $name, $username, $email, $phone, $hashed_password, $city, $pincode, $address]);
+                    $user_id = $pdo->lastInsertId();
 
-                // Auto login
-                $_SESSION['user_id'] = $user_id;
-                $_SESSION['user_name'] = $name;
-                $_SESSION['user_role'] = 'customer';
-                $_SESSION['user_email'] = $email;
+                    // Item 10: Dispatch email verification link
+                    send_email_verification_link($user_id, $email, $name);
 
-                set_flash('success', 'खाता सफलतापूर्वक बनाया गया! गाँव गली हाट में आपका स्वागत है।');
-                header('Location: /account.php');
-                exit;
+                    // Item 13: Rotate session ID on authentication
+                    if (session_status() === PHP_SESSION_ACTIVE) {
+                        session_regenerate_id(true);
+                    }
+
+                    // Auto login
+                    $_SESSION['user_id'] = $user_id;
+                    $_SESSION['user_name'] = $name;
+                    $_SESSION['user_role'] = 'customer';
+                    $_SESSION['user_email'] = $email;
+
+                    set_flash('success', 'खाता सफलतापूर्वक बनाया गया! सत्यापन लिंक आपके ईमेल पर भेज दिया गया है।');
+                    header('Location: /account.php');
+                    exit;
+                }
+            } catch (Exception $e) {
+                $error = 'पंजीकरण त्रुटि: ' . $e->getMessage();
             }
-        } catch (Exception $e) {
-            $error = 'पंजीकरण त्रुटि: ' . $e->getMessage();
         }
     }
+}
 }
 
 $page_title = 'नया ग्राहक पंजीकरण — GaunGaliHat';
@@ -90,6 +116,7 @@ require_once __DIR__ . '/includes/header.php';
       <?php endif; ?>
 
       <form action="/register.php" method="POST" class="space-y-4">
+        <?= csrf_field() ?>
         
         <!-- Name -->
         <div>
@@ -116,12 +143,12 @@ require_once __DIR__ . '/includes/header.php';
         <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div>
             <label class="block text-xs font-bold text-gray-700 mb-1">पासवर्ड बनाएं <span class="text-red-500">*</span></label>
-            <input type="password" name="password" required minlength="6" placeholder="न्यूनतम 6 अक्षर"
+            <input type="password" name="password" required minlength="10" placeholder="न्यूनतम 10 अक्षर (मजबूत पासवर्ड)"
               class="w-full px-3.5 py-2.5 bg-stone-50 border border-gray-200 rounded-xl text-sm focus:bg-white focus:border-brand-green focus:outline-none transition">
           </div>
           <div>
             <label class="block text-xs font-bold text-gray-700 mb-1">पासवर्ड की पुष्टि करें <span class="text-red-500">*</span></label>
-            <input type="password" name="confirm_password" required minlength="6" placeholder="दोबारा लिखें"
+            <input type="password" name="confirm_password" required minlength="10" placeholder="दोबारा लिखें"
               class="w-full px-3.5 py-2.5 bg-stone-50 border border-gray-200 rounded-xl text-sm focus:bg-white focus:border-brand-green focus:outline-none transition">
           </div>
         </div>
@@ -146,6 +173,9 @@ require_once __DIR__ . '/includes/header.php';
               class="w-full px-3.5 py-2.5 bg-stone-50 border border-gray-200 rounded-xl text-sm focus:bg-white focus:border-brand-green focus:outline-none transition">
           </div>
         </div>
+
+        <!-- Security CAPTCHA -->
+        <?= render_turnstile_widget() ?>
 
         <!-- Submit Button -->
         <button type="submit"
@@ -179,7 +209,7 @@ require_once __DIR__ . '/includes/header.php';
                  data-width="100%">
             </div>
 
-            <a href="https://accounts.google.com/o/oauth2/v2/auth?client_id=<?= urlencode($google_client_id) ?>&redirect_uri=<?= urlencode(((!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') ? 'https://' : 'http://') . ($_SERVER['HTTP_HOST'] ?? 'localhost') . '/auth/google-callback.php') ?>&response_type=code&scope=openid%20profile%20email"
+            <a href="https://accounts.google.com/o/oauth2/v2/auth?client_id=<?= urlencode($google_client_id) ?>&redirect_uri=<?= urlencode(SITE_URL . '/auth/google-callback.php') ?>&response_type=code&scope=openid%20profile%20email"
                class="w-full py-2.5 px-4 bg-white border border-gray-300 hover:bg-stone-50 text-gray-700 font-bold rounded-xl text-xs transition flex items-center justify-center gap-2 shadow-xs">
               <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" class="w-4 h-4" alt="Google">
               <span>Google द्वारा पंजीकरण करें</span>

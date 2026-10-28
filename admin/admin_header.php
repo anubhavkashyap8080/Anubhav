@@ -9,6 +9,11 @@ require_once __DIR__ . '/../includes/auth_check.php';
 // Strict Admin Authorization Check
 require_admin();
 
+// Item 16: Central CSRF Protection for all Admin POST actions
+if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    csrf_protect();
+}
+
 $admin_user = get_logged_in_user();
 $current_page = basename($_SERVER['PHP_SELF']);
 $flash = get_flash();
@@ -40,22 +45,12 @@ $flash = get_flash();
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <link rel="stylesheet" href="/assets/css/style.css">
+  <meta name="csrf-token" content="<?= htmlspecialchars(csrf_token(), ENT_QUOTES, 'UTF-8') ?>">
 </head>
 <body class="h-full flex flex-col font-sans text-gray-800 antialiased bg-stone-100">
 
-  <!-- Impersonation Notice Banner -->
-  <?php if (!empty($_SESSION['impersonator_id'])): ?>
-    <div class="bg-amber-500 text-stone-950 px-4 py-2 text-xs font-bold flex flex-wrap items-center justify-between shadow-md z-50 sticky top-0 border-b border-amber-600">
-      <div class="flex items-center gap-2">
-        <i class="fa-solid fa-user-secret text-base"></i>
-        <span>आप <strong><?= htmlspecialchars($admin_user['name']) ?></strong> (@<?= htmlspecialchars($admin_user['username']) ?>) के रूप में कार्य कर रहे हैं। मूल एडमिन: <?= htmlspecialchars($_SESSION['impersonator_name'] ?? 'Super Admin') ?></span>
-      </div>
-      <a href="/admin/impersonate.php?action=exit" class="px-3 py-1 bg-stone-950 text-white rounded-lg hover:bg-black transition flex items-center gap-1.5 shadow-xs text-xs font-bold">
-        <i class="fa-solid fa-arrow-right-from-bracket"></i>
-        एडमिन पैनल पर वापस लौटें (Exit Impersonation)
-      </a>
-    </div>
-  <?php endif; ?>
+  <!-- Item 7: Impersonation Notice Banner with POST + CSRF exit -->
+  <?= function_exists('render_impersonation_banner') ? render_impersonation_banner() : '' ?>
 
   <!-- Top Admin Bar -->
   <header class="bg-indigo-950 text-white border-b border-indigo-900 sticky top-0 z-40">

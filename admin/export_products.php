@@ -30,7 +30,7 @@ $stmt = $pdo->query("
 ");
 
 while ($row = $stmt->fetch()) {
-    fputcsv($output, [
+    fputcsv($output, array_map('escape_csv_cell', [
         $row['id'],
         $row['code'],
         $row['name'],
@@ -48,7 +48,7 @@ while ($row = $stmt->fetch()) {
         $row['unit'] ?? 'piece',
         $row['image'] ?? '',
         $row['description'] ?? ''
-    ]);
+    ]));
 }
 
 fclose($output);

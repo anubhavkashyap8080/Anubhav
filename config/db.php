@@ -1,7 +1,7 @@
 <?php
 /**
  * GaunGaliHat Enterprise E-Commerce Platform
- * Database Connection & Migration Layer (PDO MySQL with Resilient Fallback)
+ * Database Connection & Platform Configuration Layer (PDO MySQL)
  */
 
 // Enable global output buffering to prevent "headers already sent"
@@ -9,16 +9,80 @@ if (ob_get_level() === 0) {
     ob_start();
 }
 
+// Item 13: Secure Session Cookie Parameters before session_start
 if (session_status() === PHP_SESSION_NONE && !headers_sent()) {
+    $is_https = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off')
+        || (isset($_SERVER['SERVER_PORT']) && (int)$_SERVER['SERVER_PORT'] === 443)
+        || (!empty($_SERVER['HTTP_X_FORWARDED_PROTO']) && strtolower($_SERVER['HTTP_X_FORWARDED_PROTO']) === 'https');
+
+    ini_set('session.use_strict_mode', '1');
+    ini_set('session.use_only_cookies', '1');
+    ini_set('session.cookie_httponly', '1');
+
+    session_set_cookie_params([
+        'lifetime' => 0,
+        'path'     => '/',
+        'domain'   => '',
+        'secure'   => $is_https,
+        'httponly' => true,
+        'samesite' => 'Lax'
+    ]);
     session_start();
 }
 
-// Database Credentials (cPanel Production & Local Fallback Configuration)
-define('DB_HOST', getenv('DB_HOST') ?: 'localhost');
-define('DB_PORT', getenv('DB_PORT') ?: '3306');
-define('DB_NAME', getenv('DB_NAME') ?: 'womenvission_gaungali');
-define('DB_USER', getenv('DB_USER') ?: 'womenvission_admin');
-define('DB_PASS', getenv('DB_PASS') ?: 'Anumi@9935');
+/**
+ * Item 4: Load Platform Configuration outside public_html or from environment variables
+ */
+function load_platform_config() {
+    static $config = null;
+    if ($config !== null) {
+        return $config;
+    }
+
+    $locations = [
+        getenv('GGH_CONFIG_PATH'),
+        dirname(__DIR__, 2) . '/gaungalihat_config.php', // Outside web root on cPanel (/home/user/gaungalihat_config.php)
+        dirname(__DIR__) . '/config/config.local.php',    // Git-ignored local config file
+    ];
+
+    foreach ($locations as $loc) {
+        if (!empty($loc) && file_exists($loc) && is_readable($loc)) {
+            $loaded = include $loc;
+            if (is_array($loaded)) {
+                $config = $loaded;
+                break;
+            }
+        }
+    }
+
+    if (!is_array($config)) {
+        $config = [];
+    }
+
+    return $config;
+}
+
+function get_platform_config($section = null, $default = null) {
+    $cfg = load_platform_config();
+    if ($section === null) return $cfg;
+    return $cfg[$section] ?? $default;
+}
+
+$platform_cfg = load_platform_config();
+$db_cfg = $platform_cfg['db'] ?? [];
+
+// Resolve DB credentials from config or environment variables (no hardcoded credentials)
+$db_host = $db_cfg['host'] ?? getenv('DB_HOST') ?: 'localhost';
+$db_port = $db_cfg['port'] ?? getenv('DB_PORT') ?: '3306';
+$db_name = $db_cfg['name'] ?? getenv('DB_NAME') ?: '';
+$db_user = $db_cfg['user'] ?? getenv('DB_USER') ?: '';
+$db_pass = $db_cfg['pass'] ?? getenv('DB_PASS') ?: '';
+
+if (!defined('DB_HOST')) define('DB_HOST', $db_host);
+if (!defined('DB_PORT')) define('DB_PORT', $db_port);
+if (!defined('DB_NAME')) define('DB_NAME', $db_name);
+if (!defined('DB_USER')) define('DB_USER', $db_user);
+if (!defined('DB_PASS')) define('DB_PASS', $db_pass);
 
 $pdo = null;
 $db_driver = 'mysql';
@@ -28,7 +92,7 @@ $options = [
     PDO::ATTR_ERRMODE            => PDO::ERRMODE_EXCEPTION,
     PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
     PDO::ATTR_EMULATE_PREPARES   => false,
-    PDO::ATTR_TIMEOUT            => 2,
+    PDO::ATTR_TIMEOUT            => 3,
 ];
 
 // Set MySQL UTF-8 collation command if constant exists
@@ -36,50 +100,25 @@ if (defined('PDO::MYSQL_ATTR_INIT_COMMAND')) {
     $options[PDO::MYSQL_ATTR_INIT_COMMAND] = "SET NAMES utf8mb4 COLLATE utf8mb4_unicode_ci";
 }
 
-// Resilient candidate list: tried strictly in sequence with quick 2s timeout
-$candidates = [
-    ['host' => DB_HOST, 'user' => DB_USER, 'pass' => DB_PASS, 'db' => DB_NAME],
-    ['host' => 'localhost', 'user' => 'admin', 'pass' => 'Anumi@9935', 'db' => 'womenvission_gaungali'],
-    ['host' => 'localhost', 'user' => 'womenvission_admin', 'pass' => 'Anumi@9935', 'db' => 'womenvission_gaungali'],
-    ['host' => 'localhost', 'user' => 'root', 'pass' => '', 'db' => 'gaungalihat'],
-];
-
-$tried = [];
-foreach ($candidates as $cand) {
-    $sig = $cand['host'] . ':' . $cand['user'] . ':' . $cand['db'];
-    if (isset($tried[$sig])) continue;
-    $tried[$sig] = true;
-
+if (!empty($db_name) && !empty($db_user)) {
     try {
-        $dsn = "mysql:host={$cand['host']};port=" . DB_PORT . ";dbname={$cand['db']};charset=utf8mb4";
-        $pdo = new PDO($dsn, $cand['user'], $cand['pass'], $options);
+        $dsn = "mysql:host={$db_host};port={$db_port};dbname={$db_name};charset=utf8mb4";
+        $pdo = new PDO($dsn, $db_user, $db_pass, $options);
         $db_driver = 'mysql';
-        break;
     } catch (Throwable $e) {
         $last_mysql_error = $e->getMessage();
+        error_log("[GaunGaliHat DB Error] Connection failed: " . $e->getMessage());
     }
 }
 
 if ($pdo) {
-    // MySQL Connected Successfully! Ensure UTF-8 & Verify/migrate platform schema
+    // MySQL Connected Successfully! Ensure UTF-8 & Verify platform schema
     try {
         $pdo->exec("SET NAMES utf8mb4 COLLATE utf8mb4_unicode_ci");
     } catch (Throwable $e_utf8) {}
 
     try {
-        $table_check = $pdo->query("SHOW TABLES LIKE 'products'");
-        if (!$table_check || !$table_check->fetch()) {
-            $schemaFile = __DIR__ . '/../database/schema.sql';
-            if (file_exists($schemaFile)) {
-                $sql = file_get_contents($schemaFile);
-                $queries = array_filter(array_map('trim', explode(';', $sql)));
-                foreach ($queries as $q) {
-                    if (!empty($q)) {
-                        try { $pdo->exec($q); } catch (Throwable $e_q) {}
-                    }
-                }
-            }
-        }
+        // Item 5: Stop auto-running schema.sql on production requests. Database provisioning is handled via migrations.
         // Auto-heal Hindi UTF-8 mojibake in products & categories if present
         try {
             $probe = $pdo->query("SELECT COUNT(*) FROM products WHERE hindi_name LIKE '%à¤%'")->fetchColumn();
@@ -151,36 +190,34 @@ if ($pdo) {
     }
 
     if (!$pdo) {
-        // Output clear diagnostics instead of a blank white screen
+        if (defined('TESTING_MOCK_DB') && TESTING_MOCK_DB === true) {
+            return;
+        }
+        // Item 4: Generic error page for visitors; no sensitive connection parameters or raw errors displayed.
         http_response_code(500);
+        error_log("[GaunGaliHat DB Fatal] Database connection could not be established: " . ($last_mysql_error ?: 'No driver response'));
         die("<!DOCTYPE html>
-        <html lang='en'>
-        <head>
-          <meta charset='UTF-8'>
-          <title>Database Connection Diagnostic — GaunGaliHat</title>
-          <style>
-            body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: #fdfbf7; color: #1f2937; padding: 40px 20px; }
-            .card { max-width: 600px; margin: 0 auto; background: white; border: 1px solid #e5e7eb; border-radius: 16px; padding: 30px; box-shadow: 0 4px 12px rgba(0,0,0,0.05); }
-            h2 { color: #dc2626; margin-top: 0; font-size: 20px; }
-            p { font-size: 14px; line-height: 1.6; color: #4b5563; }
-            .code { background: #f3f4f6; padding: 12px; border-radius: 8px; font-family: monospace; font-size: 12px; overflow-x: auto; margin: 15px 0; border-left: 4px solid #dc2626; }
-            .tip { background: #ecfdf5; border: 1px solid #a7f3d0; color: #065f46; padding: 12px; border-radius: 8px; font-size: 13px; margin-top: 15px; }
-          </style>
-        </head>
-        <body>
-          <div class='card'>
-            <h2>GaunGaliHat Database Connection Diagnostic</h2>
-            <p>The application could not establish a connection to MySQL with the current configuration.</p>
-            <div class='code'><strong>MySQL Error:</strong> " . htmlspecialchars($last_mysql_error ?: 'Unknown error') . "</div>
-            <div class='tip'>
-              <strong>Quick Fix in cPanel:</strong><br>
-              1. Open <strong>cPanel > MySQL Databases</strong>.<br>
-              2. Ensure user <code>" . htmlspecialchars(DB_USER) . "</code> or <code>admin</code> has been added to database <code>" . htmlspecialchars(DB_NAME) . "</code>.<br>
-              3. Ensure <strong>All Privileges</strong> are granted.
-            </div>
-          </div>
-        </body>
-        </html>");
+<html lang='en'>
+<head>
+  <meta charset='UTF-8'>
+  <meta name='viewport' content='width=device-width, initial-scale=1.0'>
+  <title>Service Unavailable — GaunGaliHat</title>
+  <style>
+    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: #fdfbf7; color: #1f2937; padding: 40px 20px; display: flex; align-items: center; justify-content: center; min-height: 80vh; margin: 0; }
+    .card { max-width: 500px; width: 100%; background: #ffffff; border: 1px solid #e5e7eb; border-radius: 16px; padding: 32px; box-shadow: 0 4px 16px rgba(0,0,0,0.06); text-align: center; }
+    h1 { color: #b91c1c; font-size: 22px; margin-top: 0; margin-bottom: 12px; }
+    p { font-size: 14px; line-height: 1.6; color: #4b5563; margin-bottom: 20px; }
+    .ref { font-size: 12px; color: #9ca3af; font-family: monospace; }
+  </style>
+</head>
+<body>
+  <div class='card'>
+    <h1>Service Temporarily Unavailable</h1>
+    <p>We are currently experiencing a technical interruption with our database connectivity. Our engineering team has been notified. Please try again shortly.</p>
+    <div class='ref'>Reference: GGH-DB-ERR-500</div>
+  </div>
+</body>
+</html>");
     }
 }
 
@@ -220,6 +257,119 @@ function ensure_platform_schema($pdo) {
             }
         }
     } catch (Throwable $e_seo_mig) {}
+
+    // Security Hardening Schema Migration (Item 10, 11, 12, 15, 25)
+    try {
+        if ($is_sqlite) {
+            $pdo->exec("
+                CREATE TABLE IF NOT EXISTS password_resets (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    user_id INTEGER DEFAULT 0,
+                    email TEXT NOT NULL,
+                    token_hash TEXT NOT NULL,
+                    expires_at DATETIME NOT NULL,
+                    used INTEGER DEFAULT 0,
+                    created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+                );
+                CREATE TABLE IF NOT EXISTS login_attempts (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    identifier TEXT NOT NULL,
+                    ip_address TEXT NOT NULL,
+                    success INTEGER DEFAULT 0,
+                    attempted_at DATETIME DEFAULT CURRENT_TIMESTAMP
+                );
+                CREATE TABLE IF NOT EXISTS coupon_usages (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    coupon_id INTEGER NOT NULL,
+                    user_id INTEGER DEFAULT NULL,
+                    order_id INTEGER DEFAULT NULL,
+                    used_at DATETIME DEFAULT CURRENT_TIMESTAMP
+                );
+            ");
+            $u_cols = $pdo->query("PRAGMA table_info(users)")->fetchAll(PDO::FETCH_COLUMN, 1);
+            $mig_u = [
+                'email_verified_at' => 'DATETIME DEFAULT NULL',
+                'email_verification_token' => 'TEXT DEFAULT NULL',
+                'email_verification_expires' => 'DATETIME DEFAULT NULL',
+                'force_password_change' => 'INTEGER DEFAULT 0',
+                'two_factor_secret' => 'TEXT DEFAULT NULL',
+                'two_factor_enabled' => 'INTEGER DEFAULT 0',
+                'failed_login_attempts' => 'INTEGER DEFAULT 0',
+                'lockout_until' => 'DATETIME DEFAULT NULL'
+            ];
+            foreach ($mig_u as $col => $type) {
+                if (!in_array($col, $u_cols)) {
+                    $pdo->exec("ALTER TABLE users ADD COLUMN {$col} {$type}");
+                }
+            }
+            $o_cols = $pdo->query("PRAGMA table_info(orders)")->fetchAll(PDO::FETCH_COLUMN, 1);
+            if (!in_array('order_access_token', $o_cols)) {
+                $pdo->exec("ALTER TABLE orders ADD COLUMN order_access_token TEXT DEFAULT NULL");
+            }
+            if (!in_array('gateway_order_id', $o_cols)) {
+                $pdo->exec("ALTER TABLE orders ADD COLUMN gateway_order_id TEXT DEFAULT NULL");
+            }
+            $oi_cols = $pdo->query("PRAGMA table_info(order_items)")->fetchAll(PDO::FETCH_COLUMN, 1);
+            if (!in_array('item_status', $oi_cols)) {
+                $pdo->exec("ALTER TABLE order_items ADD COLUMN item_status TEXT DEFAULT 'Confirmed'");
+            }
+        } else {
+            $pdo->exec("
+                CREATE TABLE IF NOT EXISTS `password_resets` (
+                    `id` INT AUTO_INCREMENT PRIMARY KEY,
+                    `user_id` INT DEFAULT 0,
+                    `email` VARCHAR(150) NOT NULL,
+                    `token_hash` VARCHAR(64) NOT NULL,
+                    `expires_at` DATETIME NOT NULL,
+                    `used` TINYINT(1) DEFAULT 0,
+                    `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                    INDEX `idx_pr_token` (`token_hash`),
+                    INDEX `idx_pr_email` (`email`)
+                ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+                CREATE TABLE IF NOT EXISTS `login_attempts` (
+                    `id` INT AUTO_INCREMENT PRIMARY KEY,
+                    `identifier` VARCHAR(150) NOT NULL,
+                    `ip_address` VARCHAR(45) NOT NULL,
+                    `success` TINYINT(1) DEFAULT 0,
+                    `attempted_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                    INDEX `idx_la_ip` (`ip_address`, `attempted_at`),
+                    INDEX `idx_la_ident` (`identifier`, `attempted_at`)
+                ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+                CREATE TABLE IF NOT EXISTS `coupon_usages` (
+                    `id` INT AUTO_INCREMENT PRIMARY KEY,
+                    `coupon_id` INT NOT NULL,
+                    `user_id` INT DEFAULT NULL,
+                    `order_id` INT DEFAULT NULL,
+                    `used_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                    INDEX `idx_cu_coupon_user` (`coupon_id`, `user_id`)
+                ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+            ");
+
+            $check_and_add_col = function($table, $col, $def) use ($pdo) {
+                try {
+                    $chk = $pdo->query("SHOW COLUMNS FROM `{$table}` LIKE '{$col}'")->fetch();
+                    if (!$chk) {
+                        $pdo->exec("ALTER TABLE `{$table}` ADD COLUMN `{$col}` {$def}");
+                    }
+                } catch (Throwable $t) {}
+            };
+
+            $check_and_add_col('users', 'email_verified_at', 'DATETIME DEFAULT NULL');
+            $check_and_add_col('users', 'email_verification_token', 'VARCHAR(100) DEFAULT NULL');
+            $check_and_add_col('users', 'email_verification_expires', 'DATETIME DEFAULT NULL');
+            $check_and_add_col('users', 'force_password_change', 'TINYINT(1) DEFAULT 0');
+            $check_and_add_col('users', 'two_factor_secret', 'VARCHAR(100) DEFAULT NULL');
+            $check_and_add_col('users', 'two_factor_enabled', 'TINYINT(1) DEFAULT 0');
+            $check_and_add_col('users', 'failed_login_attempts', 'INT DEFAULT 0');
+            $check_and_add_col('users', 'lockout_until', 'DATETIME DEFAULT NULL');
+
+            $check_and_add_col('orders', 'order_access_token', 'VARCHAR(64) DEFAULT NULL');
+            $check_and_add_col('orders', 'gateway_order_id', 'VARCHAR(100) DEFAULT NULL');
+            $check_and_add_col('order_items', 'item_status', "VARCHAR(50) DEFAULT 'Confirmed'");
+        }
+    } catch (Throwable $e_sec_schema) {}
 
     // 1. site_settings
     if ($is_sqlite) {
@@ -266,13 +416,13 @@ function ensure_platform_schema($pdo) {
                 'shipping_base_north' => '60',
                 'shipping_base_other' => '85',
                 'shipping_heavy_per_kg' => '25',
-                'razorpay_enabled' => '1',
-                'razorpay_key_id' => 'rzp_test_SSIndustriesLiveKey',
-                'razorpay_key_secret' => 'rzp_sec_SSIndustriesLiveSecret',
-                'payu_enabled' => '1',
-                'payu_merchant_key' => 'SSIndKeyTest108',
-                'payu_merchant_salt' => 'SSIndSaltTest7897',
-                'payu_mode' => 'test',
+                'razorpay_enabled' => !empty($platform_cfg['payments']['razorpay']['enabled']) ? '1' : '0',
+                'razorpay_key_id' => $platform_cfg['payments']['razorpay']['key_id'] ?? '',
+                'razorpay_key_secret' => $platform_cfg['payments']['razorpay']['key_secret'] ?? '',
+                'payu_enabled' => !empty($platform_cfg['payments']['payu']['enabled']) ? '1' : '0',
+                'payu_merchant_key' => $platform_cfg['payments']['payu']['merchant_key'] ?? '',
+                'payu_merchant_salt' => $platform_cfg['payments']['payu']['merchant_salt'] ?? '',
+                'payu_mode' => $platform_cfg['payments']['payu']['mode'] ?? 'test',
                 'cod_enabled' => '1',
                 'commission_rate_default' => '4',
                 'default_language' => 'en',

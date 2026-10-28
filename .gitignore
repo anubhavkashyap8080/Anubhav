@@ -32,4 +32,8 @@ data/*.sqlite
 data/*.db
 data/backups/*.sqlite
 data/backups/*.db
+config/config.local.php
+*config.local.php
+.env
+gaungalihat_config.php
 

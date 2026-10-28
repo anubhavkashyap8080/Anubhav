@@ -1,6 +1,8 @@
 <?php
 /**
  * GaunGaliHat Users CSV Importer
+ * Secure CSV Import Engine with Role Whitelisting, CSRF Protection,
+ * and Unique Random Credentials per Imported User.
  */
 
 require_once __DIR__ . '/../includes/functions.php';
@@ -8,6 +10,12 @@ require_once __DIR__ . '/../includes/auth_check.php';
 require_admin();
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_FILES['csv_file'])) {
+    if (!verify_csrf($_POST['csrf_token'] ?? '')) {
+        set_flash('error', 'CSRF सत्यापन विफल रहा। (Invalid CSRF token)');
+        header('Location: /admin/users.php');
+        exit;
+    }
+
     $file = $_FILES['csv_file'];
 
     if ($file['error'] !== UPLOAD_ERR_OK) {
@@ -38,12 +46,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_FILES['csv_file'])) {
 
     $header = fgetcsv($handle);
     $imported = 0;
+    $skipped = 0;
+
+    $is_super = is_super_admin();
+    $allowed_roles = $is_super ? ['customer', 'vendor', 'admin', 'super_admin'] : ['customer', 'vendor'];
 
     $stmt_chk = $pdo->prepare("SELECT id FROM users WHERE username = ? OR email = ?");
     $stmt_ins = $pdo->prepare("
         INSERT INTO users (
-            unique_code, name, username, email, phone, password, role, department, city, pincode, status
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'active')
+            unique_code, name, username, email, phone, password, role, department, city, pincode, status, force_password_change, created_at
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'active', 1, CURRENT_TIMESTAMP)
     ");
 
     while (($row = fgetcsv($handle)) !== false) {
@@ -53,28 +65,42 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_FILES['csv_file'])) {
         $username = strtolower(trim($row[3] ?? ''));
         $email = strtolower(trim($row[4] ?? ''));
         $phone = trim($row[5] ?? '');
-        $role = trim($row[6] ?? 'customer');
+        $raw_role = strtolower(trim($row[6] ?? 'customer'));
         $department = trim($row[7] ?? 'General');
         $city = trim($row[8] ?? '');
         $pincode = trim($row[9] ?? '');
 
-        if (empty($name) || empty($username) || empty($email)) continue;
+        // Role whitelisting
+        $role = in_array($raw_role, $allowed_roles, true) ? $raw_role : 'customer';
 
-        // Skip if exists
+        if (empty($name) || empty($username) || empty($email) || !filter_var($email, FILTER_VALIDATE_EMAIL)) {
+            $skipped++;
+            continue;
+        }
+
+        // Skip if username or email already exists
         $stmt_chk->execute([$username, $email]);
-        if ($stmt_chk->fetch()) continue;
+        if ($stmt_chk->fetch()) {
+            $skipped++;
+            continue;
+        }
 
-        $code = 'GGH-USR-' . rand(100, 999);
-        $hashed = password_hash('Ggh@12345', PASSWORD_BCRYPT);
+        $code = 'GGH-USR-' . bin2hex(random_bytes(3));
+        // Generate secure random password per user
+        $random_temp_pass = bin2hex(random_bytes(8)) . '@' . random_int(10, 99);
+        $hashed = password_hash($random_temp_pass, PASSWORD_BCRYPT);
 
         try {
             $stmt_ins->execute([$code, $name, $username, $email, $phone, $hashed, $role, $department, $city, $pincode]);
             $imported++;
-        } catch (Exception $e) {}
+        } catch (Exception $e) {
+            $skipped++;
+        }
     }
 
     fclose($handle);
-    set_flash('success', "सफलतापूर्वक $imported उपयोगकर्ता CSV से जोड़े गए! डिफ़ॉल्ट पासवर्ड: Ggh@12345");
+    log_audit_action('admin_import_users', 'users', "Imported {$imported} users via CSV (skipped {$skipped})");
+    set_flash('success', "सफलतापूर्वक {$imported} उपयोगकर्ता CSV से जोड़े गए! सुरक्षा कारणों से प्रत्येक उपयोगकर्ता के लिए यादृच्छिक (Random) पासवर्ड उत्पन्न किया गया है और प्रथम लॉगिन पर पासवर्ड बदलना अनिवार्य (Force Password Change) किया गया है।");
     header('Location: /admin/users.php');
     exit;
 }

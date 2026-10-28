@@ -14,17 +14,26 @@ $vendor_id = $vendor['id'];
 $status_filter = clean_input($_GET['status'] ?? '');
 $view_order_id = intval($_GET['view'] ?? 0);
 
-// Handle Status or Tracking Update (Strict Multi-Tenant Scoping)
+// Handle Status or Tracking Update (Strict Multi-Tenant Scoping - Item 12)
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['update_order_status'])) {
     csrf_protect();
-    $order_id = intval($_POST['order_id']);
-    $new_status = clean_input($_POST['order_status']);
-    $consignment_no = clean_input($_POST['consignment_no']);
+    $order_id = intval($_POST['order_id'] ?? 0);
+    $new_status = clean_input($_POST['order_status'] ?? '');
+    $consignment_no = clean_input($_POST['consignment_no'] ?? '');
+
+    // Item 12: Whitelist allowed order_status values
+    $allowed_statuses = ['Confirmed', 'Processing', 'Dispatched', 'Delivered', 'Cancelled'];
+    if (!in_array($new_status, $allowed_statuses, true)) {
+        set_flash('error', 'अमान्य आर्डर स्थिति चुनी गई है। (Invalid status selection)');
+        header('Location: /seller/orders.php' . ($order_id ? '?view=' . $order_id : ''));
+        exit;
+    }
 
     // IDOR Protection: Verify this vendor owns items in this order
-    $stmt_check = $pdo->prepare("SELECT 1 FROM order_items WHERE order_id = ? AND vendor_id = ? LIMIT 1");
+    $stmt_check = $pdo->prepare("SELECT id FROM order_items WHERE order_id = ? AND vendor_id = ?");
     $stmt_check->execute([$order_id, $vendor_id]);
-    if (!$stmt_check->fetch()) {
+    $owned_items = $stmt_check->fetchAll();
+    if (empty($owned_items)) {
         record_security_event('idor_attempt', "Vendor #{$vendor_id} attempted unauthorized update on order #{$order_id}");
         set_flash('error', 'अनाधिकृत कार्रवाई: यह आर्डर आपके विक्रेता खाते से संबद्ध नहीं है।');
         header('Location: /seller/orders.php');
@@ -32,15 +41,35 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['update_order_status']
     }
 
     try {
-        $stmt = $pdo->prepare("
-            UPDATE orders 
-            SET order_status = ?, 
-                tracking_consignment_no = ? 
-            WHERE id = ?
-        ");
-        $stmt->execute([$new_status, $consignment_no, $order_id]);
-        log_audit_action('seller_order_status_update', 'orders', "Vendor #{$vendor_id} updated order #{$order_id} to {$new_status}");
-        set_flash('success', 'आर्डर स्थिति एवं इंडिया पोस्ट कंसाइनमेंट नंबर सफलतापूर्वक अपडेट किया गया!');
+        // Item 12: Vendor updates ONLY the status of their own order items
+        $upd_items = $pdo->prepare("UPDATE order_items SET item_status = ? WHERE order_id = ? AND vendor_id = ?");
+        $upd_items->execute([$new_status, $order_id, $vendor_id]);
+
+        // If order belongs exclusively to this vendor, update main order tracking and status
+        $stmt_vcnt = $pdo->prepare("SELECT COUNT(DISTINCT vendor_id) FROM order_items WHERE order_id = ?");
+        $stmt_vcnt->execute([$order_id]);
+        $total_vendors = (int)$stmt_vcnt->fetchColumn();
+
+        if ($total_vendors === 1) {
+            $stmt = $pdo->prepare("
+                UPDATE orders 
+                SET order_status = ?, 
+                    tracking_consignment_no = ? 
+                WHERE id = ?
+            ");
+            $stmt->execute([$new_status, $consignment_no, $order_id]);
+        } else {
+            // Check if all vendors in this order have reached this status
+            $distinct_st = $pdo->prepare("SELECT DISTINCT item_status FROM order_items WHERE order_id = ?");
+            $distinct_st->execute([$order_id]);
+            $statuses = $distinct_st->fetchAll(PDO::FETCH_COLUMN);
+            if (count($statuses) === 1 && !empty($statuses[0])) {
+                $pdo->prepare("UPDATE orders SET order_status = ? WHERE id = ?")->execute([$statuses[0], $order_id]);
+            }
+        }
+
+        log_audit_action('seller_order_status_update', 'orders', "Vendor #{$vendor_id} updated order #{$order_id} item_status to {$new_status}");
+        set_flash('success', 'आपके उत्पादों की स्थिति (' . htmlspecialchars($new_status) . ') सफलतापूर्वक अपडेट की गई!');
         header('Location: /seller/orders.php?view=' . $order_id);
         exit;
     } catch (Exception $e) {
@@ -77,16 +106,16 @@ if (isset($_GET['export']) && $_GET['export'] === 'csv') {
     fputcsv($out, ['Order Number', 'Date', 'Customer Name', 'City', 'Pincode', 'Items Count', 'Vendor Net Subtotal', 'Payment Method', 'Tracking AWB', 'Order Status']);
     foreach ($orders as $o) {
         fputcsv($out, [
-            $o['order_number'],
-            $o['created_at'],
-            $o['customer_name'],
-            $o['shipping_city'],
-            $o['shipping_pincode'],
-            $o['vendor_item_count'],
-            $o['vendor_subtotal'],
-            strtoupper($o['payment_method']),
-            $o['tracking_consignment_no'] ?: 'Pending',
-            $o['order_status']
+            escape_csv_cell($o['order_number']),
+            escape_csv_cell($o['created_at']),
+            escape_csv_cell($o['customer_name']),
+            escape_csv_cell($o['shipping_city']),
+            escape_csv_cell($o['shipping_pincode']),
+            escape_csv_cell($o['vendor_item_count']),
+            escape_csv_cell($o['vendor_subtotal']),
+            escape_csv_cell(strtoupper($o['payment_method'])),
+            escape_csv_cell($o['tracking_consignment_no'] ?: 'Pending'),
+            escape_csv_cell($o['order_status'])
         ]);
     }
     fclose($out);
@@ -297,7 +326,7 @@ require_once __DIR__ . '/seller_header.php';
                 <i class="fa-solid fa-barcode"></i>
               </span>
               <input type="text" name="consignment_no" required
-                value="<?= htmlspecialchars($selected_order['tracking_consignment_no'] ?? ('EU' . rand(100000000, 999999999) . 'IN')) ?>"
+                value="<?= htmlspecialchars($selected_order['tracking_consignment_no'] ?? ('EU' . random_int(100000000, 999999999) . 'IN')) ?>"
                 class="w-full pl-9 pr-3 py-2 bg-stone-50 border border-gray-200 rounded-xl text-xs font-mono font-bold focus:outline-none focus:border-amber-500">
             </div>
           </div>

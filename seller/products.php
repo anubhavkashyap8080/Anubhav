@@ -24,25 +24,36 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['add_product'])) {
     $name = clean_input($_POST['name'] ?? '');
     $hindi_name = clean_input($_POST['hindi_name'] ?? '');
     $category_id = intval($_POST['category_id'] ?? 0);
-    $price = floatval($_POST['price'] ?? 0);
-    $original_price = floatval($_POST['original_price'] ?? $price);
-    $weight_kg = floatval($_POST['weight_kg'] ?? 0.5);
-    $stock = intval($_POST['stock'] ?? 50);
+    $price = max(0, floatval($_POST['price'] ?? 0));
+    $original_price = max($price, floatval($_POST['original_price'] ?? $price));
+    $weight_kg = max(0.01, floatval($_POST['weight_kg'] ?? 0.5));
+    $stock = max(0, intval($_POST['stock'] ?? 50));
     $unit = clean_input($_POST['unit'] ?? 'piece');
     $image_url = clean_input($_POST['image_url'] ?? '');
     $description = clean_input($_POST['description'] ?? '');
+
+    if (empty($name) || $price <= 0) {
+        set_flash('error', 'कृपया मान्य उत्पाद नाम और मूल्य दर्ज करें।');
+        header('Location: /seller/products.php');
+        exit;
+    }
+
+    if (!empty($image_url) && !is_valid_product_image_url($image_url)) {
+        set_flash('error', 'अमान्य छवि URL। केवल स्थानीय अपलोड या अनुमत HTTPS CDN छवियां ही मान्य हैं।');
+        header('Location: /seller/products.php');
+        exit;
+    }
 
     if (empty($image_url)) {
         $image_url = 'https://images.unsplash.com/photo-1544717305-2782549b5136?auto=format&fit=crop&w=600&q=80';
     }
 
-    $discount = ($original_price > $price) ? round((($original_price - $price) / $original_price) * 100) : 0;
-    $code = 'GGH-' . strtoupper(substr(preg_replace('/[^a-zA-Z]/', '', $name) . 'PRD', 0, 3)) . '-' . rand(100, 999);
-    $slug = strtolower(preg_replace('/[^a-zA-Z0-9]+/', '-', $name)) . '-' . rand(100, 999);
+    $discount = ($original_price > $price) ? min(100, max(0, round((($original_price - $price) / $original_price) * 100))) : 0;
+    $code = 'GGH-' . strtoupper(substr(preg_replace('/[^a-zA-Z]/', '', $name) . 'PRD', 0, 3)) . '-' . random_int(100, 999);
+    $slug = strtolower(preg_replace('/[^a-zA-Z0-9]+/', '-', $name)) . '-' . random_int(100, 999);
 
     try {
-        $stmt = $pdo->prepare("
-            $seo_title = clean_input($_POST['seo_title'] ?? '');
+        $seo_title = clean_input($_POST['seo_title'] ?? '');
         $seo_description = clean_input($_POST['seo_description'] ?? '');
         $seo_keywords = clean_input($_POST['seo_keywords'] ?? '');
 
@@ -59,7 +70,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['add_product'])) {
             $seo_title, $seo_description, $seo_keywords
         ]);
         log_audit_action('seller_product_created', 'products', "Vendor #{$vendor_id} added product {$name} ({$code})");
-        set_flash('success', 'नया उत्पाद "' . htmlspecialchars($name) . '" सफलतापूर्वक कैटलॉग में जोड़ा गया!');
+        set_flash('success', 'नया उत्पाद "' . htmlspecialchars($name, ENT_QUOTES, 'UTF-8') . '" सफलतापूर्वक कैटलॉग में जोड़ा गया!');
         header('Location: /seller/products.php');
         exit;
     } catch (Exception $e) {
@@ -74,16 +85,22 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['edit_product'])) {
     $name = clean_input($_POST['name'] ?? '');
     $hindi_name = clean_input($_POST['hindi_name'] ?? '');
     $category_id = intval($_POST['category_id'] ?? 0);
-    $price = floatval($_POST['price'] ?? 0);
-    $original_price = floatval($_POST['original_price'] ?? $price);
-    $weight_kg = floatval($_POST['weight_kg'] ?? 0.5);
-    $stock = intval($_POST['stock'] ?? 50);
+    $price = max(0, floatval($_POST['price'] ?? 0));
+    $original_price = max($price, floatval($_POST['original_price'] ?? $price));
+    $weight_kg = max(0.01, floatval($_POST['weight_kg'] ?? 0.5));
+    $stock = max(0, intval($_POST['stock'] ?? 50));
     $unit = clean_input($_POST['unit'] ?? 'piece');
     $image_url = clean_input($_POST['image_url'] ?? '');
     $description = clean_input($_POST['description'] ?? '');
 
     if ($pid > 0 && !empty($name) && $price > 0) {
-        $discount = ($original_price > $price) ? round((($original_price - $price) / $original_price) * 100) : 0;
+        if (!empty($image_url) && !is_valid_product_image_url($image_url)) {
+            set_flash('error', 'अमान्य छवि URL। केवल स्थानीय अपलोड या अनुमत HTTPS CDN छवियां ही मान्य हैं।');
+            header('Location: /seller/products.php');
+            exit;
+        }
+
+        $discount = ($original_price > $price) ? min(100, max(0, round((($original_price - $price) / $original_price) * 100))) : 0;
         try {
             $seo_title = clean_input($_POST['seo_title'] ?? '');
             $seo_description = clean_input($_POST['seo_description'] ?? '');
@@ -102,12 +119,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['edit_product'])) {
             $stmt = $pdo->prepare($sql_up);
             $stmt->execute($params);
             log_audit_action('seller_product_updated', 'products', "Vendor #{$vendor_id} updated product #{$pid} ({$name})");
-            set_flash('success', 'उत्पाद "' . htmlspecialchars($name) . '" सफलतापूर्वक अपडेट किया गया!');
+            set_flash('success', 'उत्पाद "' . htmlspecialchars($name, ENT_QUOTES, 'UTF-8') . '" सफलतापूर्वक अपडेट किया गया!');
             header('Location: /seller/products.php');
             exit;
         } catch (Exception $e) {
             set_flash('error', 'उत्पाद अपडेट करने में त्रुटि: ' . $e->getMessage());
         }
+    } else {
+        set_flash('error', 'अमान्य उत्पाद विवरण या शून्य मूल्य।');
     }
 }
 
@@ -130,19 +149,20 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['bulk_import_csv'])) {
                 $p_name = trim($data[0]);
                 $p_hindi = trim($data[1] ?? '');
                 $p_cat_id = intval($data[2] ?? 1);
-                $p_price = floatval($data[3] ?? 0);
-                $p_orig_price = floatval($data[4] ?? $p_price);
-                $p_weight = floatval($data[5] ?? 0.5);
-                $p_stock = intval($data[6] ?? 50);
+                $p_price = max(0, floatval($data[3] ?? 0));
+                $p_orig_price = max($p_price, floatval($data[4] ?? $p_price));
+                $p_weight = max(0.01, floatval($data[5] ?? 0.5));
+                $p_stock = max(0, intval($data[6] ?? 50));
                 $p_unit = trim($data[7] ?? 'piece');
-                $p_img = trim($data[8] ?? 'https://images.unsplash.com/photo-1544717305-2782549b5136?auto=format&fit=crop&w=600&q=80');
+                $raw_img = trim($data[8] ?? '');
+                $p_img = is_valid_product_image_url($raw_img) ? $raw_img : 'https://images.unsplash.com/photo-1544717305-2782549b5136?auto=format&fit=crop&w=600&q=80';
                 $p_desc = trim($data[9] ?? '');
 
-                if ($p_price <= 0) continue;
+                if ($p_price <= 0 || empty($p_name)) continue;
 
-                $p_disc = ($p_orig_price > $p_price) ? round((($p_orig_price - $p_price) / $p_orig_price) * 100) : 0;
-                $p_code = 'GGH-' . strtoupper(substr(preg_replace('/[^a-zA-Z]/', '', $p_name) . 'CSV', 0, 3)) . '-' . rand(100, 999);
-                $p_slug = strtolower(preg_replace('/[^a-zA-Z0-9]+/', '-', $p_name)) . '-' . rand(100, 999);
+                $p_disc = ($p_orig_price > $p_price) ? min(100, max(0, round((($p_orig_price - $p_price) / $p_orig_price) * 100))) : 0;
+                $p_code = 'GGH-' . strtoupper(substr(preg_replace('/[^a-zA-Z]/', '', $p_name) . 'CSV', 0, 3)) . '-' . random_int(100, 999);
+                $p_slug = strtolower(preg_replace('/[^a-zA-Z0-9]+/', '-', $p_name)) . '-' . random_int(100, 999);
 
                 try {
                     $stmt_ins = $pdo->prepare("
@@ -167,31 +187,40 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['bulk_import_csv'])) {
     }
 }
 
-// Handle Quick Stock Toggle
-if (isset($_GET['toggle_stock'])) {
-    $prod_id = intval($_GET['toggle_stock']);
-    $stmt = $pdo->prepare("SELECT stock_status FROM products WHERE id = ? AND vendor_id = ?");
-    $stmt->execute([$prod_id, $vendor_id]);
-    $curr = $stmt->fetchColumn();
-    if ($curr) {
-        $new_status = ($curr === 'In Stock') ? 'Out of Stock' : 'In Stock';
-        $pdo->prepare("UPDATE products SET stock_status = ? WHERE id = ? AND vendor_id = ?")->execute([$new_status, $prod_id, $vendor_id]);
-        log_audit_action('seller_stock_toggle', 'products', "Vendor #{$vendor_id} toggled product #{$prod_id} to {$new_status}");
-        set_flash('success', 'उत्पाद स्टॉक स्थिति अपडेट की गई।');
-    }
-    header('Location: /seller/products.php');
-    exit;
-}
+// Handle State-Changing Product Actions (Strictly POST + CSRF)
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
+    csrf_protect();
+    $action_type = $_POST['action'];
+    $prod_id = intval($_POST['product_id'] ?? 0);
 
-// Handle Delete Product
-if (isset($_GET['delete_id'])) {
-    $del_id = intval($_GET['delete_id']);
-    $stmt = $pdo->prepare("DELETE FROM products WHERE id = ? AND vendor_id = ?");
-    $stmt->execute([$del_id, $vendor_id]);
-    log_audit_action('seller_product_deleted', 'products', "Vendor #{$vendor_id} deleted product #{$del_id}");
-    set_flash('success', 'उत्पाद कैटलॉग से हटा दिया गया।');
-    header('Location: /seller/products.php');
-    exit;
+    if ($prod_id <= 0) {
+        set_flash('error', 'अमान्य उत्पाद अनुरोध।');
+        header('Location: /seller/products.php');
+        exit;
+    }
+
+    if ($action_type === 'toggle_stock') {
+        $stmt = $pdo->prepare("SELECT stock_status FROM products WHERE id = ? AND vendor_id = ?");
+        $stmt->execute([$prod_id, $vendor_id]);
+        $curr = $stmt->fetchColumn();
+        if ($curr) {
+            $new_status = ($curr === 'In Stock') ? 'Out of Stock' : 'In Stock';
+            $pdo->prepare("UPDATE products SET stock_status = ? WHERE id = ? AND vendor_id = ?")->execute([$new_status, $prod_id, $vendor_id]);
+            log_audit_action('seller_stock_toggle', 'products', "Vendor #{$vendor_id} toggled product #{$prod_id} to {$new_status}");
+            set_flash('success', 'उत्पाद स्टॉक स्थिति अपडेट की गई।');
+        }
+        header('Location: /seller/products.php');
+        exit;
+    }
+
+    if ($action_type === 'delete_product') {
+        $stmt = $pdo->prepare("DELETE FROM products WHERE id = ? AND vendor_id = ?");
+        $stmt->execute([$prod_id, $vendor_id]);
+        log_audit_action('seller_product_deleted', 'products', "Vendor #{$vendor_id} deleted product #{$prod_id}");
+        set_flash('success', 'उत्पाद कैटलॉग से हटा दिया गया।');
+        header('Location: /seller/products.php');
+        exit;
+    }
 }
 
 // Query Vendor Products
@@ -224,9 +253,10 @@ if (isset($_GET['export']) && $_GET['export'] === 'csv') {
     header('Content-Type: text/csv; charset=utf-8');
     header('Content-Disposition: attachment; filename="vendor_catalog_' . $vendor_id . '_' . date('Y_m_d') . '.csv"');
     $out = fopen('php://output', 'w');
+    fprintf($out, chr(0xEF).chr(0xBB).chr(0xBF));
     fputcsv($out, ['Product ID', 'SKU Code', 'Name', 'Hindi Name', 'Category', 'Price (INR)', 'MRP (INR)', 'Discount %', 'Stock', 'Stock Status', 'Weight (KG)', 'Unit']);
     foreach ($products as $p) {
-        fputcsv($out, [
+        fputcsv($out, array_map('escape_csv_cell', [
             $p['id'],
             $p['code'],
             $p['name'],
@@ -239,7 +269,7 @@ if (isset($_GET['export']) && $_GET['export'] === 'csv') {
             $p['stock_status'],
             $p['weight_kg'],
             $p['unit']
-        ]);
+        ]));
     }
     fclose($out);
     exit;
@@ -374,12 +404,17 @@ require_once __DIR__ . '/seller_header.php';
 
               <!-- Stock Toggle -->
               <td class="px-4 py-3">
-                <a href="/seller/products.php?toggle_stock=<?= $p['id'] ?>"
-                  class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-bold cursor-pointer transition <?= $p['stock_status'] === 'In Stock' ? 'bg-emerald-100 text-emerald-800 hover:bg-emerald-200' : 'bg-red-100 text-red-800 hover:bg-red-200' ?>"
-                  title="क्लिक करके स्टॉक स्थिति बदलें">
-                  <span class="w-1.5 h-1.5 rounded-full <?= $p['stock_status'] === 'In Stock' ? 'bg-emerald-600' : 'bg-red-600' ?>"></span>
-                  <?= htmlspecialchars($p['stock_status']) ?> (<?= $p['stock'] ?>)
-                </a>
+                <form method="POST" action="/seller/products.php" class="inline">
+                  <input type="hidden" name="csrf_token" value="<?= csrf_token() ?>">
+                  <input type="hidden" name="action" value="toggle_stock">
+                  <input type="hidden" name="product_id" value="<?= $p['id'] ?>">
+                  <button type="submit"
+                    class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-bold cursor-pointer transition <?= $p['stock_status'] === 'In Stock' ? 'bg-emerald-100 text-emerald-800 hover:bg-emerald-200' : 'bg-red-100 text-red-800 hover:bg-red-200' ?>"
+                    title="क्लिक करके स्टॉक स्थिति बदलें">
+                    <span class="w-1.5 h-1.5 rounded-full <?= $p['stock_status'] === 'In Stock' ? 'bg-emerald-600' : 'bg-red-600' ?>"></span>
+                    <?= htmlspecialchars($p['stock_status'], ENT_QUOTES, 'UTF-8') ?> (<?= intval($p['stock']) ?>)
+                  </button>
+                </form>
               </td>
 
               <!-- Actions -->
@@ -406,10 +441,14 @@ require_once __DIR__ . '/seller_header.php';
                 <a href="/product.php?id=<?= $p['id'] ?>" target="_blank" class="p-1.5 text-stone-400 hover:text-stone-700 rounded hover:bg-stone-100 transition" title="लाइव उत्पाद देखें">
                   <i class="fa-solid fa-arrow-up-right-from-square"></i>
                 </a>
-                <a href="/seller/products.php?delete_id=<?= $p['id'] ?>" onclick="return confirm('क्या आप इस उत्पाद को हटाना चाहते हैं?')"
-                  class="p-1.5 text-stone-400 hover:text-red-600 rounded hover:bg-red-50 transition" title="हटाएं">
-                  <i class="fa-regular fa-trash-can"></i>
-                </a>
+                <form method="POST" action="/seller/products.php" class="inline" onsubmit="return confirm('क्या आप इस उत्पाद को हटाना चाहते हैं?')">
+                  <input type="hidden" name="csrf_token" value="<?= csrf_token() ?>">
+                  <input type="hidden" name="action" value="delete_product">
+                  <input type="hidden" name="product_id" value="<?= $p['id'] ?>">
+                  <button type="submit" class="p-1.5 text-stone-400 hover:text-red-600 rounded hover:bg-red-50 transition cursor-pointer" title="हटाएं">
+                    <i class="fa-regular fa-trash-can"></i>
+                  </button>
+                </form>
               </td>
             </tr>
           <?php endforeach; ?>

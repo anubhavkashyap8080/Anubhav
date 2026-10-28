@@ -1,8 +1,0 @@
-User-agent: *
-Allow: /
-Disallow: /admin
-Disallow: /admin/*
-Disallow: /checkout
-Disallow: /seller/dashboard
-
-Sitemap: https://anubhav.pages.dev/sitemap.xml

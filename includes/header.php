@@ -204,6 +204,7 @@ $active_site_logo = ($use_gif_logo && !empty($logo_gif_url)) ? $logo_gif_url : $
 
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
   <link rel="stylesheet" href="/assets/css/style.css">
+  <meta name="csrf-token" content="<?= htmlspecialchars(csrf_token(), ENT_QUOTES, 'UTF-8') ?>">
   <script src="/assets/js/main.js"></script>
 </head>
 <body class="flex flex-col min-h-screen text-gray-800 antialiased selection:bg-emerald-200 overflow-x-hidden">
@@ -214,19 +215,8 @@ $active_site_logo = ($use_gif_logo && !empty($logo_gif_url)) ? $logo_gif_url : $
   <!-- Global Toast Notification Container (Bottom on mobile / Top-Right on desktop) -->
   <div id="toast-container" class="fixed z-[99999] pointer-events-none flex flex-col gap-2.5 bottom-4 inset-x-4 sm:bottom-auto sm:inset-x-auto sm:top-5 sm:right-5 sm:max-w-sm w-auto"></div>
 
-  <!-- Impersonation Alert Banner -->
-  <?php if (!empty($_SESSION['impersonator_id'])): ?>
-    <div class="bg-amber-500 text-stone-950 px-4 py-2 text-xs font-bold flex flex-wrap items-center justify-between shadow-md z-50 sticky top-0 border-b border-amber-600">
-      <div class="flex items-center gap-2">
-        <i data-lucide="user-check" class="w-4 h-4"></i>
-        <span>Viewing store as customer <strong><?= htmlspecialchars($current_user['name'] ?? $_SESSION['user_name']) ?></strong>. Original Admin: <?= htmlspecialchars($_SESSION['impersonator_name'] ?? 'Super Admin') ?></span>
-      </div>
-      <a href="/admin/impersonate.php?action=exit" class="px-3 py-1 bg-stone-950 text-white rounded-lg hover:bg-black transition flex items-center gap-1.5 shadow-xs text-xs font-bold">
-        <i data-lucide="arrow-right-left" class="w-3.5 h-3.5"></i>
-        Exit Impersonation (Back to Admin)
-      </a>
-    </div>
-  <?php endif; ?>
+  <!-- Item 7: Impersonation Alert Banner (POST + CSRF exit) -->
+  <?= function_exists('render_impersonation_banner') ? render_impersonation_banner() : '' ?>
 
   <!-- 1. Top Announcement Bar (Strictly Single-Line Linear & Fully Responsive across all screens) -->
   <div class="bg-gradient-to-r from-emerald-950 via-slate-900 to-emerald-900 text-white text-[11px] py-1.5 px-2.5 sm:px-6 border-b border-emerald-900/50 w-full overflow-hidden select-none">

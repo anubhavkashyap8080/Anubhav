@@ -33,6 +33,8 @@ if (is_logged_in()) {
 }
 
 $error = '';
+$show_2fa_input = false;
+$cached_identifier = '';
 
 // Fetch Google Auth Settings
 $google_enabled = false;
@@ -46,38 +48,49 @@ try {
 } catch (Exception $e) {}
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    $identifier = clean_input($_POST['identifier'] ?? '');
-    $password = $_POST['password'] ?? '';
-    $tab = clean_input($_POST['portal_tab'] ?? 'shopper');
-    
-    $role_group = null;
-    if ($tab === 'seller') $role_group = 'seller';
-    if ($tab === 'staff') $role_group = 'admin';
-
-    $result = authenticate_user($identifier, $password, $role_group);
-    if ($result['success']) {
-        $user = $result['user'];
-        set_flash('success', 'नमस्ते ' . htmlspecialchars($user['name']) . ', आपका स्वागत है!');
-
-        if (!empty($redirect) && strpos($redirect, 'http') === false) {
-            header('Location: /' . ltrim($redirect, '/'));
-            exit;
-        }
-
-        // Direct according to role
-        if (in_array($user['role'], ['super_admin', 'admin'])) {
-            header('Location: /admin/index.php');
-            exit;
-        } elseif ($user['role'] === 'vendor') {
-            header('Location: /seller/dashboard.php');
-            exit;
-        } else {
-            header('Location: /account.php');
-            exit;
-        }
+    // Item 15: CSRF Token Check on Login Form
+    $csrf = $_POST['csrf_token'] ?? '';
+    if (!csrf_check($csrf)) {
+        $error = 'सुरक्षा टोकन अमान्य है। कृपया पृष्ठ रीफ़्रेश करके पुनः प्रयास करें। (Invalid security token)';
     } else {
-        $error = $result['error'];
-        $active_tab = $tab;
+        $identifier = clean_input($_POST['identifier'] ?? '');
+        $password = $_POST['password'] ?? '';
+        $tab = clean_input($_POST['portal_tab'] ?? 'shopper');
+        $two_factor_code = clean_input($_POST['two_factor_code'] ?? '');
+        
+        $role_group = null;
+        if ($tab === 'seller') $role_group = 'seller';
+        if ($tab === 'staff') $role_group = 'admin';
+
+        $result = authenticate_user($identifier, $password, $role_group, $two_factor_code);
+        if ($result['success']) {
+            $user = $result['user'];
+            set_flash('success', 'नमस्ते ' . htmlspecialchars($user['name']) . ', आपका स्वागत है!');
+
+            if (!empty($redirect) && strpos($redirect, 'http') === false) {
+                header('Location: /' . ltrim($redirect, '/'));
+                exit;
+            }
+
+            // Direct according to role
+            if (in_array($user['role'], ['super_admin', 'admin'])) {
+                header('Location: /admin/index.php');
+                exit;
+            } elseif ($user['role'] === 'vendor') {
+                header('Location: /seller/dashboard.php');
+                exit;
+            } else {
+                header('Location: /account.php');
+                exit;
+            }
+        } else {
+            $error = $result['error'];
+            $active_tab = $tab;
+            if (!empty($result['require_2fa'])) {
+                $show_2fa_input = true;
+                $cached_identifier = $identifier;
+            }
+        }
     }
 }
 
@@ -137,7 +150,26 @@ require_once __DIR__ . '/includes/header.php';
         </div>
 
         <form action="/login.php<?= !empty($redirect) ? '?redirect=' . urlencode($redirect) : '' ?>" method="POST" class="space-y-4">
+          <?= csrf_field() ?>
           <input type="hidden" name="portal_tab" id="portal_tab_input" value="<?= htmlspecialchars($active_tab) ?>">
+
+          <?php if ($show_2fa_input): ?>
+            <!-- Item 15: TOTP 2FA Verification Field -->
+            <div class="p-3 bg-amber-50 border border-amber-300 rounded-2xl text-xs text-amber-900 mb-2">
+              <div class="font-bold flex items-center gap-1.5 mb-1 text-amber-800">
+                <i class="fa-solid fa-shield-halved"></i>
+                Two-Factor Authentication Required (2FA)
+              </div>
+              <span>कृपया अपने Google Authenticator या 2FA ऍप से 6-अंकीय कोड दर्ज करें।</span>
+            </div>
+            <div>
+              <label class="block text-xs font-bold text-gray-700 mb-1">
+                2FA Verification Code (6-अंकीय सुरक्षा कोड) <span class="text-red-500">*</span>
+              </label>
+              <input type="text" name="two_factor_code" autofocus pattern="[0-9]{6}" maxlength="6" placeholder="000000"
+                class="w-full text-center tracking-widest text-lg font-mono px-3.5 py-2.5 bg-amber-50 border border-amber-300 rounded-xl focus:bg-white focus:border-brand-green focus:outline-none transition">
+            </div>
+          <?php endif; ?>
 
           <!-- Username/Email/Phone -->
           <div>
@@ -148,7 +180,7 @@ require_once __DIR__ . '/includes/header.php';
               <span class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-gray-400">
                 <i class="fa-regular fa-user text-xs"></i>
               </span>
-              <input type="text" name="identifier" required autofocus
+              <input type="text" name="identifier" required autofocus value="<?= htmlspecialchars($cached_identifier) ?>"
                 placeholder="उदा. mobile या email"
                 class="w-full pl-10 pr-3 py-2.5 bg-stone-50 border border-gray-200 rounded-xl text-sm focus:bg-white focus:border-brand-green focus:outline-none transition">
             </div>
@@ -158,7 +190,7 @@ require_once __DIR__ . '/includes/header.php';
           <div>
             <div class="flex items-center justify-between mb-1">
               <label class="block text-xs font-bold text-gray-700">Password (पासवर्ड)</label>
-              <a href="tel:<?= APP_PHONE ?>" class="text-[11px] text-brand-green hover:underline">Need Help? (मदद चाहिए?)</a>
+              <a href="/forgot-password.php" class="text-[11px] text-brand-green hover:underline">Forgot Password? (पासवर्ड भूल गए?)</a>
             </div>
             <div class="relative">
               <span class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-gray-400">
@@ -217,7 +249,7 @@ require_once __DIR__ . '/includes/header.php';
                    data-width="100%">
               </div>
               
-              <a href="https://accounts.google.com/o/oauth2/v2/auth?client_id=<?= urlencode($google_client_id) ?>&redirect_uri=<?= urlencode(((!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') ? 'https://' : 'http://') . ($_SERVER['HTTP_HOST'] ?? 'localhost') . '/auth/google-callback.php') ?>&response_type=code&scope=openid%20profile%20email"
+              <a href="https://accounts.google.com/o/oauth2/v2/auth?client_id=<?= urlencode($google_client_id) ?>&redirect_uri=<?= urlencode(SITE_URL . '/auth/google-callback.php') ?>&response_type=code&scope=openid%20profile%20email"
                  class="w-full py-2.5 px-4 bg-white border border-gray-300 hover:bg-stone-50 text-gray-700 font-bold rounded-xl text-xs transition flex items-center justify-center gap-2 shadow-xs">
                 <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" class="w-4 h-4" alt="Google">
                 <span>Sign in with Google (Google खाते से प्रवेश)</span>

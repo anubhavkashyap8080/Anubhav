@@ -1,14 +1,17 @@
 <?php
+/**
+ * GaunGaliHat Order Confirmation & Receipt (Item 11 Hardened Access)
+ */
+
 require_once __DIR__ . '/includes/functions.php';
 
 $order_id = intval($_GET['id'] ?? 0);
+$token = trim((string)($_GET['token'] ?? ''));
+
 if (!$order_id) {
     header('Location: /');
     exit;
 }
-
-$page_title = 'Order Confirmation — GaunGaliHat';
-require_once __DIR__ . '/includes/header.php';
 
 // Fetch order
 $stmt = $pdo->prepare("SELECT * FROM orders WHERE id = ?");
@@ -16,6 +19,8 @@ $stmt->execute([$order_id]);
 $order = $stmt->fetch();
 
 if (!$order) {
+    $page_title = 'Order Not Found — GaunGaliHat';
+    require_once __DIR__ . '/includes/header.php';
     echo '<div class="max-w-xl mx-auto py-20 px-4 text-center">
             <h2 class="text-xl font-bold text-gray-800">आर्डर नहीं मिला (Order Not Found)</h2>
             <a href="/" class="mt-4 inline-block px-5 py-2.5 bg-brand-green text-white rounded-xl">होमपेज पर जाएं</a>
@@ -23,6 +28,42 @@ if (!$order) {
     require_once __DIR__ . '/includes/footer.php';
     exit;
 }
+
+// Item 11: Access Authorization Check (Owner, Admin, or Valid Guest Access Token)
+$is_authorized = false;
+
+// 1. Session owner check
+if (is_logged_in()) {
+    $current_uid = (int)($_SESSION['user_id'] ?? 0);
+    $current_role = $_SESSION['user_role'] ?? '';
+    if ($current_uid > 0 && (int)$order['user_id'] === $current_uid) {
+        $is_authorized = true;
+    } elseif (in_array($current_role, ['admin', 'super_admin'], true)) {
+        $is_authorized = true;
+    }
+}
+
+// 2. Just placed in current session checkout
+if (!empty($_SESSION['last_placed_order_id']) && (int)$_SESSION['last_placed_order_id'] === $order_id) {
+    $is_authorized = true;
+}
+
+// 3. Guest long random order access token check
+if (!$is_authorized && !empty($token) && !empty($order['order_access_token'])) {
+    if (hash_equals($order['order_access_token'], $token)) {
+        $is_authorized = true;
+    }
+}
+
+if (!$is_authorized) {
+    http_response_code(403);
+    set_flash('error', 'अनधिकृत पहुंच: इस आर्डर विवरण को देखने की अनुमति नहीं है। (Access Denied)');
+    header('Location: /login.php');
+    exit;
+}
+
+$page_title = 'Order Confirmation — GaunGaliHat';
+require_once __DIR__ . '/includes/header.php';
 
 // Fetch items
 $stmt_items = $pdo->prepare("

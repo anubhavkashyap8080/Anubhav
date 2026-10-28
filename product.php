@@ -129,9 +129,9 @@ document.addEventListener('DOMContentLoaded', function() {
       currency: 'INR',
       value: <?= (float)$product['price'] ?>,
       items: [{
-        item_id: '<?= htmlspecialchars($product['code'] ?: ('GGH-' . $product['id'])) ?>',
-        item_name: '<?= htmlspecialchars(addslashes($product['name'])) ?>',
-        item_category: '<?= htmlspecialchars(addslashes($product['category_name'] ?? 'General')) ?>',
+        item_id: <?= json_encode($product['code'] ?: ('GGH-' . $product['id']), JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_HEX_AMP) ?>,
+        item_name: <?= json_encode($product['name'], JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_HEX_AMP) ?>,
+        item_category: <?= json_encode($product['category_name'] ?? 'General', JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_HEX_AMP) ?>,
         price: <?= (float)$product['price'] ?>,
         quantity: 1
       }]

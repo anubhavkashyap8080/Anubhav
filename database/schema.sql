@@ -221,13 +221,8 @@ CREATE TABLE IF NOT EXISTS `ticket_replies` (
 
 
 -- SEED INITIAL DATA
--- Initial Users: Super Admin (anubhav), Admin (sunil_ops), Seller (ramkishan_artisan), Customer (aarav_buyer)
-INSERT IGNORE INTO `users` (`unique_code`, `name`, `username`, `email`, `phone`, `password`, `role`, `department`) VALUES
-('GGH-USR-01', 'Anubhav Kashyap', 'anubhav', 'anubhav@ssindustries.in', '+91 7897492100', '$2y$10$g2bX5vBfyZObWF81HbhgsOFWClnOg0G48lQ2vcmpDzO8HfNTLrKpW', 'super_admin', 'Executive Governance & Foundry Operations'),
-('GGH-USR-02', 'Sunil Sharma', 'sunil_ops', 'sunil.ops@ssindustries.in', '+91 9005756321', '$2y$10$g2bX5vBfyZObWF81HbhgsOFWClnOg0G48lQ2vcmpDzO8HfNTLrKpW', 'admin', 'Factory Dispatch & Regional Warehousing'),
-('GGH-USR-03', 'Ramkishan Lohar', 'ramkishan_artisan', 'ramkishan@ganvgalihat.com', '+91 8303578806', '$2y$10$BYm/rcOxjfXGye1e9CKg9O.Nu648DFJCP4EgzoFWZSefcARDa83O.', 'vendor', 'Blacksmith Artisan Partner'),
-('GGH-USR-04', 'S S Industries Hardoi', 'ss_industries', 'hardoi@ssindustries.in', '+91 7897492100', '$2y$10$BYm/rcOxjfXGye1e9CKg9O.Nu648DFJCP4EgzoFWZSefcARDa83O.', 'vendor', 'Agricultural Forge & Foundry'),
-('GGH-USR-05', 'Aarav Gupta', 'aarav_buyer', 'aarav.buyer@gmail.com', '+91 98112 34567', '$2y$10$BYm/rcOxjfXGye1e9CKg9O.Nu648DFJCP4EgzoFWZSefcARDa83O.', 'customer', 'Retail Shopper');
+-- Note: Default accounts & passwords removed for production security.
+-- Use scripts/create_super_admin.php to initialize the first super administrator.
 
 -- Initial Vendors
 INSERT IGNORE INTO `vendors` (`user_id`, `name`, `business_name`, `slug`, `type`, `avatar`, `cover_image`, `location`, `panchayat`, `village`, `district`, `state`, `pincode`, `phone`, `whatsapp`, `email`, `story`, `year_established`, `member_count`, `commission_rate`, `bank_beneficiary`, `bank_name`, `bank_account`, `bank_ifsc`, `upi_id`) VALUES
@@ -529,6 +524,17 @@ CREATE TABLE IF NOT EXISTS `coupon_usages` (
   `customer_phone` VARCHAR(50) DEFAULT NULL,
   `discount_amount` DECIMAL(10,2) DEFAULT 0,
   `used_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE IF NOT EXISTS `rate_limits` (
+  `id` INT AUTO_INCREMENT PRIMARY KEY,
+  `action` VARCHAR(50) NOT NULL,
+  `identifier` VARCHAR(100) NOT NULL,
+  `hit_count` INT NOT NULL DEFAULT 1,
+  `first_hit_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  `last_hit_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  UNIQUE KEY `uk_action_identifier` (`action`, `identifier`),
+  INDEX `idx_rate_limit_action` (`action`, `last_hit_at`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- 8. LIVE CUSTOMER & ARTISAN CHAT

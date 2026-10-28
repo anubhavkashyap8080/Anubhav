@@ -5,11 +5,29 @@ require_once __DIR__ . '/includes/header.php';
 $sent = false;
 $ticket_created_num = '';
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    // Item 16: CSRF Check
+    csrf_protect();
+
     $sender_name = clean_input($_POST['name'] ?? '');
     $sender_phone = clean_input($_POST['phone'] ?? '');
     $sender_email = clean_input($_POST['email'] ?? '');
     $subject_key = clean_input($_POST['subject'] ?? 'order');
     $sender_message = clean_input($_POST['message'] ?? '');
+
+    // Item 24: Rate limiting per IP and phone
+    $client_ip = get_client_ip();
+    if (!check_rate_limit('contact_ip', $client_ip, 5, 900) || !check_rate_limit('contact_phone', $sender_phone, 3, 900)) {
+        set_flash('error', 'बहुत अधिक संदेश अनुरोध। कृपया 15 मिनट बाद पुनः प्रयास करें। (Rate limit exceeded)');
+        header('Location: /contact.php');
+        exit;
+    }
+
+    // Item 24: Turnstile CAPTCHA verification
+    if (!verify_turnstile_captcha()) {
+        set_flash('error', 'CAPTCHA सुरक्षा सत्यापन विफल रहा। कृपया पुनः प्रयास करें।');
+        header('Location: /contact.php');
+        exit;
+    }
 
     $cat_map = [
         'order' => 'Order Tracking',
@@ -36,7 +54,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             }
 
             $email_val = !empty($sender_email) ? $sender_email : ($sender_phone . '@visitor.ganvgalihat.com');
-            $ticket_num = 'TKT-' . date('ymd') . '-' . rand(1000, 9999);
+            $ticket_num = 'TKT-' . date('ymd') . '-' . random_int(1000, 9999);
             
             $stmt_tkt = $pdo->prepare("
                 INSERT INTO tickets (ticket_number, user_id, name, email, phone, role, subject, category, priority, status, message, created_at)
@@ -154,6 +172,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         </h3>
 
         <form action="/contact.php" method="POST" class="space-y-4">
+          <input type="hidden" name="csrf_token" value="<?= csrf_token() ?>">
           <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
               <label class="block text-xs font-bold text-gray-700 mb-1">आपका नाम <span class="text-red-500">*</span></label>
@@ -189,6 +208,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             <textarea name="message" required rows="4" placeholder="कृपया अपना प्रश्न या आवश्यकता यहाँ लिखें..."
               class="w-full px-3.5 py-2.5 bg-stone-50 border border-gray-200 rounded-xl text-xs focus:bg-white focus:outline-none focus:border-brand-green transition"></textarea>
           </div>
+
+          <?= render_turnstile_widget() ?>
 
           <button type="submit"
             class="px-8 py-3 bg-brand-green hover:bg-emerald-800 text-white font-bold rounded-xl text-xs transition shadow-md flex items-center justify-center gap-2">

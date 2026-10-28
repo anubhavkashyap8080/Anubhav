@@ -18,6 +18,11 @@ function send_json_wishlist_response($data) {
 
 $product_id = (int)($_POST['product_id'] ?? $_GET['product_id'] ?? 0);
 
+// Item 16: Central CSRF Protection for state-changing wishlist actions
+if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    csrf_protect();
+}
+
 if ($product_id <= 0) {
     send_json_wishlist_response(['success' => false, 'message' => 'Invalid product.']);
 }

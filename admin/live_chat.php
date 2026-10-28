@@ -328,14 +328,17 @@ function handleSendAdminReply(e) {
   isSendingAdmin = true;
   if (btn) btn.disabled = true;
 
+  const csrf = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '';
   const formData = new FormData();
   formData.append('session_id', currentSessionId);
   formData.append('message', msg);
+  if (csrf) formData.append('csrf_token', csrf);
 
   input.value = '';
 
   fetch('/ajax/chat_api.php?action=admin_reply', {
     method: 'POST',
+    headers: { 'X-CSRF-Token': csrf },
     body: formData
   })
   .then(res => res.json())
@@ -365,12 +368,15 @@ function toggleActiveSessionStatus() {
   const badge = document.getElementById('activeStatusBadge');
   const newStatus = (badge.innerText === 'resolved') ? 'active' : 'resolved';
 
+  const csrf = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '';
   const formData = new FormData();
   formData.append('session_id', currentSessionId);
   formData.append('status', newStatus);
+  if (csrf) formData.append('csrf_token', csrf);
 
   fetch('/ajax/chat_api.php?action=admin_toggle_status', {
     method: 'POST',
+    headers: { 'X-CSRF-Token': csrf },
     body: formData
   })
   .then(res => res.json())
