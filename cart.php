@@ -11,16 +11,20 @@ $coupon_err = '';
 
 // Handle Coupon Post Actions
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    if (isset($_POST['apply_coupon'])) {
-        $res = validate_and_apply_coupon($_POST['coupon_code'] ?? '');
-        if ($res['success']) {
-            $coupon_msg = $res['message'];
-        } else {
-            $coupon_err = $res['error'];
+    if (!csrf_check($_POST['csrf_token'] ?? '')) {
+        $coupon_err = 'सुरक्षा टोकन अमान्य है। (Invalid CSRF Token)';
+    } else {
+        if (isset($_POST['apply_coupon'])) {
+            $res = validate_and_apply_coupon($_POST['coupon_code'] ?? '');
+            if ($res['success']) {
+                $coupon_msg = $res['message'];
+            } else {
+                $coupon_err = $res['error'];
+            }
+        } elseif (isset($_POST['remove_coupon'])) {
+            remove_applied_coupon();
+            $coupon_msg = 'Coupon has been removed.';
         }
-    } elseif (isset($_POST['remove_coupon'])) {
-        remove_applied_coupon();
-        $coupon_msg = 'Coupon has been removed.';
     }
 }
 
@@ -187,6 +191,7 @@ $final_total = max(0, $cart_subtotal + $shipping['shipping_fee'] - $discount_amo
                 </div>
               </div>
               <form action="/cart.php" method="POST">
+                <?= csrf_field() ?>
                 <input type="hidden" name="remove_coupon" value="1">
                 <button type="submit" class="text-xs text-red-500 hover:text-red-700 font-bold hover:underline">
                   Remove
@@ -195,6 +200,7 @@ $final_total = max(0, $cart_subtotal + $shipping['shipping_fee'] - $discount_amo
             </div>
           <?php else: ?>
             <form action="/cart.php" method="POST" class="flex gap-2">
+              <?= csrf_field() ?>
               <input type="hidden" name="apply_coupon" value="1">
               <input type="text" name="coupon_code" required placeholder="e.g. WELCOME50, FESTIVAL20"
                 class="flex-1 px-3 py-2 border border-gray-300 rounded-xl font-mono uppercase text-xs font-bold outline-none focus:border-brand-green">

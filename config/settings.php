@@ -86,22 +86,32 @@ if (empty($raw_tagline) || $raw_tagline === '0') {
     $raw_tagline = 'S S Industries Enterprise • Ganv se ghar tak';
 }
 define('APP_TAGLINE', $raw_tagline);
+$canonical_host_fallback = parse_url(SITE_URL, PHP_URL_HOST) ?: 'gaungalihat.womenvission.in';
 define('APP_PHONE', get_setting('contact_phone', '+91 7897492100'));
-define('APP_EMAIL', get_setting('contact_email', 'namaste@ganvgalihat.com'));
+define('APP_EMAIL', get_setting('contact_email', 'namaste@' . $canonical_host_fallback));
 define('APP_CURRENCY', '₹');
 
-// Payment Gateway Constants (Read from DB or external platform config, no hardcoded fallbacks)
+// Payment Gateway Constants (Config/Env takes priority over site_settings DB table, Item 10)
 $cfg_payments = function_exists('get_platform_config') ? get_platform_config('payments') : [];
 
-define('RAZORPAY_ENABLED', (bool)get_setting('razorpay_enabled', $cfg_payments['razorpay']['enabled'] ?? 0));
-define('RAZORPAY_KEY_ID', get_setting('razorpay_key_id', $cfg_payments['razorpay']['key_id'] ?? ''));
-define('RAZORPAY_KEY_SECRET', get_setting('razorpay_key_secret', $cfg_payments['razorpay']['key_secret'] ?? ''));
+define('RAZORPAY_ENABLED', (bool)(getenv('RAZORPAY_ENABLED') !== false ? getenv('RAZORPAY_ENABLED') : ($cfg_payments['razorpay']['enabled'] ?? get_setting('razorpay_enabled', 0))));
+define('RAZORPAY_KEY_ID', (string)(getenv('RAZORPAY_KEY_ID') ?: ($cfg_payments['razorpay']['key_id'] ?? get_setting('razorpay_key_id', ''))));
+$raw_rp_secret = getenv('RAZORPAY_KEY_SECRET') ?: ($cfg_payments['razorpay']['key_secret'] ?? '');
+define('RAZORPAY_KEY_SECRET', (string)(!empty($raw_rp_secret) ? $raw_rp_secret : get_setting('razorpay_key_secret', '')));
 
-define('PAYU_ENABLED', (bool)get_setting('payu_enabled', $cfg_payments['payu']['enabled'] ?? 0));
-define('PAYU_MERCHANT_KEY', get_setting('payu_merchant_key', $cfg_payments['payu']['merchant_key'] ?? ''));
-define('PAYU_MERCHANT_SALT', get_setting('payu_merchant_salt', $cfg_payments['payu']['merchant_salt'] ?? ''));
-define('PAYU_MODE', get_setting('payu_mode', $cfg_payments['payu']['mode'] ?? 'test')); // 'test' or 'live'
+define('PAYU_ENABLED', (bool)(getenv('PAYU_ENABLED') !== false ? getenv('PAYU_ENABLED') : ($cfg_payments['payu']['enabled'] ?? get_setting('payu_enabled', 0))));
+define('PAYU_MERCHANT_KEY', (string)(getenv('PAYU_MERCHANT_KEY') ?: ($cfg_payments['payu']['merchant_key'] ?? get_setting('payu_merchant_key', ''))));
+$raw_payu_salt = getenv('PAYU_MERCHANT_SALT') ?: ($cfg_payments['payu']['merchant_salt'] ?? '');
+define('PAYU_MERCHANT_SALT', (string)(!empty($raw_payu_salt) ? $raw_payu_salt : get_setting('payu_merchant_salt', '')));
+define('PAYU_MODE', (string)(getenv('PAYU_MODE') ?: ($cfg_payments['payu']['mode'] ?? get_setting('payu_mode', 'test')))); // 'test' or 'live'
 define('PAYU_URL', PAYU_MODE === 'live' ? 'https://secure.payu.in/_payment' : 'https://test.payu.in/_payment');
+
+// Social Auth Constants (Item 10: config/env priority)
+$cfg_social = function_exists('get_platform_config') ? get_platform_config('social') : [];
+define('GOOGLE_AUTH_ENABLED', (bool)(getenv('GOOGLE_AUTH_ENABLED') !== false ? getenv('GOOGLE_AUTH_ENABLED') : ($cfg_social['google']['enabled'] ?? get_setting('google_auth_enabled', 1))));
+define('GOOGLE_CLIENT_ID', (string)(getenv('GOOGLE_CLIENT_ID') ?: ($cfg_social['google']['client_id'] ?? get_setting('google_client_id', ''))));
+$raw_google_secret = getenv('GOOGLE_CLIENT_SECRET') ?: ($cfg_social['google']['client_secret'] ?? '');
+define('GOOGLE_CLIENT_SECRET', (string)(!empty($raw_google_secret) ? $raw_google_secret : get_setting('google_client_secret', '')));
 
 define('COD_ENABLED', (bool)get_setting('cod_enabled', 1));
 

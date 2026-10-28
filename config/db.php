@@ -172,31 +172,14 @@ if ($pdo) {
         ensure_platform_schema($pdo);
     } catch (Throwable $e_tbl) {}
 } else {
-    // 2. MySQL is not reachable - fallback immediately to local SQLite database
-    $sqliteDir = __DIR__ . '/../data';
-    $sqliteFile = $sqliteDir . '/gaungalihat.sqlite';
-
-    if (extension_loaded('pdo_sqlite') && is_dir($sqliteDir) && file_exists($sqliteFile)) {
-        try {
-            $pdo = new PDO("sqlite:" . $sqliteFile, null, null, [
-                PDO::ATTR_ERRMODE            => PDO::ERRMODE_EXCEPTION,
-                PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
-            ]);
-            $db_driver = 'sqlite';
-            ensure_platform_schema($pdo);
-        } catch (Throwable $e_sqlite) {
-            $pdo = null;
-        }
+    // Item 4 Deploy Cleanup: Fail securely without SQLite fallback
+    if (defined('TESTING_MOCK_DB') && TESTING_MOCK_DB === true) {
+        return;
     }
-
-    if (!$pdo) {
-        if (defined('TESTING_MOCK_DB') && TESTING_MOCK_DB === true) {
-            return;
-        }
-        // Item 4: Generic error page for visitors; no sensitive connection parameters or raw errors displayed.
-        http_response_code(500);
-        error_log("[GaunGaliHat DB Fatal] Database connection could not be established: " . ($last_mysql_error ?: 'No driver response'));
-        die("<!DOCTYPE html>
+    // Generic error page for visitors; no sensitive connection parameters or raw errors displayed.
+    http_response_code(500);
+    error_log("[GaunGaliHat DB Fatal] Database connection could not be established: " . ($last_mysql_error ?: 'No driver response'));
+    die("<!DOCTYPE html>
 <html lang='en'>
 <head>
   <meta charset='UTF-8'>
@@ -218,7 +201,6 @@ if ($pdo) {
   </div>
 </body>
 </html>");
-    }
 }
 
 /**
@@ -345,6 +327,37 @@ function ensure_platform_schema($pdo) {
                     `used_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
                     INDEX `idx_cu_coupon_user` (`coupon_id`, `user_id`)
                 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+                CREATE TABLE IF NOT EXISTS `admin_audit_logs` (
+                    `id` INT AUTO_INCREMENT PRIMARY KEY,
+                    `user_id` INT DEFAULT NULL,
+                    `user_name` VARCHAR(150) DEFAULT 'System',
+                    `user_role` VARCHAR(50) DEFAULT 'guest',
+                    `action` VARCHAR(100) NOT NULL,
+                    `module` VARCHAR(100) NOT NULL,
+                    `entity_type` VARCHAR(100) DEFAULT NULL,
+                    `entity_id` VARCHAR(100) DEFAULT NULL,
+                    `details` TEXT DEFAULT NULL,
+                    `ip_address` VARCHAR(45) NOT NULL,
+                    `user_agent` TEXT DEFAULT NULL,
+                    `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                    INDEX `idx_aal_user` (`user_id`),
+                    INDEX `idx_aal_module` (`module`),
+                    INDEX `idx_aal_action` (`action`),
+                    INDEX `idx_aal_created` (`created_at`)
+                ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+                CREATE TABLE IF NOT EXISTS `security_logs` (
+                    `id` INT AUTO_INCREMENT PRIMARY KEY,
+                    `event_type` VARCHAR(100) NOT NULL,
+                    `description` TEXT NOT NULL,
+                    `user_id` INT DEFAULT NULL,
+                    `ip_address` VARCHAR(45) NOT NULL,
+                    `user_agent` TEXT DEFAULT NULL,
+                    `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                    INDEX `idx_sl_event` (`event_type`),
+                    INDEX `idx_sl_created` (`created_at`)
+                ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
             ");
 
             $check_and_add_col = function($table, $col, $def) use ($pdo) {
@@ -364,6 +377,7 @@ function ensure_platform_schema($pdo) {
             $check_and_add_col('users', 'two_factor_enabled', 'TINYINT(1) DEFAULT 0');
             $check_and_add_col('users', 'failed_login_attempts', 'INT DEFAULT 0');
             $check_and_add_col('users', 'lockout_until', 'DATETIME DEFAULT NULL');
+            $check_and_add_col('users', 'password_changed_at', 'DATETIME DEFAULT NULL');
 
             $check_and_add_col('orders', 'order_access_token', 'VARCHAR(64) DEFAULT NULL');
             $check_and_add_col('orders', 'gateway_order_id', 'VARCHAR(100) DEFAULT NULL');

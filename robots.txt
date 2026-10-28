@@ -2,12 +2,6 @@
 # User-Agent Directives for Web Crawlers and Search Engines
 
 User-agent: *
-Disallow: /admin/
-Disallow: /seller/
-Disallow: /ajax/
-Disallow: /data/
-Disallow: /database/
-Disallow: /includes/
 Disallow: /cart.php
 Disallow: /checkout.php
 Disallow: /account.php
@@ -22,6 +16,5 @@ Allow: /blogs.php
 Allow: /blog-detail.php
 Allow: /about.php
 Allow: /contact.php
-Allow: /uploads/
 
-Sitemap: https://ganvgalihat.com/sitemap.xml
+Sitemap: https://gaungalihat.womenvission.in/sitemap.xml

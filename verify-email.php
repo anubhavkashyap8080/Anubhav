@@ -17,15 +17,26 @@ if (empty($token) || empty($email) || !filter_var($email, FILTER_VALIDATE_EMAIL)
 try {
     $now = date('Y-m-d H:i:s');
     $stmt = $pdo->prepare("
-        SELECT id, name, email, email_verified_at, email_verification_expires 
+        SELECT id, name, email, email_verified_at, email_verification_token, email_verification_expires 
         FROM users 
-        WHERE email = ? AND email_verification_token = ?
+        WHERE email = ? AND email_verification_token IS NOT NULL
         LIMIT 1
     ");
-    $stmt->execute([$email, $token]);
+    $stmt->execute([$email]);
     $user = $stmt->fetch();
 
-    if (!$user) {
+    $token_hash = hash('sha256', $token);
+    $is_valid_token = false;
+    if ($user && !empty($user['email_verification_token'])) {
+        if (hash_equals((string)$user['email_verification_token'], $token_hash)) {
+            $is_valid_token = true;
+        } elseif (hash_equals((string)$user['email_verification_token'], $token)) {
+            // Backward compatibility for unhashed legacy tokens
+            $is_valid_token = true;
+        }
+    }
+
+    if (!$is_valid_token) {
         set_flash('error', 'यह सत्यापन लिंक अमान्य है या पहले ही उपयोग किया जा चुका है। (Invalid or consumed token)');
         header('Location: /account.php');
         exit;

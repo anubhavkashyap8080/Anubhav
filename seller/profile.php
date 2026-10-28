@@ -13,6 +13,11 @@ $vendor_id = $vendor['id'];
 $success_msg = '';
 $error_msg = '';
 
+// Enforce CSRF token check on all POST requests
+if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    csrf_protect();
+}
+
 // Handle Workshop, Avatar & Bank Profile Update
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['update_store_profile'])) {
     $business_name = clean_input($_POST['business_name'] ?? '');
@@ -23,41 +28,53 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['update_store_profile'
     $pincode = clean_input($_POST['pincode'] ?? '');
     $story = clean_input($_POST['story'] ?? '');
     $bank_name = clean_input($_POST['bank_name'] ?? '');
-    $bank_account = clean_input($_POST['bank_account'] ?? '');
-    $bank_ifsc = clean_input($_POST['bank_ifsc'] ?? '');
-    $upi_id = clean_input($_POST['upi_id'] ?? '');
+    
+    // Encrypt sensitive bank & UPI details if changed
+    $in_bank_account = trim($_POST['bank_account'] ?? '');
+    $in_bank_ifsc = trim($_POST['bank_ifsc'] ?? '');
+    $in_upi_id = trim($_POST['upi_id'] ?? '');
+
+    if (strpos($in_bank_account, '•') !== false) {
+        $bank_account = $vendor['bank_account'] ?? '';
+    } elseif ($in_bank_account !== '') {
+        $bank_account = encrypt_sensitive_field(clean_input($in_bank_account));
+    } else {
+        $bank_account = '';
+    }
+
+    if (strpos($in_bank_ifsc, '•') !== false) {
+        $bank_ifsc = $vendor['bank_ifsc'] ?? '';
+    } elseif ($in_bank_ifsc !== '') {
+        $bank_ifsc = encrypt_sensitive_field(strtoupper(clean_input($in_bank_ifsc)));
+    } else {
+        $bank_ifsc = '';
+    }
+
+    if (strpos($in_upi_id, '•') !== false) {
+        $upi_id = $vendor['upi_id'] ?? '';
+    } elseif ($in_upi_id !== '') {
+        $upi_id = encrypt_sensitive_field(clean_input($in_upi_id));
+    } else {
+        $upi_id = '';
+    }
+
     $avatar_url = $vendor['avatar'] ?? $user['avatar'] ?? null;
 
-    // Handle File Upload if provided
-    if (isset($_FILES['avatar_file']) && $_FILES['avatar_file']['error'] === UPLOAD_ERR_OK) {
-        $file = $_FILES['avatar_file'];
-        $allowed = ['jpg', 'jpeg', 'png', 'webp', 'gif'];
-        $ext = strtolower(pathinfo($file['name'], PATHINFO_EXTENSION));
-
-        if (in_array($ext, $allowed) && $file['size'] <= 5 * 1024 * 1024) {
-            $finfo = finfo_open(FILEINFO_MIME_TYPE);
-            $mime = finfo_file($finfo, $file['tmp_name']);
-            finfo_close($finfo);
-
-            $valid_mimes = ['image/jpeg', 'image/png', 'image/webp', 'image/gif'];
-            if (in_array($mime, $valid_mimes)) {
-                $target_dir = __DIR__ . '/../uploads/avatars/';
-                if (!is_dir($target_dir)) {
-                    mkdir($target_dir, 0755, true);
-                }
-                $filename = 'vendor_' . $vendor_id . '_' . time() . '.' . $ext;
-                $dest = $target_dir . $filename;
-                if (move_uploaded_file($file['tmp_name'], $dest)) {
-                    $avatar_url = '/uploads/avatars/' . $filename;
-                }
-            } else {
-                $error_msg = 'केवल JPG, PNG या WebP छवियां स्वीकार्य हैं।';
-            }
+    // Item 8: Secure upload with secure_upload_image() or validated relative/HTTPS URL
+    if (isset($_FILES['avatar_file']) && $_FILES['avatar_file']['error'] !== UPLOAD_ERR_NO_FILE) {
+        $up_res = secure_upload_image('avatar_file', 'uploads/avatars/', 5 * 1024 * 1024);
+        if (!empty($up_res['success'])) {
+            $avatar_url = $up_res['path'];
         } else {
-            $error_msg = 'फ़ाइल का आकार 5MB से कम होना चाहिए।';
+            $error_msg = $up_res['error'] ?? 'फ़ोटो अपलोड करने में त्रुटि।';
         }
     } elseif (!empty($_POST['avatar_url_input'])) {
-        $avatar_url = clean_input($_POST['avatar_url_input']);
+        $input_url = trim($_POST['avatar_url_input']);
+        if (is_valid_product_image_url($input_url)) {
+            $avatar_url = $input_url;
+        } else {
+            $error_msg = 'अमान्य छवि URL। केवल आंतरिक /uploads/ पथ या मान्य सुरक्षित छवियां ही स्वीकार्य हैं।';
+        }
     }
 
     if (empty($error_msg)) {
@@ -84,6 +101,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['update_store_profile'
             $vendor = $stmt_ref->fetch();
             $user = get_logged_in_user();
 
+            log_audit_action('vendor_profile_update', 'vendor', 'vendor', $vendor_id, 'Workshop profile and banking details updated');
             $success_msg = 'कार्यशाला विवरण, प्रोफ़ाइल फ़ोटो एवं बैंकिंग जानकारी सफलतापूर्वक अपडेट की गई।';
         } catch (Exception $e) {
             $error_msg = 'त्रुटि: ' . $e->getMessage();
@@ -106,9 +124,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['change_seller_passwor
     } else {
         try {
             $hashed = password_hash($new_pass, PASSWORD_BCRYPT);
-            $stmt = $pdo->prepare("UPDATE users SET password = ? WHERE id = ?");
+            // Item 10: Invalidate all other active sessions upon password change
+            $stmt = $pdo->prepare("UPDATE users SET password = ?, force_password_change = 0, password_changed_at = CURRENT_TIMESTAMP WHERE id = ?");
             $stmt->execute([$hashed, $user['id']]);
-            $success_msg = 'विक्रेता खाता पासवर्ड सफलतापूर्वक बदल दिया गया है।';
+            unset($_SESSION['force_password_change']);
+            $_SESSION['login_time'] = time();
+            if (session_status() === PHP_SESSION_ACTIVE) {
+                session_regenerate_id(true);
+            }
+            log_audit_action('seller_password_change', 'auth', 'user', $user['id'], 'Password changed by vendor; other sessions invalidated');
+            $success_msg = 'विक्रेता खाता पासवर्ड सफलतापूर्वक बदल दिया गया है। सुरक्षा हेतु अन्य सभी सत्र समाप्त कर दिए गए हैं।';
             $user = get_logged_in_user(); // refresh
         } catch (Exception $e) {
             $error_msg = 'त्रुटि: ' . $e->getMessage();
@@ -150,6 +175,7 @@ require_once __DIR__ . '/seller_header.php';
   <!-- Store Details & Banking Form (8 cols) -->
   <div class="lg:col-span-8 bg-white rounded-2xl border border-gray-200 shadow-sm p-6 sm:p-8">
     <form action="/seller/profile.php" method="POST" enctype="multipart/form-data" class="space-y-6">
+      <?= csrf_field() ?>
       <input type="hidden" name="update_store_profile" value="1">
 
       <!-- Section 1: Workshop details & Logo -->
@@ -247,20 +273,20 @@ require_once __DIR__ . '/seller_header.php';
 
           <div>
             <label class="block text-xs font-bold text-gray-700 mb-1">खाता संख्या (Account Number)</label>
-            <input type="text" name="bank_account" value="<?= htmlspecialchars($vendor['bank_account'] ?? '') ?>"
-              class="w-full px-3.5 py-2.5 bg-stone-50 border border-gray-200 rounded-xl text-xs focus:bg-white focus:outline-none focus:border-amber-500 transition">
+            <input type="text" name="bank_account" value="<?= htmlspecialchars(mask_sensitive_value($vendor['bank_account'] ?? '')) ?>"
+              class="w-full px-3.5 py-2.5 bg-stone-50 border border-gray-200 rounded-xl text-xs focus:bg-white focus:outline-none focus:border-amber-500 transition" autocomplete="off">
           </div>
 
           <div>
             <label class="block text-xs font-bold text-gray-700 mb-1">IFSC कोड</label>
-            <input type="text" name="bank_ifsc" value="<?= htmlspecialchars($vendor['bank_ifsc'] ?? '') ?>"
-              class="w-full px-3.5 py-2.5 bg-stone-50 border border-gray-200 rounded-xl text-xs focus:bg-white focus:outline-none focus:border-amber-500 transition">
+            <input type="text" name="bank_ifsc" value="<?= htmlspecialchars(mask_sensitive_value($vendor['bank_ifsc'] ?? '')) ?>"
+              class="w-full px-3.5 py-2.5 bg-stone-50 border border-gray-200 rounded-xl text-xs focus:bg-white focus:outline-none focus:border-amber-500 transition" autocomplete="off">
           </div>
 
           <div>
             <label class="block text-xs font-bold text-gray-700 mb-1">UPI ID (त्वरित सेटलमेंट)</label>
-            <input type="text" name="upi_id" value="<?= htmlspecialchars($vendor['upi_id'] ?? '') ?>"
-              class="w-full px-3.5 py-2.5 bg-stone-50 border border-gray-200 rounded-xl text-xs focus:bg-white focus:outline-none focus:border-amber-500 transition">
+            <input type="text" name="upi_id" value="<?= htmlspecialchars(mask_sensitive_value($vendor['upi_id'] ?? '')) ?>"
+              class="w-full px-3.5 py-2.5 bg-stone-50 border border-gray-200 rounded-xl text-xs focus:bg-white focus:outline-none focus:border-amber-500 transition" autocomplete="off">
           </div>
         </div>
       </div>
@@ -279,6 +305,7 @@ require_once __DIR__ . '/seller_header.php';
     </div>
 
     <form action="/seller/profile.php" method="POST" class="space-y-4">
+      <?= csrf_field() ?>
       <input type="hidden" name="change_seller_password" value="1">
 
       <div>

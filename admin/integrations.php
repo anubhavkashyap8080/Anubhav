@@ -33,13 +33,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['save_integrations']))
         'firebase_project_id',
         'firebase_fcm_server_key',
         'firebase_vapid_key',
-        // Payment Gateways
+        // Payment Gateways (Note: Secrets RAZORPAY_KEY_SECRET and PAYU_MERCHANT_SALT are managed via config/env, not stored in DB)
         'razorpay_enabled',
         'razorpay_key_id',
-        'razorpay_key_secret',
         'payu_enabled',
         'payu_merchant_key',
-        'payu_merchant_salt',
         'payu_mode',
         'cod_enabled'
     ];
@@ -67,7 +65,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['save_integrations']))
 // Handle Test Notification Trigger
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['test_notification'])) {
     if (verify_csrf($_POST['csrf_token'] ?? '')) {
-        $test_recipient = clean_input($_POST['test_recipient'] ?? 'admin@ganvgalihat.com');
+        $default_admin_mail = 'admin@' . (parse_url(SITE_URL, PHP_URL_HOST) ?: 'gaungalihat.womenvission.in');
+        $test_recipient = clean_input($_POST['test_recipient'] ?? $default_admin_mail);
         $nid = queue_notification($_SESSION['user_id'] ?? null, $test_recipient, 'email', 'GaunGaliHat Integration Test', 'यह एक परीक्षण सूचना है। आपकी नोटिफिकेशन प्रणाली पूर्ण रूप से कार्यरत है।');
         log_audit_action('test_notification_sent', 'integrations', 'notification', $nid, 'Test notification queued to ' . $test_recipient);
         $msg = "टेस्ट नोटिफिकेशन कतार (Queue ID #$nid) में सफलतापूर्वक जोड़ दिया गया!";
@@ -192,7 +191,7 @@ function mask_secret($secret) {
           <label class="text-xs font-bold uppercase tracking-wider text-gray-600 block mb-1.5">
             प्रॉपर्टी URL (Canonical Domain)
           </label>
-          <input type="text" name="gsc_property_url" value="<?= htmlspecialchars($settings_raw['gsc_property_url'] ?? $settings_raw['seo_canonical_url'] ?? 'https://ganvgalihat.com') ?>"
+          <input type="text" name="gsc_property_url" value="<?= htmlspecialchars($settings_raw['gsc_property_url'] ?? $settings_raw['seo_canonical_url'] ?? (defined('SITE_URL') ? SITE_URL : 'https://gaungalihat.womenvission.in')) ?>"
             class="w-full px-4 py-2.5 bg-stone-50 border border-gray-300 rounded-xl text-xs font-mono focus:bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500">
         </div>
       </div>
@@ -271,8 +270,9 @@ function mask_secret($secret) {
             <input type="text" name="razorpay_key_id" value="<?= htmlspecialchars($settings_raw['razorpay_key_id'] ?? '') ?>" class="w-full px-3 py-2 bg-white border border-stone-300 rounded-xl text-xs font-mono">
           </div>
           <div>
-            <label class="text-[10px] font-bold uppercase tracking-wider text-gray-500 block mb-1">Key Secret (Masked)</label>
-            <input type="text" name="razorpay_key_secret" value="<?= htmlspecialchars(mask_secret($settings_raw['razorpay_key_secret'] ?? '')) ?>" class="w-full px-3 py-2 bg-white border border-stone-300 rounded-xl text-xs font-mono">
+            <label class="text-[10px] font-bold uppercase tracking-wider text-gray-500 block mb-1">Key Secret (Masked, Config/Env)</label>
+            <input type="text" name="razorpay_key_secret" readonly value="<?= htmlspecialchars(mask_secret(defined('RAZORPAY_KEY_SECRET') ? RAZORPAY_KEY_SECRET : ($settings_raw['razorpay_key_secret'] ?? ''))) ?>" class="w-full px-3 py-2 bg-stone-100 border border-stone-300 rounded-xl text-xs font-mono text-gray-600 cursor-not-allowed">
+            <span class="text-[10px] text-gray-400 mt-0.5 block">पर्यावरण चर (config/env) से सुरक्षित पढ़ा गया</span>
           </div>
         </div>
 
@@ -289,8 +289,9 @@ function mask_secret($secret) {
             <input type="text" name="payu_merchant_key" value="<?= htmlspecialchars($settings_raw['payu_merchant_key'] ?? '') ?>" class="w-full px-3 py-2 bg-white border border-stone-300 rounded-xl text-xs font-mono">
           </div>
           <div>
-            <label class="text-[10px] font-bold uppercase tracking-wider text-gray-500 block mb-1">Merchant Salt (Masked)</label>
-            <input type="text" name="payu_merchant_salt" value="<?= htmlspecialchars(mask_secret($settings_raw['payu_merchant_salt'] ?? '')) ?>" class="w-full px-3 py-2 bg-white border border-stone-300 rounded-xl text-xs font-mono">
+            <label class="text-[10px] font-bold uppercase tracking-wider text-gray-500 block mb-1">Merchant Salt (Masked, Config/Env)</label>
+            <input type="text" name="payu_merchant_salt" readonly value="<?= htmlspecialchars(mask_secret(defined('PAYU_MERCHANT_SALT') ? PAYU_MERCHANT_SALT : ($settings_raw['payu_merchant_salt'] ?? ''))) ?>" class="w-full px-3 py-2 bg-stone-100 border border-stone-300 rounded-xl text-xs font-mono text-gray-600 cursor-not-allowed">
+            <span class="text-[10px] text-gray-400 mt-0.5 block">पर्यावरण चर (config/env) से सुरक्षित पढ़ा गया</span>
           </div>
         </div>
       </div>

@@ -79,6 +79,7 @@ require_once __DIR__ . '/admin_header.php';
 </div>
 
 <form action="/admin/site_customizer.php" method="POST" class="space-y-6">
+  <?= csrf_field() ?>
   <input type="hidden" name="save_customizer" value="1">
 
   <!-- 1. Header & Top Announcement Ticker -->
@@ -112,8 +113,9 @@ require_once __DIR__ . '/admin_header.php';
         </div>
         <div>
           <label class="block text-xs font-bold text-gray-700 mb-1">आधिकारिक ईमेल</label>
+          <?php $site_custom_host = parse_url(defined('SITE_URL') ? SITE_URL : '', PHP_URL_HOST) ?: 'gaungalihat.womenvission.in'; ?>
           <input type="email" name="contact_email"
-            value="<?= htmlspecialchars(get_cfg_val('contact_email', 'namaste@ganvgalihat.com')) ?>"
+            value="<?= htmlspecialchars(get_cfg_val('contact_email', 'namaste@' . $site_custom_host)) ?>"
             class="w-full px-3.5 py-2.5 bg-stone-50 border border-gray-200 rounded-xl text-xs focus:bg-white focus:outline-none focus:border-indigo-600 transition">
         </div>
       </div>

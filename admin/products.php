@@ -7,20 +7,30 @@ $cat_filter = clean_input($_GET['category'] ?? '');
 $vendor_filter = intval($_GET['vendor'] ?? 0);
 $q = clean_input($_GET['q'] ?? '');
 
-// Toggle Featured
-if (isset($_GET['toggle_featured'])) {
-    $pid = intval($_GET['toggle_featured']);
+// Toggle Featured (Strictly POST + CSRF)
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['action'] === 'toggle_featured') {
+    $pid = intval($_POST['product_id'] ?? 0);
     $pdo->prepare("UPDATE products SET is_featured = NOT is_featured WHERE id = ?")->execute([$pid]);
+    log_audit_action('product_toggle_featured', 'products', 'product', $pid, 'Toggled featured flag');
     set_flash('success', 'उत्पाद फ़ीचर्ड स्थिति बदली गई।');
     header('Location: /admin/products.php');
     exit;
 }
 
-// Delete Product
-if (isset($_GET['delete_id'])) {
-    $del_id = intval($_GET['delete_id']);
+// Delete Product (Strictly POST + CSRF)
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['action'] === 'delete_product') {
+    $del_id = intval($_POST['delete_id'] ?? 0);
     $pdo->prepare("DELETE FROM products WHERE id = ?")->execute([$del_id]);
+    log_audit_action('product_delete', 'products', 'product', $del_id, 'Product deleted by admin');
     set_flash('success', 'उत्पाद सफलतापूर्वक कैटलॉग से हटाया गया।');
+    header('Location: /admin/products.php');
+    exit;
+}
+
+// Reject Insecure GET Mutating Requests
+if (isset($_GET['delete_id']) || isset($_GET['toggle_featured'])) {
+    http_response_code(405);
+    set_flash('error', 'अमान्य अनुरोध विधि (GET अस्वीकृत)। कृपया फ़ॉर्म या बटन का उपयोग करें।');
     header('Location: /admin/products.php');
     exit;
 }
@@ -221,11 +231,16 @@ require_once __DIR__ . '/admin_header.php';
             </td>
 
             <td class="px-4 py-3">
-              <a href="/admin/products.php?toggle_featured=<?= $p['id'] ?>"
-                class="p-1 rounded text-base transition <?= $p['is_featured'] ? 'text-amber-500 hover:text-amber-600' : 'text-gray-300 hover:text-gray-400' ?>"
-                title="फ़ीचर्ड स्थिति बदलें">
-                <i class="fa-solid fa-star"></i>
-              </a>
+              <form action="/admin/products.php" method="POST" class="inline">
+                <?= csrf_field() ?>
+                <input type="hidden" name="action" value="toggle_featured">
+                <input type="hidden" name="product_id" value="<?= $p['id'] ?>">
+                <button type="submit"
+                  class="p-1 rounded text-base transition cursor-pointer <?= $p['is_featured'] ? 'text-amber-500 hover:text-amber-600' : 'text-gray-300 hover:text-gray-400' ?>"
+                  title="फ़ीचर्ड स्थिति बदलें">
+                  <i class="fa-solid fa-star"></i>
+                </button>
+              </form>
             </td>
 
             <td class="px-4 py-3 text-right space-x-1 whitespace-nowrap">
@@ -251,10 +266,14 @@ require_once __DIR__ . '/admin_header.php';
               <a href="/product.php?id=<?= $p['id'] ?>" target="_blank" class="p-1.5 text-gray-400 hover:text-gray-700 rounded hover:bg-stone-100 transition" title="देखें">
                 <i class="fa-solid fa-arrow-up-right-from-square"></i>
               </a>
-              <a href="/admin/products.php?delete_id=<?= $p['id'] ?>" onclick="return confirm('क्या आप इस उत्पाद को हटाना चाहते हैं?')"
-                class="p-1.5 text-gray-400 hover:text-red-600 rounded hover:bg-red-50 transition" title="हटाएं">
-                <i class="fa-regular fa-trash-can"></i>
-              </a>
+              <form action="/admin/products.php" method="POST" class="inline" onsubmit="return confirm('क्या आप इस उत्पाद को हटाना चाहते हैं?');">
+                <?= csrf_field() ?>
+                <input type="hidden" name="action" value="delete_product">
+                <input type="hidden" name="delete_id" value="<?= $p['id'] ?>">
+                <button type="submit" class="p-1.5 text-gray-400 hover:text-red-600 rounded hover:bg-red-50 transition cursor-pointer" title="हटाएं">
+                  <i class="fa-regular fa-trash-can"></i>
+                </button>
+              </form>
             </td>
           </tr>
         <?php endforeach; ?>
@@ -277,6 +296,7 @@ require_once __DIR__ . '/admin_header.php';
     </div>
 
     <form action="/admin/import_products.php" method="POST" enctype="multipart/form-data" class="space-y-4">
+      <?= csrf_field() ?>
       <div>
         <label class="block text-xs font-bold text-gray-700 mb-1">CSV फ़ाइल चुनें (.csv) <span class="text-red-500">*</span></label>
         <input type="file" name="csv_file" accept=".csv" required
@@ -315,6 +335,7 @@ require_once __DIR__ . '/admin_header.php';
     </div>
 
     <form action="/admin/products.php" method="POST" class="space-y-4">
+      <?= csrf_field() ?>
       <input type="hidden" name="edit_product" value="1">
       <input type="hidden" name="edit_product_id" id="edit_pid" value="">
 

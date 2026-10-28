@@ -32,14 +32,23 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['reply_ticket'])) {
     }
 }
 
-// Handle Status Change via Quick GET
-if (isset($_GET['set_status']) && isset($_GET['ticket_id'])) {
-    $tid = intval($_GET['ticket_id']);
-    $st = clean_input($_GET['set_status']);
-    if (in_array($st, ['Open', 'In Progress', 'Resolved', 'Closed'])) {
+// Handle Status Change via Quick POST + CSRF
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['action'] === 'set_ticket_status') {
+    $tid = intval($_POST['ticket_id'] ?? 0);
+    $st = clean_input($_POST['status'] ?? '');
+    if (in_array($st, ['Open', 'In Progress', 'Resolved', 'Closed'], true)) {
         $pdo->prepare("UPDATE tickets SET status = ? WHERE id = ?")->execute([$st, $tid]);
+        log_audit_action('ticket_set_status', 'tickets', 'ticket', $tid, "Ticket status set to {$st}");
         set_flash('success', 'टिकट स्थिति अपडेट की गई: ' . $st);
     }
+    header('Location: /admin/tickets.php');
+    exit;
+}
+
+// Reject Insecure GET Mutating Requests
+if (isset($_GET['set_status'])) {
+    http_response_code(405);
+    set_flash('error', 'अमान्य अनुरोध विधि (GET अस्वीकृत)। कृपया फ़ॉर्म या बटन का उपयोग करें।');
     header('Location: /admin/tickets.php');
     exit;
 }
@@ -220,6 +229,7 @@ require_once __DIR__ . '/admin_header.php';
 
       <!-- Reply Box -->
       <form action="/admin/tickets.php" method="POST" class="space-y-4 pt-4 border-t border-gray-100">
+        <?= csrf_field() ?>
         <input type="hidden" name="reply_ticket" value="1">
         <input type="hidden" name="ticket_id" value="<?= $active_ticket['id'] ?>">
 

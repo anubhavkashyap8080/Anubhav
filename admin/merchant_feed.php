@@ -62,6 +62,7 @@ foreach ($feed_products as $p) {
     <!-- Actions -->
     <div class="flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
       <form method="POST" class="inline">
+        <?= csrf_field() ?>
         <input type="hidden" name="regenerate_feed" value="1">
         <button type="submit" class="w-full sm:w-auto px-5 py-3 rounded-2xl bg-amber-400 hover:bg-amber-500 text-stone-950 font-black text-xs uppercase tracking-wider transition shadow-lg flex items-center justify-center gap-2">
           <i class="fa-solid fa-rotate text-sm"></i>

@@ -120,6 +120,7 @@ require_once __DIR__ . '/admin_header.php';
 </div>
 
 <form action="/admin/site_settings.php" method="POST" enctype="multipart/form-data" class="space-y-8">
+  <?= csrf_field() ?>
   <input type="hidden" name="save_settings" value="1">
 
   <!-- Logo & Festive GIF Branding Settings Section -->
@@ -487,7 +488,8 @@ require_once __DIR__ . '/admin_header.php';
 
       <div>
         <label class="block text-xs font-bold text-gray-700 mb-1">आधिकारिक ईमेल</label>
-        <input type="email" name="contact_email" value="<?= htmlspecialchars(get_setting_val('contact_email', 'namaste@ganvgalihat.com')) ?>"
+        <?php $settings_site_host = parse_url(defined('SITE_URL') ? SITE_URL : '', PHP_URL_HOST) ?: 'gaungalihat.womenvission.in'; ?>
+        <input type="email" name="contact_email" value="<?= htmlspecialchars(get_setting_val('contact_email', 'namaste@' . $settings_site_host)) ?>"
           class="w-full px-3.5 py-2.5 bg-stone-50 border border-gray-200 rounded-xl text-xs font-bold">
       </div>
 

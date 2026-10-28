@@ -68,7 +68,9 @@ if (empty($posted_hash) || !hash_equals($calculated_hash, $posted_hash)) {
     log_audit_action(
         'payu_hash_verification_failed',
         'orders',
-        "PayU SHA-512 hash mismatch for txnid {$txnid}. Posted: {$posted_hash}, Calculated: {$calculated_hash}"
+        'order',
+        null,
+        "PayU SHA-512 cryptographic hash mismatch for txnid {$txnid}"
     );
     set_flash('error', 'PayU सुरक्षा हैश सत्यापन विफल रहा। लेन-देन अस्वीकृत।');
     header('Location: /checkout.php');
@@ -137,9 +139,16 @@ try {
                 payment_txn_id = ?,
                 order_access_token = ?,
                 updated_at = CURRENT_TIMESTAMP
-            WHERE id = ?
+            WHERE id = ? AND payment_status != 'completed'
         ");
         $update->execute([$payu_money_id, $access_token, $order_id]);
+
+        if ($update->rowCount() === 0) {
+            log_audit_action('payu_replay_blocked', 'orders', 'order', $order_id, 'Duplicate replay attempt prevented on completed order');
+            set_flash('info', 'यह ऑर्डर पहले ही अपडेट हो चुका है।');
+            header('Location: /order-success.php?id=' . $order_id . '&token=' . urlencode($access_token));
+            exit;
+        }
 
         clear_cart();
         unset($_SESSION['pending_payment_order_id']);

@@ -28,22 +28,9 @@ $flash = get_flash();
   <link rel="icon" type="image/png" sizes="32x32" href="/favicon.png">
   <link rel="apple-touch-icon" href="/apple-touch-icon.png">
   
-  <script src="https://cdn.tailwindcss.com"></script>
-  <script>
-    tailwind.config = {
-      theme: {
-        extend: {
-          colors: {
-            'brand-green': '#1b4332',
-            'brand-dark': '#081c15',
-            'admin-indigo': '#4338ca',
-          }
-        }
-      }
-    }
-  </script>
+  <link rel="stylesheet" href="/assets/css/tailwind.css">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
-  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script src="/assets/vendor/chart.umd.min.js"></script>
   <link rel="stylesheet" href="/assets/css/style.css">
   <meta name="csrf-token" content="<?= htmlspecialchars(csrf_token(), ENT_QUOTES, 'UTF-8') ?>">
 </head>
@@ -82,15 +69,19 @@ $flash = get_flash();
 
           <div class="flex items-center gap-2 sm:gap-3 pl-2 sm:pl-3 border-l border-indigo-900">
             <div class="w-8 h-8 rounded-full overflow-hidden bg-indigo-800 text-amber-300 font-bold flex items-center justify-center text-xs border border-indigo-700">
+              <?php 
+                $admin_display_name = !empty($admin_user['name']) ? (string)$admin_user['name'] : 'Admin';
+                $admin_display_role = !empty($admin_user['role']) ? (string)$admin_user['role'] : 'admin';
+              ?>
               <?php if (!empty($admin_user['avatar'])): ?>
-                <img src="<?= htmlspecialchars($admin_user['avatar']) ?>" alt="Admin" class="w-full h-full object-cover">
+                <img src="<?= htmlspecialchars((string)$admin_user['avatar']) ?>" alt="Admin" class="w-full h-full object-cover">
               <?php else: ?>
-                <?= strtoupper(mb_substr($admin_user['name'], 0, 1)) ?>
+                <?= strtoupper(mb_substr($admin_display_name, 0, 1)) ?>
               <?php endif; ?>
             </div>
             <div class="text-right hidden sm:block">
-              <div class="text-xs font-bold text-white"><?= htmlspecialchars($admin_user['name']) ?></div>
-              <div class="text-[10px] text-amber-300 uppercase font-semibold"><?= htmlspecialchars($admin_user['role']) ?></div>
+              <div class="text-xs font-bold text-white"><?= htmlspecialchars($admin_display_name) ?></div>
+              <div class="text-[10px] text-amber-300 uppercase font-semibold"><?= htmlspecialchars($admin_display_role) ?></div>
             </div>
 
             <a href="/logout.php" class="p-2 text-indigo-300 hover:text-red-400 rounded-lg hover:bg-indigo-900 transition" title="Sign Out (लॉगआउट)">

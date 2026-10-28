@@ -26,12 +26,6 @@ echo "# GaunGaliHat Robots.txt\n";
 echo "# User-Agent Directives for Web Crawlers and Search Engines\n\n";
 
 echo "User-agent: *\n";
-echo "Disallow: /admin/\n";
-echo "Disallow: /seller/\n";
-echo "Disallow: /ajax/\n";
-echo "Disallow: /data/\n";
-echo "Disallow: /database/\n";
-echo "Disallow: /includes/\n";
 echo "Disallow: /cart.php\n";
 echo "Disallow: /checkout.php\n";
 echo "Disallow: /account.php\n";
@@ -45,7 +39,6 @@ echo "Allow: /product.php\n";
 echo "Allow: /blogs.php\n";
 echo "Allow: /blog-detail.php\n";
 echo "Allow: /about.php\n";
-echo "Allow: /contact.php\n";
-echo "Allow: /uploads/\n\n";
+echo "Allow: /contact.php\n\n";
 
 echo "Sitemap: {$base_url}/sitemap.xml\n";

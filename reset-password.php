@@ -61,8 +61,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $is_token_valid) {
 
                 $new_hash = password_hash($new_pass, PASSWORD_BCRYPT);
 
-                // Update user password and clear forced change flag
-                $upd_user = $pdo->prepare("UPDATE users SET password = ?, force_password_change = 0 WHERE id = ?");
+                // Update user password, clear forced change flag, and invalidate all other sessions (Item 10)
+                $upd_user = $pdo->prepare("UPDATE users SET password = ?, force_password_change = 0, password_changed_at = CURRENT_TIMESTAMP WHERE id = ?");
                 $upd_user->execute([$new_hash, $reset_record['user_id']]);
 
                 // Invalidate this token and all other tokens for this user

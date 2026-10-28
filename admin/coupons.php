@@ -44,24 +44,34 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['add_coupon'])) {
     }
 }
 
-// Handle Toggle Status (Active / Inactive)
-if (isset($_GET['toggle_status'])) {
-    $id = intval($_GET['toggle_status']);
+// Handle Toggle Status (Active / Inactive) (Strictly POST + CSRF)
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['action'] === 'toggle_status') {
+    $id = intval($_POST['coupon_id'] ?? 0);
     $stmt_cur = $pdo->prepare("SELECT status FROM coupons WHERE id = ?");
     $stmt_cur->execute([$id]);
     $cur = $stmt_cur->fetchColumn();
     $new = ($cur === 'active') ? 'inactive' : 'active';
     $pdo->prepare("UPDATE coupons SET status = ? WHERE id = ?")->execute([$new, $id]);
+    log_audit_action('coupon_toggle_status', 'coupons', 'coupon', $id, "Status changed to {$new}");
     set_flash('success', 'कूपन स्थिति अपडेट की गई: ' . $new);
     header('Location: /admin/coupons.php');
     exit;
 }
 
-// Handle Delete Coupon
-if (isset($_GET['delete_id'])) {
-    $id = intval($_GET['delete_id']);
+// Handle Delete Coupon (Strictly POST + CSRF)
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['action'] === 'delete_coupon') {
+    $id = intval($_POST['delete_id'] ?? 0);
     $pdo->prepare("DELETE FROM coupons WHERE id = ?")->execute([$id]);
+    log_audit_action('coupon_delete', 'coupons', 'coupon', $id, 'Coupon deleted');
     set_flash('success', 'कूपन सफलतापूर्वक हटा दिया गया।');
+    header('Location: /admin/coupons.php');
+    exit;
+}
+
+// Reject Insecure GET Mutating Requests
+if (isset($_GET['delete_id']) || isset($_GET['toggle_status'])) {
+    http_response_code(405);
+    set_flash('error', 'अमान्य अनुरोध विधि (GET अस्वीकृत)। कृपया फ़ॉर्म या बटन का उपयोग करें।');
     header('Location: /admin/coupons.php');
     exit;
 }
@@ -218,18 +228,27 @@ require_once __DIR__ . '/admin_header.php';
               </td>
 
               <td class="px-4 py-3.5">
-                <a href="/admin/coupons.php?toggle_status=<?= $c['id'] ?>"
-                  class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-bold <?= $c['status'] === 'active' ? 'bg-emerald-100 text-emerald-800' : 'bg-stone-200 text-stone-600' ?>">
-                  <span class="w-1.5 h-1.5 rounded-full <?= $c['status'] === 'active' ? 'bg-emerald-600' : 'bg-stone-500' ?>"></span>
-                  <?= ucfirst($c['status']) ?>
-                </a>
+                <form action="/admin/coupons.php" method="POST" class="inline">
+                  <?= csrf_field() ?>
+                  <input type="hidden" name="action" value="toggle_status">
+                  <input type="hidden" name="coupon_id" value="<?= $c['id'] ?>">
+                  <button type="submit"
+                    class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-bold cursor-pointer <?= $c['status'] === 'active' ? 'bg-emerald-100 text-emerald-800' : 'bg-stone-200 text-stone-600' ?>">
+                    <span class="w-1.5 h-1.5 rounded-full <?= $c['status'] === 'active' ? 'bg-emerald-600' : 'bg-stone-500' ?>"></span>
+                    <?= ucfirst($c['status']) ?>
+                  </button>
+                </form>
               </td>
 
               <td class="px-4 py-3.5 text-right whitespace-nowrap">
-                <a href="/admin/coupons.php?delete_id=<?= $c['id'] ?>" onclick="return confirm('क्या आप वाकई इस कूपन को हटाना चाहते हैं?')"
-                  class="p-1.5 text-gray-400 hover:text-red-600 rounded hover:bg-red-50 transition" title="डिलीट करें">
-                  <i class="fa-regular fa-trash-can"></i>
-                </a>
+                <form action="/admin/coupons.php" method="POST" class="inline" onsubmit="return confirm('क्या आप वाकई इस कूपन को हटाना चाहते हैं?');">
+                  <?= csrf_field() ?>
+                  <input type="hidden" name="action" value="delete_coupon">
+                  <input type="hidden" name="delete_id" value="<?= $c['id'] ?>">
+                  <button type="submit" class="p-1.5 text-gray-400 hover:text-red-600 rounded hover:bg-red-50 transition cursor-pointer" title="डिलीट करें">
+                    <i class="fa-regular fa-trash-can"></i>
+                  </button>
+                </form>
               </td>
             </tr>
           <?php endforeach; ?>
@@ -299,6 +318,7 @@ require_once __DIR__ . '/admin_header.php';
     </div>
 
     <form action="/admin/coupons.php" method="POST" class="space-y-4">
+      <?= csrf_field() ?>
       <input type="hidden" name="add_coupon" value="1">
 
       <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">

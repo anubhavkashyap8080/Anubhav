@@ -6,8 +6,8 @@ require_admin();
 // Handle Save Social Auth Settings
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['save_social_settings'])) {
     $keys = [
-        'google_auth_enabled', 'google_client_id', 'google_client_secret',
-        'facebook_auth_enabled', 'facebook_app_id', 'facebook_app_secret',
+        'google_auth_enabled', 'google_client_id',
+        'facebook_auth_enabled', 'facebook_app_id',
         'social_auto_register'
     ];
 
@@ -73,6 +73,7 @@ require_once __DIR__ . '/admin_header.php';
 </div>
 
 <form action="/admin/social_auth.php" method="POST" class="space-y-8">
+  <?= csrf_field() ?>
   <input type="hidden" name="save_social_settings" value="1">
 
   <!-- 1. Google OAuth Settings Card -->
@@ -99,17 +100,17 @@ require_once __DIR__ . '/admin_header.php';
       <div>
         <label class="block text-xs font-bold text-gray-700 mb-1">Google Client ID <span class="text-red-500">*</span></label>
         <input type="text" name="google_client_id" required
-          value="<?= htmlspecialchars(get_soc_val('google_client_id', '9876543210-gghruralartisanapps.apps.googleusercontent.com')) ?>"
+          value="<?= htmlspecialchars(defined('GOOGLE_CLIENT_ID') && GOOGLE_CLIENT_ID !== '' ? GOOGLE_CLIENT_ID : get_soc_val('google_client_id', '')) ?>"
           class="w-full px-3.5 py-2.5 bg-stone-50 border border-gray-200 rounded-xl text-xs font-mono focus:bg-white focus:outline-none focus:border-red-500">
         <p class="text-[11px] text-gray-400 mt-1">Google Cloud Console से प्राप्त OAuth Client ID</p>
       </div>
 
       <div>
-        <label class="block text-xs font-bold text-gray-700 mb-1">Google Client Secret</label>
-        <input type="password" name="google_client_secret"
-          value="<?= htmlspecialchars(get_soc_val('google_client_secret', 'GOCSPX-SampleLiveSecretClientKey99')) ?>"
-          class="w-full px-3.5 py-2.5 bg-stone-50 border border-gray-200 rounded-xl text-xs font-mono focus:bg-white focus:outline-none focus:border-red-500">
-        <p class="text-[11px] text-gray-400 mt-1">गुप्त कुंजी (Server side verification हेतु सुरक्षित रखी जाती है)</p>
+        <label class="block text-xs font-bold text-gray-700 mb-1">Google Client Secret (Masked, Config/Env)</label>
+        <input type="text" name="google_client_secret" readonly
+          value="<?= htmlspecialchars(mask_secret(defined('GOOGLE_CLIENT_SECRET') ? GOOGLE_CLIENT_SECRET : '')) ?>"
+          class="w-full px-3.5 py-2.5 bg-stone-100 border border-gray-200 rounded-xl text-xs font-mono text-gray-600 cursor-not-allowed">
+        <p class="text-[11px] text-gray-400 mt-1">पर्यावरण चर (config/env) से सुरक्षित पढ़ा गया; डेटाबेस में संग्रहीत नहीं</p>
       </div>
     </div>
 

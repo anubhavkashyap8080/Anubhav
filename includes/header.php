@@ -61,20 +61,20 @@ if (empty($page_keywords)) {
     $page_keywords = $site_seo_keywords;
 }
 
-$canonical_base = get_site_setting('seo_canonical_url', 'https://ganvgalihat.com');
+$canonical_base = get_site_setting('seo_canonical_url', defined('SITE_URL') ? SITE_URL : 'https://gaungalihat.womenvission.in');
 $current_canonical_url = rtrim($canonical_base, '/') . ($_SERVER['REQUEST_URI'] ?? '/');
 if (empty($og_image)) {
     $og_image = get_site_setting('seo_og_image', 'https://images.unsplash.com/photo-1504148455328-c376907d081c?w=1200');
 }
-$twitter_handle = get_site_setting('seo_twitter_handle', '@ganvgalihat');
+$twitter_handle = get_site_setting('seo_twitter_handle', '@GaunGaliHat');
 $gsc_tag = get_site_setting('seo_google_console', '');
 $ga4_id = get_site_setting('ga4_measurement_id', get_site_setting('seo_google_analytics', ''));
 
-// Brand Logo Sizing & Occasion GIF Logo Settings
+// Brand Logo Sizing & Occasion GIF Logo Settings (clamped safely)
 $logo_height_mobile = (int)get_setting('logo_height_mobile', 38);
 $logo_height_desktop = (int)get_setting('logo_height_desktop', 48);
-if ($logo_height_mobile < 24 || $logo_height_mobile > 64) $logo_height_mobile = 38;
-if ($logo_height_desktop < 30 || $logo_height_desktop > 80) $logo_height_desktop = 48;
+$logo_height_mobile = max(20, min(80, $logo_height_mobile));
+$logo_height_desktop = max(24, min(120, $logo_height_desktop));
 
 $use_gif_logo = (get_setting('use_gif_logo', '0') === '1');
 $logo_gif_url = get_setting('logo_gif_url', '');
@@ -96,12 +96,18 @@ $active_site_logo = ($use_gif_logo && !empty($logo_gif_url)) ? $logo_gif_url : $
   <link rel="icon" type="image/png" sizes="32x32" href="/favicon.png">
   <link rel="apple-touch-icon" href="/apple-touch-icon.png">
 
-  <?php if (!empty($gsc_tag)): ?>
-    <?php if (strpos((string)$gsc_tag, '<meta') === 0): ?>
-      <?= $gsc_tag ?>
-    <?php else: ?>
-      <meta name="google-site-verification" content="<?= htmlspecialchars(str_replace('google-site-verification=', '', $gsc_tag)) ?>">
-    <?php endif; ?>
+  <?php 
+    $gsc_token = '';
+    if (!empty($gsc_tag)) {
+        if (preg_match('/content=[\'"]([A-Za-z0-9_\-]{20,100})[\'"]/i', (string)$gsc_tag, $m)) {
+            $gsc_token = $m[1];
+        } elseif (preg_match('/^[A-Za-z0-9_\-]{20,100}$/', trim((string)$gsc_tag))) {
+            $gsc_token = trim((string)$gsc_tag);
+        }
+    }
+  ?>
+  <?php if (!empty($gsc_token)): ?>
+    <meta name="google-site-verification" content="<?= htmlspecialchars($gsc_token, ENT_QUOTES, 'UTF-8') ?>">
   <?php endif; ?>
 
   <!-- Open Graph / Social Cards -->
@@ -169,38 +175,15 @@ $active_site_logo = ($use_gif_logo && !empty($logo_gif_url)) ? $logo_gif_url : $
     </script>
   <?php endif; ?>
   
-  <!-- Tailwind CSS CDN -->
-  <script src="https://cdn.tailwindcss.com"></script>
-  <script>
-    tailwind.config = {
-      theme: {
-        extend: {
-          colors: {
-            brand: {
-              green: '#1b4332',
-              'green-dark': '#0f291e',
-              'green-50': '#e8f5e9',
-              orange: '#d97706',
-              'orange-dark': '#b45309',
-              sand: '#fdfbf7',
-              cream: '#fefae0',
-            }
-          },
-          fontFamily: {
-            sans: ['Inter', 'system-ui', 'sans-serif'],
-            display: ['Outfit', 'sans-serif'],
-          }
-        }
-      }
-    }
-  </script>
+  <!-- Static Compiled Tailwind CSS (Item 7 Hardening) -->
+  <link rel="stylesheet" href="/assets/css/tailwind.css">
 
-  <!-- Google Fonts & Lucide Icons -->
+  <!-- Google Fonts & Self-Hosted Pin-Versioned Icons & Libraries -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Outfit:wght@500;600;700;800&family=Yatra+One&display=swap" rel="stylesheet">
-  <script src="https://unpkg.com/lucide@latest"></script>
-  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script src="/assets/vendor/lucide.min.js"></script>
+  <script src="/assets/vendor/chart.umd.min.js"></script>
 
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
   <link rel="stylesheet" href="/assets/css/style.css">

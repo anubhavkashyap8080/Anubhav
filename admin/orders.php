@@ -12,6 +12,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['update_admin_order'])
     $new_status = clean_input($_POST['order_status']);
     $new_awb = clean_input($_POST['tracking_consignment_no']);
     $pdo->prepare("UPDATE orders SET order_status = ?, tracking_consignment_no = ? WHERE id = ?")->execute([$new_status, $new_awb, $oid]);
+    log_audit_action('admin_order_update', 'orders', 'order', $oid, "Status updated to {$new_status}, AWB: {$new_awb}");
     set_flash('success', 'आर्डर स्थिति एवं इंडिया पोस्ट कंसाइनमेंट नंबर अपडेट किया गया!');
     header('Location: /admin/orders.php');
     exit;
@@ -155,6 +156,7 @@ require_once __DIR__ . '/admin_header.php';
     </div>
 
     <form action="/admin/orders.php" method="POST" class="space-y-4">
+      <?= csrf_field() ?>
       <input type="hidden" name="update_admin_order" value="1">
       <input type="hidden" name="order_id" id="modal_order_id">
 

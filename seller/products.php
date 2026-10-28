@@ -11,6 +11,12 @@ if (!$vendor) {
 }
 $vendor_id = $vendor['id'];
 
+// Item 3: Reject GET for state-changing product actions
+if (isset($_GET['action']) && in_array($_GET['action'], ['toggle_stock', 'delete_product', 'delete'], true) || isset($_GET['delete_id']) || isset($_GET['toggle_id'])) {
+    http_response_code(405);
+    die("Method Not Allowed. State-changing actions require POST with CSRF token.");
+}
+
 $action = clean_input($_GET['action'] ?? 'list');
 $selected_category = clean_input($_GET['category'] ?? '');
 $search_query = clean_input($_GET['q'] ?? '');
@@ -130,35 +136,68 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['edit_product'])) {
     }
 }
 
-// Handle Bulk CSV Import
+// Handle Bulk CSV Import (Item 11: 1MB size limit, 500 rows bound, numeric checks & formula neutralization)
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['bulk_import_csv'])) {
     csrf_protect();
     if (!isset($_FILES['csv_file']) || $_FILES['csv_file']['error'] !== UPLOAD_ERR_OK) {
         set_flash('error', 'कृपया एक मान्य CSV फ़ाइल अपलोड करें।');
+    } elseif ($_FILES['csv_file']['size'] > 1024 * 1024) {
+        set_flash('error', 'CSV फ़ाइल का आकार 1MB से कम होना चाहिए।');
     } else {
         $file_path = $_FILES['csv_file']['tmp_name'];
+        $ext = strtolower(pathinfo($_FILES['csv_file']['name'], PATHINFO_EXTENSION));
+        if ($ext !== 'csv') {
+            set_flash('error', 'कृपया केवल CSV (.csv) फ़ाइल चुनें।');
+            header('Location: /seller/products.php');
+            exit;
+        }
+
         $handle = fopen($file_path, 'r');
         if ($handle !== false) {
+            // Skip UTF-8 BOM if present
+            $bom = fread($handle, 3);
+            if ($bom !== "\xEF\xBB\xBF") {
+                rewind($handle);
+            }
+
             $imported_count = 0;
             $row_idx = 0;
-            while (($data = fgetcsv($handle, 2000, ',')) !== false) {
+            $max_rows = 500;
+            $valid_cat_ids = array_column($categories, 'id');
+
+            while (($data = fgetcsv($handle, 4096, ',')) !== false) {
+                if (empty($data) || count($data) < 3) continue;
                 $row_idx++;
                 if ($row_idx === 1) continue; // Skip header
-                if (empty($data[0])) continue;
+                if ($row_idx > $max_rows + 1) break; // Max 500 rows limit
 
-                $p_name = trim($data[0]);
-                $p_hindi = trim($data[1] ?? '');
-                $p_cat_id = intval($data[2] ?? 1);
-                $p_price = max(0, floatval($data[3] ?? 0));
-                $p_orig_price = max($p_price, floatval($data[4] ?? $p_price));
-                $p_weight = max(0.01, floatval($data[5] ?? 0.5));
-                $p_stock = max(0, intval($data[6] ?? 50));
-                $p_unit = trim($data[7] ?? 'piece');
+                $raw_name = trim($data[0] ?? '');
+                if (empty($raw_name)) continue;
+
+                $raw_p = trim($data[3] ?? '');
+                if (!is_numeric($raw_p) || floatval($raw_p) <= 0) continue;
+                $p_price = floatval($raw_p);
+
+                $raw_op = trim($data[4] ?? '');
+                $p_orig_price = (is_numeric($raw_op) && floatval($raw_op) >= $p_price) ? floatval($raw_op) : $p_price;
+
+                $raw_w = trim($data[5] ?? '');
+                $p_weight = (is_numeric($raw_w) && floatval($raw_w) > 0) ? floatval($raw_w) : 0.5;
+
+                $raw_s = trim($data[6] ?? '');
+                $p_stock = (is_numeric($raw_s) && intval($raw_s) >= 0) ? intval($raw_s) : 50;
+
+                // Neutralize formula injection
+                $p_name = neutralize_csv_formula(clean_input($raw_name));
+                $p_hindi = neutralize_csv_formula(clean_input($data[1] ?? ''));
+                $p_unit = neutralize_csv_formula(clean_input($data[7] ?? 'piece'));
                 $raw_img = trim($data[8] ?? '');
                 $p_img = is_valid_product_image_url($raw_img) ? $raw_img : 'https://images.unsplash.com/photo-1544717305-2782549b5136?auto=format&fit=crop&w=600&q=80';
-                $p_desc = trim($data[9] ?? '');
+                $p_desc = neutralize_csv_formula(clean_input($data[9] ?? ''));
 
-                if ($p_price <= 0 || empty($p_name)) continue;
+                // Whitelist category ID
+                $in_cid = intval($data[2] ?? 1);
+                $p_cat_id = in_array($in_cid, $valid_cat_ids) ? $in_cid : ($valid_cat_ids[0] ?? 1);
 
                 $p_disc = ($p_orig_price > $p_price) ? min(100, max(0, round((($p_orig_price - $p_price) / $p_orig_price) * 100))) : 0;
                 $p_code = 'GGH-' . strtoupper(substr(preg_replace('/[^a-zA-Z]/', '', $p_name) . 'CSV', 0, 3)) . '-' . random_int(100, 999);
@@ -179,7 +218,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['bulk_import_csv'])) {
                 } catch (Exception $e) {}
             }
             fclose($handle);
-            log_audit_action('seller_bulk_import', 'products', "Vendor #{$vendor_id} imported {$imported_count} products via CSV");
+            log_audit_action('seller_bulk_import', 'products', 'import', null, "Vendor #{$vendor_id} imported {$imported_count} products via CSV (parsed {$row_idx} rows)");
             set_flash('success', "सफलतापूर्वक {$imported_count} उत्पाद बल्क में कैटलॉग में जोड़े गए!");
             header('Location: /seller/products.php');
             exit;

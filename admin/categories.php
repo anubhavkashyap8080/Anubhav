@@ -18,6 +18,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['add_category'])) {
     try {
         $stmt = $pdo->prepare("INSERT INTO categories (name, hindi_name, slug, description, image, sort_order) VALUES (?, ?, ?, ?, ?, ?)");
         $stmt->execute([$name, $hindi_name, $slug, $description, $image, $sort_order]);
+        $new_cat_id = $pdo->lastInsertId();
+        log_audit_action('category_create', 'categories', 'category', $new_cat_id, "Created category: {$name}");
         set_flash('success', 'नई श्रेणी "' . htmlspecialchars($name) . '" सफलतापूर्वक जोड़ी गई!');
         header('Location: /admin/categories.php');
         exit;
@@ -26,11 +28,20 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['add_category'])) {
     }
 }
 
-// Handle Delete Category
-if (isset($_GET['delete_id'])) {
-    $del_id = intval($_GET['delete_id']);
+// Handle Delete Category (Strictly POST + CSRF)
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['action'] === 'delete_category') {
+    $del_id = intval($_POST['delete_id'] ?? 0);
     $pdo->prepare("DELETE FROM categories WHERE id = ?")->execute([$del_id]);
+    log_audit_action('category_delete', 'categories', 'category', $del_id, 'Category deleted');
     set_flash('success', 'श्रेणी हटा दी गई।');
+    header('Location: /admin/categories.php');
+    exit;
+}
+
+// Reject Insecure GET Mutating Requests
+if (isset($_GET['delete_id'])) {
+    http_response_code(405);
+    set_flash('error', 'अमान्य अनुरोध विधि (GET अस्वीकृत)। कृपया फ़ॉर्म या बटन का उपयोग करें।');
     header('Location: /admin/categories.php');
     exit;
 }
@@ -131,9 +142,14 @@ require_once __DIR__ . '/admin_header.php';
             <a href="/products.php?category=<?= htmlspecialchars($cat['slug']) ?>" target="_blank" class="text-indigo-600 hover:underline font-bold">
               देखें →
             </a>
-            <a href="/admin/categories.php?delete_id=<?= $cat['id'] ?>" onclick="return confirm('क्या आप इस श्रेणी को हटाना चाहते हैं?')" class="text-red-500 hover:text-red-700">
-              <i class="fa-regular fa-trash-can"></i>
-            </a>
+            <form action="/admin/categories.php" method="POST" class="inline" onsubmit="return confirm('क्या आप इस श्रेणी को हटाना चाहते हैं?');">
+              <?= csrf_field() ?>
+              <input type="hidden" name="action" value="delete_category">
+              <input type="hidden" name="delete_id" value="<?= $cat['id'] ?>">
+              <button type="submit" class="text-red-500 hover:text-red-700 cursor-pointer" title="हटाएं">
+                <i class="fa-regular fa-trash-can"></i>
+              </button>
+            </form>
           </div>
         </div>
       </div>
@@ -155,6 +171,7 @@ require_once __DIR__ . '/admin_header.php';
     </div>
 
     <form action="/admin/categories.php" method="POST" class="space-y-4">
+      <?= csrf_field() ?>
       <input type="hidden" name="add_category" value="1">
 
       <div>
@@ -212,6 +229,7 @@ require_once __DIR__ . '/admin_header.php';
     </div>
 
     <form action="/admin/categories.php" method="POST" class="space-y-4">
+      <?= csrf_field() ?>
       <input type="hidden" name="edit_category" value="1">
       <input type="hidden" name="edit_cat_id" id="edit_cat_id" value="">
 

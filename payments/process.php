@@ -301,7 +301,24 @@ if ($payment_method === 'razorpay') {
             $pdo->prepare("UPDATE orders SET gateway_order_id = ? WHERE id = ?")->execute([$rzp_order_id, $order_id]);
         }
     } else {
-        error_log("Razorpay Order Creation API failed (HTTP {$http_code}): {$rzp_res}");
+        error_log("Razorpay Order Creation API failed (HTTP {$http_code})");
+    }
+
+    // Fail-closed check: Never proceed without a verified gateway_order_id
+    if (empty($rzp_order_id)) {
+        try {
+            // Restore inventory
+            foreach ($order_items_to_insert as $oi) {
+                $pdo->prepare("UPDATE products SET stock = stock + ? WHERE id = ?")->execute([$oi['quantity'], $oi['product_id']]);
+            }
+            // Cancel pending order
+            $pdo->prepare("UPDATE orders SET order_status = 'Cancelled', payment_status = 'failed' WHERE id = ?")->execute([$order_id]);
+        } catch (Throwable $t) {}
+
+        log_audit_action('payment_rzp_order_create_failed', 'orders', 'order', $order_id, "Razorpay API returned HTTP {$http_code}");
+        set_flash('error', 'Razorpay भुगतान गेटवे से संपर्क करने में असमर्थ। कृपया पुनः प्रयास करें या कैश ऑन डिलीवरी (COD) चुनें।');
+        header('Location: /checkout.php');
+        exit;
     }
 
     $_SESSION['pending_payment_order_id'] = $order_id;
@@ -313,7 +330,7 @@ if ($payment_method === 'razorpay') {
       <meta charset="UTF-8">
       <title>Processing Payment — Razorpay</title>
       <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
-      <script src="https://cdn.tailwindcss.com"></script>
+      <link rel="stylesheet" href="/assets/css/tailwind.css">
     </head>
     <body class="bg-stone-50 min-h-screen flex items-center justify-center p-4">
       <div class="bg-white p-8 rounded-3xl border border-gray-200 shadow-xl max-w-md w-full text-center space-y-4">
@@ -411,7 +428,7 @@ if ($payment_method === 'payu') {
     <head>
       <meta charset="UTF-8">
       <title>Redirecting to PayU...</title>
-      <script src="https://cdn.tailwindcss.com"></script>
+      <link rel="stylesheet" href="/assets/css/tailwind.css">
     </head>
     <body class="bg-stone-50 min-h-screen flex items-center justify-center p-4">
       <div class="bg-white p-8 rounded-3xl border border-gray-200 shadow-xl max-w-md w-full text-center space-y-4">

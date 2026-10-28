@@ -34,36 +34,21 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['update_profile'])) {
         $address = clean_input($_POST['address'] ?? '');
         $avatar_url = $user['avatar'] ?? null;
 
-        // Handle File Upload if provided
+        // Handle File Upload if provided via secure_upload_image() (Item 8 Hardening)
         if (isset($_FILES['avatar_file']) && $_FILES['avatar_file']['error'] === UPLOAD_ERR_OK) {
-            $file = $_FILES['avatar_file'];
-            $allowed = ['jpg', 'jpeg', 'png', 'webp'];
-            $ext = strtolower(pathinfo($file['name'], PATHINFO_EXTENSION));
-
-            if (in_array($ext, $allowed) && $file['size'] <= 5 * 1024 * 1024) {
-                $finfo = finfo_open(FILEINFO_MIME_TYPE);
-                $mime = finfo_file($finfo, $file['tmp_name']);
-                finfo_close($finfo);
-
-                $valid_mimes = ['image/jpeg', 'image/png', 'image/webp'];
-                if (in_array($mime, $valid_mimes)) {
-                    $target_dir = __DIR__ . '/uploads/avatars/';
-                    if (!is_dir($target_dir)) {
-                        mkdir($target_dir, 0755, true);
-                    }
-                    $filename = 'user_' . $user['id'] . '_' . time() . '_' . bin2hex(random_bytes(4)) . '.' . $ext;
-                    $dest = $target_dir . $filename;
-                    if (move_uploaded_file($file['tmp_name'], $dest)) {
-                        $avatar_url = '/uploads/avatars/' . $filename;
-                    }
-                } else {
-                    $error_msg = 'केवल JPG, PNG या WebP छवियां स्वीकार्य हैं।';
-                }
+            $up_res = secure_upload_image('avatar_file', 'uploads/avatars/');
+            if ($up_res['success']) {
+                $avatar_url = $up_res['path'];
             } else {
-                $error_msg = 'फ़ाइल का आकार 5MB से कम होना चाहिए।';
+                $error_msg = $up_res['error'];
             }
         } elseif (!empty($_POST['avatar_url_input'])) {
-            $avatar_url = clean_input($_POST['avatar_url_input']);
+            $in_url = clean_input($_POST['avatar_url_input']);
+            if (is_valid_product_image_url($in_url)) {
+                $avatar_url = $in_url;
+            } else {
+                $error_msg = 'अमान्य अवतार छवि यूआरएल! केवल /uploads/ पथ या अनुमत HTTPS होस्ट ही मान्य हैं।';
+            }
         }
 
         if (empty($error_msg) && !empty($name) && !empty($phone)) {
@@ -103,10 +88,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['change_password'])) {
         } else {
             try {
                 $hashed = password_hash($new_pass, PASSWORD_BCRYPT);
-                $stmt = $pdo->prepare("UPDATE users SET password = ?, force_password_change = 0 WHERE id = ?");
+                $stmt = $pdo->prepare("UPDATE users SET password = ?, force_password_change = 0, password_changed_at = CURRENT_TIMESTAMP WHERE id = ?");
                 $stmt->execute([$hashed, $user['id']]);
                 unset($_SESSION['force_password_change']);
-                $success_msg = 'पासवर्ड सफलतापूर्वक बदल दिया गया है।';
+                // Item 10: Invalidate all other active sessions
+                $_SESSION['login_time'] = time();
+                if (session_status() === PHP_SESSION_ACTIVE) {
+                    session_regenerate_id(true);
+                }
+                log_audit_action('user_password_change', 'auth', 'user', $user['id'], 'Password changed by user; other sessions invalidated');
+                $success_msg = 'पासवर्ड सफलतापूर्वक बदल दिया गया है। सुरक्षा हेतु अन्य सभी सत्र समाप्त कर दिए गए हैं।';
                 $active_tab = 'security';
             } catch (Exception $e) {
                 $error_msg = 'त्रुटि: ' . $e->getMessage();

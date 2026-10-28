@@ -36,27 +36,13 @@ $flash = get_flash();
   <link rel="icon" type="image/png" sizes="32x32" href="/favicon.png">
   <link rel="apple-touch-icon" href="/apple-touch-icon.png">
   
-  <!-- Tailwind CSS -->
-  <script src="https://cdn.tailwindcss.com"></script>
-  <script>
-    tailwind.config = {
-      theme: {
-        extend: {
-          colors: {
-            'brand-green': '#1b4332',
-            'brand-dark': '#081c15',
-            'brand-accent': '#d4a373',
-            'seller-orange': '#ea580c',
-          }
-        }
-      }
-    }
-  </script>
+  <!-- Static Compiled Tailwind CSS (Item 7 Hardening) -->
+  <link rel="stylesheet" href="/assets/css/tailwind.css">
   
   <!-- Font Awesome -->
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
-  <!-- Chart.js for real graphics -->
-  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <!-- Chart.js (Self-Hosted) -->
+  <script src="/assets/vendor/chart.umd.min.js"></script>
   
   <link rel="stylesheet" href="/assets/css/style.css">
   <meta name="csrf-token" content="<?= htmlspecialchars(csrf_token(), ENT_QUOTES, 'UTF-8') ?>">
@@ -104,16 +90,16 @@ $flash = get_flash();
             <a href="/seller/profile.php" class="flex items-center gap-2 group">
               <div class="w-8 h-8 rounded-full overflow-hidden bg-amber-500 text-stone-900 font-bold flex items-center justify-center text-xs border border-amber-400">
                 <?php if (!empty($vendor['avatar'])): ?>
-                  <img src="<?= htmlspecialchars($vendor['avatar']) ?>" alt="Avatar" class="w-full h-full object-cover">
+                  <img src="<?= htmlspecialchars((string)$vendor['avatar']) ?>" alt="Avatar" class="w-full h-full object-cover">
                 <?php elseif (!empty($user['avatar'])): ?>
-                  <img src="<?= htmlspecialchars($user['avatar']) ?>" alt="Avatar" class="w-full h-full object-cover">
+                  <img src="<?= htmlspecialchars((string)$user['avatar']) ?>" alt="Avatar" class="w-full h-full object-cover">
                 <?php else: ?>
-                  <?= strtoupper(mb_substr($vendor['business_name'] ?? $user['name'], 0, 1)) ?>
+                  <?= strtoupper(mb_substr((string)($vendor['business_name'] ?? ($user['name'] ?? 'Vendor')), 0, 1)) ?>
                 <?php endif; ?>
               </div>
               <div class="text-right hidden sm:block">
-                <div class="text-xs font-bold text-white group-hover:text-amber-400 transition"><?= htmlspecialchars($user['name']) ?></div>
-                <div class="text-[10px] text-amber-400 uppercase font-semibold"><?= htmlspecialchars($user['role']) ?></div>
+                <div class="text-xs font-bold text-white group-hover:text-amber-400 transition"><?= htmlspecialchars((string)($user['name'] ?? 'Vendor')) ?></div>
+                <div class="text-[10px] text-amber-400 uppercase font-semibold"><?= htmlspecialchars((string)($user['role'] ?? 'vendor')) ?></div>
               </div>
             </a>
 

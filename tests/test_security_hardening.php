@@ -27,15 +27,15 @@ assert_test("Common password 'password12345' rejected", !is_strong_password("pas
 assert_test("Common password 'Admin@12345' rejected", !is_strong_password("Admin@12345", $err));
 assert_test("Strong password accepted", is_strong_password("Kisan#Forge!2026Secure", $err));
 
-echo "\n=== 2. CSV Formula Injection Neutralization (Item 21) ===\n";
-assert_test("Formula =cmd neutralized", escape_csv_cell("=cmd|'/C calc'!A0") === "'=cmd|'/C calc'!A0");
-assert_test("Formula +2+3 neutralized", escape_csv_cell("+2+3") === "'+2+3");
-assert_test("Formula -5+10 neutralized", escape_csv_cell("-5+10") === "'-5+10");
-assert_test("Formula @SUM neutralized", escape_csv_cell("@SUM(A1:A10)") === "'@SUM(A1:A10)");
-assert_test("Normal string untouched", escape_csv_cell("Pure Artisan Honey") === "Pure Artisan Honey");
-assert_test("Numeric value untouched", escape_csv_cell(250.50) === "250.5");
+echo "\n=== 2. CSV Formula Injection Neutralization (Item 11 / 21) ===\n";
+assert_test("Formula =cmd neutralized", neutralize_csv_formula("=cmd|'/C calc'!A0") === "'=cmd|'/C calc'!A0");
+assert_test("Formula +2+3 neutralized", neutralize_csv_formula("+2+3") === "'+2+3");
+assert_test("Formula -5+10 neutralized", neutralize_csv_formula("-5+10") === "'-5+10");
+assert_test("Formula @SUM neutralized", neutralize_csv_formula("@SUM(A1:A10)") === "'@SUM(A1:A10)");
+assert_test("Normal string untouched", neutralize_csv_formula("Pure Artisan Honey") === "Pure Artisan Honey");
+assert_test("Numeric value untouched", neutralize_csv_formula(250.50) === "250.5");
 
-echo "\n=== 3. Product Image URL Whitelisting (Item 20) ===\n";
+echo "\n=== 3. Product Image URL Whitelisting (Item 8 / 20) ===\n";
 assert_test("Local uploads allowed", is_valid_product_image_url("/uploads/products/iron_sickle.jpg"));
 assert_test("Local uploads directory traversal blocked", !is_valid_product_image_url("/uploads/../config/db.php"));
 assert_test("Local uploads PHP file blocked", !is_valid_product_image_url("/uploads/shell.php"));
@@ -82,6 +82,37 @@ assert_test("e() prevents double-encoding on legacy values", e($legacy_encoded) 
 echo "\n=== 6. Turnstile CAPTCHA (Item 24) ===\n";
 assert_test("Turnstile test token passes", verify_turnstile_captcha('1x00000000000000000000AA'));
 assert_test("Turnstile placeholder renders widget/hidden field", strpos(render_turnstile_widget(), 'cf-turnstile') !== false);
+
+echo "\n=== 7. Field Encryption & Secret Masking (Item 10) ===\n";
+$bank_account_raw = "1234567890123456";
+$encrypted = encrypt_sensitive_field($bank_account_raw);
+assert_test("Sensitive field encrypted with prefix", strpos($encrypted, 'enc:') === 0 || strpos($encrypted, 'raw:') === 0);
+$decrypted = decrypt_sensitive_field($encrypted);
+assert_test("Sensitive field decrypts exactly", $decrypted === $bank_account_raw);
+$masked_acc = mask_sensitive_value($encrypted);
+assert_test("Masked bank account masks all but last 4", substr($masked_acc, -4) === '3456' && strpos($masked_acc, '••••') !== false);
+$masked_sec = mask_secret("rzp_live_secret_key_998877");
+assert_test("Mask secret masks middle characters", strpos($masked_sec, '•') !== false && substr($masked_sec, 0, 3) === 'rzp');
+
+echo "\n=== 8. Email Verification Token Hashing (Item 10) ===\n";
+$raw_token = bin2hex(random_bytes(16));
+$hashed_token = hash('sha256', $raw_token);
+assert_test("Hashed token matches via hash_equals", hash_equals($hashed_token, hash('sha256', $raw_token)));
+assert_test("Altered token rejected via hash_equals", !hash_equals($hashed_token, hash('sha256', $raw_token . 'tamper')));
+
+echo "\n=== 9. Deploy Cleanup Verification (Item 4) ===\n";
+$sqlite_exists = file_exists(__DIR__ . '/../data/backups/gaungalihat_backup_pre_upgrade.sqlite');
+$schema_sql_exists = file_exists(__DIR__ . '/../database/schema.sql');
+$db_sql_exists = file_exists(__DIR__ . '/../gaungalihat_database.sql');
+assert_test("No sqlite backup files in deploy directory", !$sqlite_exists);
+assert_test("No schema.sql in deploy directory", !$schema_sql_exists);
+assert_test("No gaungalihat_database.sql in deploy directory", !$db_sql_exists);
+
+echo "\n=== 10. Web Server Security (.htaccess & CSP - Item 5) ===\n";
+$htaccess = file_get_contents(__DIR__ . '/../.htaccess');
+assert_test("HTTPS 301 redirect present in .htaccess", strpos($htaccess, 'RewriteCond %{HTTPS} off') !== false && strpos($htaccess, 'gaungalihat.womenvission.in') !== false);
+assert_test("CSP frame-ancestors 'self' present", strpos($htaccess, "frame-ancestors 'self'") !== false);
+assert_test("CSP form-action includes payu", strpos($htaccess, "form-action 'self' https://secure.payu.in https://test.payu.in") !== false);
 
 echo "\n==========================================\n";
 if ($all_passed) {

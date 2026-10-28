@@ -58,5 +58,6 @@ return [
         'owner_alert_email' => getenv('OWNER_ALERT_EMAIL') ?: '',
         'session_lifetime'  => 1800, // 30 minutes admin idle timeout
         'admin_require_2fa' => false,
+        'setup_secret'      => getenv('SETUP_SECRET') ?: 'ChangeThisToRandomSecretKey32Chars',
     ],
 ];

@@ -263,6 +263,89 @@ function escape_csv_cell($value) {
     return $str;
 }
 
+function neutralize_csv_formula($value) {
+    if ($value === null || $value === '') return '';
+    $str = (string)$value;
+    if (preg_match('/^[=\+\-@\t\r]/', $str)) {
+        return "'" . $str;
+    }
+    return $str;
+}
+
+// Item 10: Libsodium Secretbox Field Encryption for sensitive credentials
+function get_sodium_encryption_key() {
+    static $key = null;
+    if ($key !== null) return $key;
+
+    $cfg = function_exists('get_platform_config') ? get_platform_config('security') : [];
+    $raw_key = getenv('APP_ENCRYPTION_KEY') ?: ($cfg['encryption_key'] ?? '');
+    if (empty($raw_key)) {
+        $salt = defined('PAYU_MERCHANT_SALT') ? PAYU_MERCHANT_SALT : 'GaunGaliHat_Default_Salt_Hardened';
+        $raw_key = hash('sha256', 'GGH_SECRET_BOX_KEY_' . $salt, true);
+    } elseif (defined('SODIUM_CRYPTO_SECRETBOX_KEYBYTES') && strlen($raw_key) !== SODIUM_CRYPTO_SECRETBOX_KEYBYTES) {
+        $raw_key = hash('sha256', $raw_key, true);
+    }
+    $key = defined('SODIUM_CRYPTO_SECRETBOX_KEYBYTES') ? substr($raw_key, 0, SODIUM_CRYPTO_SECRETBOX_KEYBYTES) : substr($raw_key, 0, 32);
+    return $key;
+}
+
+function encrypt_sensitive_field($plaintext) {
+    if ($plaintext === null || $plaintext === '') return '';
+    $plaintext = (string)$plaintext;
+    if (strpos($plaintext, 'enc:') === 0) return $plaintext;
+    if (function_exists('sodium_crypto_secretbox') && defined('SODIUM_CRYPTO_SECRETBOX_NONCEBYTES')) {
+        $key = get_sodium_encryption_key();
+        $nonce = random_bytes(SODIUM_CRYPTO_SECRETBOX_NONCEBYTES);
+        $ciphertext = sodium_crypto_secretbox($plaintext, $nonce, $key);
+        return 'enc:' . base64_encode($nonce . $ciphertext);
+    }
+    return 'raw:' . $plaintext;
+}
+
+function decrypt_sensitive_field($ciphertext) {
+    if ($ciphertext === null || $ciphertext === '') return '';
+    $ciphertext = (string)$ciphertext;
+    if (strpos($ciphertext, 'enc:') === 0) {
+        if (function_exists('sodium_crypto_secretbox_open') && defined('SODIUM_CRYPTO_SECRETBOX_NONCEBYTES')) {
+            $data = base64_decode(substr($ciphertext, 4), true);
+            if ($data !== false && strlen($data) > SODIUM_CRYPTO_SECRETBOX_NONCEBYTES) {
+                $nonce = substr($data, 0, SODIUM_CRYPTO_SECRETBOX_NONCEBYTES);
+                $encrypted = substr($data, SODIUM_CRYPTO_SECRETBOX_NONCEBYTES);
+                $key = get_sodium_encryption_key();
+                $decrypted = @sodium_crypto_secretbox_open($encrypted, $nonce, $key);
+                if ($decrypted !== false) {
+                    return $decrypted;
+                }
+            }
+        }
+        return '';
+    }
+    if (strpos($ciphertext, 'raw:') === 0) {
+        return substr($ciphertext, 4);
+    }
+    return $ciphertext;
+}
+
+function mask_sensitive_value($value, $visible_chars = 4, $mask_char = '•') {
+    if (empty($value)) return '';
+    $decrypted = decrypt_sensitive_field($value);
+    $len = strlen($decrypted);
+    if ($len <= $visible_chars) {
+        return str_repeat($mask_char, $len);
+    }
+    return str_repeat($mask_char, max(0, $len - $visible_chars)) . substr($decrypted, -$visible_chars);
+}
+
+if (!function_exists('mask_secret')) {
+    function mask_secret($secret) {
+        if (empty($secret)) return '';
+        $secret = (string)$secret;
+        $len = strlen($secret);
+        if ($len <= 6) return '••••••';
+        return substr($secret, 0, 3) . str_repeat('•', max(4, $len - 6)) . substr($secret, -3);
+    }
+}
+
 // Item 20: Validate Seller Product Image URLs (Local uploads or whitelisted HTTPS CDNs)
 function is_valid_product_image_url($url) {
     if (empty($url) || !is_string($url)) {
@@ -523,22 +606,24 @@ function verify_totp_code($secret, $code) {
     return false;
 }
 
-// Item 10: Email Verification Link Dispatcher
+// Item 10: Email Verification Link Dispatcher (Stored as SHA-256 hash)
 function send_email_verification_link($user_id, $email, $name) {
     global $pdo;
     try {
-        $token = bin2hex(random_bytes(32));
+        $raw_token = bin2hex(random_bytes(32));
+        $token_hash = hash('sha256', $raw_token);
         $expires = date('Y-m-d H:i:s', time() + 86400); // 24 hours validity
         $stmt = $pdo->prepare("UPDATE users SET email_verification_token = ?, email_verification_expires = ? WHERE id = ?");
-        $stmt->execute([$token, $expires, $user_id]);
+        $stmt->execute([$token_hash, $expires, $user_id]);
 
         $site_url = defined('SITE_URL') ? SITE_URL : 'https://gaungalihat.womenvission.in';
-        $verify_url = $site_url . '/verify-email.php?token=' . $token . '&email=' . urlencode($email);
+        $site_host = parse_url($site_url, PHP_URL_HOST) ?: 'gaungalihat.womenvission.in';
+        $verify_url = $site_url . '/verify-email.php?token=' . $raw_token . '&email=' . urlencode($email);
 
         $subject = "Verify your GaunGaliHat Account Email";
         $headers = "MIME-Version: 1.0\r\n";
         $headers .= "Content-Type: text/html; charset=UTF-8\r\n";
-        $headers .= "From: GaunGaliHat Security <no-reply@ganvgalihat.com>\r\n";
+        $headers .= "From: GaunGaliHat Security <no-reply@" . $site_host . ">\r\n";
 
         $message = "
         <div style='font-family: sans-serif; max-width: 540px; margin: 0 auto; padding: 24px; border: 1px solid #e5e7eb; border-radius: 12px;'>
@@ -567,8 +652,9 @@ function send_owner_security_alert($subject, $details) {
     }
 
     if (!empty($owner_email)) {
+        $site_host = parse_url(defined('SITE_URL') ? SITE_URL : '', PHP_URL_HOST) ?: 'gaungalihat.womenvission.in';
         $full_subject = "[GaunGaliHat Security Alert] " . $subject;
-        $headers = "MIME-Version: 1.0\r\nContent-Type: text/plain; charset=UTF-8\r\nFrom: security@ganvgalihat.com\r\n";
+        $headers = "MIME-Version: 1.0\r\nContent-Type: text/plain; charset=UTF-8\r\nFrom: security@" . $site_host . "\r\n";
         $body = "SECURITY EVENT NOTIFICATION\nTime: " . date('Y-m-d H:i:s T') . "\nIP: " . ($_SERVER['REMOTE_ADDR'] ?? 'Unknown') . "\n\nDetails:\n" . (is_array($details) ? json_encode($details, JSON_PRETTY_PRINT) : (string)$details);
         @mail($owner_email, $full_subject, $body, $headers);
     }
@@ -937,6 +1023,17 @@ function get_logged_in_user($force_refresh = false) {
                     $cached_user = null;
                     return null;
                 }
+                // Item 10: Invalidate session if password was changed after this session was created
+                if (!empty($user['password_changed_at']) && isset($_SESSION['login_time'])) {
+                    if ((int)$_SESSION['login_time'] < (strtotime($user['password_changed_at']) - 5)) {
+                        unset($_SESSION['user_id'], $_SESSION['user_name'], $_SESSION['user_role'], $_SESSION['user_email'], $_SESSION['login_time']);
+                        if (session_status() === PHP_SESSION_ACTIVE) {
+                            session_destroy();
+                        }
+                        $cached_user = null;
+                        return null;
+                    }
+                }
                 // Live sync session with DB role on every request
                 $_SESSION['user_role'] = $user['role'];
                 $_SESSION['user_name'] = $user['name'];
@@ -1130,6 +1227,7 @@ function authenticate_user($identifier, $password, $expected_role_group = null, 
     $_SESSION['user_name'] = $user['name'];
     $_SESSION['user_role'] = $user['role'];
     $_SESSION['user_email'] = $user['email'];
+    $_SESSION['login_time'] = time();
 
     if (!empty($user['force_password_change'])) {
         $_SESSION['force_password_change'] = 1;

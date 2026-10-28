@@ -16,6 +16,31 @@ if (!$pdo) {
     die("<h3>डेटाबेस कनेक्शन त्रुटि (Database Connection Failed)</h3><p>कृपया सुनिश्चित करें कि config/config.local.php या gaungalihat_config.php में डेटाबेस विवरण सही हैं।</p>");
 }
 
+// Item 4: 30-minute time window enforcement from file modification time
+$file_age = time() - filemtime(__FILE__);
+if ($file_age > 1800) {
+    http_response_code(403);
+    die("<!DOCTYPE html><html lang='hi'><head><meta charset='UTF-8'><title>Expired — GaunGaliHat Setup</title></head>
+    <body style='font-family:sans-serif;padding:40px;text-align:center;'>
+    <h2 style='color:#dc2626;'>सेटअप समय सीमा समाप्त (Setup Expired)</h2>
+    <p>सुरक्षा कारणों से, setup_admin.php फ़ाइल परिनियोजन के केवल 30 मिनट तक ही सक्रिय रहती है।</p>
+    </body></html>");
+}
+
+// Item 4: Require SETUP_SECRET via ?key= with hash_equals
+$cfg_sec = function_exists('get_platform_config') ? get_platform_config('security') : [];
+$expected_secret = (string)(getenv('SETUP_SECRET') ?: ($cfg_sec['setup_secret'] ?? 'GaunGaliHatSetup2026Key'));
+$provided_key = (string)($_GET['key'] ?? $_POST['setup_key'] ?? '');
+
+if (empty($provided_key) || !hash_equals($expected_secret, $provided_key)) {
+    http_response_code(403);
+    die("<!DOCTYPE html><html lang='hi'><head><meta charset='UTF-8'><title>Access Denied — GaunGaliHat Setup</title></head>
+    <body style='font-family:sans-serif;padding:40px;text-align:center;'>
+    <h2 style='color:#dc2626;'>अमान्य या अनुपस्थित सेटअप कुंजी (Unauthorized Access)</h2>
+    <p>इस पृष्ठ को खोलने के लिए config/config.local.php में निर्धारित ?key= पैरामीटर आवश्यक है।</p>
+    </body></html>");
+}
+
 // Security Check: Lock immediately if any super_admin already exists
 $existing_supers = (int)$pdo->query("SELECT COUNT(*) FROM users WHERE role = 'super_admin'")->fetchColumn();
 if ($existing_supers > 0) {
@@ -96,7 +121,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>प्रारंभिक सुपर एडमिन सेटअप — GaunGaliHat</title>
-  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="/assets/css/tailwind.css">
 </head>
 <body class="bg-stone-50 min-h-screen py-10 flex items-center justify-center font-sans">
   <div class="max-w-md w-full mx-4">
@@ -115,8 +140,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         </div>
       <?php endif; ?>
 
-      <form action="/setup_admin.php" method="POST" class="space-y-4">
-        <input type="hidden" name="csrf_token" value="<?= csrf_token() ?>">
+      <form action="/setup_admin.php?key=<?= urlencode($provided_key) ?>" method="POST" class="space-y-4">
+        <?= csrf_field() ?>
+        <input type="hidden" name="setup_key" value="<?= htmlspecialchars($provided_key) ?>">
 
         <div>
           <label class="block text-xs font-bold text-gray-700 mb-1">पूरा नाम (Full Name) <span class="text-red-500">*</span></label>

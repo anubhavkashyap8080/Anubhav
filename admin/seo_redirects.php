@@ -42,13 +42,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['save_redirect'])) {
     }
 }
 
-// Handle Delete Redirect
-if (isset($_GET['delete_redirect'])) {
-    $del_id = (int)$_GET['delete_redirect'];
+// Handle Delete Redirect (Strictly POST + CSRF)
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['action'] === 'delete_redirect') {
+    $del_id = (int)($_POST['redirect_id'] ?? 0);
     try {
         $stmt = $pdo->prepare("DELETE FROM seo_redirects WHERE id = ?");
         $stmt->execute([$del_id]);
-        log_audit_action('seo_redirect_deleted', 'seo', "Deleted redirect #{$del_id}");
+        log_audit_action('seo_redirect_deleted', 'seo', 'redirect', $del_id, "Deleted redirect #{$del_id}");
         set_flash('success', 'रीडायरेक्ट नियम हटा दिया गया।');
         header('Location: /admin/seo_redirects.php');
         exit;
@@ -57,18 +57,27 @@ if (isset($_GET['delete_redirect'])) {
     }
 }
 
-// Handle Mark 404 Resolved
-if (isset($_GET['resolve_404'])) {
-    $res_id = (int)$_GET['resolve_404'];
+// Handle Mark 404 Resolved (Strictly POST + CSRF)
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['action'] === 'resolve_404') {
+    $res_id = (int)($_POST['log_id'] ?? 0);
     try {
         $stmt = $pdo->prepare("UPDATE seo_404_logs SET resolved = 1 WHERE id = ?");
         $stmt->execute([$res_id]);
+        log_audit_action('seo_404_resolved', 'seo', '404_log', $res_id, "Resolved 404 error #{$res_id}");
         set_flash('success', '404 एरर को रिसॉल्व्ड मार्क किया गया।');
         header('Location: /admin/seo_redirects.php?tab=404');
         exit;
     } catch (Exception $e) {
         set_flash('error', 'त्रुटि: ' . $e->getMessage());
     }
+}
+
+// Reject Insecure GET Mutating Requests
+if (isset($_GET['delete_redirect']) || isset($_GET['resolve_404'])) {
+    http_response_code(405);
+    set_flash('error', 'अमान्य अनुरोध विधि (GET अस्वीकृत)। कृपया फ़ॉर्म या बटन का उपयोग करें।');
+    header('Location: /admin/seo_redirects.php');
+    exit;
 }
 
 // Fetch Redirects
@@ -229,9 +238,14 @@ require_once __DIR__ . '/admin_header.php';
                       <button type="button" onclick="editRedirect(<?= htmlspecialchars(json_encode($r)) ?>)" class="p-1.5 text-gray-500 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg transition" title="एडिट करें">
                         <i class="fa-solid fa-pen text-xs"></i>
                       </button>
-                      <a href="/admin/seo_redirects.php?delete_redirect=<?= $r['id'] ?>" onclick="return confirm('क्या आप इस रीडायरेक्ट को हटाना चाहते हैं?')" class="p-1.5 text-gray-500 hover:text-red-600 hover:bg-red-50 rounded-lg transition" title="हटाएं">
-                        <i class="fa-solid fa-trash text-xs"></i>
-                      </a>
+                      <form action="/admin/seo_redirects.php" method="POST" class="inline" onsubmit="return confirm('क्या आप इस रीडायरेक्ट को हटाना चाहते हैं?');">
+                        <?= csrf_field() ?>
+                        <input type="hidden" name="action" value="delete_redirect">
+                        <input type="hidden" name="redirect_id" value="<?= $r['id'] ?>">
+                        <button type="submit" class="p-1.5 text-gray-500 hover:text-red-600 hover:bg-red-50 rounded-lg transition cursor-pointer" title="हटाएं">
+                          <i class="fa-solid fa-trash text-xs"></i>
+                        </button>
+                      </form>
                     </div>
                   </td>
                 </tr>
@@ -300,9 +314,14 @@ require_once __DIR__ . '/admin_header.php';
                       <i class="fa-solid fa-turn-down-right"></i> रीडायरेक्ट बनाएं
                     </button>
                     <?php if (empty($log['resolved'])): ?>
-                      <a href="/admin/seo_redirects.php?resolve_404=<?= $log['id'] ?>" class="p-1.5 text-gray-400 hover:text-green-600 hover:bg-green-50 rounded-lg transition" title="रिसॉल्व्ड मार्क करें">
-                        <i class="fa-solid fa-check text-xs"></i>
-                      </a>
+                      <form action="/admin/seo_redirects.php" method="POST" class="inline">
+                        <?= csrf_field() ?>
+                        <input type="hidden" name="action" value="resolve_404">
+                        <input type="hidden" name="log_id" value="<?= $log['id'] ?>">
+                        <button type="submit" class="p-1.5 text-gray-400 hover:text-green-600 hover:bg-green-50 rounded-lg transition cursor-pointer" title="रिसॉल्व्ड मार्क करें">
+                          <i class="fa-solid fa-check text-xs"></i>
+                        </button>
+                      </form>
                     <?php endif; ?>
                   </div>
                 </td>

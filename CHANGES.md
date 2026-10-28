@@ -297,3 +297,106 @@ To complete production setup after deploying this hardened codebase:
 4. **Invalidate Existing Sessions & Reset Passwords:**
    - Ask existing vendors/staff to change their passwords using the new "Forgot Password" link.
    - If migrating from old seeded accounts, remove any lingering test accounts from phpMyAdmin.
+
+---
+
+## Follow-Up Production Hardening (Items 1–12)
+
+### 1. Payments Fail-Closed Architecture
+- **`payments/process.php`**: If Razorpay server-side order creation fails or returns no id, checkout immediately halts: marks pending order as cancelled, restores reserved inventory, logs the failure, and displays a user-safe error message. Never proceeds without a valid `gateway_order_id`.
+- **`payments/razorpay_verify.php`**: Strictly requires both `gateway_order_id` and `razorpay_signature`. Computes HMAC-SHA256 signature using `hash_equals()`. Fails closed if the Razorpay REST API verification fails, returns non-200 HTTP status, or confirms status other than `captured` or `authorized`. Amount must be `>= order.total_amount`.
+- **Replay Protection & Secret Log Stripping**: Both `razorpay_verify.php` and `payu_callback.php` perform conditional SQL updates (`WHERE id = ? AND payment_status != 'completed'`) and check `rowCount() === 0` to block transaction replays. Stripped all "Expected" and "Calculated" secret signatures and hashes from audit logs and error logs.
+
+### 2. Universal CSRF Tokens in Admin & Seller Forms
+- Embedded `<?= csrf_field() ?>` inside all POST `<form>` tags across:
+  - `admin/blogs.php`, `admin/categories.php`, `admin/coupons.php`, `admin/merchant_feed.php`, `admin/orders.php`, `admin/products.php`, `admin/seo_settings.php`, `admin/site_customizer.php`, `admin/site_settings.php`, `admin/social_auth.php`, `admin/tickets.php`
+  - `seller/profile.php`
+  - `cart.php`
+- Enforced `X-CSRF-Token` headers on all fetch and XHR calls via `<meta name="csrf-token">`.
+- Preserved automatic `csrf_protect()` in `admin_header.php` and `seller_header.php`.
+
+### 3. Elimination of State-Changing GET Endpoints
+- Converted all state mutations to POST + CSRF token + JavaScript confirmation:
+  - `admin/products.php`: `delete_id`, `toggle_featured`
+  - `admin/coupons.php`: `delete_id`, `toggle_status`
+  - `admin/blogs.php`: `delete_id`, `toggle_status`
+  - `admin/categories.php`: `delete_id`
+  - `admin/tickets.php`: `set_status`
+  - `admin/seo_redirects.php`: `delete_redirect`, `resolve_404`
+  - `seller/products.php`: `toggle_stock`, `delete_product`
+- Added explicit HTTP 405 Method Not Allowed blocks for any incoming GET requests targeting these actions.
+- Added comprehensive audit log entries for every deletion action.
+
+### 4. Deploy Cleanup & One-Time Setup Admin Script
+- Removed `data/backups/*.sqlite`, `gaungalihat_database.sql`, `database/schema.sql`, and `database/migration_*.sql` from the deployable repository into a private archive outside the web root (`ganvgalihat_private_archive`).
+- Removed SQLite fallback block in `config/db.php` so production database connectivity fails securely without exposing diagnostics or creating local file databases.
+- Hardened `setup_admin.php`: Enforces a 30-minute validity window based on `filemtime(__FILE__)`, requires `SETUP_SECRET` via `?key=` compared with `hash_equals()`, locks immediately if a super admin already exists, and self-deletes (`@unlink(__FILE__)`) upon successful account creation.
+
+### 5. HTTPS Enforcement, Security Headers & Inline Script Roadmap
+- **`.htaccess`**:
+  - Enforced 301 HTTPS redirect using canonical `SITE_URL` host:
+    ```apache
+    RewriteCond %{HTTPS} off
+    RewriteRule ^ https://gaungalihat.womenvission.in%{REQUEST_URI} [L,R=301]
+    ```
+  - Strengthened Content-Security-Policy (CSP): Added `frame-ancestors 'self'` and `form-action 'self' https://secure.payu.in https://test.payu.in`.
+  - Removed `cdn.tailwindcss.com` from CSP.
+- **Roadmap for Removing `unsafe-inline` and `unsafe-eval`**:
+  - *Current Blocking Elements:* Inline onclick handlers in modals (`toggleModal()`), dynamic chart initialization in `admin/index.php`, and dynamic search filter handlers in `assets/js/main.js`.
+  - *Planned Migration Phase:*
+    1. Implement PHP nonces generated per request (`bin2hex(random_bytes(16))`) and injected into the CSP header (`script-src 'self' 'nonce-...'`).
+    2. Move all inline JavaScript block logic into external versioned bundles (`/assets/js/admin_dashboard.js`, `/assets/js/modals.js`).
+    3. Replace inline `onclick="func()"` attributes with `addEventListener` attached to data attributes (`data-action="open-modal"`).
+
+### 6. Domain Alignment & Email Deliverability (SPF / DKIM / DMARC)
+- Replaced all legacy hardcoded references to `ganvgalihat.com` with the canonical host resolved from `SITE_URL` across:
+  - `includes/functions.php`, `forgot-password.php`, `robots.php`, `robots.txt`, `sitemap.php`, `includes/header.php`, `admin/seo_settings.php`, `admin/site_settings.php`, `admin/site_customizer.php`.
+- **DNS Records Guidance for `gaungalihat.womenvission.in`:**
+  - **SPF Record (TXT):**
+    ```
+    v=spf1 include:_spf.google.com include:relay.mailchannels.net ~all
+    ```
+    *(Adjust according to your cPanel hosting SMTP provider or Google Workspace).*
+  - **DKIM Record (TXT):**
+    Generate a 2048-bit DKIM key inside **cPanel > Email Deliverability** > click **Manage** next to `womenvission.in`, and publish the provided TXT record under `default._domainkey.gaungalihat.womenvission.in`.
+  - **DMARC Record (TXT):**
+    ```
+    _dmarc.gaungalihat.womenvission.in TXT "v=DMARC1; p=quarantine; sp=quarantine; rua=mailto:dmarc-reports@womenvission.in; pct=100"
+    ```
+
+### 7. Self-Hosted Assets & GSC Token Sanitization
+- Removed runtime dependency on `cdn.tailwindcss.com`. Built a static, minified production CSS bundle (`/assets/css/tailwind.css`, ~71 KB) compiled via Tailwind CLI with all scanned templates and custom brand color configurations.
+- Self-hosted pinned third-party vendor libraries in `/assets/vendor/`:
+  - `assets/vendor/lucide.min.js` (pinned v0.469.0)
+  - `assets/vendor/chart.umd.min.js` (pinned v4.4.7)
+- In `includes/header.php`, Google Search Console verification tag is strictly regex-validated (`/^[A-Za-z0-9_-]{20,100}$/`) and escaped with `htmlspecialchars()`. Clamped mobile (20–80px) and desktop (24–120px) logo heights to prevent layout breaks.
+
+### 8. Secure Avatar Uploads & URL Validation
+- Replaced custom avatar file upload code in `account.php` and `seller/profile.php` with `secure_upload_image()`, ensuring server-side image re-encoding, EXIF stripping, and safe file extensions.
+- Restricted `avatar_url_input` and seller product image URLs using `is_valid_product_image_url()` (allowing only local `/uploads/` paths or whitelisted HTTPS CDNs like Unsplash/Cloudinary).
+
+### 9. Robots.txt Security Alignment
+- Removed all `Disallow` directives revealing internal directories (`/admin/`, `/seller/`, `/data/`, `/database/`, `/includes/`) and removed `Allow: /uploads/`.
+- Access to sensitive administrative and system paths is strictly blocked at the web server level via `.htaccess` (returning HTTP 403) rather than disclosed via `robots.txt`.
+
+### 10. Secrets Priority, Field Encryption & Session Invalidation
+- **Secrets Priority (`config/settings.php`):**
+  - Config and environment variables take strict precedence over `site_settings` for `RAZORPAY_KEY_SECRET`, `PAYU_MERCHANT_SALT`, and `GOOGLE_CLIENT_SECRET`.
+  - Plaintext secrets are no longer persisted to the database. The admin integrations hub and social auth settings display only masked values (`mask_secret()`).
+- **Vendor Banking Details Encryption:**
+  - Encrypted vendor `bank_account`, `bank_ifsc`, and `upi_id` fields using Libsodium authenticated symmetric encryption (`sodium_crypto_secretbox`) with random nonces.
+  - Masked values in seller and admin forms (`mask_sensitive_value()`).
+- **Session Invalidation on Password Change:**
+  - Upon user or vendor password change/reset, `password_changed_at` is updated to `CURRENT_TIMESTAMP`, the active session ID is regenerated (`session_regenerate_id(true)`), and all older active sessions for that account are invalidated.
+- **Hashed Email Verification Tokens:**
+  - Stored `email_verification_token` as a SHA-256 hash in the database and validated incoming tokens using constant-time `hash_equals()`.
+
+### 11. Hardened CSV Imports
+- Implemented file size limit (max 1 MB) and maximum row limit (max 500 rows) in `seller/products.php`, `admin/import_products.php`, and `admin/import_users.php`.
+- Added strict numeric validation (`is_numeric()`) for price, original price, weight, and stock quantities.
+- Whitelisted categories and roles against database tables before insertion.
+- Neutralized spreadsheet formula injection attacks (`=`, `+`, `-`, `@`, `\t`, `\r`) using `neutralize_csv_formula()` on all text fields.
+
+### 12. Permissions Hardening Script
+- Added `fix_permissions.sh` script to set standard cPanel file permissions (644 for files, 755 for directories, 640 for local configs, 750 for CLI tools).
+

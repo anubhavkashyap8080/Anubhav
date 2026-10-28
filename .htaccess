@@ -73,7 +73,7 @@ Options -Indexes
     Header always set Strict-Transport-Security "max-age=31536000; includeSubDomains"
     # Deprecated header removed per security audit Item 28
     Header unset X-XSS-Protection
-    Header set Content-Security-Policy "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://cdn.tailwindcss.com https://unpkg.com https://cdnjs.cloudflare.com https://challenges.cloudflare.com https://accounts.google.com https://checkout.razorpay.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://cdnjs.cloudflare.com; font-src 'self' https://fonts.gstatic.com https://cdnjs.cloudflare.com data:; img-src 'self' data: https:; connect-src 'self' https://challenges.cloudflare.com https://lumberjack.razorpay.com; frame-src 'self' https://challenges.cloudflare.com https://accounts.google.com https://api.razorpay.com; object-src 'none'; base-uri 'self';"
+    Header set Content-Security-Policy "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://unpkg.com https://cdnjs.cloudflare.com https://challenges.cloudflare.com https://accounts.google.com https://checkout.razorpay.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://cdnjs.cloudflare.com; font-src 'self' https://fonts.gstatic.com https://cdnjs.cloudflare.com data:; img-src 'self' data: https:; connect-src 'self' https://challenges.cloudflare.com https://lumberjack.razorpay.com; frame-src 'self' https://challenges.cloudflare.com https://accounts.google.com https://api.razorpay.com; frame-ancestors 'self'; form-action 'self' https://secure.payu.in https://test.payu.in; object-src 'none'; base-uri 'self';"
 </IfModule>
 
 # Item 27: Disable Error Display on Production
@@ -94,6 +94,10 @@ Options -Indexes
 <IfModule mod_rewrite.c>
     RewriteEngine On
     RewriteBase /
+
+    # Item 5: HTTPS Enforcement using canonical SITE_URL host (not HTTP_HOST)
+    RewriteCond %{HTTPS} off
+    RewriteRule ^ https://gaungalihat.womenvission.in%{REQUEST_URI} [L,R=301]
 
     # Item 28: Deny direct web access to sensitive internal directories
     RewriteRule ^(config|includes|database|data|functions|src|scripts|\.git)(/|$) - [F,L,NC]

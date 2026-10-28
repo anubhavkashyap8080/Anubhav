@@ -36,6 +36,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['save_blog'])) {
                     WHERE id = ?
                 ");
                 $stmt->execute([$title, $hindi_title, $slug, $category, $author_name, $image, $excerpt, $content, $tags, $status, $blog_id]);
+                log_audit_action('blog_update', 'blogs', 'blog', $blog_id, "Updated blog: {$title}");
                 set_flash('success', 'ब्लॉग लेख सफलतापूर्वक अपडेट किया गया!');
             } else {
                 $stmt = $pdo->prepare("
@@ -43,6 +44,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['save_blog'])) {
                     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
                 ");
                 $stmt->execute([$title, $hindi_title, $slug, $category, $author_name, $image, $excerpt, $content, $tags, $status]);
+                $new_id = $pdo->lastInsertId();
+                log_audit_action('blog_create', 'blogs', 'blog', $new_id, "Created blog: {$title}");
                 set_flash('success', 'नया ब्लॉग लेख सफलतापूर्वक प्रकाशित किया गया!');
             }
             header('Location: /admin/blogs.php');
@@ -53,24 +56,34 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['save_blog'])) {
     }
 }
 
-// Handle Toggle Status
-if (isset($_GET['toggle_status'])) {
-    $bid = intval($_GET['toggle_status']);
+// Handle Toggle Status (Strictly POST + CSRF)
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['action'] === 'toggle_status') {
+    $bid = intval($_POST['blog_id'] ?? 0);
     $cur = $pdo->prepare("SELECT status FROM blogs WHERE id = ?");
     $cur->execute([$bid]);
     $st = $cur->fetchColumn();
     $new_st = ($st === 'published') ? 'draft' : 'published';
     $pdo->prepare("UPDATE blogs SET status = ? WHERE id = ?")->execute([$new_st, $bid]);
+    log_audit_action('blog_toggle_status', 'blogs', 'blog', $bid, "Status changed to {$new_st}");
     set_flash('success', 'ब्लॉग स्थिति बदली गई: ' . $new_st);
     header('Location: /admin/blogs.php');
     exit;
 }
 
-// Handle Delete Blog
-if (isset($_GET['delete_id'])) {
-    $del_id = intval($_GET['delete_id']);
+// Handle Delete Blog (Strictly POST + CSRF)
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['action'] === 'delete_blog') {
+    $del_id = intval($_POST['delete_id'] ?? 0);
     $pdo->prepare("DELETE FROM blogs WHERE id = ?")->execute([$del_id]);
+    log_audit_action('blog_delete', 'blogs', 'blog', $del_id, 'Blog post deleted');
     set_flash('success', 'ब्लॉग लेख सफलतापूर्वक हटा दिया गया।');
+    header('Location: /admin/blogs.php');
+    exit;
+}
+
+// Reject Insecure GET Mutating Requests
+if (isset($_GET['delete_id']) || isset($_GET['toggle_status'])) {
+    http_response_code(405);
+    set_flash('error', 'अमान्य अनुरोध विधि (GET अस्वीकृत)। कृपया फ़ॉर्म या बटन का उपयोग करें।');
     header('Location: /admin/blogs.php');
     exit;
 }
@@ -147,12 +160,17 @@ require_once __DIR__ . '/admin_header.php';
             </td>
 
             <td class="px-4 py-3.5">
-              <a href="/admin/blogs.php?toggle_status=<?= $b['id'] ?>"
-                class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-bold <?= $b['status'] === 'published' ? 'bg-emerald-100 text-emerald-800 hover:bg-emerald-200' : 'bg-stone-200 text-stone-700 hover:bg-stone-300' ?>"
-                title="क्लिक करके स्थिति बदलें">
-                <span class="w-1.5 h-1.5 rounded-full <?= $b['status'] === 'published' ? 'bg-emerald-600' : 'bg-stone-500' ?>"></span>
-                <?= ucfirst($b['status']) ?>
-              </a>
+              <form action="/admin/blogs.php" method="POST" class="inline">
+                <?= csrf_field() ?>
+                <input type="hidden" name="action" value="toggle_status">
+                <input type="hidden" name="blog_id" value="<?= $b['id'] ?>">
+                <button type="submit"
+                  class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-bold cursor-pointer <?= $b['status'] === 'published' ? 'bg-emerald-100 text-emerald-800 hover:bg-emerald-200' : 'bg-stone-200 text-stone-700 hover:bg-stone-300' ?>"
+                  title="क्लिक करके स्थिति बदलें">
+                  <span class="w-1.5 h-1.5 rounded-full <?= $b['status'] === 'published' ? 'bg-emerald-600' : 'bg-stone-500' ?>"></span>
+                  <?= ucfirst($b['status']) ?>
+                </button>
+              </form>
             </td>
 
             <td class="px-4 py-3.5 text-gray-400 text-[11px]">
@@ -168,10 +186,14 @@ require_once __DIR__ . '/admin_header.php';
                 class="p-1.5 text-gray-400 hover:text-indigo-600 rounded hover:bg-indigo-50 transition" title="एडिट करें">
                 <i class="fa-regular fa-pen-to-square"></i>
               </button>
-              <a href="/admin/blogs.php?delete_id=<?= $b['id'] ?>" onclick="return confirm('क्या आप वाकई इस ब्लॉग लेख को हटाना चाहते हैं?')"
-                class="p-1.5 text-gray-400 hover:text-red-600 rounded hover:bg-red-50 transition" title="हटाएं">
-                <i class="fa-regular fa-trash-can"></i>
-              </a>
+              <form action="/admin/blogs.php" method="POST" class="inline" onsubmit="return confirm('क्या आप वाकई इस ब्लॉग लेख को हटाना चाहते हैं?');">
+                <?= csrf_field() ?>
+                <input type="hidden" name="action" value="delete_blog">
+                <input type="hidden" name="delete_id" value="<?= $b['id'] ?>">
+                <button type="submit" class="p-1.5 text-gray-400 hover:text-red-600 rounded hover:bg-red-50 transition cursor-pointer" title="हटाएं">
+                  <i class="fa-regular fa-trash-can"></i>
+                </button>
+              </form>
             </td>
           </tr>
         <?php endforeach; ?>
@@ -194,6 +216,7 @@ require_once __DIR__ . '/admin_header.php';
     </div>
 
     <form action="/admin/blogs.php" method="POST" class="space-y-4">
+      <?= csrf_field() ?>
       <input type="hidden" name="save_blog" value="1">
       <input type="hidden" name="blog_id" id="blog_id" value="0">
 

@@ -15,10 +15,10 @@ exclude_dirs = {
 exclude_files = {
     '.gitignore', 'package.json', 'package-lock.json', 'tsconfig.json',
     'vite.config.ts', 'wrangler.toml', 'postcss.config.js', 'tailwind.config.js',
-    'README.md', 'gaungalihat_cpanel_production.zip'
+    'README.md', 'gaungalihat_cpanel_production.zip', 'config.local.php'
 }
 
-exclude_exts = {'.zip', '.log', '.tmp'}
+exclude_exts = {'.zip', '.log', '.tmp', '.sqlite', '.sql'}
 
 file_count = 0
 total_size = 0

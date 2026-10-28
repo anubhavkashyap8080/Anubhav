@@ -260,7 +260,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['reset_user_password']
         set_flash('error', $pass_err);
     } else {
         $hashed = password_hash($new_password, PASSWORD_BCRYPT);
-        $stmt_up = $pdo->prepare("UPDATE users SET password = ? WHERE id = ?");
+        $stmt_up = $pdo->prepare("UPDATE users SET password = ?, password_changed_at = CURRENT_TIMESTAMP WHERE id = ?");
         $stmt_up->execute([$hashed, $target_user_id]);
         log_audit_action('admin_password_reset', 'users', "Password for user #{$target_user_id} was reset by Admin #{$admin_user['id']}");
         set_flash('success', 'यूजर का पासवर्ड सुरक्षित Bcrypt एन्क्रिप्शन के साथ सफलतापूर्वक रीसेट कर दिया गया!');

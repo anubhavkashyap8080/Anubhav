@@ -71,8 +71,9 @@ if (empty($cur_home_title) || $cur_home_title === '0') {
 }
 $cur_meta_desc = get_seo_val('seo_meta_description', 'Direct from Indian village foundries & self-help groups. Authentic hand-forged agricultural sickles, khurpis, unpolished Awadh pulses, and Banarasi achar.');
 $cur_meta_kw = get_seo_val('seo_meta_keywords', 'farming tools, sickle, hansiya, khurpi, unpolished dal, banarasi achar, rural artisans, Hardoi foundries');
+$default_site_canonical = defined('SITE_URL') ? rtrim(SITE_URL, '/') : 'https://gaungalihat.womenvission.in';
 $cur_robots = get_seo_val('seo_robots_meta', 'index, follow');
-$cur_canonical = get_seo_val('seo_canonical_url', 'https://ganvgalihat.com');
+$cur_canonical = get_seo_val('seo_canonical_url', $default_site_canonical);
 $cur_og_image = get_seo_val('seo_og_image', 'https://images.unsplash.com/photo-1504148455328-c376907d081c?w=1200');
 
 $page_title = 'SEO & On-Page Settings (सर्च इंजन ऑप्टिमाइज़ेशन)';
@@ -105,6 +106,7 @@ require_once __DIR__ . '/admin_header.php';
 </div>
 
 <form action="/admin/seo_settings.php" method="POST" class="space-y-8">
+  <?= csrf_field() ?>
   <input type="hidden" name="save_seo" value="1">
 
   <!-- 1. Live Google Search Result Preview (Real-time dynamic simulation) -->
@@ -233,7 +235,7 @@ require_once __DIR__ . '/admin_header.php';
           oninput="updateSerpPreview()"
           value="<?= htmlspecialchars($cur_canonical) ?>"
           class="w-full px-4 py-2.5 bg-stone-50 border border-gray-300 rounded-xl text-xs font-mono focus:bg-white focus:outline-none focus:border-indigo-600 transition shadow-2xs">
-        <p class="text-[11px] text-gray-400 mt-1">डुप्लीकेट कंटेंट से बचने के लिए प्राथमिक डोमेन (उदा. https://ganvgalihat.com)।</p>
+        <p class="text-[11px] text-gray-400 mt-1">डुप्लीकेट कंटेंट से बचने के लिए प्राथमिक डोमेन (उदा. <?= htmlspecialchars($default_site_canonical) ?>)।</p>
       </div>
 
     </div>
@@ -329,7 +331,7 @@ require_once __DIR__ . '/admin_header.php';
 function updateSerpPreview() {
   const t = document.getElementById('input_homepage_title').value || 'GaunGaliHat';
   const d = document.getElementById('input_meta_desc').value || 'Authentic rural artisan products';
-  const u = document.getElementById('input_canonical_url').value || 'https://ganvgalihat.com';
+  const u = document.getElementById('input_canonical_url').value || '<?= addslashes($default_site_canonical) ?>';
 
   document.getElementById('serpTitleDisplay').innerText = t;
   document.getElementById('serpDescDisplay').innerText = d;
