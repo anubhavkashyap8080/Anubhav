@@ -542,9 +542,9 @@ if ($hero_theme === 'crimson') {
 
               <!-- Price & Action (Strictly Non-Overflowing Grid) -->
               <div class="pt-2.5 border-t border-gray-100 mt-2.5 space-y-1">
-                <div class="flex items-center justify-between gap-1.5">
-                  <span class="text-base font-black text-gray-900 font-display truncate"><?= format_price($np['price']) ?></span>
-                  <button onclick="addToCart(<?= $np['id'] ?>, 1, event)" class="px-3 py-1.5 bg-brand-green hover:bg-brand-green-dark text-white rounded-xl text-xs font-bold shadow-xs flex items-center gap-1 shrink-0 cursor-pointer transition-colors active:scale-95">
+                <div class="flex items-center justify-between gap-1">
+                  <span class="text-sm sm:text-base font-black text-gray-900 font-display whitespace-nowrap shrink-0"><?= format_price($np['price']) ?></span>
+                  <button onclick="addToCart(<?= $np['id'] ?>, 1, event)" class="px-2.5 sm:px-3 py-1.5 bg-brand-green hover:bg-brand-green-dark text-white rounded-xl text-xs font-bold shadow-xs flex items-center gap-1 shrink-0 cursor-pointer transition-colors active:scale-95">
                     <i data-lucide="plus" class="w-3.5 h-3.5 shrink-0"></i>
                     <span>Add</span>
                   </button>
@@ -653,17 +653,17 @@ if ($hero_theme === 'crimson') {
 
         <!-- Price & Action (Strictly Non-Overflowing Grid) -->
         <div class="pt-3 border-t border-gray-100 mt-3 space-y-1">
-          <div class="flex items-center justify-between gap-1.5">
-            <div class="flex items-baseline gap-1.5 min-w-0 truncate">
-              <span class="text-base sm:text-lg font-extrabold text-gray-900 font-display truncate"><?= format_price($p['price']) ?></span>
+          <div class="flex items-center justify-between gap-1">
+            <div class="flex items-baseline gap-1 shrink-0 whitespace-nowrap">
+              <span class="text-sm sm:text-base font-extrabold text-gray-900 font-display whitespace-nowrap shrink-0"><?= format_price($p['price']) ?></span>
               <?php if ($p['original_price'] > $p['price']): ?>
-                <span class="text-xs text-gray-400 line-through shrink-0"><?= format_price($p['original_price']) ?></span>
+                <span class="text-[10px] sm:text-xs text-gray-400 line-through shrink-0"><?= format_price($p['original_price']) ?></span>
               <?php endif; ?>
             </div>
 
             <button 
               onclick="addToCart(<?= $p['id'] ?>, 1, event)" 
-              class="px-3 py-1.5 bg-brand-green hover:bg-brand-green-dark text-white rounded-xl text-xs font-bold shadow-xs flex items-center gap-1 shrink-0 cursor-pointer transition-colors active:scale-95"
+              class="px-2.5 sm:px-3 py-1.5 bg-brand-green hover:bg-brand-green-dark text-white rounded-xl text-xs font-bold shadow-xs flex items-center gap-1 shrink-0 cursor-pointer transition-colors active:scale-95"
             >
               <i data-lucide="plus" class="w-3.5 h-3.5 shrink-0"></i>
               <span>Add</span>
@@ -715,10 +715,10 @@ if ($hero_theme === 'crimson') {
 
 <!-- Automatic First-Time Geolocation Prompt Modal (Slide-in) -->
 <?php if (!$location_detected): ?>
-<div id="firstTimeLocationPrompt" class="fixed bottom-5 right-5 z-40 max-w-sm w-full bg-stone-900 text-white rounded-3xl p-5 shadow-2xl border border-stone-700 animate-bounce-subtle">
+<div id="firstTimeLocationPrompt" class="fixed z-40 bottom-20 inset-x-3 sm:bottom-6 sm:left-6 sm:right-auto sm:inset-x-auto max-w-sm mx-auto sm:mx-0 w-auto bg-stone-900/95 backdrop-blur-md text-white rounded-3xl p-4 sm:p-5 shadow-2xl border border-stone-700">
   <div class="flex items-start justify-between gap-3 mb-2">
     <div class="flex items-center gap-2">
-      <div class="w-8 h-8 rounded-xl bg-amber-400 text-stone-950 flex items-center justify-center font-bold">
+      <div class="w-8 h-8 rounded-xl bg-amber-400 text-stone-950 flex items-center justify-center font-bold shrink-0">
         <i data-lucide="map-pin" class="w-4 h-4"></i>
       </div>
       <div>
@@ -726,27 +726,32 @@ if ($hero_theme === 'crimson') {
         <p class="text-[10px] text-stone-400">Discover local workshops & 24h delivery</p>
       </div>
     </div>
-    <button onclick="dismissFirstTimePrompt()" class="text-stone-400 hover:text-white p-1 rounded-lg">
+    <button type="button" onclick="dismissFirstTimePrompt()" class="text-stone-400 hover:text-white p-1 rounded-lg" aria-label="Close">
       <i data-lucide="x" class="w-4 h-4"></i>
     </button>
   </div>
-  <p class="text-[11px] text-stone-300 mb-3.5 leading-relaxed">
+  <p class="text-[11px] text-stone-300 mb-3 leading-relaxed">
     Allow location access to show nearby rural foundries, exact India Post shipping charges, and 24-48h express dispatch.
   </p>
   <div class="flex items-center gap-2">
-    <button onclick="detectGPSLocation(); dismissFirstTimePrompt();" class="flex-1 py-2 px-3 bg-amber-400 hover:bg-amber-300 text-stone-950 font-black rounded-xl text-xs flex items-center justify-center gap-1.5 transition cursor-pointer">
+    <button type="button" onclick="detectGPSLocation(); dismissFirstTimePrompt();" class="flex-1 py-2 px-3 bg-amber-400 hover:bg-amber-300 text-stone-950 font-black rounded-xl text-xs flex items-center justify-center gap-1.5 transition cursor-pointer">
       <i data-lucide="crosshair" class="w-3.5 h-3.5"></i>
       <span>Allow GPS</span>
     </button>
-    <button onclick="openPincodeModal(); dismissFirstTimePrompt();" class="py-2 px-3 bg-stone-800 hover:bg-stone-700 text-stone-300 font-bold rounded-xl text-xs transition border border-stone-700 cursor-pointer">
+    <button type="button" onclick="openPincodeModal(); dismissFirstTimePrompt();" class="py-2 px-3 bg-stone-800 hover:bg-stone-700 text-stone-300 font-bold rounded-xl text-xs transition border border-stone-700 cursor-pointer">
       Enter PIN
     </button>
   </div>
 </div>
 <script>
+if (typeof localStorage !== 'undefined' && localStorage.getItem('ggh_dismissed_nearby_prompt') === '1') {
+  const el = document.getElementById('firstTimeLocationPrompt');
+  if (el) el.style.display = 'none';
+}
 function dismissFirstTimePrompt() {
   const el = document.getElementById('firstTimeLocationPrompt');
   if (el) el.remove();
+  try { localStorage.setItem('ggh_dismissed_nearby_prompt', '1'); } catch(e){}
 }
 </script>
 <?php endif; ?>

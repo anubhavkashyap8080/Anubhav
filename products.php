@@ -225,17 +225,17 @@ if (!empty($category_slug)) {
 
               <!-- Price & Add (Strictly Non-Overflowing Grid) -->
               <div class="pt-3 border-t border-gray-100 mt-3 space-y-1">
-                <div class="flex items-center justify-between gap-1.5">
-                  <div class="flex items-baseline gap-1.5 min-w-0 truncate">
-                    <span class="text-base sm:text-lg font-extrabold text-gray-900 font-display truncate"><?= format_price($p['price']) ?></span>
+                <div class="flex items-center justify-between gap-1">
+                  <div class="flex items-baseline gap-1 shrink-0 whitespace-nowrap">
+                    <span class="text-sm sm:text-base font-extrabold text-gray-900 font-display whitespace-nowrap shrink-0"><?= format_price($p['price']) ?></span>
                     <?php if ($p['original_price'] > $p['price']): ?>
-                      <span class="text-xs text-gray-400 line-through shrink-0"><?= format_price($p['original_price']) ?></span>
+                      <span class="text-[10px] sm:text-xs text-gray-400 line-through shrink-0"><?= format_price($p['original_price']) ?></span>
                     <?php endif; ?>
                   </div>
 
                   <button 
                     onclick="addToCart(<?= $p['id'] ?>, 1, event)" 
-                    class="px-3 py-1.5 bg-brand-green hover:bg-brand-green-dark text-white rounded-xl text-xs font-bold shadow-xs flex items-center gap-1 shrink-0 cursor-pointer transition-colors active:scale-95"
+                    class="px-2.5 sm:px-3 py-1.5 bg-brand-green hover:bg-brand-green-dark text-white rounded-xl text-xs font-bold shadow-xs flex items-center gap-1 shrink-0 cursor-pointer transition-colors active:scale-95"
                   >
                     <i data-lucide="plus" class="w-3.5 h-3.5 shrink-0"></i>
                     <span>Add</span>

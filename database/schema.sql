@@ -323,7 +323,12 @@ INSERT IGNORE INTO `site_settings` (`setting_key`, `setting_value`) VALUES
 ('payu_merchant_salt', 'eCwWELxi'),
 ('payu_mode', 'test'),
 ('cod_enabled', '1'),
-('commission_rate_default', '4.00');
+('commission_rate_default', '4.00'),
+('logo_height_mobile', '38'),
+('logo_height_desktop', '48'),
+('site_logo_url', '/logo.png'),
+('use_gif_logo', '0'),
+('logo_gif_url', '');
 
 
 -- ==========================================================================

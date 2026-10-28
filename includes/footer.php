@@ -60,8 +60,11 @@
         
         <!-- Brand & Factory Info with Logo -->
         <div class="lg:col-span-2 space-y-4">
+          <?php 
+            $footer_logo = (get_setting('use_gif_logo', '0') === '1' && !empty(get_setting('logo_gif_url'))) ? get_setting('logo_gif_url') : get_setting('site_logo_url', '/logo.png');
+          ?>
           <a href="/" class="flex items-center gap-2">
-            <img src="/logo.png" alt="GaunGaliHat" class="h-10 sm:h-12 w-auto object-contain bg-white/90 p-1 rounded-lg" />
+            <img src="<?= htmlspecialchars($footer_logo) ?>" alt="<?= htmlspecialchars(APP_NAME) ?>" class="h-10 sm:h-12 w-auto object-contain bg-white/90 p-1 rounded-lg" onerror="this.onerror=null; this.src='/logo.png';" />
             <div>
               <span class="font-extrabold text-lg sm:text-xl font-display text-white block">GaunGaliHat</span>
               <span class="text-[10px] text-amber-300 font-semibold uppercase tracking-wider block">A Brand by S S Industries</span>

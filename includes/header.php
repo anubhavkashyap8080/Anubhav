@@ -32,6 +32,18 @@ $og_image = get_site_setting('seo_og_image', 'https://images.unsplash.com/photo-
 $twitter_handle = get_site_setting('seo_twitter_handle', '@ganvgalihat');
 $gsc_tag = get_site_setting('seo_google_console', '');
 $ga4_id = get_site_setting('ga4_measurement_id', get_site_setting('seo_google_analytics', ''));
+
+// Brand Logo Sizing & Occasion GIF Logo Settings
+$logo_height_mobile = (int)get_setting('logo_height_mobile', 38);
+$logo_height_desktop = (int)get_setting('logo_height_desktop', 48);
+if ($logo_height_mobile < 24 || $logo_height_mobile > 64) $logo_height_mobile = 38;
+if ($logo_height_desktop < 30 || $logo_height_desktop > 80) $logo_height_desktop = 48;
+
+$use_gif_logo = (get_setting('use_gif_logo', '0') === '1');
+$logo_gif_url = get_setting('logo_gif_url', '');
+$site_logo_url = get_setting('site_logo_url', '/logo.png');
+
+$active_site_logo = ($use_gif_logo && !empty($logo_gif_url)) ? $logo_gif_url : $site_logo_url;
 ?>
 <!DOCTYPE html>
 <html lang="en" class="scroll-smooth bg-stone-50">
@@ -219,14 +231,15 @@ $ga4_id = get_site_setting('ga4_measurement_id', get_site_setting('seo_google_an
           <i data-lucide="menu" class="w-6 h-6"></i>
         </button>
 
-        <!-- Brand Logo Only (Exact logo.png from Ajax site without extra placeholder text) -->
-        <a href="/" class="flex items-center shrink-0 group py-1" title="GaunGaliHat • Home">
-          <div class="relative h-9 sm:h-14 w-auto flex items-center shrink-0">
+        <!-- Brand Logo Only (Configurable via Admin & Responsive) -->
+        <a href="/" class="flex items-center shrink-0 group py-1" title="<?= htmlspecialchars(APP_NAME) ?> • Home">
+          <div class="relative w-auto flex items-center shrink-0" style="min-height: <?= $logo_height_mobile ?>px;">
             <img
-              src="/logo.png"
-              alt="GaunGaliHat Logo"
-              class="h-7 sm:h-12 w-auto max-w-[105px] sm:max-w-[210px] object-contain transition-transform group-hover:scale-105"
-              onerror="this.onerror=null; this.src='/assets/images/logo.png';"
+              src="<?= htmlspecialchars($active_site_logo) ?>"
+              alt="<?= htmlspecialchars(APP_NAME) ?> Logo"
+              style="height: <?= $logo_height_mobile ?>px;"
+              class="w-auto max-w-[150px] sm:max-w-[240px] object-contain transition-transform group-hover:scale-105 sm:!h-[<?= $logo_height_desktop ?>px]"
+              onerror="this.onerror=null; this.src='/logo.png';"
             />
           </div>
         </a>
@@ -529,7 +542,7 @@ $ga4_id = get_site_setting('ga4_measurement_id', get_site_setting('seo_google_an
         
         <!-- Header in Drawer -->
         <div class="flex items-center justify-between border-b border-gray-100 pb-3">
-          <img src="/logo.png" alt="GaunGaliHat" class="h-9 w-auto object-contain" />
+          <img src="<?= htmlspecialchars($active_site_logo) ?>" alt="<?= htmlspecialchars(APP_NAME) ?>" style="height: <?= max(34, $logo_height_mobile) ?>px;" class="w-auto object-contain" onerror="this.onerror=null; this.src='/logo.png';" />
           <button id="mobile-menu-close" class="p-1.5 text-gray-400 hover:text-gray-700 rounded-lg">
             <i data-lucide="x" class="w-5 h-5"></i>
           </button>

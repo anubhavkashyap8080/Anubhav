@@ -53,9 +53,13 @@ function clean_input($data) {
     return htmlspecialchars(trim((string)$data), ENT_QUOTES, 'UTF-8');
 }
 
-// Format INR Price
-function format_price($amount) {
-    return '₹' . number_format((float)$amount, 2);
+// Format INR Price (Clean whole rupee display on products, e.g. ₹240 or ₹240.50)
+function format_price($amount, $always_decimals = false) {
+    $val = (float)$amount;
+    if (!$always_decimals && fmod($val, 1) == 0.0) {
+        return '₹' . number_format($val, 0);
+    }
+    return '₹' . number_format($val, 2);
 }
 
 // Generate / Get CSRF Token
@@ -259,12 +263,13 @@ function secure_upload_image($file_input, $dest_dir = 'uploads/') {
         'image/jpeg' => 'jpg',
         'image/png'  => 'png',
         'image/webp' => 'webp',
+        'image/gif'  => 'gif',
         'image/svg+xml' => 'svg'
     ];
 
     if (!array_key_exists($mime, $allowed_mimes)) {
         record_security_event('suspicious_file_upload_attempt', ['mime' => $mime, 'original_name' => $file['name']]);
-        return ['success' => false, 'error' => 'अमान्य फ़ाइल प्रकार! केवल JPG, PNG या WebP चित्र ही अनुमत हैं (Invalid image type).'];
+        return ['success' => false, 'error' => 'अमान्य फ़ाइल प्रकार! केवल JPG, PNG, GIF या WebP चित्र ही अनुमत हैं (Invalid image type).'];
     }
 
     $ext = $allowed_mimes[$mime];
@@ -763,6 +768,12 @@ function get_site_setting($key, $default = '') {
     }
     $res = $settings_cache[$key] ?? $default;
     return function_exists('fix_utf8_mojibake') ? fix_utf8_mojibake($res) : $res;
+}
+
+if (!function_exists('get_setting')) {
+    function get_setting($key, $default = '') {
+        return get_site_setting($key, $default);
+    }
 }
 
 /**
