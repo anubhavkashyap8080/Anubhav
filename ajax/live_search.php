@@ -21,9 +21,10 @@ try {
         SELECT p.id, p.code, p.name, p.hindi_name, p.slug, p.price, p.original_price, p.discount, p.image, p.stock_status, c.name as category_name 
         FROM products p
         LEFT JOIN categories c ON p.category_id = c.id
-        WHERE (p.name LIKE ? OR p.hindi_name LIKE ? OR p.code LIKE ? OR p.description LIKE ?)
+        LEFT JOIN vendors v ON p.vendor_id = v.id
+        WHERE (p.name LIKE ? OR p.hindi_name LIKE ? OR p.code LIKE ? OR p.description LIKE ? OR v.name LIKE ? OR v.business_name LIKE ? OR v.village LIKE ? OR v.district LIKE ?)
     ";
-    $params = [$search_param, $search_param, $search_param, $search_param];
+    $params = [$search_param, $search_param, $search_param, $search_param, $search_param, $search_param, $search_param, $search_param];
 
     if ($category_id > 0) {
         $sql .= " AND p.category_id = ?";

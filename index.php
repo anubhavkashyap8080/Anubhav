@@ -455,7 +455,7 @@ if ($hero_theme === 'crimson') {
 </section>
 
 <!-- 4. Nearby Rural Artisans & Express 24h Dispatch Section -->
-<section class="bg-stone-100/90 py-10 sm:py-14 border-y border-stone-200">
+<section id="nearby-artisans" class="bg-stone-100/90 py-10 sm:py-14 border-y border-stone-200">
   <div class="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 space-y-6">
     
     <div class="flex flex-col sm:flex-row sm:items-end justify-between gap-3">
@@ -473,6 +473,10 @@ if ($hero_theme === 'crimson') {
       </div>
 
       <div class="flex items-center gap-2">
+        <a href="/artisans.php" class="px-3.5 py-2 bg-emerald-700 hover:bg-emerald-800 text-white rounded-xl text-xs font-bold shadow-2xs flex items-center gap-1.5 transition">
+          <i data-lucide="store" class="w-3.5 h-3.5"></i>
+          <span>All Artisans Directory (कारीगर निर्देशिका)</span>
+        </a>
         <button type="button" onclick="detectGPSLocation()" class="px-3.5 py-2 bg-white hover:bg-stone-50 text-stone-900 rounded-xl text-xs font-bold border border-stone-300 shadow-2xs flex items-center gap-1.5 transition cursor-pointer">
           <i data-lucide="crosshair" class="w-3.5 h-3.5 text-amber-600"></i>
           <span>Re-Scan Nearby</span>

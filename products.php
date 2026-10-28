@@ -30,8 +30,12 @@ $sql = "
 $params = [];
 
 if (!empty($search)) {
-    $sql .= " AND (p.name LIKE ? OR p.hindi_name LIKE ? OR p.code LIKE ? OR p.description LIKE ?)";
+    $sql .= " AND (p.name LIKE ? OR p.hindi_name LIKE ? OR p.code LIKE ? OR p.description LIKE ? OR v.name LIKE ? OR v.business_name LIKE ? OR v.village LIKE ? OR v.district LIKE ?)";
     $p = '%' . $search . '%';
+    $params[] = $p;
+    $params[] = $p;
+    $params[] = $p;
+    $params[] = $p;
     $params[] = $p;
     $params[] = $p;
     $params[] = $p;

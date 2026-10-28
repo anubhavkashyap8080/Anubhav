@@ -38,6 +38,7 @@ echo "Allow: /products.php\n";
 echo "Allow: /product.php\n";
 echo "Allow: /blogs.php\n";
 echo "Allow: /blog-detail.php\n";
+echo "Allow: /artisans.php\n";
 echo "Allow: /about.php\n";
 echo "Allow: /contact.php\n\n";
 

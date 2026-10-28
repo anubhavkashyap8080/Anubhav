@@ -319,7 +319,7 @@ $active_site_logo = ($use_gif_logo && !empty($logo_gif_url)) ? $logo_gif_url : $
           
           <!-- Nearby Artisans Button -->
           <a
-            href="/about.php"
+            href="/artisans.php"
             class="hidden md:inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-emerald-600/30 text-brand-green bg-emerald-50 hover:bg-brand-green hover:text-white transition-all text-xs font-semibold"
             title="Locate rural artisans & foundries"
           >
@@ -448,7 +448,7 @@ $active_site_logo = ($use_gif_logo && !empty($logo_gif_url)) ? $logo_gif_url : $
                     <i data-lucide="heart" class="w-4 h-4 text-gray-400"></i> My Wishlist (<?= $wishlist_count ?>)
                   </a>
 
-                  <a href="/about.php" class="flex items-center gap-2 px-4 py-2 font-medium text-gray-700 hover:bg-gray-50 hover:text-brand-green">
+                  <a href="/artisans.php" class="flex items-center gap-2 px-4 py-2 font-medium text-gray-700 hover:bg-gray-50 hover:text-brand-green">
                     <i data-lucide="map-pin" class="w-4 h-4 text-brand-orange"></i> Nearby Artisan Directory
                   </a>
                 </div>
@@ -536,7 +536,7 @@ $active_site_logo = ($use_gif_logo && !empty($logo_gif_url)) ? $logo_gif_url : $
           <?php endforeach; ?>
 
           <a
-            href="/about.php"
+            href="/artisans.php"
             class="flex items-center gap-1.5 px-3 py-1.5 rounded-full transition-all shrink-0 hover:bg-emerald-100/70 text-brand-green font-semibold border border-emerald-300/60"
           >
             <i data-lucide="map-pin" class="w-3.5 h-3.5 text-brand-orange"></i>
@@ -564,6 +564,9 @@ $active_site_logo = ($use_gif_logo && !empty($logo_gif_url)) ? $logo_gif_url : $
         <div class="space-y-1 text-xs font-semibold">
           <a href="/index.php" class="flex items-center gap-2.5 px-3 py-2.5 rounded-xl hover:bg-gray-50 text-gray-800">
             <i data-lucide="home" class="w-4 h-4 text-brand-green"></i> Home Store
+          </a>
+          <a href="/artisans.php" class="flex items-center gap-2.5 px-3 py-2.5 rounded-xl bg-amber-50 hover:bg-amber-100 text-stone-900 font-bold border border-amber-200">
+            <i data-lucide="map-pin" class="w-4 h-4 text-brand-orange"></i> 📍 Nearby Artisans (निकटतम कारीगर)
           </a>
           <a href="/products.php" class="flex items-center gap-2.5 px-3 py-2.5 rounded-xl hover:bg-gray-50 text-gray-800">
             <i data-lucide="layout-grid" class="w-4 h-4 text-brand-orange"></i> All Products Catalog

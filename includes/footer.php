@@ -99,6 +99,7 @@
           <h4 class="font-bold text-white uppercase tracking-wider text-xs mb-3 font-display">Quick Access</h4>
           <ul class="space-y-2 text-slate-400">
             <li><a href="/about.php" class="hover:text-white">About S S Industries</a></li>
+            <li><a href="/artisans.php" class="hover:text-amber-300 font-semibold text-amber-300">Nearby Artisans Directory</a></li>
             <li><a href="/seller/dashboard.php" class="hover:text-brand-orange font-bold text-brand-orange">Artisan & Seller Portal</a></li>
             <li><a href="/seller-register.php" class="hover:text-white">Register Artisan Workshop</a></li>
             <li><a href="/account.php" class="hover:text-white">Track India Post Parcel</a></li>

@@ -100,6 +100,13 @@ if ($type === 'products') {
         }
     } catch (Exception $e) {}
 } elseif ($type === 'sellers') {
+    echo "  <url>\n";
+    echo "    <loc>" . htmlspecialchars($base_url . '/artisans.php', ENT_XML1, 'UTF-8') . "</loc>\n";
+    echo "    <lastmod>{$today_iso}</lastmod>\n";
+    echo "    <changefreq>daily</changefreq>\n";
+    echo "    <priority>0.8</priority>\n";
+    echo "  </url>\n";
+
     try {
         $stmt = $pdo->query("SELECT id, name, business_name, slug, created_at FROM vendors WHERE verified = 1 ORDER BY id ASC");
         while ($row = $stmt->fetch()) {
