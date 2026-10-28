@@ -8,6 +8,10 @@ require_once __DIR__ . '/functions.php';
 
 if (!headers_sent()) {
     header('Content-Type: text/html; charset=UTF-8');
+    // Pages embed a per-session CSRF token: never let LiteSpeed/Cloudflare/browser cache them
+    header('Cache-Control: private, no-store, no-cache, must-revalidate, max-age=0');
+    header('Pragma: no-cache');
+    header('X-LiteSpeed-Cache-Control: no-cache');
 }
 
 $current_user = get_logged_in_user();
@@ -176,7 +180,15 @@ $active_site_logo = ($use_gif_logo && !empty($logo_gif_url)) ? $logo_gif_url : $
   <?php endif; ?>
   
   <!-- Static Compiled Tailwind CSS (Item 7 Hardening) -->
-  <link rel="stylesheet" href="/assets/css/tailwind.css">
+  <?php
+    // Cache-busting version for CSS/JS (bumped from Admin > Cache Manager, falls back to file mtime)
+    $asset_v = get_site_setting('asset_version', '');
+    $av = function ($rel) use ($asset_v) {
+        $v = $asset_v !== '' ? $asset_v : (string)@filemtime(__DIR__ . '/..' . $rel);
+        return $rel . '?v=' . rawurlencode($v ?: '1');
+    };
+  ?>
+  <link rel="stylesheet" href="<?= $av('/assets/css/tailwind.css') ?>">
 
   <!-- Google Fonts & Self-Hosted Pin-Versioned Icons & Libraries -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -186,9 +198,9 @@ $active_site_logo = ($use_gif_logo && !empty($logo_gif_url)) ? $logo_gif_url : $
   <script src="/assets/vendor/chart.umd.min.js"></script>
 
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
-  <link rel="stylesheet" href="/assets/css/style.css">
+  <link rel="stylesheet" href="<?= $av('/assets/css/style.css') ?>">
   <meta name="csrf-token" content="<?= htmlspecialchars(csrf_token(), ENT_QUOTES, 'UTF-8') ?>">
-  <script src="/assets/js/main.js"></script>
+  <script src="<?= $av('/assets/js/main.js') ?>"></script>
 </head>
 <body class="flex flex-col min-h-screen text-gray-800 antialiased selection:bg-emerald-200 overflow-x-hidden">
 

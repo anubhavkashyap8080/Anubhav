@@ -191,6 +191,18 @@ $flash = get_flash();
           <i class="fa-solid fa-shield-halved text-emerald-400"></i> सुरक्षा केंद्र
         </a>
 
+        <?php if (function_exists('is_super_admin') && is_super_admin()): ?>
+        <a href="/admin/security_logs.php"
+          class="px-3 py-2 rounded-lg transition whitespace-nowrap flex items-center gap-1.5 <?= $current_page === 'security_logs.php' ? 'bg-indigo-600 text-white' : 'text-indigo-200 hover:text-white hover:bg-indigo-800' ?>">
+          <i class="fa-solid fa-satellite-dish text-rose-300"></i> सुरक्षा लॉग्स
+        </a>
+
+        <a href="/admin/cache_manager.php"
+          class="px-3 py-2 rounded-lg transition whitespace-nowrap flex items-center gap-1.5 <?= $current_page === 'cache_manager.php' ? 'bg-indigo-600 text-white' : 'text-indigo-200 hover:text-white hover:bg-indigo-800' ?>">
+          <i class="fa-solid fa-broom text-amber-300"></i> कैश मैनेजर
+        </a>
+        <?php endif; ?>
+
         <a href="/admin/audit_logs.php"
           class="px-3 py-2 rounded-lg transition whitespace-nowrap flex items-center gap-1.5 <?= $current_page === 'audit_logs.php' ? 'bg-indigo-600 text-white' : 'text-indigo-200 hover:text-white hover:bg-indigo-800' ?>">
           <i class="fa-solid fa-clipboard-check text-indigo-300"></i> ऑडिट लॉग्स

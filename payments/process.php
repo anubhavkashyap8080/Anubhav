@@ -248,7 +248,8 @@ try {
 
 } catch (Exception $e) {
     if ($pdo->inTransaction()) $pdo->rollBack();
-    set_flash('error', 'Order placement failed: ' . $e->getMessage());
+    error_log('[GaunGaliHat Order Error] ' . $e->getMessage());
+    set_flash('error', 'Order placement failed. Please try again or contact support.');
     header('Location: /checkout.php');
     exit;
 }

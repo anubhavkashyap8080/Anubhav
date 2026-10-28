@@ -53,6 +53,12 @@ return [
         'client_secret' => getenv('GOOGLE_CLIENT_SECRET') ?: '',
     ],
 
+    // Optional: Cloudflare cache purge from Admin > Cache Manager (token needs only "Zone > Cache Purge")
+    'cloudflare' => [
+        'zone_id'   => getenv('CF_ZONE_ID') ?: '',
+        'api_token' => getenv('CF_API_TOKEN') ?: '',
+    ],
+
     // Security Governance & Administrative Alerts
     'security' => [
         'owner_alert_email' => getenv('OWNER_ALERT_EMAIL') ?: '',

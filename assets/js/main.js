@@ -15,6 +15,36 @@ function getCsrfToken() {
   return meta ? (meta.getAttribute('content') || '') : '';
 }
 
+
+// POST helper: sends CSRF token, and if the server rejects it (stale/cached page token), fetches a fresh one and retries once
+function postWithCsrf(url, buildFormData) {
+  function attempt(token) {
+    const fd = buildFormData();
+    fd.set('csrf_token', token);
+    return fetch(url, {
+      method: 'POST',
+      credentials: 'same-origin',
+      headers: { 'X-CSRF-Token': token, 'X-Requested-With': 'XMLHttpRequest' },
+      body: fd
+    }).then(res => res.json().catch(() => ({ success: false, message: 'Server returned an invalid response (HTTP ' + res.status + ').' })));
+  }
+  return attempt(getCsrfToken()).then(data => {
+    if (data && data.success === false && /csrf/i.test(String(data.error || data.message || ''))) {
+      return fetch('/ajax/csrf_token.php', { credentials: 'same-origin', cache: 'no-store' })
+        .then(r => r.json())
+        .then(t => {
+          if (t && t.csrf_token) {
+            const meta = document.querySelector('meta[name="csrf-token"]');
+            if (meta) meta.setAttribute('content', t.csrf_token);
+            return attempt(t.csrf_token);
+          }
+          return data;
+        });
+    }
+    return data;
+  });
+}
+
 // Item 19: Strict Output Encoding Helper
 function escapeHtml(str) {
   if (str === null || str === undefined) return '';
@@ -328,31 +358,25 @@ function closeCartPopup() {
 }
 
 // Item 16: Add to cart with CSRF token in header and body
-function addToCart(productId, qty = 1, e = null) {
+function addToCart(productId, qty = 1, e = null, e2 = null) {
+  // Some pages call addToCart(id, 1, this, event) - accept the event in either position
   if (e && typeof e.preventDefault === 'function') e.preventDefault();
+  else if (e2 && typeof e2.preventDefault === 'function') e2.preventDefault();
   
-  const csrf = getCsrfToken();
-  const formData = new FormData();
-  formData.append('action', 'add');
-  formData.append('product_id', productId);
-  formData.append('quantity', qty);
-  if (csrf) formData.append('csrf_token', csrf);
-
-  fetch('/ajax/cart_actions.php', {
-    method: 'POST',
-    headers: {
-      'X-CSRF-Token': csrf
-    },
-    body: formData
+  return postWithCsrf('/ajax/cart_actions.php', () => {
+    const formData = new FormData();
+    formData.append('action', 'add');
+    formData.append('product_id', productId);
+    formData.append('quantity', qty);
+    return formData;
   })
-    .then(res => res.json())
     .then(data => {
       if (data.success) {
         showCartPopup(data.product, data.cart_count, data.cart_subtotal);
         updateCartBadge(data.cart_count, data.cart_subtotal);
         showToast('success', data.message || 'Product added to your cart!');
       } else {
-        showToast('error', data.message || 'Failed to add product.');
+        showToast('error', data.message || data.error || 'Failed to add product.');
       }
     })
     .catch(err => {
@@ -382,20 +406,13 @@ function updateCartBadge(count, subtotal = null) {
 // Item 16: Wishlist toggle with CSRF token in header and body
 function toggleWishlist(productId, btn = null, e = null) {
   if (e && typeof e.preventDefault === 'function') e.preventDefault();
+  if (btn && typeof btn.preventDefault === 'function') { btn.preventDefault(); btn = null; }
 
-  const csrf = getCsrfToken();
-  const formData = new FormData();
-  formData.append('product_id', productId);
-  if (csrf) formData.append('csrf_token', csrf);
-
-  fetch('/ajax/wishlist_actions.php', {
-    method: 'POST',
-    headers: {
-      'X-CSRF-Token': csrf
-    },
-    body: formData
+  return postWithCsrf('/ajax/wishlist_actions.php', () => {
+    const formData = new FormData();
+    formData.append('product_id', productId);
+    return formData;
   })
-    .then(res => res.json())
     .then(data => {
       if (data.success) {
         showToast('success', data.message);
@@ -427,7 +444,7 @@ function toggleWishlist(productId, btn = null, e = null) {
           }
         }
       } else {
-        showToast('error', data.message || 'Wishlist update failed.');
+        showToast('error', data.message || data.error || 'Wishlist update failed.');
       }
     })
     .catch(() => showToast('error', 'Wishlist update failed.'));

@@ -21,7 +21,7 @@ if (empty($cart)) {
 $user = get_logged_in_user();
 $subtotal = get_cart_subtotal();
 $total_weight = get_cart_total_weight();
-$default_pincode = $_SESSION['delivery_pincode'] ?? '241126';
+$default_pincode = ($_SESSION['shipping_pincode'] ?? $_SESSION['delivery_pincode'] ?? '241126');
 $shipping = calculate_shipping_rate($default_pincode, $subtotal, $total_weight);
 $shipping_fee = $shipping['shipping_fee'];
 

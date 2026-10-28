@@ -257,14 +257,86 @@ function calc_distance_km($lat1, $lon1, $lat2, $lon2) {
     return round($earth_radius * $c, 1);
 }
 
+// Security Event Severity Classifier (critical / high / medium / info)
+function security_severity_patterns() {
+    return [
+        'critical' => ['idor_attempt', 'suspicious_file_upload%', 'impersonat%', 'privilege%', 'sql_injection%'],
+        'high'     => ['login_rate_limit_triggered', 'login_failed_bad_2fa', 'login_unauthorized_portal_access',
+                       'csrf_validation_failed', 'permission_denied', 'ip_blocked%'],
+        'medium'   => ['login_failed_bad_password', 'login_failed_unknown_user', 'login_attempt_suspended_account',
+                       'admin_session_timeout'],
+    ];
+}
+
+function security_event_severity($event_type) {
+    $event_type = strtolower((string)$event_type);
+    foreach (security_severity_patterns() as $level => $patterns) {
+        foreach ($patterns as $pat) {
+            $regex = '/^' . str_replace('%', '.*', preg_quote(rtrim($pat, '%'), '/')) . (substr($pat, -1) === '%' ? '.*' : '') . '$/';
+            if (preg_match($regex, $event_type)) return $level;
+        }
+    }
+    return 'info';
+}
+
+// Security Event Logger (severity, real client IP, user-agent, URL & method are captured automatically)
 function record_security_event($event_type, $details = null, $user_id = null) {
     global $pdo;
+    if (!$pdo) return;
     try {
-        $ip = $_SERVER['REMOTE_ADDR'] ?? '127.0.0.1';
+        $ip = function_exists('get_client_ip') ? get_client_ip() : ($_SERVER['REMOTE_ADDR'] ?? '127.0.0.1');
         $uid = $user_id ?: ($_SESSION['user_id'] ?? null);
-        $stmt = $pdo->prepare("INSERT INTO security_logs (event_type, ip_address, user_id, details) VALUES (?, ?, ?, ?)");
-        $stmt->execute([$event_type, $ip, $uid, is_array($details) ? json_encode($details) : (string)$details]);
-    } catch (Exception $e) {}
+        $detail_text = is_array($details) ? json_encode($details, JSON_UNESCAPED_UNICODE) : (string)$details;
+        $severity = security_event_severity($event_type);
+        $ua = substr((string)($_SERVER['HTTP_USER_AGENT'] ?? ''), 0, 255);
+        $uri = substr((string)($_SERVER['REQUEST_URI'] ?? ''), 0, 500);
+        $method = substr((string)($_SERVER['REQUEST_METHOD'] ?? ''), 0, 10);
+
+        try {
+            $stmt = $pdo->prepare("INSERT INTO security_logs (event_type, severity, ip_address, user_id, details, user_agent, request_uri, request_method) VALUES (?, ?, ?, ?, ?, ?, ?, ?)");
+            $stmt->execute([$event_type, $severity, $ip, $uid, $detail_text, $ua, $uri, $method]);
+        } catch (Throwable $e_adv) {
+            try {
+                $stmt = $pdo->prepare("INSERT INTO security_logs (event_type, ip_address, user_id, details) VALUES (?, ?, ?, ?)");
+                $stmt->execute([$event_type, $ip, $uid, $detail_text]);
+            } catch (Throwable $e_details) {
+                $stmt = $pdo->prepare("INSERT INTO security_logs (event_type, description, user_id, ip_address) VALUES (?, ?, ?, ?)");
+                $stmt->execute([$event_type, $detail_text, $uid, $ip]);
+            }
+        }
+
+        // E-mail the owner about critical events (max once per 15 min per event type)
+        if ($severity === 'critical' && function_exists('check_rate_limit') && check_rate_limit('sec_alert', $event_type, 1, 900)) {
+            send_owner_security_alert('Critical: ' . $event_type, ['ip' => $ip, 'user_id' => $uid, 'uri' => $uri, 'details' => $detail_text]);
+        }
+    } catch (Throwable $e) {}
+}
+
+// ------------------------------------------------------------------
+// IP Block List enforcement (managed from Admin > Security Logs)
+// ------------------------------------------------------------------
+function is_ip_blocked($ip) {
+    global $pdo;
+    if (!$pdo || empty($ip)) return false;
+    try {
+        $stmt = $pdo->prepare("SELECT id FROM blocked_ips WHERE ip_address = ? AND (blocked_until IS NULL OR blocked_until > ?) LIMIT 1");
+        $stmt->execute([$ip, date('Y-m-d H:i:s')]);
+        return (bool)$stmt->fetch();
+    } catch (Throwable $e) {
+        return false;
+    }
+}
+
+function enforce_ip_block() {
+    if (PHP_SAPI === 'cli') return;
+    // Super admins are never locked out of the console
+    if (($_SESSION['user_role'] ?? '') === 'super_admin') return;
+    $ip = get_client_ip();
+    if (is_ip_blocked($ip)) {
+        http_response_code(403);
+        header('Content-Type: text/html; charset=UTF-8');
+        die('<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Access Denied</title></head><body style="font-family:sans-serif;text-align:center;padding:60px"><h1>403 — Access Denied</h1><p>आपके IP पते से पहुँच अस्थायी रूप से रोकी गई है। Your IP address has been blocked by the site administrator.</p></body></html>');
+    }
 }
 
 // Item 21: Neutralize CSV Formula Injection (Excel / LibreOffice DDE & formula execution mitigation)
@@ -1674,3 +1746,6 @@ function record_404_hit($path = null) {
 if (php_sapi_name() !== 'cli') {
     handle_seo_redirects();
 }
+
+// Enforce IP block list on every request
+enforce_ip_block();

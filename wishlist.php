@@ -55,7 +55,7 @@ if (!empty($wishlist_ids) && $pdo) {
     <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
       <?php foreach ($wishlist_products as $p): ?>
         <div class="bg-white rounded-3xl border border-gray-200 p-4 flex flex-col justify-between space-y-3 relative group">
-          <button onclick="toggleWishlist(<?= $p['id'] ?>, this); window.location.reload();" class="absolute top-6 right-6 z-10 w-8 h-8 rounded-full bg-white border border-gray-200 shadow-sm flex items-center justify-center text-brand-orange hover:bg-orange-50 cursor-pointer">
+          <button onclick="Promise.resolve(toggleWishlist(<?= $p['id'] ?>, this)).finally(function(){ window.location.reload(); });" class="absolute top-6 right-6 z-10 w-8 h-8 rounded-full bg-white border border-gray-200 shadow-sm flex items-center justify-center text-brand-orange hover:bg-orange-50 cursor-pointer">
             <i data-lucide="trash-2" class="w-4 h-4 text-red-500"></i>
           </button>
 
@@ -67,7 +67,7 @@ if (!empty($wishlist_ids) && $pdo) {
           </a>
 
           <div class="pt-2 border-t border-gray-100">
-            <button onclick="addToCart(<?= $p['id'] ?>, 1); toggleWishlist(<?= $p['id'] ?>); window.location.reload();" class="w-full py-2 bg-brand-green hover:bg-brand-green-dark text-white rounded-xl text-xs font-bold cursor-pointer transition-colors flex items-center justify-center gap-1.5">
+            <button onclick="Promise.resolve(addToCart(<?= $p['id'] ?>, 1)).then(function(){ return toggleWishlist(<?= $p['id'] ?>); }).finally(function(){ window.location.reload(); });" class="w-full py-2 bg-brand-green hover:bg-brand-green-dark text-white rounded-xl text-xs font-bold cursor-pointer transition-colors flex items-center justify-center gap-1.5">
               <i data-lucide="shopping-bag" class="w-3.5 h-3.5"></i>
               <span>Move to Cart</span>
             </button>

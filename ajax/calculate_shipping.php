@@ -22,6 +22,7 @@ $shipping_data = calculate_shipping_rate($pincode, $subtotal, $total_weight);
 
 // Cache in session for checkout process
 $_SESSION['shipping_pincode'] = $shipping_data['pincode'];
+$_SESSION['delivery_pincode'] = $shipping_data['pincode']; // keep index.php/checkout.php in sync
 $_SESSION['shipping_fee'] = $shipping_data['shipping_fee'];
 $_SESSION['shipping_zone'] = $shipping_data['zone_name'];
 $_SESSION['shipping_eta'] = $shipping_data['eta_text'];

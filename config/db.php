@@ -422,6 +422,36 @@ function ensure_platform_schema($pdo) {
             $check_and_add_col('orders', 'order_access_token', 'VARCHAR(64) DEFAULT NULL');
             $check_and_add_col('orders', 'gateway_order_id', 'VARCHAR(100) DEFAULT NULL');
             $check_and_add_col('order_items', 'item_status', "VARCHAR(50) DEFAULT 'Confirmed'");
+
+            // Advanced Security Log columns (severity, user agent, request URI, details)
+            $check_and_add_col('security_logs', 'details', 'TEXT DEFAULT NULL');
+            $check_and_add_col('security_logs', 'severity', "VARCHAR(20) DEFAULT 'info'");
+            $check_and_add_col('security_logs', 'user_agent', 'VARCHAR(255) DEFAULT NULL');
+            $check_and_add_col('security_logs', 'request_uri', 'VARCHAR(500) DEFAULT NULL');
+            $check_and_add_col('security_logs', 'request_method', 'VARCHAR(10) DEFAULT NULL');
+            try {
+                // Legacy schema had `description TEXT NOT NULL` with no default -> make it optional
+                $desc_col = $pdo->query("SHOW COLUMNS FROM `security_logs` LIKE 'description'")->fetch();
+                if ($desc_col && strtoupper((string)($desc_col['Null'] ?? '')) === 'NO') {
+                    $pdo->exec("ALTER TABLE `security_logs` MODIFY `description` TEXT NULL");
+                }
+            } catch (Throwable $t) {}
+
+            // Blocked IPs table for IP blacklist manager in Admin > Security Logs
+            try {
+                $pdo->exec("
+                    CREATE TABLE IF NOT EXISTS `blocked_ips` (
+                        `id` INT AUTO_INCREMENT PRIMARY KEY,
+                        `ip_address` VARCHAR(45) NOT NULL,
+                        `reason` VARCHAR(255) DEFAULT 'Suspicious activity',
+                        `blocked_by` INT DEFAULT NULL,
+                        `blocked_until` DATETIME DEFAULT NULL,
+                        `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                        UNIQUE KEY `uk_ip_address` (`ip_address`),
+                        INDEX `idx_blocked_until` (`blocked_until`)
+                    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+                ");
+            } catch (Throwable $t) {}
         }
     } catch (Throwable $e_sec_schema) {}
 

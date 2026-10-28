@@ -263,19 +263,28 @@ $final_total = max(0, $cart_subtotal + $shipping['shipping_fee'] - $discount_amo
 </div>
 
 <script>
+function ggCsrf() {
+  const m = document.querySelector('meta[name="csrf-token"]');
+  return m ? (m.getAttribute('content') || '') : '';
+}
+
 function handleCartAction(action, productId, qty = 1) {
   const formData = new FormData();
+  formData.append('csrf_token', ggCsrf());
   formData.append('action', action);
   formData.append('product_id', productId);
   formData.append('quantity', qty);
 
-  fetch('/ajax/cart_actions.php', { method: 'POST', body: formData })
+  fetch('/ajax/cart_actions.php', { method: 'POST', headers: { 'X-CSRF-Token': ggCsrf() }, body: formData })
     .then(r => r.json())
     .then(data => {
       if (data.success) {
         window.location.reload();
+      } else {
+        alert(data.message || data.error || 'Cart update failed. Please refresh and try again.');
       }
-    });
+    })
+    .catch(() => alert('Network error. Please try again.'));
 }
 
 function calculateCartShipping() {
@@ -289,10 +298,11 @@ function calculateCartShipping() {
 
   const formData = new FormData();
   formData.append('pincode', pin);
+  formData.append('csrf_token', ggCsrf());
   formData.append('subtotal', <?= $cart_subtotal ?>);
   formData.append('total_weight', <?= $cart_weight ?>);
 
-  fetch('/ajax/calculate_shipping.php', { method: 'POST', body: formData })
+  fetch('/ajax/calculate_shipping.php', { method: 'POST', headers: { 'X-CSRF-Token': ggCsrf() }, body: formData })
     .then(r => r.json())
     .then(res => {
       if (res.success) {
