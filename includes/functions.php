@@ -173,6 +173,10 @@ function verify_csrf($token = null) {
     return isset($_SESSION['csrf_token']) && hash_equals($_SESSION['csrf_token'], (string)$token);
 }
 
+function csrf_check($token = null) {
+    return verify_csrf($token);
+}
+
 function csrf_protect() {
     if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $token = $_POST['csrf_token'] ?? ($_SERVER['HTTP_X_CSRF_TOKEN'] ?? '');
@@ -242,6 +246,17 @@ function render_impersonation_banner() {
 }
 
 // Security Event Logger
+function calc_distance_km($lat1, $lon1, $lat2, $lon2) {
+    $earth_radius = 6371; // Earth's mean radius in km
+    $dLat = deg2rad($lat2 - $lat1);
+    $dLon = deg2rad($lon2 - $lon1);
+    $a = sin($dLat / 2) * sin($dLat / 2) +
+         cos(deg2rad($lat1)) * cos(deg2rad($lat2)) *
+         sin($dLon / 2) * sin($dLon / 2);
+    $c = 2 * atan2(sqrt($a), sqrt(1 - $a));
+    return round($earth_radius * $c, 1);
+}
+
 function record_security_event($event_type, $details = null, $user_id = null) {
     global $pdo;
     try {
@@ -1024,14 +1039,26 @@ function get_logged_in_user($force_refresh = false) {
                     return null;
                 }
                 // Item 10: Invalidate session if password was changed after this session was created
-                if (!empty($user['password_changed_at']) && isset($_SESSION['login_time'])) {
-                    if ((int)$_SESSION['login_time'] < (strtotime($user['password_changed_at']) - 5)) {
-                        unset($_SESSION['user_id'], $_SESSION['user_name'], $_SESSION['user_role'], $_SESSION['user_email'], $_SESSION['login_time']);
-                        if (session_status() === PHP_SESSION_ACTIVE) {
-                            session_destroy();
+                if (!empty($user['password_changed_at'])) {
+                    if (isset($_SESSION['auth_pwd_ts'])) {
+                        if ($_SESSION['auth_pwd_ts'] !== (string)$user['password_changed_at']) {
+                            unset($_SESSION['user_id'], $_SESSION['user_name'], $_SESSION['user_role'], $_SESSION['user_email'], $_SESSION['login_time'], $_SESSION['auth_pwd_ts']);
+                            if (session_status() === PHP_SESSION_ACTIVE) {
+                                session_destroy();
+                            }
+                            $cached_user = null;
+                            return null;
                         }
-                        $cached_user = null;
-                        return null;
+                    } elseif (isset($_SESSION['login_time'])) {
+                        $pwd_time = strtotime($user['password_changed_at']);
+                        if ($pwd_time !== false && (int)$_SESSION['login_time'] < ($pwd_time - 300)) {
+                            unset($_SESSION['user_id'], $_SESSION['user_name'], $_SESSION['user_role'], $_SESSION['user_email'], $_SESSION['login_time']);
+                            if (session_status() === PHP_SESSION_ACTIVE) {
+                                session_destroy();
+                            }
+                            $cached_user = null;
+                            return null;
+                        }
                     }
                 }
                 // Live sync session with DB role on every request
@@ -1228,6 +1255,7 @@ function authenticate_user($identifier, $password, $expected_role_group = null, 
     $_SESSION['user_role'] = $user['role'];
     $_SESSION['user_email'] = $user['email'];
     $_SESSION['login_time'] = time();
+    $_SESSION['auth_pwd_ts'] = (string)($user['password_changed_at'] ?? '');
 
     if (!empty($user['force_password_change'])) {
         $_SESSION['force_password_change'] = 1;

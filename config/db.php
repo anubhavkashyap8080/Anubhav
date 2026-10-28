@@ -350,13 +350,50 @@ function ensure_platform_schema($pdo) {
                 CREATE TABLE IF NOT EXISTS `security_logs` (
                     `id` INT AUTO_INCREMENT PRIMARY KEY,
                     `event_type` VARCHAR(100) NOT NULL,
-                    `description` TEXT NOT NULL,
+                    `details` TEXT DEFAULT NULL,
+                    `description` TEXT DEFAULT NULL,
                     `user_id` INT DEFAULT NULL,
                     `ip_address` VARCHAR(45) NOT NULL,
                     `user_agent` TEXT DEFAULT NULL,
                     `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
                     INDEX `idx_sl_event` (`event_type`),
                     INDEX `idx_sl_created` (`created_at`)
+                ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+                CREATE TABLE IF NOT EXISTS `rate_limits` (
+                    `id` INT AUTO_INCREMENT PRIMARY KEY,
+                    `action` VARCHAR(50) NOT NULL,
+                    `identifier` VARCHAR(100) NOT NULL,
+                    `hit_count` INT NOT NULL DEFAULT 1,
+                    `first_hit_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                    `last_hit_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+                    UNIQUE KEY `uk_action_identifier` (`action`, `identifier`),
+                    INDEX `idx_rate_limit_action` (`action`, `last_hit_at`)
+                ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+                CREATE TABLE IF NOT EXISTS `hero_campaigns` (
+                    `id` INT AUTO_INCREMENT PRIMARY KEY,
+                    `name` VARCHAR(150) NOT NULL,
+                    `slug` VARCHAR(100) NOT NULL,
+                    `campaign_type` VARCHAR(50) DEFAULT 'festival',
+                    `theme_preset` VARCHAR(50) DEFAULT 'diwali',
+                    `title_line1` VARCHAR(255) DEFAULT '',
+                    `badge_text` VARCHAR(100) DEFAULT '',
+                    `status` VARCHAR(50) DEFAULT 'active',
+                    `start_datetime` DATETIME DEFAULT NULL,
+                    `end_datetime` DATETIME DEFAULT NULL,
+                    `priority` INT DEFAULT 0,
+                    `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+                ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+                CREATE TABLE IF NOT EXISTS `hero_campaign_versions` (
+                    `id` INT AUTO_INCREMENT PRIMARY KEY,
+                    `campaign_id` INT DEFAULT 1,
+                    `version_num` INT NOT NULL,
+                    `snapshot_data` LONGTEXT,
+                    `reason` VARCHAR(255) DEFAULT NULL,
+                    `created_by` VARCHAR(100) DEFAULT 'Admin',
+                    `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP
                 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
             ");
 
@@ -368,6 +405,9 @@ function ensure_platform_schema($pdo) {
                     }
                 } catch (Throwable $t) {}
             };
+
+            $check_and_add_col('security_logs', 'details', 'TEXT DEFAULT NULL');
+            $check_and_add_col('security_logs', 'description', 'TEXT DEFAULT NULL');
 
             $check_and_add_col('users', 'email_verified_at', 'DATETIME DEFAULT NULL');
             $check_and_add_col('users', 'email_verification_token', 'VARCHAR(100) DEFAULT NULL');

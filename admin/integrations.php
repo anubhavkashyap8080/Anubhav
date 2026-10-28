@@ -76,11 +76,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['test_notification']))
 // Fetch Current Settings
 $settings_raw = $pdo->query("SELECT setting_key, setting_value FROM site_settings")->fetchAll(PDO::FETCH_KEY_PAIR) ?: [];
 
-function mask_secret($secret) {
-    if (empty($secret)) return '';
-    $len = strlen($secret);
-    if ($len <= 6) return '••••••';
-    return substr($secret, 0, 3) . str_repeat('•', max(4, $len - 6)) . substr($secret, -3);
+if (!function_exists('mask_secret')) {
+    function mask_secret($secret) {
+        if (empty($secret)) return '';
+        $len = strlen($secret);
+        if ($len <= 6) return '••••••';
+        return substr($secret, 0, 3) . str_repeat('•', max(4, $len - 6)) . substr($secret, -3);
+    }
 }
 ?>
 

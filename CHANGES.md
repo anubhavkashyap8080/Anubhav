@@ -400,3 +400,26 @@ To complete production setup after deploying this hardened codebase:
 ### 12. Permissions Hardening Script
 - Added `fix_permissions.sh` script to set standard cPanel file permissions (644 for files, 755 for directories, 640 for local configs, 750 for CLI tools).
 
+
+---
+
+## Super Admin Authentication & HTTP 500 Resolution Log
+
+### Root Cause Analysis of HTTP 500 on Super Admin Login:
+1. **Undefined Function `csrf_check()` in `login.php:53`:**
+   - During the CSRF hardening across POST forms, `login.php` called `csrf_check($csrf)` instead of `verify_csrf($csrf)`. Since `csrf_check()` was not defined in `includes/functions.php`, submitting any login credentials resulted in `PHP Fatal error: Uncaught Error: Call to undefined function csrf_check()`. Under production `display_errors Off`, Apache returned an HTTP 500 Internal Server Error.
+   - **Resolution:** Added `csrf_check($token = null)` as a permanent alias for `verify_csrf($token)` in `includes/functions.php`.
+
+2. **Function Redeclaration in `admin/integrations.php`:**
+   - `admin/integrations.php` declared `mask_secret()`, which had also been centralized in `includes/functions.php`, triggering a fatal `Cannot redeclare mask_secret()` error upon loading.
+   - **Resolution:** Wrapped with `if (!function_exists('mask_secret'))`.
+
+3. **Timezone Clock-Skew in Session Invalidation:**
+   - Comparing `strtotime($user['password_changed_at'])` against PHP `$_SESSION['login_time']` risked immediate session termination on servers where MySQL and PHP timezones differed (e.g. UTC vs Asia/Kolkata).
+   - **Resolution:** Upgraded session tracking to compare exact string timestamps via `$_SESSION['auth_pwd_ts']`, completely eliminating clock-skew invalidations.
+
+4. **Missing Schema Elements in `ensure_platform_schema`:**
+   - Auto-migrated `security_logs` (`details` and `description`), `rate_limits`, `hero_campaigns`, and `hero_campaign_versions` in `config/db.php` so all admin panels and login rate-limiting execute without missing-column exceptions.
+
+5. **`setup_admin.php` Resilience for cPanel Hosting Without SSH:**
+   - Upgraded `setup_admin.php` to allow authorized password reset (`?key=...&reset=1`) in addition to initial provisioning, and replaced the `filemtime(__FILE__)` window with a first-access session marker so ZIP extraction timestamps do not prematurely lock out setup.
