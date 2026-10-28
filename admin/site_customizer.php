@@ -25,7 +25,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['save_customizer'])) {
         }
 
         foreach ($cust_keys as $k) {
-            $val = trim((string)($_POST[$k] ?? ''));
+            if (!isset($_POST[$k])) {
+                continue;
+            }
+            $val = trim((string)$_POST[$k]);
+            if ($k === 'brand_name' && (empty($val) || $val === '0')) {
+                $val = 'GaunGaliHat';
+            }
             $stmt_up->execute([$k, $val]);
         }
 

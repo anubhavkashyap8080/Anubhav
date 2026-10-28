@@ -45,9 +45,23 @@ function get_setting($key, $default = '') {
 }
 
 // Global Platform Constants
-define('APP_NAME', get_setting('brand_name', 'GaunGaliHat'));
-define('APP_COMPANY', get_setting('company_name', 'S S Industries'));
-define('APP_TAGLINE', get_setting('brand_tagline', 'S S Industries Enterprise • Ganv se ghar tak'));
+$raw_brand_name = trim((string)get_setting('brand_name', 'GaunGaliHat'));
+if (empty($raw_brand_name) || $raw_brand_name === '0' || preg_match('/^0\b/', $raw_brand_name)) {
+    $raw_brand_name = 'GaunGaliHat';
+}
+define('APP_NAME', $raw_brand_name);
+
+$raw_company_name = trim((string)get_setting('company_name', 'S S Industries'));
+if (empty($raw_company_name) || $raw_company_name === '0') {
+    $raw_company_name = 'S S Industries';
+}
+define('APP_COMPANY', $raw_company_name);
+
+$raw_tagline = trim((string)get_setting('brand_tagline', 'S S Industries Enterprise • Ganv se ghar tak'));
+if (empty($raw_tagline) || $raw_tagline === '0') {
+    $raw_tagline = 'S S Industries Enterprise • Ganv se ghar tak';
+}
+define('APP_TAGLINE', $raw_tagline);
 define('APP_PHONE', get_setting('contact_phone', '+91 7897492100'));
 define('APP_EMAIL', get_setting('contact_email', 'namaste@ganvgalihat.com'));
 define('APP_CURRENCY', '₹');

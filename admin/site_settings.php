@@ -51,8 +51,17 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['save_settings'])) {
         }
 
         foreach ($allowed_keys as $key) {
-            $val = $_POST[$key] ?? '0';
-            $stmt_up->execute([$key, trim((string)$val)]);
+            if (!isset($_POST[$key])) {
+                continue; // Never overwrite unsubmitted settings with '0'
+            }
+            $val = trim((string)$_POST[$key]);
+            if ($key === 'brand_name' && (empty($val) || $val === '0')) {
+                $val = 'GaunGaliHat';
+            }
+            if ($key === 'brand_tagline' && (empty($val) || $val === '0')) {
+                $val = 'Desh ki mitti ka swad | Ganv se ghar tak';
+            }
+            $stmt_up->execute([$key, $val]);
         }
 
         set_flash('success', 'लोगो साइज़, GIF लोगो, पेमेंट गेटवे एवं साइट सेटिंग्स सफलतापूर्वक सहेजी गईं!');
@@ -453,6 +462,18 @@ require_once __DIR__ . '/admin_header.php';
 
     <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
       <div>
+        <label class="block text-xs font-bold text-gray-700 mb-1">ब्रांड का नाम (Brand Name)</label>
+        <input type="text" name="brand_name" value="<?= htmlspecialchars(get_setting_val('brand_name', 'GaunGaliHat')) ?>"
+          class="w-full px-3.5 py-2.5 bg-stone-50 border border-gray-200 rounded-xl text-xs font-bold">
+      </div>
+
+      <div>
+        <label class="block text-xs font-bold text-gray-700 mb-1">ब्रांड टैगलाइन (Brand Tagline)</label>
+        <input type="text" name="brand_tagline" value="<?= htmlspecialchars(get_setting_val('brand_tagline', 'Desh ki mitti ka swad | Ganv se ghar tak')) ?>"
+          class="w-full px-3.5 py-2.5 bg-stone-50 border border-gray-200 rounded-xl text-xs font-bold">
+      </div>
+
+      <div>
         <label class="block text-xs font-bold text-gray-700 mb-1">कंपनी का नाम</label>
         <input type="text" name="company_name" value="<?= htmlspecialchars(get_setting_val('company_name', 'S S Industries')) ?>"
           class="w-full px-3.5 py-2.5 bg-stone-50 border border-gray-200 rounded-xl text-xs font-bold">
@@ -473,6 +494,12 @@ require_once __DIR__ . '/admin_header.php';
       <div>
         <label class="block text-xs font-bold text-gray-700 mb-1">फ़ैक्टरी का पता (Works / Manufacturing)</label>
         <input type="text" name="factory_address" value="<?= htmlspecialchars(get_setting_val('factory_address', 'Works / Factory: Madhoganj Baghauli Road, Newada, Hardoi, Uttar Pradesh - 241126')) ?>"
+          class="w-full px-3.5 py-2.5 bg-stone-50 border border-gray-200 rounded-xl text-xs">
+      </div>
+
+      <div class="sm:col-span-2">
+        <label class="block text-xs font-bold text-gray-700 mb-1">प्रधान कार्यालय का पता (Head Office Address)</label>
+        <input type="text" name="head_office_address" value="<?= htmlspecialchars(get_setting_val('head_office_address', 'G145 Phase 2 Industrial Area, UPSIDA Sandila, Hardoi, UP')) ?>"
           class="w-full px-3.5 py-2.5 bg-stone-50 border border-gray-200 rounded-xl text-xs">
       </div>
 

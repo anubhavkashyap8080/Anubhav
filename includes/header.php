@@ -24,15 +24,34 @@ try {
 } catch (Exception $e) {}
 
 // Dynamic SEO & Title Resolution Engine
-$site_seo_title = get_site_setting('homepage_title', get_site_setting('seo_meta_title', APP_NAME . ' — Desh ki mitti ka swad | Rural Tools & Farm Staples'));
+$raw_home_title = get_site_setting('homepage_title', '');
+$raw_seo_title = get_site_setting('seo_meta_title', '');
+
+$site_seo_title = (!empty($raw_home_title) && $raw_home_title !== '0') ? $raw_home_title : $raw_seo_title;
+if (empty($site_seo_title) || $site_seo_title === '0') {
+    $site_seo_title = APP_NAME . ' — Desh ki mitti ka swad | Rural Tools & Farm Staples';
+}
+
+// Clean any stray leading 0 artifact like "0 —", "0 -", "0 __", "0_", "0 "
+$site_seo_title = preg_replace('/^0\s*[-—_:]+\s*/u', APP_NAME . ' — ', trim((string)$site_seo_title));
+$site_seo_title = preg_replace('/^0\s+/u', '', trim((string)$site_seo_title));
+if (empty($site_seo_title) || $site_seo_title === '0') {
+    $site_seo_title = APP_NAME . ' — Desh ki mitti ka swad | Rural Tools & Farm Staples';
+}
+
 $site_seo_desc = get_site_setting('seo_meta_description', 'High-durability hand-forged agricultural tools, unpolished pulses, Banarasi pickles, and authentic handlooms direct from Indian village clusters.');
 $site_seo_keywords = get_site_setting('seo_meta_keywords', 'farming tools, sickle, hansiya, khurpi, unpolished dal, banarasi achar, rural artisans, Hardoi foundries');
 $robots_meta = get_site_setting('seo_robots_meta', 'index, follow');
 
 if ($current_page === 'index.php' || empty($page_title)) {
     $page_title = $site_seo_title;
-} elseif (strpos($page_title, APP_NAME) === false) {
-    $page_title = $page_title . ' — ' . APP_NAME;
+} else {
+    $page_title = preg_replace('/^0\s*[-—_:]+\s*/u', '', trim((string)$page_title));
+    if (empty($page_title) || $page_title === '0') {
+        $page_title = $site_seo_title;
+    } elseif (strpos($page_title, APP_NAME) === false) {
+        $page_title = $page_title . ' — ' . APP_NAME;
+    }
 }
 
 if (empty($page_desc)) {

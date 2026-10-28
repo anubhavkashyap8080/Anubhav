@@ -32,6 +32,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['save_seo'])) {
 
         foreach ($seo_keys as $k) {
             $val = trim((string)($_POST[$k] ?? ''));
+            if ($k === 'homepage_title' || $k === 'seo_meta_title') {
+                $val = preg_replace('/^0\s*[-—_:]+\s*/u', 'GaunGaliHat — ', $val);
+                $val = preg_replace('/^0\s+/u', '', $val);
+                if (empty($val) || $val === '0') {
+                    $val = 'GaunGaliHat — Desh ki mitti ka swad | Rural Tools & Farm Staples';
+                }
+            }
             $stmt_up->execute([$k, $val]);
         }
 
@@ -56,7 +63,12 @@ function get_seo_val($key, $default = '') {
     return $seo[$key] ?? $default;
 }
 
-$cur_home_title = get_seo_val('homepage_title', get_seo_val('seo_meta_title', 'GaunGaliHat — Desh ki mitti ka swad | Rural Tools & Farm Staples'));
+$cur_home_title = get_seo_val('homepage_title', get_seo_val('seo_meta_title', ''));
+$cur_home_title = preg_replace('/^0\s*[-—_:]+\s*/u', 'GaunGaliHat — ', trim((string)$cur_home_title));
+$cur_home_title = preg_replace('/^0\s+/u', '', trim((string)$cur_home_title));
+if (empty($cur_home_title) || $cur_home_title === '0') {
+    $cur_home_title = 'GaunGaliHat — Desh ki mitti ka swad | Rural Tools & Farm Staples';
+}
 $cur_meta_desc = get_seo_val('seo_meta_description', 'Direct from Indian village foundries & self-help groups. Authentic hand-forged agricultural sickles, khurpis, unpolished Awadh pulses, and Banarasi achar.');
 $cur_meta_kw = get_seo_val('seo_meta_keywords', 'farming tools, sickle, hansiya, khurpi, unpolished dal, banarasi achar, rural artisans, Hardoi foundries');
 $cur_robots = get_seo_val('seo_robots_meta', 'index, follow');

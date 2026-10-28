@@ -240,6 +240,14 @@ function ensure_platform_schema($pdo) {
         ");
     }
 
+    // Auto-heal corrupted '0' brand_name, brand_tagline, or '0 —' / '0 -' / '0 __' titles
+    try {
+        $pdo->exec("UPDATE site_settings SET setting_value = 'GaunGaliHat' WHERE setting_key = 'brand_name' AND (setting_value = '0' OR setting_value = '' OR setting_value IS NULL)");
+        $pdo->exec("UPDATE site_settings SET setting_value = 'Desh ki mitti ka swad | Ganv se ghar tak' WHERE setting_key = 'brand_tagline' AND (setting_value = '0' OR setting_value = '' OR setting_value IS NULL)");
+        $pdo->exec("UPDATE site_settings SET setting_value = 'G145 Phase 2 Industrial Area, UPSIDA Sandila, Hardoi, UP' WHERE setting_key = 'head_office_address' AND (setting_value = '0' OR setting_value = '' OR setting_value IS NULL)");
+        $pdo->exec("UPDATE site_settings SET setting_value = 'GaunGaliHat — Desh ki mitti ka swad | Rural Tools & Farm Staples' WHERE setting_key IN ('homepage_title', 'seo_meta_title') AND (setting_value = '0' OR setting_value LIKE '0 %' OR setting_value LIKE '0-%' OR setting_value LIKE '0—%' OR setting_value LIKE '0_%')");
+    } catch (Throwable $e_heal0) {}
+
     // Default Settings
     try {
         $chk = $pdo->query("SELECT COUNT(*) FROM site_settings")->fetchColumn();
