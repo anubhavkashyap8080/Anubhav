@@ -165,7 +165,7 @@ if ($pdo) {
     <div class="flex items-center gap-2">
       <h1 class="text-2xl sm:text-3xl font-black text-gray-900 flex items-center gap-2">
         <i class="fa-solid fa-gauge-high text-indigo-700"></i>
-        केंद्रीय प्रशासनिक नियंत्रण केंद्र (Control Center)
+        Administrative Control Center (केंद्रीय प्रशासनिक नियंत्रण केंद्र)
       </h1>
       <span class="px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider bg-emerald-100 text-emerald-800 border border-emerald-300">
         Enterprise Production Ready
@@ -180,10 +180,10 @@ if ($pdo) {
   <div class="flex flex-wrap items-center gap-2">
     <!-- Date Range Filter -->
     <div class="inline-flex rounded-xl bg-white border border-gray-300 p-0.5 text-xs font-bold shadow-2xs">
-      <a href="/admin/index.php?range=all" class="px-3 py-1.5 rounded-lg transition <?= $date_filter === 'all' ? 'bg-indigo-600 text-white' : 'text-gray-600 hover:text-gray-900' ?>">सभी समय</a>
-      <a href="/admin/index.php?range=today" class="px-3 py-1.5 rounded-lg transition <?= $date_filter === 'today' ? 'bg-indigo-600 text-white' : 'text-gray-600 hover:text-gray-900' ?>">आज</a>
-      <a href="/admin/index.php?range=week" class="px-3 py-1.5 rounded-lg transition <?= $date_filter === 'week' ? 'bg-indigo-600 text-white' : 'text-gray-600 hover:text-gray-900' ?>">7 दिन</a>
-      <a href="/admin/index.php?range=month" class="px-3 py-1.5 rounded-lg transition <?= $date_filter === 'month' ? 'bg-indigo-600 text-white' : 'text-gray-600 hover:text-gray-900' ?>">30 दिन</a>
+      <a href="/admin/index.php?range=all" class="px-3 py-1.5 rounded-lg transition <?= $date_filter === 'all' ? 'bg-indigo-600 text-white' : 'text-gray-600 hover:text-gray-900' ?>">All Time (सभी समय)</a>
+      <a href="/admin/index.php?range=today" class="px-3 py-1.5 rounded-lg transition <?= $date_filter === 'today' ? 'bg-indigo-600 text-white' : 'text-gray-600 hover:text-gray-900' ?>">Today (आज)</a>
+      <a href="/admin/index.php?range=week" class="px-3 py-1.5 rounded-lg transition <?= $date_filter === 'week' ? 'bg-indigo-600 text-white' : 'text-gray-600 hover:text-gray-900' ?>">7 Days (7 दिन)</a>
+      <a href="/admin/index.php?range=month" class="px-3 py-1.5 rounded-lg transition <?= $date_filter === 'month' ? 'bg-indigo-600 text-white' : 'text-gray-600 hover:text-gray-900' ?>">30 Days (30 दिन)</a>
     </div>
 
     <!-- Export Financial CSV -->
@@ -216,7 +216,7 @@ if ($pdo) {
     </div>
     <div class="text-2xl font-black text-gray-900"><?= format_price($total_gmv) ?></div>
     <div class="text-[11px] text-gray-500 mt-1 flex items-center justify-between">
-      <span>कुल आर्डर: <strong><?= number_format($total_orders) ?></strong></span>
+      <span>Total Orders (कुल आर्डर): <strong><?= number_format($total_orders) ?></strong></span>
       <span>शिपिंग: <strong><?= format_price($total_shipping) ?></strong></span>
     </div>
   </div>

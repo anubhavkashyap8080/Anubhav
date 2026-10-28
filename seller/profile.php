@@ -124,7 +124,7 @@ require_once __DIR__ . '/seller_header.php';
 <div class="mb-6">
   <h1 class="text-2xl font-extrabold text-stone-900 flex items-center gap-2">
     <i class="fa-solid fa-gear text-amber-600"></i>
-    कार्यशाला प्रोफ़ाइल एवं खाता सुरक्षा (Settings)
+    Workshop Settings & Security (कार्यशाला प्रोफ़ाइल व सेटिंग्स)
   </h1>
   <p class="text-xs text-gray-500 mt-1">
     अपनी ग्रामीण कुटीर उद्योग जानकारी, कार्यशाला लोगो, बैंक खाता और लॉगिन पासवर्ड प्रबंधित करें
@@ -156,7 +156,7 @@ require_once __DIR__ . '/seller_header.php';
       <div>
         <h3 class="text-sm font-bold text-gray-900 pb-2 mb-4 border-b border-gray-100 flex items-center gap-2">
           <i class="fa-solid fa-store text-amber-600"></i>
-          कार्यशाला एवं संस्थान का विवरण (Workshop Details)
+          Workshop Details (कार्यशाला एवं संस्थान विवरण)
         </h3>
 
         <!-- Logo / Photo Uploader -->

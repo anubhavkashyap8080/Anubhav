@@ -94,7 +94,7 @@ require_once __DIR__ . '/seller_header.php';
   <div>
     <h1 class="text-2xl font-extrabold text-stone-900 flex items-center gap-2">
       <i class="fa-solid fa-indian-rupee-sign text-amber-600"></i>
-      भुगतान इतिहास एवं UTR सेटलमेंट (Payments & Settlements)
+      Payments & Settlements (भुगतान एवं UTR सेटलमेंट)
     </h1>
     <p class="text-xs text-gray-500 mt-1">
       पारदर्शी 4% फ्लैट कमीशन • सीधे बैंक खाते एवं UPI में समय पर हस्तांतरण
@@ -104,11 +104,11 @@ require_once __DIR__ . '/seller_header.php';
   <div class="flex items-center gap-2">
     <a href="/seller/payments.php?export=statement_csv"
       class="px-3.5 py-2.5 bg-stone-100 hover:bg-stone-200 text-stone-700 font-bold text-xs rounded-xl border border-stone-300 transition flex items-center gap-1.5 shadow-xs">
-      <i class="fa-solid fa-file-invoice text-emerald-600"></i> स्टेटमेंट डाउनलोड करें (CSV)
+      <i class="fa-solid fa-file-invoice text-emerald-600"></i> Download Statement (स्टेटमेंट डाउनलोड CSV)
     </a>
     <button onclick="document.getElementById('payoutModal').classList.remove('hidden')"
       class="px-4 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs rounded-xl shadow transition flex items-center gap-2">
-      <i class="fa-solid fa-building-columns"></i> बैंक में निकासी अनुरोध करें (Request Payout)
+      <i class="fa-solid fa-building-columns"></i> Request Payout (बैंक निकासी अनुरोध)
     </button>
   </div>
 </div>
@@ -117,7 +117,7 @@ require_once __DIR__ . '/seller_header.php';
 <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
   
   <div class="bg-white p-5 rounded-2xl border border-gray-200 shadow-sm">
-    <div class="text-xs font-bold uppercase tracking-wider text-gray-500 mb-1">कुल सकल बिक्री (Gross Sales)</div>
+    <div class="text-xs font-bold uppercase tracking-wider text-gray-500 mb-1">Gross Sales (कुल सकल बिक्री)</div>
     <div class="text-2xl font-black text-gray-900"><?= format_price($gross_sales) ?></div>
     <p class="text-[11px] text-gray-400 mt-1">सभी डिस्पैच आर्डर का योग</p>
   </div>
@@ -129,7 +129,7 @@ require_once __DIR__ . '/seller_header.php';
   </div>
 
   <div class="bg-white p-5 rounded-2xl border border-gray-200 shadow-sm">
-    <div class="text-xs font-bold uppercase tracking-wider text-gray-500 mb-1">बैंक में जमा (Settled to Bank)</div>
+    <div class="text-xs font-bold uppercase tracking-wider text-gray-500 mb-1">Settled to Bank (बैंक में जमा)</div>
     <div class="text-2xl font-black text-blue-600"><?= format_price($total_settled) ?></div>
     <p class="text-[11px] text-emerald-600 mt-1 flex items-center gap-1 font-semibold">
       <i class="fa-solid fa-circle-check"></i> UTR द्वारा सत्यापित
@@ -137,7 +137,7 @@ require_once __DIR__ . '/seller_header.php';
   </div>
 
   <div class="bg-white p-5 rounded-2xl border border-gray-200 shadow-sm">
-    <div class="text-xs font-bold uppercase tracking-wider text-gray-500 mb-1">निकासी योग्य शेष (Available)</div>
+    <div class="text-xs font-bold uppercase tracking-wider text-gray-500 mb-1">Available Balance (निकासी योग्य शेष)</div>
     <div class="text-2xl font-black text-brand-green"><?= format_price($available_balance) ?></div>
     <p class="text-[11px] text-gray-400 mt-1">तत्काल ट्रांसफर हेतु तैयार</p>
   </div>

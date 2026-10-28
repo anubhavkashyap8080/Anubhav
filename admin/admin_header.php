@@ -78,11 +78,11 @@ $flash = get_flash();
         <!-- Right Side: User & Links -->
         <div class="flex items-center gap-2 sm:gap-3">
           <a href="/" target="_blank" class="hidden lg:inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-indigo-900/80 hover:bg-indigo-900 text-indigo-200 text-xs font-semibold transition border border-indigo-800">
-            <i class="fa-solid fa-store text-[11px]"></i> लाइव स्टोर
+            <i class="fa-solid fa-store text-[11px]"></i> Live Store (लाइव स्टोर)
           </a>
 
           <a href="/seller/dashboard.php" class="hidden sm:inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-amber-500 hover:bg-amber-600 text-stone-950 text-xs font-bold transition shadow-sm">
-            <i class="fa-solid fa-store text-[11px]"></i> सेलर हब
+            <i class="fa-solid fa-hammer text-[11px]"></i> Seller Hub (सेलर हब)
           </a>
 
           <div class="flex items-center gap-2 sm:gap-3 pl-2 sm:pl-3 border-l border-indigo-900">
@@ -98,7 +98,7 @@ $flash = get_flash();
               <div class="text-[10px] text-amber-300 uppercase font-semibold"><?= htmlspecialchars($admin_user['role']) ?></div>
             </div>
 
-            <a href="/logout.php" class="p-2 text-indigo-300 hover:text-red-400 rounded-lg hover:bg-indigo-900 transition" title="लॉगआउट">
+            <a href="/logout.php" class="p-2 text-indigo-300 hover:text-red-400 rounded-lg hover:bg-indigo-900 transition" title="Sign Out (लॉगआउट)">
               <i class="fa-solid fa-power-off text-sm"></i>
             </a>
           </div>
@@ -112,52 +112,52 @@ $flash = get_flash();
       <div class="max-w-7xl mx-auto flex items-center gap-1 overflow-x-auto py-1 scrollbar-none text-xs font-bold">
         <a href="/admin/index.php"
           class="px-3 py-2 rounded-lg transition whitespace-nowrap flex items-center gap-1.5 <?= $current_page === 'index.php' ? 'bg-indigo-600 text-white' : 'text-indigo-200 hover:text-white hover:bg-indigo-800' ?>">
-          <i class="fa-solid fa-chart-pie"></i> अवलोकन
+          <i class="fa-solid fa-chart-pie"></i> Overview (अवलोकन)
         </a>
 
         <a href="/admin/users.php"
           class="px-3 py-2 rounded-lg transition whitespace-nowrap flex items-center gap-1.5 <?= $current_page === 'users.php' ? 'bg-indigo-600 text-white' : 'text-indigo-200 hover:text-white hover:bg-indigo-800' ?>">
-          <i class="fa-solid fa-users-gear"></i> यूजर व स्टाफ
+          <i class="fa-solid fa-users-gear"></i> Users & Staff (यूजर व स्टाफ)
         </a>
 
         <a href="/admin/products.php"
           class="px-3 py-2 rounded-lg transition whitespace-nowrap flex items-center gap-1.5 <?= $current_page === 'products.php' ? 'bg-indigo-600 text-white' : 'text-indigo-200 hover:text-white hover:bg-indigo-800' ?>">
-          <i class="fa-solid fa-boxes-stacked"></i> उत्पाद कैटलॉग
+          <i class="fa-solid fa-boxes-stacked"></i> Products (उत्पाद कैटलॉग)
         </a>
 
         <a href="/admin/categories.php"
           class="px-3 py-2 rounded-lg transition whitespace-nowrap flex items-center gap-1.5 <?= $current_page === 'categories.php' ? 'bg-indigo-600 text-white' : 'text-indigo-200 hover:text-white hover:bg-indigo-800' ?>">
-          <i class="fa-solid fa-tags"></i> श्रेणियां
+          <i class="fa-solid fa-tags"></i> Categories (श्रेणियां)
         </a>
 
         <a href="/admin/vendors.php"
           class="px-3 py-2 rounded-lg transition whitespace-nowrap flex items-center gap-1.5 <?= $current_page === 'vendors.php' ? 'bg-indigo-600 text-white' : 'text-indigo-200 hover:text-white hover:bg-indigo-800' ?>">
-          <i class="fa-solid fa-hammer"></i> विक्रेता (KYC)
+          <i class="fa-solid fa-hammer"></i> Vendors / KYC (विक्रेता)
         </a>
 
         <a href="/admin/orders.php"
           class="px-3 py-2 rounded-lg transition whitespace-nowrap flex items-center gap-1.5 <?= $current_page === 'orders.php' ? 'bg-indigo-600 text-white' : 'text-indigo-200 hover:text-white hover:bg-indigo-800' ?>">
-          <i class="fa-solid fa-truck-fast"></i> आर्डर व डिस्पैच
+          <i class="fa-solid fa-truck-fast"></i> Orders (आर्डर व डिस्पैच)
         </a>
 
         <a href="/admin/blogs.php"
           class="px-3 py-2 rounded-lg transition whitespace-nowrap flex items-center gap-1.5 <?= $current_page === 'blogs.php' ? 'bg-indigo-600 text-white' : 'text-indigo-200 hover:text-white hover:bg-indigo-800' ?>">
-          <i class="fa-solid fa-newspaper"></i> ब्लॉग CMS
+          <i class="fa-solid fa-newspaper"></i> Blogs CMS (ब्लॉग)
         </a>
 
         <a href="/admin/tickets.php"
           class="px-3 py-2 rounded-lg transition whitespace-nowrap flex items-center gap-1.5 <?= $current_page === 'tickets.php' ? 'bg-indigo-600 text-white' : 'text-indigo-200 hover:text-white hover:bg-indigo-800' ?>">
-          <i class="fa-solid fa-headset"></i> सपोर्ट टिकट्स
+          <i class="fa-solid fa-headset"></i> Tickets (सपोर्ट टिकट्स)
         </a>
 
         <a href="/admin/coupons.php"
           class="px-3 py-2 rounded-lg transition whitespace-nowrap flex items-center gap-1.5 <?= $current_page === 'coupons.php' ? 'bg-indigo-600 text-white' : 'text-indigo-200 hover:text-white hover:bg-indigo-800' ?>">
-          <i class="fa-solid fa-ticket"></i> कूपन व डिस्काउंट
+          <i class="fa-solid fa-ticket"></i> Coupons (कूपन व डिस्काउंट)
         </a>
 
         <a href="/admin/hero_customizer.php"
           class="px-3 py-2 rounded-lg transition whitespace-nowrap flex items-center gap-1.5 <?= $current_page === 'hero_customizer.php' ? 'bg-indigo-600 text-white' : 'text-indigo-200 hover:text-white hover:bg-indigo-800' ?>">
-          <i class="fa-solid fa-wand-magic-sparkles"></i> त्योहार व सेल बैनर
+          <i class="fa-solid fa-wand-magic-sparkles"></i> Hero Campaigns (त्योहार बैनर)
         </a>
 
         <a href="/admin/live_chat.php"

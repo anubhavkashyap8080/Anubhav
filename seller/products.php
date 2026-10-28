@@ -243,7 +243,7 @@ require_once __DIR__ . '/seller_header.php';
   <div>
     <h1 class="text-2xl font-extrabold text-stone-900 flex items-center gap-2">
       <i class="fa-solid fa-boxes-stacked text-amber-600"></i>
-      उत्पाद कैटलॉग प्रबंधन (Product Catalog)
+      Product Catalog Management (उत्पाद कैटलॉग प्रबंधन)
     </h1>
     <p class="text-xs text-gray-500 mt-1">
       कुल <?= count($products) ?> उत्पाद सूचीबद्ध • श्रेणीवार स्टॉक व मूल्य नियंत्रण
@@ -253,15 +253,15 @@ require_once __DIR__ . '/seller_header.php';
   <div class="flex flex-wrap items-center gap-2">
     <a href="/seller/products.php?export=csv"
       class="px-3.5 py-2.5 bg-stone-100 hover:bg-stone-200 text-stone-700 font-bold text-xs rounded-xl border border-stone-300 transition flex items-center gap-1.5 shadow-xs">
-      <i class="fa-solid fa-file-csv text-emerald-600"></i> CSV एक्सपोर्ट
+      <i class="fa-solid fa-file-csv text-emerald-600"></i> Export CSV (एक्सपोर्ट)
     </a>
     <button onclick="document.getElementById('importCsvModal').classList.remove('hidden')"
       class="px-3.5 py-2.5 bg-stone-100 hover:bg-stone-200 text-stone-700 font-bold text-xs rounded-xl border border-stone-300 transition flex items-center gap-1.5 shadow-xs">
-      <i class="fa-solid fa-file-import text-blue-600"></i> बल्क आयात (CSV Import)
+      <i class="fa-solid fa-file-import text-blue-600"></i> Import CSV (बल्क आयात)
     </button>
     <button onclick="document.getElementById('addProductModal').classList.remove('hidden')"
       class="px-4 py-2.5 bg-amber-600 hover:bg-amber-700 text-white font-bold text-xs rounded-xl shadow transition flex items-center gap-2">
-      <i class="fa-solid fa-plus"></i> नया उत्पाद जोड़ें (Add New)
+      <i class="fa-solid fa-plus"></i> + Add New Product (+ नया उत्पाद)
     </button>
   </div>
 </div>
@@ -271,12 +271,12 @@ require_once __DIR__ . '/seller_header.php';
   
   <!-- Category Selector -->
   <form method="GET" action="/seller/products.php" class="flex flex-wrap items-center gap-2 w-full sm:w-auto">
-    <label class="text-xs font-bold text-gray-600">श्रेणी चुनें:</label>
+    <label class="text-xs font-bold text-gray-600">Category (श्रेणी):</label>
     <select name="category" onchange="this.form.submit()" class="px-3 py-1.5 bg-stone-50 border border-gray-200 rounded-lg text-xs font-semibold focus:outline-none">
-      <option value="">सभी श्रेणियां (All Categories)</option>
+      <option value="">All Categories (सभी श्रेणियां)</option>
       <?php foreach ($categories as $cat): ?>
         <option value="<?= htmlspecialchars($cat['slug']) ?>" <?= $selected_category === $cat['slug'] ? 'selected' : '' ?>>
-          <?= htmlspecialchars($cat['hindi_name'] ?? $cat['name']) ?>
+          <?= htmlspecialchars(fix_utf8_mojibake($cat['hindi_name'] ?? $cat['name'])) ?>
         </option>
       <?php endforeach; ?>
     </select>
@@ -288,7 +288,7 @@ require_once __DIR__ . '/seller_header.php';
       <input type="hidden" name="category" value="<?= htmlspecialchars($selected_category) ?>">
     <?php endif; ?>
     <div class="relative">
-      <input type="text" name="q" value="<?= htmlspecialchars($search_query) ?>" placeholder="नाम या कोड से खोजें..."
+      <input type="text" name="q" value="<?= htmlspecialchars($search_query) ?>" placeholder="Search by name or code (नाम या कोड से खोजें)..."
         class="w-full pl-9 pr-3 py-1.5 bg-stone-50 border border-gray-200 rounded-lg text-xs focus:bg-white focus:outline-none focus:border-amber-500 transition">
       <span class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-gray-400 text-xs">
         <i class="fa-solid fa-magnifying-glass"></i>
@@ -304,13 +304,13 @@ require_once __DIR__ . '/seller_header.php';
     <table class="w-full text-left text-xs">
       <thead class="bg-stone-50 border-b border-gray-200 text-gray-500 font-bold uppercase text-[10px]">
         <tr>
-          <th class="px-4 py-3.5">चित्र</th>
-          <th class="px-4 py-3.5">उत्पाद विवरण</th>
-          <th class="px-4 py-3.5">श्रेणी (Category)</th>
-          <th class="px-4 py-3.5">मूल्य (Price)</th>
-          <th class="px-4 py-3.5">भार (Weight)</th>
-          <th class="px-4 py-3.5">स्टॉक स्थिति</th>
-          <th class="px-4 py-3.5 text-right">कार्य (Actions)</th>
+          <th class="px-4 py-3.5">Image (चित्र)</th>
+          <th class="px-4 py-3.5">Product Details (उत्पाद विवरण)</th>
+          <th class="px-4 py-3.5">Category (श्रेणी)</th>
+          <th class="px-4 py-3.5">Price (मूल्य)</th>
+          <th class="px-4 py-3.5">Weight (भार)</th>
+          <th class="px-4 py-3.5">Stock Status (स्टॉक स्थिति)</th>
+          <th class="px-4 py-3.5 text-right">Actions (कार्य)</th>
         </tr>
       </thead>
       <tbody class="divide-y divide-gray-100">
@@ -318,7 +318,7 @@ require_once __DIR__ . '/seller_header.php';
           <tr>
             <td colspan="7" class="px-4 py-12 text-center text-gray-400">
               <i class="fa-solid fa-box-open text-3xl mb-2 text-stone-300 block"></i>
-              कोई उत्पाद नहीं मिला। ऊपर दिए गए बटन से नया उत्पाद जोड़ें।
+              No products found. Add a new product using the button above. (कोई उत्पाद नहीं मिला)
             </td>
           </tr>
         <?php else: ?>
@@ -334,7 +334,7 @@ require_once __DIR__ . '/seller_header.php';
               <td class="px-4 py-3">
                 <div class="font-bold text-gray-900 line-clamp-1"><?= htmlspecialchars($p['name']) ?></div>
                 <?php if ($p['hindi_name']): ?>
-                  <div class="text-[11px] text-gray-500"><?= htmlspecialchars($p['hindi_name']) ?></div>
+                  <div class="text-[11px] text-gray-500 font-medium"><?= htmlspecialchars(fix_utf8_mojibake($p['hindi_name'])) ?></div>
                 <?php endif; ?>
                 <span class="font-mono text-[10px] text-amber-700 bg-amber-50 px-1.5 py-0.2 rounded font-semibold">
                   <?= htmlspecialchars($p['code']) ?>
@@ -344,7 +344,7 @@ require_once __DIR__ . '/seller_header.php';
               <!-- Category -->
               <td class="px-4 py-3 text-gray-600">
                 <span class="inline-block bg-stone-100 text-stone-700 px-2 py-0.5 rounded text-[11px] font-medium">
-                  <?= htmlspecialchars($p['category_hindi'] ?? $p['category_name'] ?? 'General') ?>
+                  <?= htmlspecialchars(fix_utf8_mojibake($p['category_hindi'] ?? $p['category_name'] ?? 'General')) ?>
                 </span>
               </td>
 
@@ -411,7 +411,7 @@ require_once __DIR__ . '/seller_header.php';
     <div class="flex items-center justify-between pb-4 mb-4 border-b border-gray-100">
       <h3 class="text-lg font-bold text-gray-900 flex items-center gap-2">
         <i class="fa-solid fa-plus-circle text-amber-600"></i>
-        नया ग्रामीण शिल्प उत्पाद जोड़ें (Add Product)
+        Add New Artisan Product (नया उत्पाद जोड़ें)
       </h3>
       <button onclick="document.getElementById('addProductModal').classList.add('hidden')" class="text-gray-400 hover:text-gray-600 text-lg">
         <i class="fa-solid fa-xmark"></i>
@@ -439,7 +439,7 @@ require_once __DIR__ . '/seller_header.php';
           <label class="block text-xs font-bold text-gray-700 mb-1">श्रेणी (Category) <span class="text-red-500">*</span></label>
           <select name="category_id" required class="w-full px-3.5 py-2.5 bg-stone-50 border border-gray-200 rounded-xl text-xs focus:bg-white focus:outline-none focus:border-amber-500 transition">
             <?php foreach ($categories as $cat): ?>
-              <option value="<?= $cat['id'] ?>"><?= htmlspecialchars($cat['hindi_name'] ?? $cat['name']) ?></option>
+              <option value="<?= $cat['id'] ?>"><?= htmlspecialchars(fix_utf8_mojibake($cat['hindi_name'] ?? $cat['name'])) ?></option>
             <?php endforeach; ?>
           </select>
         </div>
@@ -581,7 +581,7 @@ require_once __DIR__ . '/seller_header.php';
           <label class="block text-xs font-bold text-gray-700 mb-1">श्रेणी (Category) <span class="text-red-500">*</span></label>
           <select name="category_id" id="s_edit_cat" required class="w-full px-3.5 py-2.5 bg-stone-50 border border-gray-200 rounded-xl text-xs font-semibold focus:bg-white focus:outline-none focus:border-amber-500 transition">
             <?php foreach ($categories as $cat): ?>
-              <option value="<?= $cat['id'] ?>"><?= htmlspecialchars($cat['hindi_name'] ?? $cat['name']) ?></option>
+              <option value="<?= $cat['id'] ?>"><?= htmlspecialchars(fix_utf8_mojibake($cat['hindi_name'] ?? $cat['name'])) ?></option>
             <?php endforeach; ?>
           </select>
         </div>

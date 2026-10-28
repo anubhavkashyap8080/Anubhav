@@ -80,6 +80,55 @@ if ($pdo) {
                 }
             }
         }
+        // Auto-heal Hindi UTF-8 mojibake in products & categories if present
+        try {
+            $probe = $pdo->query("SELECT COUNT(*) FROM products WHERE hindi_name LIKE '%à¤%'")->fetchColumn();
+            if ((int)$probe > 0) {
+                $heal_p = [
+                    'GGH-TL-101' => 'देसी हंसिया (मजबूत धारदार)',
+                    'GGH-TL-102' => 'मजबूत लोहे की खुरपी (निराई-गुड़ाई)',
+                    'GGH-TL-103' => 'लोहे का मजबूत फावड़ा / कुदाल',
+                    'GGH-TL-104' => 'लोहे की भारी कुल्हाड़ी (लकड़ी कटाई)',
+                    'GGH-TL-105' => 'खेत व तालाब सुरक्षा जाल (नेट)',
+                    'GGH-TL-106' => 'लोहार हथौड़ा (3 किलो भारी)',
+                    'GGH-PL-201' => 'देसी अनपॉलिश अरहर दाल (1 किलो)',
+                    'GGH-PL-202' => 'देसी चना दाल (पत्थर चक्की दलिया)',
+                    'GGH-PL-203' => 'बुंदेलखंडी देसी काला चना (1 किलो)',
+                    'GGH-PL-204' => 'धुली मूंग दाल (आर्गेनिक व सुपाच्य)',
+                    'GGH-PL-205' => 'देसी छिलका उड़द दाल (दाल मखनी व तड़का)',
+                    'GGH-PK-301' => 'बनारसी कच्ची घानी आम का देसी अचार',
+                    'GGH-PK-302' => 'अवधी बनारसी भरवां लाल मिर्च का अचार',
+                    'GGH-PK-303' => 'गांव का देसी कटहल का अचार (सरसों तेल)',
+                    'GGH-PK-304' => 'जंगली आंवला मुरब्बा (देसी खांड में निर्मित)',
+                    'GGH-PK-305' => 'पाचक नींबू अदरक हरी मिर्च अचार (बिना तेल)',
+                    'GGH-JT-401' => 'हाथ से बना जूट झोला (2 का सेट)',
+                    'GGH-WM-001' => 'हाथ से बुना शुद्ध खादी कुर्ता',
+                    'GGH-WM-002' => 'पारंपरिक सूती गमछा (3 का सेट)',
+                    'GGH-DC-501' => 'हाथ से बुनी प्राकृतिक चटाई (फ्लोर मैट)',
+                    'GGH-DC-502' => 'चन्नापटना लकड़ी के पारंपरिक खिलौने'
+                ];
+                $st_hp = $pdo->prepare("UPDATE products SET hindi_name = ? WHERE code = ?");
+                foreach ($heal_p as $c_code => $c_hname) {
+                    $st_hp->execute([$c_hname, $c_code]);
+                }
+                $heal_c = [
+                    'farming-traditional-tools' => 'कृषि एवं खेती औजार',
+                    'pulses-organic-grains' => 'दालें एवं देसी अनाज',
+                    'pickles-village-murabba' => 'देसी अचार व मुरब्बा',
+                    'hardware-cottage-implements' => 'लोहार एवं वर्कशॉप उपकरण',
+                    'jute-bags-cloth-jholas' => 'इको जूट बैग एवं झोले',
+                    'village-home-decor-toys' => 'ग्रामीण सजावट व खिलौने',
+                    'handmade-apparel-textiles' => 'हथकरघा वस्त्र व खादी',
+                    'rural-utility-machinery' => 'ग्रामीण उपयोगिता व मशीनरी',
+                    'handmade-by-rural-women' => 'ग्रामीण महिलाओं द्वारा निर्मित'
+                ];
+                $st_hc = $pdo->prepare("UPDATE categories SET hindi_name = ? WHERE slug = ?");
+                foreach ($heal_c as $c_slug => $c_hname) {
+                    $st_hc->execute([$c_hname, $c_slug]);
+                }
+            }
+        } catch (Throwable $e_heal) {}
+
         // Ensure all application tables (wishlists, coupons, roles, etc.) exist
         ensure_platform_schema($pdo);
     } catch (Throwable $e_tbl) {}

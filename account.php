@@ -237,7 +237,7 @@ require_once __DIR__ . '/includes/header.php';
         <a href="/account.php?tab=orders"
           class="flex items-center gap-3 px-4 py-3 rounded-xl text-xs font-bold transition <?= $active_tab === 'orders' ? 'bg-brand-green text-white shadow-sm' : 'text-gray-700 hover:bg-stone-50' ?>">
           <i class="fa-solid fa-box-archive text-sm"></i>
-          <span>मेरे आर्डर (My Orders)</span>
+          <span>My Orders (मेरे आर्डर)</span>
           <span class="ml-auto text-[10px] <?= $active_tab === 'orders' ? 'bg-white/20' : 'bg-stone-100' ?> px-2 py-0.5 rounded-full">
             <?= count($user_orders) ?>
           </span>
@@ -246,13 +246,13 @@ require_once __DIR__ . '/includes/header.php';
         <a href="/account.php?tab=profile"
           class="flex items-center gap-3 px-4 py-3 rounded-xl text-xs font-bold transition <?= $active_tab === 'profile' ? 'bg-brand-green text-white shadow-sm' : 'text-gray-700 hover:bg-stone-50' ?>">
           <i class="fa-solid fa-id-card text-sm"></i>
-          <span>प्रोफ़ाइल विवरण (Profile & Photo)</span>
+          <span>Profile & Info (प्रोफ़ाइल विवरण)</span>
         </a>
 
         <a href="/account.php?tab=tickets"
           class="flex items-center gap-3 px-4 py-3 rounded-xl text-xs font-bold transition <?= $active_tab === 'tickets' ? 'bg-brand-green text-white shadow-sm' : 'text-gray-700 hover:bg-stone-50' ?>">
           <i class="fa-solid fa-headset text-sm"></i>
-          <span>सपोर्ट टिकट्स (Support Desk)</span>
+          <span>Support Desk (सपोर्ट टिकट्स)</span>
           <span class="ml-auto text-[10px] <?= $active_tab === 'tickets' ? 'bg-white/20' : 'bg-stone-100' ?> px-2 py-0.5 rounded-full">
             <?= count($user_tickets) ?>
           </span>
@@ -261,13 +261,13 @@ require_once __DIR__ . '/includes/header.php';
         <a href="/account.php?tab=security"
           class="flex items-center gap-3 px-4 py-3 rounded-xl text-xs font-bold transition <?= $active_tab === 'security' ? 'bg-brand-green text-white shadow-sm' : 'text-gray-700 hover:bg-stone-50' ?>">
           <i class="fa-solid fa-shield-halved text-sm"></i>
-          <span>सुरक्षा व पासवर्ड (Security)</span>
+          <span>Security & Password (सुरक्षा व पासवर्ड)</span>
         </a>
 
         <a href="/wishlist.php"
           class="flex items-center gap-3 px-4 py-3 rounded-xl text-xs font-bold transition text-gray-700 hover:bg-stone-50">
           <i class="fa-regular fa-heart text-sm"></i>
-          <span>मेरी विशलिस्ट (Wishlist)</span>
+          <span>Wishlist (मेरी विशलिस्ट)</span>
         </a>
       </div>
 
@@ -277,7 +277,7 @@ require_once __DIR__ . '/includes/header.php';
         <!-- Tab 1: Orders -->
         <?php if ($active_tab === 'orders'): ?>
           <div class="space-y-4">
-            <h2 class="text-lg font-bold text-gray-900 mb-2">मेरे आर्डर का इतिहास (My Orders)</h2>
+            <h2 class="text-lg font-bold text-gray-900 mb-2">Order History (मेरे आर्डर का इतिहास)</h2>
 
             <?php if (empty($user_orders)): ?>
               <div class="bg-white rounded-2xl border border-gray-200 p-12 text-center shadow-sm">

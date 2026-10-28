@@ -129,7 +129,7 @@ require_once __DIR__ . '/seller_header.php';
   <div>
     <h1 class="text-2xl font-extrabold text-stone-900 flex items-center gap-2">
       <i class="fa-solid fa-truck-fast text-amber-600"></i>
-      आर्डर व भारतीय डाक डिस्पैच हब (Order Logistics)
+      Order Logistics & India Post Dispatch (आर्डर व डाक डिस्पैच)
     </h1>
     <p class="text-xs text-gray-500 mt-1">
       हरदोई डाकघर से सीधा स्पीड पोस्ट बारकोड जनरेशन एवं पैकेजिंग मैनिफ़ेस्ट
@@ -140,23 +140,23 @@ require_once __DIR__ . '/seller_header.php';
   <div class="flex items-center gap-1.5 overflow-x-auto text-xs font-bold">
     <a href="/seller/orders.php<?= !empty($status_filter) ? '?status=' . $status_filter . '&' : '?' ?>export=csv"
       class="px-3 py-1.5 rounded-lg bg-stone-100 hover:bg-stone-200 text-stone-700 border border-stone-300 transition flex items-center gap-1">
-      <i class="fa-solid fa-file-csv text-emerald-600"></i> CSV एक्सपोर्ट
+      <i class="fa-solid fa-file-csv text-emerald-600"></i> Export CSV (एक्सपोर्ट)
     </a>
     <a href="/seller/orders.php"
       class="px-3 py-1.5 rounded-lg transition <?= empty($status_filter) ? 'bg-amber-600 text-white' : 'bg-white text-gray-600 border border-gray-200 hover:bg-stone-50' ?>">
-      सभी (All)
+      All Orders (सभी)
     </a>
     <a href="/seller/orders.php?status=Confirmed"
       class="px-3 py-1.5 rounded-lg transition <?= $status_filter === 'Confirmed' ? 'bg-amber-600 text-white' : 'bg-white text-gray-600 border border-gray-200 hover:bg-stone-50' ?>">
-      कन्फर्म (Confirmed)
+      Confirmed (कन्फर्म)
     </a>
     <a href="/seller/orders.php?status=Dispatched"
       class="px-3 py-1.5 rounded-lg transition <?= $status_filter === 'Dispatched' ? 'bg-amber-600 text-white' : 'bg-white text-gray-600 border border-gray-200 hover:bg-stone-50' ?>">
-      रास्ते में (Dispatched)
+      Dispatched (रास्ते में)
     </a>
     <a href="/seller/orders.php?status=Delivered"
       class="px-3 py-1.5 rounded-lg transition <?= $status_filter === 'Delivered' ? 'bg-amber-600 text-white' : 'bg-white text-gray-600 border border-gray-200 hover:bg-stone-50' ?>">
-      डिलीवर (Delivered)
+      Delivered (डिलीवर)
     </a>
   </div>
 </div>
@@ -169,13 +169,13 @@ require_once __DIR__ . '/seller_header.php';
       <table class="w-full text-left text-xs">
         <thead class="bg-stone-50 border-b border-gray-200 text-gray-500 font-bold uppercase text-[10px]">
           <tr>
-            <th class="px-4 py-3">आर्डर सं.</th>
-            <th class="px-4 py-3">ग्राहक एवं पता</th>
-            <th class="px-4 py-3">वस्तुएं</th>
-            <th class="px-4 py-3">विक्रेता राशि</th>
-            <th class="px-4 py-3">डाक कंसाइनमेंट (AWB)</th>
-            <th class="px-4 py-3">स्थिति</th>
-            <th class="px-4 py-3 text-right">कार्य</th>
+            <th class="px-4 py-3">Order # (आर्डर सं.)</th>
+            <th class="px-4 py-3">Customer & Address (ग्राहक व पता)</th>
+            <th class="px-4 py-3">Items (वस्तुएं)</th>
+            <th class="px-4 py-3">Vendor Amount (राशि)</th>
+            <th class="px-4 py-3">Post Consignment / AWB (डाक ट्रैकिंग)</th>
+            <th class="px-4 py-3">Status (स्थिति)</th>
+            <th class="px-4 py-3 text-right">Action (कार्य)</th>
           </tr>
         </thead>
         <tbody class="divide-y divide-gray-100">

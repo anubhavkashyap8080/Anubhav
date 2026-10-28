@@ -53,6 +53,55 @@ function clean_input($data) {
     return htmlspecialchars(trim((string)$data), ENT_QUOTES, 'UTF-8');
 }
 
+/**
+ * UTF-8 Mojibake Repair Engine
+ * Detects and repairs Windows-1252 / ISO-8859-1 double encoded Hindi UTF-8 strings
+ */
+function fix_utf8_mojibake($str) {
+    if (!is_string($str) || empty($str)) {
+        return $str;
+    }
+    if (strpos($str, 'à¤') !== false || strpos($str, 'à¥') !== false) {
+        static $mojibake_dict = [
+            'GGH-TL-101' => 'देसी हंसिया (मजबूत धारदार)',
+            'GGH-TL-102' => 'मजबूत लोहे की खुरपी (निराई-गुड़ाई)',
+            'GGH-TL-103' => 'लोहे का मजबूत फावड़ा / कुदाल',
+            'GGH-TL-104' => 'लोहे की भारी कुल्हाड़ी (लकड़ी कटाई)',
+            'GGH-TL-105' => 'खेत व तालाब सुरक्षा जाल (नेट)',
+            'GGH-TL-106' => 'लोहार हथौड़ा (3 किलो भारी)',
+            'GGH-PL-201' => 'देसी अनपॉलिश अरहर दाल (1 किलो)',
+            'GGH-PL-202' => 'देसी चना दाल (पत्थर चक्की दलिया)',
+            'GGH-PL-203' => 'बुंदेलखंडी देसी काला चना (1 किलो)',
+            'GGH-PL-204' => 'धुली मूंग दाल (आर्गेनिक व सुपाच्य)',
+            'GGH-PL-205' => 'देसी छिलका उड़द दाल (दाल मखनी व तड़का)',
+            'GGH-PK-301' => 'बनारसी कच्ची घानी आम का देसी अचार',
+            'GGH-PK-302' => 'अवधी बनारसी भरवां लाल मिर्च का अचार',
+            'GGH-PK-303' => 'गांव का देसी कटहल का अचार (सरसों तेल)',
+            'GGH-PK-304' => 'जंगली आंवला मुरब्बा (देसी खांड में निर्मित)',
+            'GGH-PK-305' => 'पाचक नींबू अदरक हरी मिर्च अचार (बिना तेल)',
+            'GGH-JT-401' => 'हाथ से बना जूट झोला (2 का सेट)',
+            'GGH-WM-001' => 'हाथ से बुना शुद्ध खादी कुर्ता',
+            'GGH-WM-002' => 'पारंपरिक सूती गमछा (3 का सेट)',
+            'GGH-DC-501' => 'हाथ से बुनी प्राकृतिक चटाई (फ्लोर मैट)',
+            'GGH-DC-502' => 'चन्नापटना लकड़ी के पारंपरिक खिलौने',
+            'farming-traditional-tools' => 'कृषि एवं खेती औजार',
+            'pulses-organic-grains' => 'दालें एवं देसी अनाज',
+            'pickles-village-murabba' => 'देसी अचार व मुरब्बा',
+            'hardware-cottage-implements' => 'लोहार एवं वर्कशॉप उपकरण',
+            'jute-bags-cloth-jholas' => 'इको जूट बैग एवं झोले',
+            'village-home-decor-toys' => 'ग्रामीण सजावट व खिलौने',
+            'handmade-apparel-textiles' => 'हथकरघा वस्त्र व खादी',
+            'rural-utility-machinery' => 'ग्रामीण उपयोगिता व मशीनरी',
+            'handmade-by-rural-women' => 'ग्रामीण महिलाओं द्वारा निर्मित'
+        ];
+        $converted = @mb_convert_encoding($str, 'ISO-8859-1', 'UTF-8');
+        if ($converted !== false && mb_check_encoding($converted, 'UTF-8') && strpos($converted, 'à¤') === false) {
+            return $converted;
+        }
+    }
+    return $str;
+}
+
 // Format INR Price (Clean whole rupee display on products, e.g. ₹240 or ₹240.50)
 function format_price($amount, $always_decimals = false) {
     $val = (float)$amount;

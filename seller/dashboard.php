@@ -87,23 +87,23 @@ if ($pdo) {
   <div>
     <div class="flex items-center gap-2">
       <h1 class="text-2xl sm:text-3xl font-extrabold text-stone-900">
-        कारीगर एवं विक्रेता डैशबोर्ड
+        Seller Central Dashboard (कारीगर एवं विक्रेता डैशबोर्ड)
       </h1>
       <span class="text-xs bg-amber-100 text-amber-800 font-bold px-2.5 py-0.5 rounded-full border border-amber-300">
         Flipkart & Amazon Standard
       </span>
     </div>
     <p class="text-xs sm:text-sm text-gray-500 mt-1">
-      <?= htmlspecialchars($vendor['business_name'] ?? $vendor['name']) ?> • सीधा भारतीय डाक (India Post) लॉजिस्टिक्स नेटवर्क
+      <?= htmlspecialchars($vendor['business_name'] ?? $vendor['name']) ?> • India Post Logistics Network (सीधा भारतीय डाक लॉजिस्टिक्स नेटवर्क)
     </p>
   </div>
 
   <div class="flex items-center gap-3">
     <a href="/seller/products.php?action=new" class="px-4 py-2.5 bg-amber-600 hover:bg-amber-700 text-white font-bold text-xs rounded-xl shadow transition flex items-center gap-2">
-      <i class="fa-solid fa-plus"></i> नया उत्पाद सूचीबद्ध करें (Add Product)
+      <i class="fa-solid fa-plus"></i> + Add Product (+ नया उत्पाद)
     </a>
     <a href="/seller/orders.php" class="px-4 py-2.5 bg-stone-900 hover:bg-stone-800 text-white font-bold text-xs rounded-xl shadow transition flex items-center gap-2">
-      <i class="fa-solid fa-print"></i> डिस्पैच मैनिफ़ेस्ट
+      <i class="fa-solid fa-print"></i> Dispatch Manifest (डिस्पैच मैनिफ़ेस्ट)
     </a>
   </div>
 </div>
@@ -114,7 +114,7 @@ if ($pdo) {
   <!-- Total Revenue -->
   <div class="bg-white p-5 rounded-2xl border border-gray-200 shadow-sm">
     <div class="flex items-center justify-between text-gray-400 mb-2">
-      <span class="text-xs font-bold uppercase tracking-wider text-gray-500">कुल सकल बिक्री</span>
+      <span class="text-xs font-bold uppercase tracking-wider text-gray-500">Gross Sales (कुल सकल बिक्री)</span>
       <div class="w-8 h-8 rounded-lg bg-emerald-50 text-brand-green flex items-center justify-center text-sm">
         <i class="fa-solid fa-indian-rupee-sign"></i>
       </div>
@@ -130,7 +130,7 @@ if ($pdo) {
   <!-- Total Orders -->
   <div class="bg-white p-5 rounded-2xl border border-gray-200 shadow-sm">
     <div class="flex items-center justify-between text-gray-400 mb-2">
-      <span class="text-xs font-bold uppercase tracking-wider text-gray-500">कुल आर्डर</span>
+      <span class="text-xs font-bold uppercase tracking-wider text-gray-500">Total Orders (कुल आर्डर)</span>
       <div class="w-8 h-8 rounded-lg bg-blue-50 text-blue-600 flex items-center justify-center text-sm">
         <i class="fa-solid fa-bag-shopping"></i>
       </div>
@@ -144,7 +144,7 @@ if ($pdo) {
   <!-- Pending Dispatch -->
   <div class="bg-white p-5 rounded-2xl border border-gray-200 shadow-sm">
     <div class="flex items-center justify-between text-gray-400 mb-2">
-      <span class="text-xs font-bold uppercase tracking-wider text-gray-500">लंबित डिस्पैच</span>
+      <span class="text-xs font-bold uppercase tracking-wider text-gray-500">Pending Dispatch (लंबित डिस्पैच)</span>
       <div class="w-8 h-8 rounded-lg bg-amber-50 text-amber-600 flex items-center justify-center text-sm">
         <i class="fa-solid fa-truck-ramp-box"></i>
       </div>
@@ -158,7 +158,7 @@ if ($pdo) {
   <!-- Active Listings -->
   <div class="bg-white p-5 rounded-2xl border border-gray-200 shadow-sm">
     <div class="flex items-center justify-between text-gray-400 mb-2">
-      <span class="text-xs font-bold uppercase tracking-wider text-gray-500">सक्रिय उत्पाद (SKU)</span>
+      <span class="text-xs font-bold uppercase tracking-wider text-gray-500">Active Products (सक्रिय उत्पाद)</span>
       <div class="w-8 h-8 rounded-lg bg-indigo-50 text-indigo-600 flex items-center justify-center text-sm">
         <i class="fa-solid fa-boxes-stacked"></i>
       </div>
@@ -172,7 +172,7 @@ if ($pdo) {
   <!-- Bank Payout Balance -->
   <div class="bg-white p-5 rounded-2xl border border-gray-200 shadow-sm col-span-2 lg:col-span-1">
     <div class="flex items-center justify-between text-gray-400 mb-2">
-      <span class="text-xs font-bold uppercase tracking-wider text-gray-500">बैंक में देय राशि</span>
+      <span class="text-xs font-bold uppercase tracking-wider text-gray-500">Payout Balance (बैंक देय राशि)</span>
       <div class="w-8 h-8 rounded-lg bg-emerald-50 text-emerald-600 flex items-center justify-center text-sm">
         <i class="fa-solid fa-building-columns"></i>
       </div>
@@ -259,11 +259,11 @@ if ($pdo) {
         <thead class="bg-stone-50 border-b border-gray-200 text-gray-500 font-bold uppercase text-[10px]">
           <tr>
             <th class="px-4 py-3">आर्डर सं.</th>
-            <th class="px-4 py-3">ग्राहक</th>
+            <th class="px-4 py-3">Customer (ग्राहक)</th>
             <th class="px-4 py-3">सामान</th>
-            <th class="px-4 py-3">राशि</th>
-            <th class="px-4 py-3">स्थिति</th>
-            <th class="px-4 py-3 text-right">कार्य</th>
+            <th class="px-4 py-3">Amount (राशि)</th>
+            <th class="px-4 py-3">Status (स्थिति)</th>
+            <th class="px-4 py-3 text-right">Action (कार्य)</th>
           </tr>
         </thead>
         <tbody class="divide-y divide-gray-100">
