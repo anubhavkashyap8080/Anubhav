@@ -1,27 +1,98 @@
 <?php
+/**
+ * GaunGaliHat Shopper & Customer Account Hub
+ * Comprehensive E-Commerce Customer Dashboard:
+ * - Live Shopping Cart & Instant Checkout CTA
+ * - Detailed Order History with Visual Shipment Tracking Stepper
+ * - Saved Delivery Addresses
+ * - Customer Support Desk & Ticket Replies
+ * - Profile & Avatar Management
+ * - Account Security & Password Protection
+ */
+
 require_once __DIR__ . '/includes/functions.php';
 require_once __DIR__ . '/includes/auth_check.php';
 
 require_login();
 $user = get_logged_in_user();
-$active_tab = clean_input($_GET['tab'] ?? 'orders');
+
+// Determine active tab (default to 'overview')
+$allowed_tabs = ['overview', 'orders', 'cart', 'addresses', 'profile', 'tickets', 'security'];
+$active_tab = clean_input($_GET['tab'] ?? 'overview');
+if (!in_array($active_tab, $allowed_tabs, true)) {
+    $active_tab = 'overview';
+}
 
 $success_msg = '';
 $error_msg = '';
 
-// Resend Verification Email
+// Check flash messages
+$flash = get_flash();
+if ($flash) {
+    if ($flash['type'] === 'success') {
+        $success_msg = $flash['message'];
+    } elseif ($flash['type'] === 'error') {
+        $error_msg = $flash['message'];
+    }
+}
+
+// 1. Resend Verification Email
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['resend_verification'])) {
     if (!csrf_check($_POST['csrf_token'] ?? '')) {
         $error_msg = 'Security session expired. Please refresh the page.';
     } else {
         if (!empty($user['email'])) {
             send_email_verification_link($user['id'], $user['email'], $user['name'], $user['phone'] ?? '');
-            $success_msg = 'A verification code and link have been dispatched to ' . htmlspecialchars($user['email'], ENT_QUOTES, 'UTF-8') . '. Please check your inbox.';
+            $success_msg = 'A 6-digit verification code and secure activation link have been dispatched to ' . htmlspecialchars($user['email'], ENT_QUOTES, 'UTF-8') . '. Please check your inbox.';
         }
     }
 }
 
-// Handle Profile & Avatar Update
+// 2. Handle Reorder Action (Add past order item back to cart)
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['reorder_item'])) {
+    if (!csrf_check($_POST['csrf_token'] ?? '')) {
+        $error_msg = 'Security session expired. Please refresh the page.';
+    } else {
+        $prod_id = (int)($_POST['product_id'] ?? 0);
+        $qty = max(1, (int)($_POST['quantity'] ?? 1));
+        if ($prod_id > 0) {
+            add_to_cart($prod_id, $qty);
+            $success_msg = 'Item added to your shopping cart!';
+            $active_tab = 'cart';
+        }
+    }
+}
+
+// 3. Handle Delivery Address Update
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['update_address'])) {
+    if (!csrf_check($_POST['csrf_token'] ?? '')) {
+        $error_msg = 'Security session expired. Please refresh the page.';
+        $active_tab = 'addresses';
+    } else {
+        $address = clean_input($_POST['address'] ?? '');
+        $city = clean_input($_POST['city'] ?? '');
+        $pincode = clean_input($_POST['pincode'] ?? '');
+        $phone = clean_input($_POST['phone'] ?? '');
+
+        if (!empty($address) && !empty($city) && !empty($pincode)) {
+            try {
+                $stmt = $pdo->prepare("UPDATE users SET address = ?, city = ?, pincode = ?, phone = ? WHERE id = ?");
+                $stmt->execute([$address, $city, $pincode, $phone, $user['id']]);
+                $success_msg = 'Default delivery address updated successfully!';
+                $user = get_logged_in_user();
+                $active_tab = 'addresses';
+            } catch (Exception $e) {
+                $error_msg = 'Address update error: ' . $e->getMessage();
+                $active_tab = 'addresses';
+            }
+        } else {
+            $error_msg = 'Please fill in your complete address, city, and 6-digit PIN code.';
+            $active_tab = 'addresses';
+        }
+    }
+}
+
+// 4. Handle Profile & Avatar Update
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['update_profile'])) {
     if (!csrf_check($_POST['csrf_token'] ?? '')) {
         $error_msg = 'Security session expired. Please refresh the page.';
@@ -34,7 +105,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['update_profile'])) {
         $address = clean_input($_POST['address'] ?? '');
         $avatar_url = $user['avatar'] ?? null;
 
-        // Handle File Upload if provided
         if (isset($_FILES['avatar_file']) && $_FILES['avatar_file']['error'] === UPLOAD_ERR_OK) {
             $up_res = secure_upload_image('avatar_file', 'uploads/avatars/');
             if ($up_res['success']) {
@@ -56,16 +126,17 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['update_profile'])) {
                 $stmt = $pdo->prepare("UPDATE users SET name = ?, phone = ?, city = ?, pincode = ?, address = ?, avatar = ? WHERE id = ?");
                 $stmt->execute([$name, $phone, $city, $pincode, $address, $avatar_url, $user['id']]);
                 $success_msg = 'Profile details and avatar updated successfully!';
-                $user = get_logged_in_user(); // refresh
+                $user = get_logged_in_user();
                 $active_tab = 'profile';
             } catch (Exception $e) {
                 $error_msg = 'Update error: ' . $e->getMessage();
+                $active_tab = 'profile';
             }
         }
     }
 }
 
-// Handle Password Change
+// 5. Handle Password Change
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['change_password'])) {
     if (!csrf_check($_POST['csrf_token'] ?? '')) {
         $error_msg = 'Security session expired. Please refresh the page.';
@@ -101,12 +172,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['change_password'])) {
                 $active_tab = 'security';
             } catch (Exception $e) {
                 $error_msg = 'Error updating password: ' . $e->getMessage();
+                $active_tab = 'security';
             }
         }
     }
 }
 
-// Handle New Support Ticket Submission
+// 6. Handle New Support Ticket Submission
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['create_ticket'])) {
     if (!csrf_check($_POST['csrf_token'] ?? '')) {
         $error_msg = 'Security session expired. Please refresh the page.';
@@ -136,18 +208,20 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['create_ticket'])) {
                     $priority,
                     $message
                 ]);
-                $success_msg = "Support ticket #$ticket_num has been created successfully. Our support desk will assist you shortly.";
+                $success_msg = "Support ticket #$ticket_num has been created successfully. Our customer support desk will assist you shortly.";
                 $active_tab = 'tickets';
             } catch (Exception $e) {
                 $error_msg = 'Error creating ticket: ' . $e->getMessage();
+                $active_tab = 'tickets';
             }
         } else {
             $error_msg = 'Please fill in both the subject and detailed message.';
+            $active_tab = 'tickets';
         }
     }
 }
 
-// Handle Ticket Reply from Customer
+// 7. Handle Ticket Reply from Customer
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['reply_ticket'])) {
     if (!csrf_check($_POST['csrf_token'] ?? '')) {
         $error_msg = 'Security session expired. Please refresh the page.';
@@ -180,17 +254,26 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['reply_ticket'])) {
                     $active_tab = 'tickets';
                 } else {
                     $error_msg = 'Invalid ticket request.';
+                    $active_tab = 'tickets';
                 }
             } catch (Exception $e) {
                 $error_msg = 'Error submitting reply: ' . $e->getMessage();
+                $active_tab = 'tickets';
             }
         }
     }
 }
 
+// Fetch Live Shopping Cart Data
+$cart_items = get_cart();
+$cart_count = get_cart_count();
+$cart_subtotal = get_cart_subtotal();
+$cart_weight = get_cart_total_weight();
+$user_pincode = !empty($user['pincode']) ? $user['pincode'] : '241001';
+$shipping_info = calculate_shipping_rate($user_pincode, $cart_subtotal, $cart_weight);
+
 // Fetch User Orders
 $is_email_verified = !empty($user['email_verified_at']);
-
 if ($is_email_verified && !empty($user['email'])) {
     $stmt_orders = $pdo->prepare("SELECT * FROM orders WHERE user_id = ? OR customer_email = ? ORDER BY id DESC");
     $stmt_orders->execute([$user['id'], $user['email']]);
@@ -198,7 +281,16 @@ if ($is_email_verified && !empty($user['email'])) {
     $stmt_orders = $pdo->prepare("SELECT * FROM orders WHERE user_id = ? ORDER BY id DESC");
     $stmt_orders->execute([$user['id']]);
 }
-$user_orders = $stmt_orders->fetchAll();
+$user_orders = $stmt_orders->fetchAll() ?: [];
+
+// Compute Order Counts & In-Transit Count
+$total_orders_count = count($user_orders);
+$active_shipments_count = 0;
+foreach ($user_orders as $ord) {
+    if (in_array(strtolower($ord['order_status']), ['pending', 'processing', 'confirmed', 'dispatched', 'shipped', 'out for delivery'], true)) {
+        $active_shipments_count++;
+    }
+}
 
 // Fetch User Support Tickets
 if ($is_email_verified && !empty($user['email'])) {
@@ -208,52 +300,74 @@ if ($is_email_verified && !empty($user['email'])) {
     $stmt_tkts = $pdo->prepare("SELECT * FROM tickets WHERE user_id = ? ORDER BY id DESC");
     $stmt_tkts->execute([$user['id']]);
 }
-$user_tickets = $stmt_tkts->fetchAll();
+$user_tickets = $stmt_tkts->fetchAll() ?: [];
+$open_tickets_count = 0;
+foreach ($user_tickets as $tkt) {
+    if ($tkt['status'] !== 'Resolved') {
+        $open_tickets_count++;
+    }
+}
 
-$page_title = 'My Account — GaunGaliHat';
+$page_title = 'Shopper Dashboard — GaunGaliHat';
 require_once __DIR__ . '/includes/header.php';
 ?>
 
 <div class="bg-stone-50 min-h-screen py-8">
   <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
     
-    <!-- Header Summary Card -->
-    <div class="bg-white rounded-3xl border border-gray-200 p-6 sm:p-8 shadow-sm mb-8 flex flex-col sm:flex-row items-center justify-between gap-4">
-      <div class="flex items-center gap-4">
+    <!-- Customer Header Summary Card -->
+    <div class="bg-white rounded-3xl border border-gray-200 p-6 sm:p-8 shadow-sm mb-8 flex flex-col sm:flex-row items-center justify-between gap-6">
+      <div class="flex items-center gap-5">
         <?php if (!empty($user['avatar'])): ?>
           <img src="<?= htmlspecialchars($user['avatar']) ?>" alt="<?= htmlspecialchars($user['name']) ?>"
-            class="w-16 h-16 rounded-2xl object-cover shadow-md border-2 border-emerald-100 bg-stone-100">
+            class="w-18 h-18 rounded-2xl object-cover shadow-md border-2 border-emerald-100 bg-stone-100">
         <?php else: ?>
-          <div class="w-16 h-16 rounded-2xl bg-brand-green text-white flex items-center justify-center text-2xl font-bold shadow-md">
+          <div class="w-18 h-18 rounded-2xl bg-brand-green text-white flex items-center justify-center text-3xl font-extrabold shadow-md">
             <?= strtoupper(mb_substr($user['name'], 0, 1)) ?>
           </div>
         <?php endif; ?>
 
         <div>
-          <h1 class="text-xl sm:text-2xl font-extrabold text-gray-900"><?= htmlspecialchars($user['name']) ?></h1>
-          <p class="text-xs text-gray-500 mt-0.5">
-            <?= htmlspecialchars($user['email']) ?> • +91 <?= htmlspecialchars($user['phone']) ?>
-          </p>
-          <?php if (!empty($user['email_verified_at'])): ?>
-            <span class="inline-block mt-1 text-[11px] font-bold text-emerald-800 bg-emerald-50 px-2.5 py-0.5 rounded-full border border-emerald-200">
-              <i class="fa-solid fa-check-circle"></i> Verified Shopper
+          <div class="flex items-center gap-2.5 flex-wrap">
+            <h1 class="text-xl sm:text-2xl font-extrabold text-gray-900"><?= htmlspecialchars($user['name']) ?></h1>
+            <span class="text-[11px] font-mono bg-stone-100 text-stone-700 px-2 py-0.5 rounded-md border border-stone-200">
+              <?= htmlspecialchars($user['unique_code'] ?? ('GGH-CST-' . $user['id'])) ?>
             </span>
-          <?php else: ?>
-            <form method="POST" action="/account.php" class="inline-flex items-center gap-2 mt-1">
-              <?= csrf_field() ?>
-              <input type="hidden" name="resend_verification" value="1">
-              <span class="text-[11px] font-bold text-amber-800 bg-amber-50 px-2.5 py-0.5 rounded-full border border-amber-300">
-                <i class="fa-solid fa-triangle-exclamation"></i> Unverified Email
+          </div>
+
+          <p class="text-xs text-gray-500 mt-1 flex items-center gap-2 flex-wrap">
+            <span><i class="fa-regular fa-envelope text-gray-400"></i> <?= htmlspecialchars($user['email']) ?></span>
+            <span>•</span>
+            <span><i class="fa-solid fa-phone text-gray-400"></i> +91 <?= htmlspecialchars($user['phone'] ?: 'Not Provided') ?></span>
+          </p>
+
+          <div class="mt-2 flex items-center gap-2 flex-wrap">
+            <?php if (!empty($user['email_verified_at'])): ?>
+              <span class="inline-flex items-center gap-1 text-[11px] font-bold text-emerald-800 bg-emerald-50 px-2.5 py-0.5 rounded-full border border-emerald-200">
+                <i class="fa-solid fa-shield-check text-emerald-600"></i> Verified Customer
               </span>
-              <button type="submit" class="text-[11px] text-brand-green font-bold hover:underline">
-                Resend Verification Link
-              </button>
-            </form>
-          <?php endif; ?>
+            <?php else: ?>
+              <form method="POST" action="/account.php" class="inline-flex items-center gap-2">
+                <?= csrf_field() ?>
+                <input type="hidden" name="resend_verification" value="1">
+                <span class="text-[11px] font-bold text-amber-800 bg-amber-50 px-2.5 py-0.5 rounded-full border border-amber-300">
+                  <i class="fa-solid fa-triangle-exclamation"></i> Unverified Email
+                </span>
+                <button type="submit" class="text-[11px] text-brand-green font-bold hover:underline">
+                  Resend Verification Code
+                </button>
+              </form>
+            <?php endif; ?>
+
+            <span class="text-[11px] text-gray-400">
+              Member since <?= date('M Y', strtotime($user['created_at'] ?? 'now')) ?>
+            </span>
+          </div>
         </div>
       </div>
 
-      <div class="flex items-center gap-2">
+      <!-- Quick Action Buttons -->
+      <div class="flex items-center gap-2.5 flex-wrap">
         <?php if (in_array($user['role'], ['vendor', 'admin', 'super_admin'])): ?>
           <a href="/seller/dashboard.php" class="px-4 py-2 bg-amber-500 hover:bg-amber-600 text-stone-950 text-xs font-bold rounded-xl transition flex items-center gap-1.5 shadow-sm">
             <i class="fa-solid fa-store"></i> Seller Hub
@@ -270,16 +384,16 @@ require_once __DIR__ . '/includes/header.php';
       </div>
     </div>
 
-    <!-- Notices -->
+    <!-- Notices / Alerts -->
     <?php if (!empty($success_msg)): ?>
-      <div class="mb-6 p-4 bg-emerald-50 border border-emerald-200 text-emerald-800 rounded-2xl text-xs flex items-center gap-2 font-medium">
-        <i class="fa-solid fa-circle-check text-base"></i>
+      <div class="mb-6 p-4 bg-emerald-50 border border-emerald-200 text-emerald-800 rounded-2xl text-xs flex items-center gap-2.5 font-medium shadow-xs">
+        <i class="fa-solid fa-circle-check text-base text-emerald-600 shrink-0"></i>
         <span><?= htmlspecialchars($success_msg) ?></span>
       </div>
     <?php endif; ?>
     <?php if (!empty($error_msg)): ?>
-      <div class="mb-6 p-4 bg-red-50 border border-red-200 text-red-700 rounded-2xl text-xs flex items-center gap-2 font-medium">
-        <i class="fa-solid fa-circle-exclamation text-base"></i>
+      <div class="mb-6 p-4 bg-red-50 border border-red-200 text-red-700 rounded-2xl text-xs flex items-center gap-2.5 font-medium shadow-xs">
+        <i class="fa-solid fa-circle-exclamation text-base text-red-600 shrink-0"></i>
         <span><?= htmlspecialchars($error_msg) ?></span>
       </div>
     <?php endif; ?>
@@ -288,110 +402,537 @@ require_once __DIR__ . '/includes/header.php';
     <div class="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
       
       <!-- Left Tab Navigation (3 cols) -->
-      <div class="lg:col-span-3 bg-white rounded-2xl border border-gray-200 p-3 shadow-sm space-y-1">
+      <div class="lg:col-span-3 bg-white rounded-3xl border border-gray-200 p-3 shadow-sm space-y-1">
+        <a href="/account.php?tab=overview"
+          class="flex items-center gap-3 px-4 py-3 rounded-2xl text-xs font-bold transition <?= $active_tab === 'overview' ? 'bg-brand-green text-white shadow-sm' : 'text-gray-700 hover:bg-stone-50' ?>">
+          <i class="fa-solid fa-table-columns text-sm"></i>
+          <span>Dashboard Overview</span>
+        </a>
+
         <a href="/account.php?tab=orders"
-          class="flex items-center gap-3 px-4 py-3 rounded-xl text-xs font-bold transition <?= $active_tab === 'orders' ? 'bg-brand-green text-white shadow-sm' : 'text-gray-700 hover:bg-stone-50' ?>">
+          class="flex items-center gap-3 px-4 py-3 rounded-2xl text-xs font-bold transition <?= $active_tab === 'orders' ? 'bg-brand-green text-white shadow-sm' : 'text-gray-700 hover:bg-stone-50' ?>">
           <i class="fa-solid fa-box-archive text-sm"></i>
-          <span>My Orders</span>
-          <span class="ml-auto text-[10px] <?= $active_tab === 'orders' ? 'bg-white/20' : 'bg-stone-100' ?> px-2 py-0.5 rounded-full">
-            <?= count($user_orders) ?>
+          <span>My Orders & History</span>
+          <span class="ml-auto text-[10px] <?= $active_tab === 'orders' ? 'bg-white/20 text-white' : 'bg-stone-100 text-gray-700' ?> px-2 py-0.5 rounded-full font-bold">
+            <?= $total_orders_count ?>
           </span>
+        </a>
+
+        <a href="/account.php?tab=cart"
+          class="flex items-center gap-3 px-4 py-3 rounded-2xl text-xs font-bold transition <?= $active_tab === 'cart' ? 'bg-brand-green text-white shadow-sm' : 'text-gray-700 hover:bg-stone-50' ?>">
+          <i class="fa-solid fa-cart-shopping text-sm"></i>
+          <span>Shopping Cart</span>
+          <?php if ($cart_count > 0): ?>
+            <span class="ml-auto text-[10px] <?= $active_tab === 'cart' ? 'bg-amber-400 text-stone-900' : 'bg-amber-100 text-amber-900' ?> px-2 py-0.5 rounded-full font-bold">
+              <?= $cart_count ?>
+            </span>
+          <?php endif; ?>
+        </a>
+
+        <a href="/account.php?tab=addresses"
+          class="flex items-center gap-3 px-4 py-3 rounded-2xl text-xs font-bold transition <?= $active_tab === 'addresses' ? 'bg-brand-green text-white shadow-sm' : 'text-gray-700 hover:bg-stone-50' ?>">
+          <i class="fa-solid fa-location-dot text-sm"></i>
+          <span>Delivery Addresses</span>
         </a>
 
         <a href="/account.php?tab=profile"
-          class="flex items-center gap-3 px-4 py-3 rounded-xl text-xs font-bold transition <?= $active_tab === 'profile' ? 'bg-brand-green text-white shadow-sm' : 'text-gray-700 hover:bg-stone-50' ?>">
+          class="flex items-center gap-3 px-4 py-3 rounded-2xl text-xs font-bold transition <?= $active_tab === 'profile' ? 'bg-brand-green text-white shadow-sm' : 'text-gray-700 hover:bg-stone-50' ?>">
           <i class="fa-solid fa-id-card text-sm"></i>
-          <span>Profile & Info</span>
+          <span>Profile & Personal Info</span>
         </a>
 
         <a href="/account.php?tab=tickets"
-          class="flex items-center gap-3 px-4 py-3 rounded-xl text-xs font-bold transition <?= $active_tab === 'tickets' ? 'bg-brand-green text-white shadow-sm' : 'text-gray-700 hover:bg-stone-50' ?>">
+          class="flex items-center gap-3 px-4 py-3 rounded-2xl text-xs font-bold transition <?= $active_tab === 'tickets' ? 'bg-brand-green text-white shadow-sm' : 'text-gray-700 hover:bg-stone-50' ?>">
           <i class="fa-solid fa-headset text-sm"></i>
-          <span>Support Desk</span>
-          <span class="ml-auto text-[10px] <?= $active_tab === 'tickets' ? 'bg-white/20' : 'bg-stone-100' ?> px-2 py-0.5 rounded-full">
-            <?= count($user_tickets) ?>
-          </span>
+          <span>Customer Support Desk</span>
+          <?php if ($open_tickets_count > 0): ?>
+            <span class="ml-auto text-[10px] <?= $active_tab === 'tickets' ? 'bg-red-500 text-white' : 'bg-red-100 text-red-700' ?> px-2 py-0.5 rounded-full font-bold">
+              <?= $open_tickets_count ?>
+            </span>
+          <?php endif; ?>
         </a>
 
         <a href="/account.php?tab=security"
-          class="flex items-center gap-3 px-4 py-3 rounded-xl text-xs font-bold transition <?= $active_tab === 'security' ? 'bg-brand-green text-white shadow-sm' : 'text-gray-700 hover:bg-stone-50' ?>">
+          class="flex items-center gap-3 px-4 py-3 rounded-2xl text-xs font-bold transition <?= $active_tab === 'security' ? 'bg-brand-green text-white shadow-sm' : 'text-gray-700 hover:bg-stone-50' ?>">
           <i class="fa-solid fa-shield-halved text-sm"></i>
           <span>Security & Password</span>
         </a>
 
-        <a href="/wishlist.php"
-          class="flex items-center gap-3 px-4 py-3 rounded-xl text-xs font-bold transition text-gray-700 hover:bg-stone-50">
-          <i class="fa-regular fa-heart text-sm"></i>
-          <span>Wishlist</span>
-        </a>
+        <div class="pt-2 border-t border-gray-100">
+          <a href="/wishlist.php"
+            class="flex items-center gap-3 px-4 py-3 rounded-2xl text-xs font-bold transition text-gray-700 hover:bg-stone-50">
+            <i class="fa-regular fa-heart text-sm text-red-500"></i>
+            <span>Saved Wishlist</span>
+          </a>
+        </div>
       </div>
 
       <!-- Right Tab Content (9 cols) -->
-      <div class="lg:col-span-9">
+      <div class="lg:col-span-9 space-y-6">
         
-        <!-- Tab 1: Orders -->
-        <?php if ($active_tab === 'orders'): ?>
-          <div class="space-y-4">
-            <h2 class="text-lg font-bold text-gray-900 mb-2">Order History</h2>
+        <!-- ============================================================== -->
+        <!-- TAB 1: OVERVIEW (GRAND SHOPPER DASHBOARD)                      -->
+        <!-- ============================================================== -->
+        <?php if ($active_tab === 'overview'): ?>
+          
+          <!-- Top Stat Metric Cards -->
+          <div class="grid grid-cols-2 sm:grid-cols-4 gap-4">
+            
+            <!-- Stat 1: Total Orders -->
+            <a href="/account.php?tab=orders" class="bg-white p-5 rounded-3xl border border-gray-200 shadow-xs hover:border-brand-green transition group">
+              <div class="w-10 h-10 rounded-2xl bg-emerald-50 text-brand-green flex items-center justify-center text-lg mb-3 group-hover:scale-110 transition">
+                <i class="fa-solid fa-box-archive"></i>
+              </div>
+              <div class="text-2xl font-extrabold text-gray-900"><?= $total_orders_count ?></div>
+              <div class="text-xs font-bold text-gray-600 mt-0.5">Total Orders</div>
+              <div class="text-[11px] text-brand-green font-semibold mt-1 flex items-center gap-1">
+                View all <i class="fa-solid fa-arrow-right text-[9px]"></i>
+              </div>
+            </a>
+
+            <!-- Stat 2: Active Shipments -->
+            <a href="/account.php?tab=orders" class="bg-white p-5 rounded-3xl border border-gray-200 shadow-xs hover:border-blue-500 transition group">
+              <div class="w-10 h-10 rounded-2xl bg-blue-50 text-blue-600 flex items-center justify-center text-lg mb-3 group-hover:scale-110 transition">
+                <i class="fa-solid fa-truck-fast"></i>
+              </div>
+              <div class="text-2xl font-extrabold text-gray-900"><?= $active_shipments_count ?></div>
+              <div class="text-xs font-bold text-gray-600 mt-0.5">In-Transit</div>
+              <div class="text-[11px] text-blue-600 font-semibold mt-1 flex items-center gap-1">
+                Track delivery <i class="fa-solid fa-arrow-right text-[9px]"></i>
+              </div>
+            </a>
+
+            <!-- Stat 3: Live Cart -->
+            <a href="/account.php?tab=cart" class="bg-white p-5 rounded-3xl border border-gray-200 shadow-xs hover:border-amber-500 transition group">
+              <div class="w-10 h-10 rounded-2xl bg-amber-50 text-amber-600 flex items-center justify-center text-lg mb-3 group-hover:scale-110 transition">
+                <i class="fa-solid fa-cart-shopping"></i>
+              </div>
+              <div class="text-2xl font-extrabold text-gray-900"><?= $cart_count ?></div>
+              <div class="text-xs font-bold text-gray-600 mt-0.5">Cart Items</div>
+              <div class="text-[11px] text-amber-700 font-semibold mt-1 truncate">
+                <?= $cart_count > 0 ? format_price($cart_subtotal) : 'Bag empty' ?>
+              </div>
+            </a>
+
+            <!-- Stat 4: Support Tickets -->
+            <a href="/account.php?tab=tickets" class="bg-white p-5 rounded-3xl border border-gray-200 shadow-xs hover:border-purple-500 transition group">
+              <div class="w-10 h-10 rounded-2xl bg-purple-50 text-purple-600 flex items-center justify-center text-lg mb-3 group-hover:scale-110 transition">
+                <i class="fa-solid fa-headset"></i>
+              </div>
+              <div class="text-2xl font-extrabold text-gray-900"><?= count($user_tickets) ?></div>
+              <div class="text-xs font-bold text-gray-600 mt-0.5">Support Desk</div>
+              <div class="text-[11px] text-purple-700 font-semibold mt-1">
+                <?= $open_tickets_count ?> open tickets
+              </div>
+            </a>
+
+          </div>
+
+          <!-- Section 1: Live Shopping Cart Preview -->
+          <div class="bg-white rounded-3xl border border-gray-200 shadow-sm overflow-hidden">
+            <div class="p-5 border-b border-gray-100 flex items-center justify-between">
+              <div class="flex items-center gap-2.5">
+                <div class="w-8 h-8 rounded-xl bg-emerald-50 text-brand-green flex items-center justify-center text-sm font-bold">
+                  <i class="fa-solid fa-cart-shopping"></i>
+                </div>
+                <div>
+                  <h2 class="text-sm sm:text-base font-extrabold text-gray-900">Live Shopping Cart</h2>
+                  <p class="text-[11px] text-gray-500">Items currently saved in your active shopping session</p>
+                </div>
+              </div>
+
+              <?php if (!empty($cart_items)): ?>
+                <a href="/checkout.php" class="px-4 py-2 bg-brand-green hover:bg-emerald-800 text-white font-bold text-xs rounded-xl transition flex items-center gap-1.5 shadow-sm">
+                  <span>Checkout Now (<?= format_price($cart_subtotal) ?>)</span>
+                  <i class="fa-solid fa-arrow-right text-[10px]"></i>
+                </a>
+              <?php endif; ?>
+            </div>
+
+            <?php if (empty($cart_items)): ?>
+              <div class="p-8 text-center">
+                <div class="w-14 h-14 rounded-2xl bg-stone-100 text-gray-400 flex items-center justify-center mx-auto mb-3">
+                  <i class="fa-solid fa-bag-shopping text-2xl"></i>
+                </div>
+                <h3 class="text-sm font-bold text-gray-800">Your shopping cart is currently empty</h3>
+                <p class="text-xs text-gray-500 mt-1 mb-4">Discover village hand-forged tools, farm staples, and authentic rural crafts.</p>
+                <a href="/products.php" class="inline-flex items-center gap-2 px-5 py-2.5 bg-brand-green hover:bg-emerald-800 text-white font-bold text-xs rounded-xl shadow-xs transition">
+                  <i class="fa-solid fa-store"></i> Start Shopping
+                </a>
+              </div>
+            <?php else: ?>
+              <div class="divide-y divide-gray-100">
+                <?php foreach (array_slice($cart_items, 0, 4) as $item): 
+                  $prod = $item['product'];
+                  $img = !empty($prod['image']) ? $prod['image'] : '/assets/images/placeholder.png';
+                ?>
+                  <div class="p-4 sm:p-5 flex items-center justify-between gap-4">
+                    <div class="flex items-center gap-3.5 min-w-0">
+                      <img src="<?= htmlspecialchars($img) ?>" alt="<?= htmlspecialchars($prod['name']) ?>"
+                        class="w-14 h-14 rounded-xl object-cover border border-gray-200 shrink-0 bg-stone-50"
+                        onerror="this.src='/assets/images/placeholder.png'">
+                      <div class="min-w-0">
+                        <a href="/product.php?id=<?= $prod['id'] ?>" class="text-xs sm:text-sm font-bold text-gray-900 hover:text-brand-green transition truncate block">
+                          <?= htmlspecialchars($prod['name']) ?>
+                        </a>
+                        <p class="text-[11px] text-gray-500 mt-0.5">
+                          <?= htmlspecialchars($prod['vendor_name'] ?? 'Kalyani agrofood pvt ltd') ?> • Qty: <strong class="text-gray-800"><?= $item['quantity'] ?></strong>
+                        </p>
+                      </div>
+                    </div>
+
+                    <div class="text-right shrink-0">
+                      <div class="text-sm font-extrabold text-gray-900">
+                        <?= format_price($item['subtotal']) ?>
+                      </div>
+                      <div class="text-[11px] text-gray-400">
+                        <?= format_price($prod['price']) ?> each
+                      </div>
+                    </div>
+                  </div>
+                <?php endforeach; ?>
+              </div>
+
+              <div class="bg-stone-50 p-4 border-t border-gray-100 flex flex-wrap items-center justify-between gap-3 text-xs">
+                <div>
+                  <span class="text-gray-600">Cart Subtotal (<?= $cart_count ?> <?= $cart_count === 1 ? 'item' : 'items' ?>):</span>
+                  <strong class="text-gray-900 text-sm ml-1"><?= format_price($cart_subtotal) ?></strong>
+                </div>
+
+                <div class="flex items-center gap-2">
+                  <a href="/account.php?tab=cart" class="px-3.5 py-1.5 bg-white border border-gray-200 rounded-xl text-gray-700 hover:bg-stone-100 font-bold transition text-xs shadow-xs">
+                    Manage Bag
+                  </a>
+                  <a href="/checkout.php" class="px-4 py-1.5 bg-brand-green hover:bg-emerald-800 text-white font-bold rounded-xl transition text-xs shadow-xs flex items-center gap-1.5">
+                    <span>Proceed to Checkout</span>
+                    <i class="fa-solid fa-arrow-right text-[10px]"></i>
+                  </a>
+                </div>
+              </div>
+            <?php endif; ?>
+          </div>
+
+          <!-- Section 2: Recent Orders & Shipment Tracking -->
+          <div class="bg-white rounded-3xl border border-gray-200 shadow-sm overflow-hidden">
+            <div class="p-5 border-b border-gray-100 flex items-center justify-between">
+              <div class="flex items-center gap-2.5">
+                <div class="w-8 h-8 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center text-sm font-bold">
+                  <i class="fa-solid fa-truck-fast"></i>
+                </div>
+                <div>
+                  <h2 class="text-sm sm:text-base font-extrabold text-gray-900">Recent Orders & Shipment Tracker</h2>
+                  <p class="text-[11px] text-gray-500">Live order fulfillment and postal delivery progress</p>
+                </div>
+              </div>
+
+              <?php if (!empty($user_orders)): ?>
+                <a href="/account.php?tab=orders" class="text-xs font-bold text-brand-green hover:underline flex items-center gap-1">
+                  <span>View All Orders (<?= $total_orders_count ?>)</span>
+                  <i class="fa-solid fa-arrow-right text-[10px]"></i>
+                </a>
+              <?php endif; ?>
+            </div>
 
             <?php if (empty($user_orders)): ?>
-              <div class="bg-white rounded-2xl border border-gray-200 p-12 text-center shadow-sm">
+              <div class="p-8 text-center">
+                <div class="w-14 h-14 rounded-2xl bg-stone-100 text-gray-400 flex items-center justify-center mx-auto mb-3">
+                  <i class="fa-solid fa-box-open text-2xl"></i>
+                </div>
+                <h3 class="text-sm font-bold text-gray-800">No orders placed yet</h3>
+                <p class="text-xs text-gray-500 mt-1 mb-4">When you place an order, live tracking details will appear here.</p>
+                <a href="/products.php" class="inline-flex items-center gap-2 px-5 py-2.5 bg-brand-green hover:bg-emerald-800 text-white font-bold text-xs rounded-xl shadow-xs transition">
+                  <i class="fa-solid fa-bag-shopping"></i> Browse Catalog
+                </a>
+              </div>
+            <?php else: ?>
+              <?php 
+                $latest_order = $user_orders[0];
+                $stmt_ord_items = $pdo->prepare("
+                    SELECT oi.*, p.image as product_image
+                    FROM order_items oi
+                    LEFT JOIN products p ON oi.product_id = p.id
+                    WHERE oi.order_id = ?
+                ");
+                $stmt_ord_items->execute([$latest_order['id']]);
+                $latest_items = $stmt_ord_items->fetchAll() ?: [];
+
+                $status_lower = strtolower($latest_order['order_status']);
+                $step = 1; // 1: Placed, 2: Confirmed, 3: Shipped, 4: Out for Delivery, 5: Delivered
+                if ($status_lower === 'processing' || $status_lower === 'confirmed') $step = 2;
+                if ($status_lower === 'dispatched' || $status_lower === 'shipped') $step = 3;
+                if ($status_lower === 'out for delivery') $step = 4;
+                if ($status_lower === 'delivered') $step = 5;
+              ?>
+
+              <div class="p-5 sm:p-6 space-y-6">
+                <!-- Order Header Info -->
+                <div class="flex flex-wrap items-center justify-between gap-3 text-xs bg-stone-50 p-4 rounded-2xl border border-gray-100">
+                  <div>
+                    <span class="text-gray-500">Order Number:</span>
+                    <strong class="text-gray-900 font-mono text-sm ml-1">#<?= htmlspecialchars($latest_order['order_number']) ?></strong>
+                    <span class="text-gray-400 mx-2">•</span>
+                    <span class="text-gray-500"><?= date('d M Y, h:i A', strtotime($latest_order['created_at'])) ?></span>
+                  </div>
+
+                  <div class="flex items-center gap-2.5">
+                    <span class="px-3 py-1 rounded-full text-xs font-bold <?= $latest_order['order_status'] === 'Delivered' ? 'bg-emerald-100 text-emerald-800' : ($latest_order['order_status'] === 'Dispatched' || $latest_order['order_status'] === 'Shipped' ? 'bg-blue-100 text-blue-800' : 'bg-amber-100 text-amber-800') ?>">
+                      <?= htmlspecialchars($latest_order['order_status']) ?>
+                    </span>
+                    <a href="/order-success.php?id=<?= $latest_order['id'] ?>" class="px-3 py-1 bg-white border border-gray-200 rounded-lg text-gray-700 hover:bg-stone-100 font-bold transition text-xs shadow-xs">
+                      Invoice Receipt
+                    </a>
+                  </div>
+                </div>
+
+                <!-- Visual Tracking Progress Stepper (Lead E-Commerce Standard) -->
+                <div class="py-2 px-2">
+                  <div class="relative flex items-center justify-between">
+                    <div class="absolute left-0 top-1/2 -translate-y-1/2 h-1 bg-gray-200 w-full z-0"></div>
+                    <div class="absolute left-0 top-1/2 -translate-y-1/2 h-1 bg-brand-green z-0 transition-all duration-500"
+                         style="width: <?= $step === 1 ? '0%' : ($step === 2 ? '25%' : ($step === 3 ? '50%' : ($step === 4 ? '75%' : '100%'))) ?>;"></div>
+
+                    <!-- Step 1: Placed -->
+                    <div class="relative z-10 flex flex-col items-center text-center">
+                      <div class="w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold shadow-sm <?= $step >= 1 ? 'bg-brand-green text-white' : 'bg-gray-200 text-gray-500' ?>">
+                        <i class="fa-solid fa-check"></i>
+                      </div>
+                      <span class="text-[11px] font-bold text-gray-800 mt-1.5">Order Placed</span>
+                    </div>
+
+                    <!-- Step 2: Confirmed -->
+                    <div class="relative z-10 flex flex-col items-center text-center">
+                      <div class="w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold shadow-sm <?= $step >= 2 ? 'bg-brand-green text-white' : 'bg-gray-200 text-gray-500' ?>">
+                        <?= $step >= 2 ? '<i class="fa-solid fa-check"></i>' : '2' ?>
+                      </div>
+                      <span class="text-[11px] font-bold text-gray-800 mt-1.5">Confirmed</span>
+                    </div>
+
+                    <!-- Step 3: Shipped -->
+                    <div class="relative z-10 flex flex-col items-center text-center">
+                      <div class="w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold shadow-sm <?= $step >= 3 ? 'bg-brand-green text-white' : 'bg-gray-200 text-gray-500' ?>">
+                        <?= $step >= 3 ? '<i class="fa-solid fa-truck-fast"></i>' : '3' ?>
+                      </div>
+                      <span class="text-[11px] font-bold text-gray-800 mt-1.5">Shipped</span>
+                    </div>
+
+                    <!-- Step 4: Out for Delivery -->
+                    <div class="relative z-10 flex flex-col items-center text-center">
+                      <div class="w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold shadow-sm <?= $step >= 4 ? 'bg-brand-green text-white' : 'bg-gray-200 text-gray-500' ?>">
+                        <?= $step >= 4 ? '<i class="fa-solid fa-location-dot"></i>' : '4' ?>
+                      </div>
+                      <span class="text-[11px] font-bold text-gray-800 mt-1.5">Out for Delivery</span>
+                    </div>
+
+                    <!-- Step 5: Delivered -->
+                    <div class="relative z-10 flex flex-col items-center text-center">
+                      <div class="w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold shadow-sm <?= $step >= 5 ? 'bg-brand-green text-white' : 'bg-gray-200 text-gray-500' ?>">
+                        <i class="fa-solid fa-house"></i>
+                      </div>
+                      <span class="text-[11px] font-bold text-gray-800 mt-1.5">Delivered</span>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Carrier / AWB Details -->
+                <div class="p-3.5 bg-amber-50/60 border border-amber-200 rounded-2xl flex flex-wrap items-center justify-between text-xs gap-3">
+                  <div class="flex items-center gap-2">
+                    <i class="fa-solid fa-barcode text-red-600 text-sm"></i>
+                    <span class="text-gray-600">Postal Consignment / AWB Tracking:</span>
+                    <strong class="font-mono text-gray-900"><?= htmlspecialchars($latest_order['tracking_consignment_no'] ?? 'AWB-PENDING') ?></strong>
+                  </div>
+                  <span class="text-gray-500 text-[11px]">Carrier: <strong><?= htmlspecialchars($latest_order['tracking_carrier'] ?? 'India Post') ?></strong></span>
+                </div>
+
+                <!-- Item preview in order -->
+                <div class="divide-y divide-gray-100">
+                  <?php foreach ($latest_items as $item): 
+                    $item_img = !empty($item['product_image']) ? $item['product_image'] : '/assets/images/placeholder.png';
+                  ?>
+                    <div class="py-3 flex items-center justify-between gap-4">
+                      <div class="flex items-center gap-3">
+                        <img src="<?= htmlspecialchars($item_img) ?>" alt="<?= htmlspecialchars($item['product_name']) ?>"
+                          class="w-12 h-12 rounded-xl object-cover border border-gray-200 bg-stone-50"
+                          onerror="this.src='/assets/images/placeholder.png'">
+                        <div>
+                          <p class="text-xs font-bold text-gray-900"><?= htmlspecialchars($item['product_name']) ?></p>
+                          <p class="text-[11px] text-gray-500">Qty: <?= $item['quantity'] ?> • <?= format_price($item['price']) ?></p>
+                        </div>
+                      </div>
+                      <div class="text-right">
+                        <div class="text-xs font-extrabold text-gray-900">
+                          <?= format_price($item['total']) ?>
+                        </div>
+                      </div>
+                    </div>
+                  <?php endforeach; ?>
+                </div>
+
+                <div class="pt-3 border-t border-gray-100 flex items-center justify-between text-xs">
+                  <span class="text-gray-500">Total Paid: <strong class="text-brand-green font-extrabold text-sm"><?= format_price($latest_order['total_amount']) ?></strong> (<?= strtoupper(htmlspecialchars($latest_order['payment_method'])) ?>)</span>
+                  <a href="/account.php?tab=orders" class="text-brand-green font-bold hover:underline">
+                    View all orders & tracking history →
+                  </a>
+                </div>
+
+              </div>
+            <?php endif; ?>
+          </div>
+
+        <!-- ============================================================== -->
+        <!-- TAB 2: MY ORDERS & ORDER HISTORY                               -->
+        <!-- ============================================================== -->
+        <?php elseif ($active_tab === 'orders'): ?>
+          <div class="space-y-4">
+            <div class="flex items-center justify-between">
+              <div>
+                <h2 class="text-lg font-bold text-gray-900">Order History & Shipment Tracking</h2>
+                <p class="text-xs text-gray-500 mt-0.5">Track your past purchases, download invoices, or reorder authentic village staples</p>
+              </div>
+              <span class="text-xs font-bold text-stone-500 bg-white px-3 py-1.5 rounded-xl border border-gray-200 shadow-xs">
+                <?= $total_orders_count ?> <?= $total_orders_count === 1 ? 'Order' : 'Orders' ?> Placed
+              </span>
+            </div>
+
+            <?php if (empty($user_orders)): ?>
+              <div class="bg-white rounded-3xl border border-gray-200 p-12 text-center shadow-sm">
                 <i class="fa-solid fa-box-open text-4xl text-stone-300 mb-3"></i>
                 <h3 class="text-base font-bold text-gray-700">No orders placed yet</h3>
                 <p class="text-xs text-gray-500 mt-1 mb-4">Explore authentic hand-forged tools, farm staples, and artisan crafts.</p>
-                <a href="/products.php" class="inline-flex items-center gap-2 px-5 py-2.5 bg-brand-green text-white text-xs font-bold rounded-xl hover:bg-emerald-800 transition">
+                <a href="/products.php" class="inline-flex items-center gap-2 px-5 py-2.5 bg-brand-green text-white text-xs font-bold rounded-xl hover:bg-emerald-800 transition shadow-xs">
                   Start Shopping <i class="fa-solid fa-arrow-right"></i>
                 </a>
               </div>
             <?php else: ?>
               <?php foreach ($user_orders as $ord): 
-                $stmt_ord_items = $pdo->prepare("SELECT * FROM order_items WHERE order_id = ?");
+                $stmt_ord_items = $pdo->prepare("
+                    SELECT oi.*, p.image as product_image
+                    FROM order_items oi
+                    LEFT JOIN products p ON oi.product_id = p.id
+                    WHERE oi.order_id = ?
+                ");
                 $stmt_ord_items->execute([$ord['id']]);
-                $items = $stmt_ord_items->fetchAll();
+                $items = $stmt_ord_items->fetchAll() ?: [];
+
+                $status_lower = strtolower($ord['order_status']);
+                $step = 1;
+                if ($status_lower === 'processing' || $status_lower === 'confirmed') $step = 2;
+                if ($status_lower === 'dispatched' || $status_lower === 'shipped') $step = 3;
+                if ($status_lower === 'out for delivery') $step = 4;
+                if ($status_lower === 'delivered') $step = 5;
               ?>
-                <div class="bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden">
+                <div class="bg-white rounded-3xl border border-gray-200 shadow-sm overflow-hidden">
+                  
+                  <!-- Order Header Bar -->
                   <div class="bg-stone-50 p-4 sm:p-5 border-b border-gray-100 flex flex-wrap items-center justify-between gap-3 text-xs">
                     <div>
-                      <span class="text-gray-500">Order No:</span>
-                      <strong class="text-gray-900 ml-1 font-mono">#<?= htmlspecialchars($ord['order_number']) ?></strong>
+                      <span class="text-gray-500">Order:</span>
+                      <strong class="text-gray-900 ml-1 font-mono text-sm">#<?= htmlspecialchars($ord['order_number']) ?></strong>
                       <span class="text-gray-400 mx-2">•</span>
                       <span class="text-gray-500"><?= date('d M Y, h:i A', strtotime($ord['created_at'])) ?></span>
                     </div>
 
                     <div class="flex items-center gap-2">
-                      <span class="px-2.5 py-1 rounded-full text-[11px] font-bold <?= $ord['order_status'] === 'Delivered' ? 'bg-emerald-100 text-emerald-800' : ($ord['order_status'] === 'Dispatched' ? 'bg-blue-100 text-blue-800' : 'bg-amber-100 text-amber-800') ?>">
+                      <span class="px-3 py-1 rounded-full text-[11px] font-bold <?= $ord['order_status'] === 'Delivered' ? 'bg-emerald-100 text-emerald-800' : ($ord['order_status'] === 'Dispatched' || $ord['order_status'] === 'Shipped' ? 'bg-blue-100 text-blue-800' : 'bg-amber-100 text-amber-800') ?>">
                         <?= htmlspecialchars($ord['order_status']) ?>
                       </span>
-                      <a href="/order-success.php?id=<?= $ord['id'] ?>" class="px-3 py-1 bg-white border border-gray-200 rounded-lg text-gray-700 hover:bg-stone-100 font-bold transition text-[11px]">
+                      <a href="/order-success.php?id=<?= $ord['id'] ?>" class="px-3 py-1 bg-white border border-gray-200 rounded-lg text-gray-700 hover:bg-stone-100 font-bold transition text-[11px] shadow-xs">
                         View Receipt
                       </a>
                     </div>
                   </div>
 
-                  <div class="p-4 bg-amber-50/50 border-b border-amber-100 flex items-center justify-between text-xs">
+                  <!-- Visual Shipment Stepper -->
+                  <div class="py-4 px-6 bg-white border-b border-gray-100">
+                    <div class="relative flex items-center justify-between">
+                      <div class="absolute left-0 top-1/2 -translate-y-1/2 h-1 bg-gray-200 w-full z-0"></div>
+                      <div class="absolute left-0 top-1/2 -translate-y-1/2 h-1 bg-brand-green z-0 transition-all duration-500"
+                           style="width: <?= $step === 1 ? '0%' : ($step === 2 ? '25%' : ($step === 3 ? '50%' : ($step === 4 ? '75%' : '100%'))) ?>;"></div>
+
+                      <div class="relative z-10 flex flex-col items-center text-center">
+                        <div class="w-7 h-7 rounded-full flex items-center justify-center text-[10px] font-bold <?= $step >= 1 ? 'bg-brand-green text-white' : 'bg-gray-200 text-gray-500' ?>">
+                          <i class="fa-solid fa-check"></i>
+                        </div>
+                        <span class="text-[10px] font-bold text-gray-700 mt-1">Placed</span>
+                      </div>
+
+                      <div class="relative z-10 flex flex-col items-center text-center">
+                        <div class="w-7 h-7 rounded-full flex items-center justify-center text-[10px] font-bold <?= $step >= 2 ? 'bg-brand-green text-white' : 'bg-gray-200 text-gray-500' ?>">
+                          <?= $step >= 2 ? '<i class="fa-solid fa-check"></i>' : '2' ?>
+                        </div>
+                        <span class="text-[10px] font-bold text-gray-700 mt-1">Confirmed</span>
+                      </div>
+
+                      <div class="relative z-10 flex flex-col items-center text-center">
+                        <div class="w-7 h-7 rounded-full flex items-center justify-center text-[10px] font-bold <?= $step >= 3 ? 'bg-brand-green text-white' : 'bg-gray-200 text-gray-500' ?>">
+                          <?= $step >= 3 ? '<i class="fa-solid fa-truck-fast"></i>' : '3' ?>
+                        </div>
+                        <span class="text-[10px] font-bold text-gray-700 mt-1">Shipped</span>
+                      </div>
+
+                      <div class="relative z-10 flex flex-col items-center text-center">
+                        <div class="w-7 h-7 rounded-full flex items-center justify-center text-[10px] font-bold <?= $step >= 4 ? 'bg-brand-green text-white' : 'bg-gray-200 text-gray-500' ?>">
+                          <?= $step >= 4 ? '<i class="fa-solid fa-location-dot"></i>' : '4' ?>
+                        </div>
+                        <span class="text-[10px] font-bold text-gray-700 mt-1">Out for Delivery</span>
+                      </div>
+
+                      <div class="relative z-10 flex flex-col items-center text-center">
+                        <div class="w-7 h-7 rounded-full flex items-center justify-center text-[10px] font-bold <?= $step >= 5 ? 'bg-brand-green text-white' : 'bg-gray-200 text-gray-500' ?>">
+                          <i class="fa-solid fa-house"></i>
+                        </div>
+                        <span class="text-[10px] font-bold text-gray-700 mt-1">Delivered</span>
+                      </div>
+                    </div>
+                  </div>
+
+                  <!-- Tracking info -->
+                  <div class="p-3.5 bg-amber-50/50 border-b border-amber-100 flex flex-wrap items-center justify-between text-xs gap-2">
                     <div class="flex items-center gap-2">
                       <i class="fa-solid fa-truck-fast text-red-600"></i>
-                      <span class="text-gray-700">India Post Consignment (AWB):</span>
+                      <span class="text-gray-700">Consignment (AWB):</span>
                       <span class="font-mono font-bold text-gray-900"><?= htmlspecialchars($ord['tracking_consignment_no'] ?? 'AWB-PENDING') ?></span>
                     </div>
                     <span class="text-[11px] text-gray-500"><?= htmlspecialchars($ord['tracking_carrier'] ?? 'India Post') ?></span>
                   </div>
 
+                  <!-- Items list -->
                   <div class="divide-y divide-gray-100 p-4">
-                    <?php foreach ($items as $it): ?>
-                      <div class="py-2.5 flex items-center justify-between text-xs">
-                        <div>
-                          <p class="font-bold text-gray-900"><?= htmlspecialchars($it['product_name']) ?></p>
-                          <p class="text-gray-500 text-[11px]">Code: <?= htmlspecialchars($it['product_code']) ?> • Qty: <?= $it['quantity'] ?></p>
+                    <?php foreach ($items as $it): 
+                      $it_img = !empty($it['product_image']) ? $it['product_image'] : '/assets/images/placeholder.png';
+                    ?>
+                      <div class="py-3 flex items-center justify-between text-xs gap-3">
+                        <div class="flex items-center gap-3">
+                          <img src="<?= htmlspecialchars($it_img) ?>" alt="<?= htmlspecialchars($it['product_name']) ?>"
+                            class="w-12 h-12 rounded-xl object-cover border border-gray-200 shrink-0 bg-stone-50"
+                            onerror="this.src='/assets/images/placeholder.png'">
+                          <div>
+                            <p class="font-bold text-gray-900"><?= htmlspecialchars($it['product_name']) ?></p>
+                            <p class="text-gray-500 text-[11px]">Code: <?= htmlspecialchars($it['product_code']) ?> • Qty: <?= $it['quantity'] ?></p>
+                          </div>
                         </div>
-                        <div class="font-bold text-gray-900">
-                          <?= format_price($it['total']) ?>
+
+                        <div class="flex items-center gap-3">
+                          <div class="font-bold text-gray-900 text-sm">
+                            <?= format_price($it['total']) ?>
+                          </div>
+                          <?php if (!empty($it['product_id'])): ?>
+                            <form method="POST" action="/account.php?tab=cart" class="inline">
+                              <?= csrf_field() ?>
+                              <input type="hidden" name="reorder_item" value="1">
+                              <input type="hidden" name="product_id" value="<?= (int)$it['product_id'] ?>">
+                              <input type="hidden" name="quantity" value="1">
+                              <button type="submit" class="px-2.5 py-1 bg-stone-100 hover:bg-stone-200 text-gray-700 font-bold text-[10px] rounded-lg transition" title="Add to Cart again">
+                                <i class="fa-solid fa-rotate-right"></i> Buy Again
+                              </button>
+                            </form>
+                          <?php endif; ?>
                         </div>
                       </div>
                     <?php endforeach; ?>
                   </div>
 
-                  <div class="bg-stone-50 p-4 border-t border-gray-100 flex items-center justify-between text-xs">
+                  <!-- Footer info -->
+                  <div class="bg-stone-50 p-4 border-t border-gray-100 flex flex-wrap items-center justify-between gap-3 text-xs">
                     <span class="text-gray-600">Payment: <strong class="uppercase text-gray-800"><?= htmlspecialchars($ord['payment_method']) ?></strong> (<?= htmlspecialchars($ord['payment_status']) ?>)</span>
                     <span class="font-bold text-sm text-gray-900">Total: <span class="text-brand-green font-extrabold"><?= format_price($ord['total_amount']) ?></span></span>
                   </div>
@@ -400,9 +941,186 @@ require_once __DIR__ . '/includes/header.php';
             <?php endif; ?>
           </div>
 
-        <!-- Tab 2: Profile & Avatar -->
+        <!-- ============================================================== -->
+        <!-- TAB 3: LIVE SHOPPING CART                                      -->
+        <!-- ============================================================== -->
+        <?php elseif ($active_tab === 'cart'): ?>
+          <div class="space-y-6">
+            <div class="flex items-center justify-between">
+              <div>
+                <h2 class="text-lg font-bold text-gray-900">Live Shopping Cart</h2>
+                <p class="text-xs text-gray-500 mt-0.5">Manage quantities, review delivery estimates, and proceed to checkout</p>
+              </div>
+              <a href="/products.php" class="text-xs font-bold text-brand-green hover:underline">
+                ← Continue Shopping
+              </a>
+            </div>
+
+            <?php if (empty($cart_items)): ?>
+              <div class="bg-white rounded-3xl border border-gray-200 p-12 text-center shadow-sm">
+                <i class="fa-solid fa-cart-shopping text-4xl text-stone-300 mb-3"></i>
+                <h3 class="text-base font-bold text-gray-700">Your shopping cart is empty</h3>
+                <p class="text-xs text-gray-500 mt-1 mb-4">Discover village hand-forged tools, farm staples, and authentic rural crafts.</p>
+                <a href="/products.php" class="inline-flex items-center gap-2 px-5 py-2.5 bg-brand-green text-white text-xs font-bold rounded-xl hover:bg-emerald-800 transition shadow-xs">
+                  Explore Products <i class="fa-solid fa-arrow-right"></i>
+                </a>
+              </div>
+            <?php else: ?>
+              <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+                
+                <!-- Cart Items List (8 cols) -->
+                <div class="lg:col-span-8 bg-white rounded-3xl border border-gray-200 shadow-sm overflow-hidden divide-y divide-gray-100">
+                  <div class="p-4 bg-stone-50 border-b border-gray-100 text-xs font-bold text-gray-600 flex justify-between items-center">
+                    <span>Products in Bag (<?= $cart_count ?>)</span>
+                    <a href="/cart.php" class="text-brand-green hover:underline">Edit in Cart Desk</a>
+                  </div>
+
+                  <?php foreach ($cart_items as $item): 
+                    $prod = $item['product'];
+                    $img = !empty($prod['image']) ? $prod['image'] : '/assets/images/placeholder.png';
+                  ?>
+                    <div class="p-4 sm:p-5 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+                      <div class="flex items-center gap-4">
+                        <img src="<?= htmlspecialchars($img) ?>" alt="<?= htmlspecialchars($prod['name']) ?>"
+                          class="w-16 h-16 rounded-2xl object-cover border border-gray-200 bg-stone-50 shrink-0"
+                          onerror="this.src='/assets/images/placeholder.png'">
+                        <div>
+                          <a href="/product.php?id=<?= $prod['id'] ?>" class="text-sm font-bold text-gray-900 hover:text-brand-green transition">
+                            <?= htmlspecialchars($prod['name']) ?>
+                          </a>
+                          <p class="text-xs text-gray-500 mt-0.5">
+                            <?= htmlspecialchars($prod['vendor_name'] ?? 'Kalyani agrofood pvt ltd') ?>
+                          </p>
+                          <div class="mt-2 flex items-center gap-2 text-xs">
+                            <span class="font-bold text-gray-700">Quantity: <?= $item['quantity'] ?></span>
+                            <span class="text-gray-300">•</span>
+                            <span class="text-gray-500"><?= format_price($prod['price']) ?> / unit</span>
+                          </div>
+                        </div>
+                      </div>
+
+                      <div class="text-right shrink-0">
+                        <div class="text-base font-extrabold text-gray-900">
+                          <?= format_price($item['subtotal']) ?>
+                        </div>
+                      </div>
+                    </div>
+                  <?php endforeach; ?>
+                </div>
+
+                <!-- Order Summary Card (4 cols) -->
+                <div class="lg:col-span-4 bg-white rounded-3xl border border-gray-200 p-6 shadow-sm space-y-4">
+                  <h3 class="text-sm font-extrabold text-gray-900 pb-3 border-b border-gray-100">
+                    Order Summary
+                  </h3>
+
+                  <div class="space-y-2.5 text-xs text-gray-600">
+                    <div class="flex justify-between">
+                      <span>Items Subtotal:</span>
+                      <strong class="text-gray-900"><?= format_price($cart_subtotal) ?></strong>
+                    </div>
+                    <div class="flex justify-between">
+                      <span>Shipping Rate:</span>
+                      <strong class="<?= $shipping_info['is_free'] ? 'text-brand-green' : 'text-gray-900' ?>">
+                        <?= $shipping_info['is_free'] ? 'FREE Delivery' : format_price($shipping_info['shipping_fee']) ?>
+                      </strong>
+                    </div>
+                    <?php if (!$shipping_info['is_free']): ?>
+                      <p class="text-[11px] text-amber-700 bg-amber-50 p-2 rounded-xl border border-amber-200">
+                        Add <?= format_price($shipping_info['remaining_for_free']) ?> more for FREE Delivery!
+                      </p>
+                    <?php endif; ?>
+                  </div>
+
+                  <div class="pt-3 border-t border-gray-100 flex justify-between items-center text-sm font-extrabold text-gray-900">
+                    <span>Estimated Total:</span>
+                    <span class="text-brand-green text-lg font-black">
+                      <?= format_price(max(0, $cart_subtotal + $shipping_info['shipping_fee'])) ?>
+                    </span>
+                  </div>
+
+                  <a href="/checkout.php" class="w-full py-3 bg-brand-green hover:bg-emerald-800 text-white font-bold text-xs rounded-xl shadow-md transition flex items-center justify-center gap-2">
+                    <span>Proceed to Checkout</span>
+                    <i class="fa-solid fa-arrow-right"></i>
+                  </a>
+
+                  <a href="/cart.php" class="w-full py-2.5 bg-stone-100 hover:bg-stone-200 text-gray-700 font-bold text-xs rounded-xl transition text-center block">
+                    View Full Cart Desk
+                  </a>
+                </div>
+
+              </div>
+            <?php endif; ?>
+          </div>
+
+        <!-- ============================================================== -->
+        <!-- TAB 4: DELIVERY ADDRESSES                                      -->
+        <!-- ============================================================== -->
+        <?php elseif ($active_tab === 'addresses'): ?>
+          <div class="bg-white rounded-3xl border border-gray-200 p-6 sm:p-8 shadow-sm space-y-6">
+            <div>
+              <h2 class="text-lg font-bold text-gray-900 flex items-center gap-2">
+                <i class="fa-solid fa-location-dot text-brand-green"></i>
+                Saved Delivery Addresses
+              </h2>
+              <p class="text-xs text-gray-500 mt-0.5">Manage your shipping address used for courier deliveries across India</p>
+            </div>
+
+            <div class="p-5 bg-stone-50 rounded-2xl border border-gray-200">
+              <span class="text-[11px] font-bold text-brand-green uppercase tracking-wider bg-emerald-50 px-2 py-0.5 rounded-md border border-emerald-200">
+                Primary Shipping Address
+              </span>
+              <div class="mt-3 text-xs text-gray-700 space-y-1">
+                <p class="font-bold text-gray-900 text-sm"><?= htmlspecialchars($user['name']) ?></p>
+                <p><?= htmlspecialchars($user['address'] ?: 'No street address provided') ?></p>
+                <p><?= htmlspecialchars($user['city'] ?: 'Hardoi') ?>, Uttar Pradesh — <strong><?= htmlspecialchars($user['pincode'] ?: '241001') ?></strong></p>
+                <p class="text-gray-500 mt-2"><i class="fa-solid fa-phone text-xs"></i> +91 <?= htmlspecialchars($user['phone'] ?: 'None') ?></p>
+              </div>
+            </div>
+
+            <form action="/account.php?tab=addresses" method="POST" class="space-y-4 pt-4 border-t border-gray-100">
+              <?= csrf_field() ?>
+              <input type="hidden" name="update_address" value="1">
+
+              <h3 class="text-sm font-bold text-gray-900">Update Shipping Destination</h3>
+
+              <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div class="sm:col-span-2">
+                  <label class="block text-xs font-bold text-gray-700 mb-1">Street Address / House No / Village <span class="text-red-500">*</span></label>
+                  <textarea name="address" rows="3" required placeholder="e.g. Madhoganj, Baghauli Road, Newada..."
+                    class="w-full px-3.5 py-2.5 bg-stone-50 border border-gray-200 rounded-xl text-xs focus:bg-white focus:border-brand-green focus:outline-none transition"><?= htmlspecialchars($user['address'] ?? '') ?></textarea>
+                </div>
+
+                <div>
+                  <label class="block text-xs font-bold text-gray-700 mb-1">City / District <span class="text-red-500">*</span></label>
+                  <input type="text" name="city" required value="<?= htmlspecialchars($user['city'] ?? 'Hardoi') ?>"
+                    class="w-full px-3.5 py-2.5 bg-stone-50 border border-gray-200 rounded-xl text-xs focus:bg-white focus:border-brand-green focus:outline-none transition">
+                </div>
+
+                <div>
+                  <label class="block text-xs font-bold text-gray-700 mb-1">6-Digit PIN Code <span class="text-red-500">*</span></label>
+                  <input type="text" name="pincode" pattern="[0-9]{6}" maxlength="6" required value="<?= htmlspecialchars($user['pincode'] ?? '241001') ?>"
+                    class="w-full px-3.5 py-2.5 bg-stone-50 border border-gray-200 rounded-xl text-xs focus:bg-white focus:border-brand-green focus:outline-none transition">
+                </div>
+
+                <div>
+                  <label class="block text-xs font-bold text-gray-700 mb-1">Delivery Contact Number <span class="text-red-500">*</span></label>
+                  <input type="tel" name="phone" pattern="[0-9]{10}" maxlength="10" required value="<?= htmlspecialchars($user['phone']) ?>"
+                    class="w-full px-3.5 py-2.5 bg-stone-50 border border-gray-200 rounded-xl text-xs focus:bg-white focus:border-brand-green focus:outline-none transition">
+                </div>
+              </div>
+
+              <button type="submit" class="px-6 py-2.5 bg-brand-green text-white text-xs font-bold rounded-xl hover:bg-emerald-800 transition shadow-md">
+                Save Delivery Address
+              </button>
+            </form>
+          </div>
+
+        <!-- ============================================================== -->
+        <!-- TAB 5: PROFILE & INFO                                          -->
+        <!-- ============================================================== -->
         <?php elseif ($active_tab === 'profile'): ?>
-          <div class="bg-white rounded-2xl border border-gray-200 p-6 sm:p-8 shadow-sm">
+          <div class="bg-white rounded-3xl border border-gray-200 p-6 sm:p-8 shadow-sm">
             <h2 class="text-lg font-bold text-gray-900 mb-4 pb-3 border-b border-gray-100 flex items-center gap-2">
               <i class="fa-solid fa-id-card text-brand-green"></i>
               Profile Details & Avatar Photo
@@ -479,19 +1197,21 @@ require_once __DIR__ . '/includes/header.php';
               </div>
 
               <button type="submit" class="px-6 py-2.5 bg-brand-green text-white text-xs font-bold rounded-xl hover:bg-emerald-800 transition shadow-md">
-                Save Changes
+                Save Profile Changes
               </button>
             </form>
           </div>
 
-        <!-- Tab 3: Support Tickets -->
+        <!-- ============================================================== -->
+        <!-- TAB 6: SUPPORT DESK & TICKETS                                  -->
+        <!-- ============================================================== -->
         <?php elseif ($active_tab === 'tickets'): ?>
           <div class="space-y-6">
             
             <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
               <div>
                 <h2 class="text-lg font-bold text-gray-900">Support Desk & Assistance Tickets</h2>
-                <p class="text-xs text-gray-500 mt-0.5">Submit a ticket for order tracking, product inquiry, or returns</p>
+                <p class="text-xs text-gray-500 mt-0.5">Submit a ticket for order tracking, product inquiries, returns, or technical help</p>
               </div>
               <button type="button" onclick="document.getElementById('newTicketCard').classList.toggle('hidden')"
                 class="px-4 py-2 bg-brand-green hover:bg-emerald-800 text-white font-bold text-xs rounded-xl transition flex items-center gap-1.5 shadow-sm">
@@ -500,7 +1220,7 @@ require_once __DIR__ . '/includes/header.php';
             </div>
 
             <!-- New Ticket Submission Form (Collapsible) -->
-            <div id="newTicketCard" class="hidden bg-white rounded-2xl border border-emerald-200 p-6 shadow-sm">
+            <div id="newTicketCard" class="hidden bg-white rounded-3xl border border-emerald-200 p-6 shadow-sm">
               <h3 class="text-sm font-bold text-gray-900 pb-3 mb-4 border-b border-gray-100 flex items-center gap-2">
                 <i class="fa-solid fa-headset text-brand-green"></i> Create New Support Ticket
               </h3>
@@ -564,12 +1284,12 @@ require_once __DIR__ . '/includes/header.php';
 
             <!-- Tickets List -->
             <?php if (empty($user_tickets)): ?>
-              <div class="bg-white rounded-2xl border border-gray-200 p-12 text-center shadow-sm">
+              <div class="bg-white rounded-3xl border border-gray-200 p-12 text-center shadow-sm">
                 <i class="fa-solid fa-headset text-4xl text-stone-300 mb-3"></i>
                 <h3 class="text-base font-bold text-gray-700">No support tickets found</h3>
                 <p class="text-xs text-gray-500 mt-1 mb-4">If you need assistance with an order, item, or delivery, please create a ticket.</p>
                 <button type="button" onclick="document.getElementById('newTicketCard').classList.remove('hidden')"
-                  class="inline-flex items-center gap-2 px-5 py-2.5 bg-brand-green text-white text-xs font-bold rounded-xl hover:bg-emerald-800 transition">
+                  class="inline-flex items-center gap-2 px-5 py-2.5 bg-brand-green text-white text-xs font-bold rounded-xl hover:bg-emerald-800 transition shadow-xs">
                   <i class="fa-solid fa-plus"></i> Submit First Ticket
                 </button>
               </div>
@@ -578,10 +1298,10 @@ require_once __DIR__ . '/includes/header.php';
                 <?php foreach ($user_tickets as $tkt): 
                   $stmt_rep = $pdo->prepare("SELECT * FROM ticket_replies WHERE ticket_id = ? ORDER BY id ASC");
                   $stmt_rep->execute([$tkt['id']]);
-                  $replies = $stmt_rep->fetchAll();
+                  $replies = $stmt_rep->fetchAll() ?: [];
                   $reply_count = count($replies);
                 ?>
-                  <div class="bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden">
+                  <div class="bg-white rounded-3xl border border-gray-200 shadow-sm overflow-hidden">
                     <div class="bg-stone-50 p-4 sm:p-5 border-b border-gray-100 flex flex-wrap items-center justify-between gap-3 text-xs">
                       <div class="flex items-center gap-3">
                         <span class="font-mono font-bold text-brand-green text-sm">#<?= htmlspecialchars($tkt['ticket_number']) ?></span>
@@ -611,11 +1331,11 @@ require_once __DIR__ . '/includes/header.php';
                           <?php foreach ($replies as $rep): 
                             $is_admin_reply = in_array($rep['sender_role'], ['admin', 'super_admin', 'support']);
                           ?>
-                            <div class="p-3.5 rounded-xl text-xs <?= $is_admin_reply ? 'bg-indigo-50/80 border border-indigo-100 ml-4' : 'bg-stone-50 border border-gray-200 mr-4' ?>">
+                            <div class="p-3.5 rounded-2xl text-xs <?= $is_admin_reply ? 'bg-indigo-50/80 border border-indigo-100 ml-4' : 'bg-stone-50 border border-gray-200 mr-4' ?>">
                               <div class="flex items-center justify-between mb-1.5">
                                 <span class="font-bold <?= $is_admin_reply ? 'text-indigo-900' : 'text-gray-900' ?>">
                                   <i class="fa-solid <?= $is_admin_reply ? 'fa-user-tie text-indigo-600' : 'fa-user' ?>"></i>
-                                  <?= htmlspecialchars($rep['sender_name']) ?> <?= $is_admin_reply ? '(Support Team)' : '(You)' ?>
+                                  <?= htmlspecialchars($rep['sender_name']) ?> <?= $is_admin_reply ? '(Support Desk)' : '(You)' ?>
                                 </span>
                                 <span class="text-[10px] text-gray-400"><?= date('d M, h:i A', strtotime($rep['created_at'])) ?></span>
                               </div>
@@ -633,7 +1353,7 @@ require_once __DIR__ . '/includes/header.php';
                             <input type="hidden" name="reply_ticket" value="1">
                             <input type="hidden" name="ticket_id" value="<?= $tkt['id'] ?>">
                             <input type="text" name="reply_message" required placeholder="Type your reply here..."
-                              class="flex-1 px-3 py-2 bg-stone-50 border border-gray-200 rounded-xl text-xs focus:bg-white focus:outline-none focus:border-brand-green">
+                              class="flex-1 px-3.5 py-2 bg-stone-50 border border-gray-200 rounded-xl text-xs focus:bg-white focus:outline-none focus:border-brand-green">
                             <button type="submit" class="px-4 py-2 bg-brand-green hover:bg-emerald-800 text-white font-bold text-xs rounded-xl transition shadow-xs flex items-center gap-1">
                               <i class="fa-solid fa-paper-plane text-[10px]"></i> Send
                             </button>
@@ -649,9 +1369,11 @@ require_once __DIR__ . '/includes/header.php';
 
           </div>
 
-        <!-- Tab 4: Security -->
+        <!-- ============================================================== -->
+        <!-- TAB 7: SECURITY & PASSWORD                                     -->
+        <!-- ============================================================== -->
         <?php elseif ($active_tab === 'security'): ?>
-          <div class="bg-white rounded-2xl border border-gray-200 p-6 sm:p-8 shadow-sm">
+          <div class="bg-white rounded-3xl border border-gray-200 p-6 sm:p-8 shadow-sm">
             <h2 class="text-lg font-bold text-gray-900 mb-4 pb-3 border-b border-gray-100 flex items-center gap-2">
               <i class="fa-solid fa-shield-halved text-brand-green"></i>
               Security & Password Settings
@@ -671,6 +1393,7 @@ require_once __DIR__ . '/includes/header.php';
                 <label class="block text-xs font-bold text-gray-700 mb-1">New Password (Min 10 characters, strong)</label>
                 <input type="password" name="new_password" required minlength="10"
                   class="w-full px-3.5 py-2.5 bg-stone-50 border border-gray-200 rounded-xl text-sm focus:bg-white focus:border-brand-green focus:outline-none transition">
+                <p class="text-[11px] text-gray-400 mt-1">Must include uppercase, lowercase, numbers, and symbols.</p>
               </div>
 
               <div>

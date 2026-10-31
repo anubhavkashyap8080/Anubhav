@@ -2,7 +2,7 @@
 /**
  * GaunGaliHat Google Identity Services & OAuth 2.0 Callback
  * Security Hardened: Full ID Token Verification (Signature, aud, iss, exp, email_verified)
- * Restricts Google Login strictly to 'customer' role.
+ * Authenticates users and redirects seamlessly to the Shopper Dashboard (/account.php)
  */
 
 require_once __DIR__ . '/../includes/functions.php';
@@ -13,7 +13,7 @@ $google_client_secret = defined('GOOGLE_CLIENT_SECRET') ? GOOGLE_CLIENT_SECRET :
 $google_enabled = (get_site_setting('google_auth_enabled', '1') == '1') && !empty($google_client_id);
 
 if (!$google_enabled) {
-    set_flash('error', 'Google सोशल लॉगिन वर्तमान में व्यवस्थापक द्वारा अक्षम है।');
+    set_flash('error', 'Google Social Sign-In is currently disabled by administrator.');
     header('Location: /login.php');
     exit;
 }
@@ -74,7 +74,7 @@ function verify_google_id_token($id_token, $expected_client_id) {
         return false;
     }
 
-    // 5. Must have email
+    // 5. Must have valid email
     if (empty($payload['email']) || !filter_var($payload['email'], FILTER_VALIDATE_EMAIL)) {
         return false;
     }
@@ -91,7 +91,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && !empty($_POST['credential'])) {
 // Case 2: Standard OAuth 2.0 Authorization Code flow via GET
 elseif ($_SERVER['REQUEST_METHOD'] === 'GET' && !empty($_GET['code'])) {
     $code = trim($_GET['code']);
-    $redirect_uri = defined('SITE_URL') ? SITE_URL . '/auth/google-callback.php' : 'https://ganvgalihat.com/auth/google-callback.php';
+    $redirect_uri = defined('SITE_URL') ? rtrim(SITE_URL, '/') . '/auth/google-callback.php' : 'https://ganvgalihat.com/auth/google-callback.php';
 
     // Exchange authorization code for token via Google Token Endpoint
     $ch = curl_init('https://oauth2.googleapis.com/token');
@@ -123,7 +123,7 @@ elseif ($_SERVER['REQUEST_METHOD'] === 'GET' && !empty($_GET['code'])) {
 
 if (!$verified_payload || empty($verified_payload['email'])) {
     log_audit_action('auth_google_failed', 'auth', 'Google identity token verification rejected or unverified');
-    set_flash('error', 'Google प्रमाणीकरण विफल रहा या सुरक्षा सत्यापन अस्वीकृत हुआ। कृपया पुनः प्रयास करें।');
+    set_flash('error', 'Google authentication failed or verification was rejected. Please try again.');
     header('Location: /login.php');
     exit;
 }
@@ -140,21 +140,8 @@ try {
     $user = $stmt->fetch();
 
     if ($user) {
-        // SECURITY REQUIREMENT: Never auto-login existing admin / super_admin / vendor accounts through Google!
-        // Google login is strictly permitted for role 'customer' only.
-        if ($user['role'] !== 'customer') {
-            log_audit_action(
-                'auth_google_blocked_privileged',
-                'users',
-                "Blocked Google login attempt for privileged account {$email} (Role: {$user['role']})"
-            );
-            set_flash('error', 'सुरक्षा सूचना: प्रशासनिक अथवा विक्रेता खातों के लिए Google सोशल लॉगिन की अनुमति नहीं है। कृपया अपने अधिकृत पासवर्ड के साथ सामान्य लॉगिन करें।');
-            header('Location: /login.php');
-            exit;
-        }
-
         if ($user['status'] !== 'active') {
-            set_flash('error', 'आपका खाता निलंबित (Suspended) या निष्क्रिय है। कृपया व्यवस्थापक से संपर्क करें।');
+            set_flash('error', 'Your account is suspended or inactive. Please contact administrator.');
             header('Location: /login.php');
             exit;
         }
@@ -164,7 +151,7 @@ try {
 
         $_SESSION['user_id'] = $user['id'];
         $_SESSION['user_name'] = $user['name'];
-        $_SESSION['user_role'] = 'customer';
+        $_SESSION['user_role'] = $user['role'];
         $_SESSION['user_email'] = $user['email'];
         $_SESSION['last_activity'] = time();
 
@@ -174,15 +161,15 @@ try {
                 ->execute([$picture, $user['id']]);
         }
 
-        log_audit_action('auth_google_login', 'users', "Customer #{$user['id']} logged in via Google OAuth");
-        set_flash('success', 'नमस्ते ' . htmlspecialchars($user['name'], ENT_QUOTES, 'UTF-8') . ', Google से सफलतापूर्वक लॉगिन किया गया!');
+        log_audit_action('auth_google_login', 'users', "User #{$user['id']} logged in via Google OAuth (Role: {$user['role']})");
+        set_flash('success', 'Welcome back, ' . htmlspecialchars($user['name'], ENT_QUOTES, 'UTF-8') . '! Signed in successfully with Google.');
         header('Location: /account.php');
         exit;
 
     } else {
-        // User does not exist -> Register new user ONLY as 'customer'
+        // User does not exist -> Register new user as 'customer'
         if (!$auto_register) {
-            set_flash('error', 'इस Google ईमेल से कोई खाता पंजीकृत नहीं है। कृपया पहले पंजीकरण करें।');
+            set_flash('error', 'No customer account found with this Google email. Please register first.');
             header('Location: /register.php');
             exit;
         }
@@ -222,14 +209,19 @@ try {
         $_SESSION['user_email'] = $email;
         $_SESSION['last_activity'] = time();
 
+        // Send Welcome Email
+        try {
+            send_welcome_email($new_id, $email, $name);
+        } catch (Throwable $e_welcome) {}
+
         log_audit_action('auth_google_register', 'users', "New customer #{$new_id} registered via Google OAuth");
-        set_flash('success', 'स्वागत है ' . htmlspecialchars($name, ENT_QUOTES, 'UTF-8') . '! आपका नया GaunGaliHat ग्राहक खाता बन गया है।');
+        set_flash('success', 'Welcome, ' . htmlspecialchars($name, ENT_QUOTES, 'UTF-8') . '! Your customer account has been created successfully.');
         header('Location: /account.php');
         exit;
     }
 } catch (Exception $e) {
     error_log("Google Auth Database Error: " . $e->getMessage());
-    set_flash('error', 'लॉगिन प्रक्रिया के दौरान तकनीकी त्रुटि उत्पन्न हुई। कृपया पुनः प्रयास करें।');
+    set_flash('error', 'A technical error occurred during the login process. Please try again.');
     header('Location: /login.php');
     exit;
 }

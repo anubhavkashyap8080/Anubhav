@@ -154,10 +154,31 @@ require_once __DIR__ . '/includes/header.php';
       </div>
 
       <div class="p-6 sm:p-8">
-        <?php if (!empty($error)): ?>
+        <?php 
+        $flash_msg = get_flash();
+        $display_error = !empty($error) ? $error : ($flash_msg && $flash_msg['type'] === 'error' ? $flash_msg['message'] : '');
+        $display_success = $flash_msg && $flash_msg['type'] === 'success' ? $flash_msg['message'] : '';
+        $display_info = $flash_msg && $flash_msg['type'] === 'info' ? $flash_msg['message'] : '';
+        ?>
+
+        <?php if (!empty($display_error)): ?>
           <div class="mb-5 p-3.5 bg-red-50 border border-red-200 text-red-700 rounded-xl text-xs flex items-center gap-2.5">
             <i class="fa-solid fa-circle-exclamation text-base flex-shrink-0"></i>
-            <span><?= htmlspecialchars($error) ?></span>
+            <span><?= htmlspecialchars($display_error) ?></span>
+          </div>
+        <?php endif; ?>
+
+        <?php if (!empty($display_success)): ?>
+          <div class="mb-5 p-3.5 bg-emerald-50 border border-emerald-200 text-emerald-800 rounded-xl text-xs flex items-center gap-2.5">
+            <i class="fa-solid fa-circle-check text-base flex-shrink-0"></i>
+            <span><?= htmlspecialchars($display_success) ?></span>
+          </div>
+        <?php endif; ?>
+
+        <?php if (!empty($display_info)): ?>
+          <div class="mb-5 p-3.5 bg-blue-50 border border-blue-200 text-blue-800 rounded-xl text-xs flex items-center gap-2.5">
+            <i class="fa-solid fa-circle-info text-base flex-shrink-0"></i>
+            <span><?= htmlspecialchars($display_info) ?></span>
           </div>
         <?php endif; ?>
 
@@ -253,11 +274,13 @@ require_once __DIR__ . '/includes/header.php';
               <div class="flex-grow border-t border-gray-200"></div>
             </div>
 
-            <div class="mt-2 flex flex-col gap-2">
+            <div class="mt-2 flex flex-col gap-2.5">
               <?php if ($google_enabled && !empty($google_client_id)): ?>
+                <!-- Official Single Google Sign In Button -->
                 <div id="g_id_onload"
                      data-client_id="<?= htmlspecialchars($google_client_id) ?>"
-                     data-login_uri="/auth/google-callback.php"
+                     data-login_uri="<?= rtrim(defined('SITE_URL') ? SITE_URL : 'https://ganvgalihat.com', '/') ?>/auth/google-callback.php"
+                     data-callback="onGoogleAuthCallback"
                      data-auto_prompt="false">
                 </div>
                 <div class="g_id_signin w-full flex justify-center"
@@ -269,16 +292,10 @@ require_once __DIR__ . '/includes/header.php';
                      data-logo_alignment="left"
                      data-width="100%">
                 </div>
-                
-                <a href="https://accounts.google.com/o/oauth2/v2/auth?client_id=<?= urlencode($google_client_id) ?>&redirect_uri=<?= urlencode(SITE_URL . '/auth/google-callback.php') ?>&response_type=code&scope=openid%20profile%20email"
-                   class="w-full py-2.5 px-4 bg-white border border-gray-300 hover:bg-stone-50 text-gray-700 font-bold rounded-xl text-xs transition flex items-center justify-center gap-2 shadow-xs">
-                  <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" class="w-4 h-4" alt="Google">
-                  <span>Sign in with Google</span>
-                </a>
               <?php endif; ?>
 
               <?php if ($facebook_enabled && !empty($facebook_app_id)): ?>
-                <a href="https://www.facebook.com/v18.0/dialog/oauth?client_id=<?= urlencode($facebook_app_id) ?>&redirect_uri=<?= urlencode(SITE_URL . '/auth/facebook-callback.php') ?>&scope=email,public_profile"
+                <a href="https://www.facebook.com/v18.0/dialog/oauth?client_id=<?= urlencode($facebook_app_id) ?>&redirect_uri=<?= urlencode((defined('SITE_URL') ? rtrim(SITE_URL, '/') : 'https://ganvgalihat.com') . '/auth/facebook-callback.php') ?>&scope=email,public_profile"
                    class="w-full py-2.5 px-4 bg-[#1877F2] hover:bg-[#166fe5] text-white font-bold rounded-xl text-xs transition flex items-center justify-center gap-2 shadow-xs">
                   <i class="fa-brands fa-facebook-f text-sm"></i>
                   <span>Sign in with Facebook</span>
@@ -366,6 +383,21 @@ function togglePasswordVisibility(inputId, btn) {
     input.type = 'password';
     icon.classList.remove('fa-eye-slash');
     icon.classList.add('fa-eye');
+  }
+}
+
+function onGoogleAuthCallback(response) {
+  if (response && response.credential) {
+    const form = document.createElement('form');
+    form.method = 'POST';
+    form.action = '<?= rtrim(defined('SITE_URL') ? SITE_URL : 'https://ganvgalihat.com', '/') ?>/auth/google-callback.php';
+    const input = document.createElement('input');
+    input.type = 'hidden';
+    input.name = 'credential';
+    input.value = response.credential;
+    form.appendChild(input);
+    document.body.appendChild(form);
+    form.submit();
   }
 }
 </script>

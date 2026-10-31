@@ -2,7 +2,7 @@
 /**
  * GaunGaliHat - Premium Rural Artisan Marketplace Homepage
  * Integrated Geolocation, Nearby Artisan Dispatch Engine, 
- * Amazon/Flipkart Circular Visual Category Tray & 4-Box Deal Grid
+ * E-Commerce Circular Visual Category Tray & 4-Box Deal Grid
  */
 
 require_once __DIR__ . '/includes/header.php';
@@ -104,7 +104,7 @@ if (!empty($nearest_vendor_ids)) {
     unset($np);
 }
 
-// 2. Fetch 4-Box Department Products (Flipkart Style 2x2 Showcase)
+// 2. Fetch 4-Box Department Products (Showcase Grid)
 $box1_tools = $pdo->query("SELECT * FROM products WHERE category_id = 1 AND stock > 0 ORDER BY is_best_seller DESC, id ASC LIMIT 4")->fetchAll();
 $box2_pulses = $pdo->query("SELECT * FROM products WHERE category_id = 2 AND stock > 0 ORDER BY is_best_seller DESC, id ASC LIMIT 4")->fetchAll();
 $box3_pickles = $pdo->query("SELECT * FROM products WHERE category_id = 3 AND stock > 0 ORDER BY is_best_seller DESC, id ASC LIMIT 4")->fetchAll();
@@ -143,7 +143,7 @@ if ($hero_theme === 'crimson') {
 }
 ?>
 
-<!-- 0. Real-time Location Bar & Dispatch Notification (Amazon/Flipkart Style) -->
+<!-- 0. Real-time Location Bar & Dispatch Notification -->
 <div class="bg-stone-900 text-stone-200 text-xs border-b border-stone-800">
   <div class="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 py-2 flex flex-col sm:flex-row items-center justify-between gap-2">
     
@@ -182,7 +182,7 @@ if ($hero_theme === 'crimson') {
   </div>
 </div>
 
-<!-- 1. Amazon / Flipkart Style Circular Category Visual Tray -->
+<!-- 1. Circular Category Visual Tray -->
 <section class="bg-white border-b border-gray-200 py-3 sm:py-4 shadow-xs">
   <div class="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8">
     <div class="flex items-center justify-start sm:justify-between gap-4 sm:gap-6 overflow-x-auto scrollbar-none pb-1">
@@ -331,7 +331,7 @@ if ($hero_theme === 'crimson') {
 </section>
 <?php endif; ?>
 
-<!-- 3. Flipkart / Amazon Signature 4-Box Department Multi-Product Showcase Grid -->
+<!-- 3. Signature 4-Box Department Multi-Product Showcase Grid -->
 <section class="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 py-8 sm:py-12">
   <div class="mb-6 flex flex-col sm:flex-row sm:items-end justify-between gap-2 border-b border-gray-200 pb-3">
     <div>

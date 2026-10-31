@@ -214,11 +214,12 @@ require_once __DIR__ . '/includes/header.php';
             <div class="flex-grow border-t border-gray-200"></div>
           </div>
 
-          <div class="mt-2 flex flex-col gap-2">
+          <div class="mt-2 flex flex-col gap-2.5">
             <?php if ($google_enabled && !empty($google_client_id)): ?>
               <div id="g_id_onload"
                    data-client_id="<?= htmlspecialchars($google_client_id) ?>"
-                   data-login_uri="/auth/google-callback.php"
+                   data-login_uri="<?= rtrim(defined('SITE_URL') ? SITE_URL : 'https://ganvgalihat.com', '/') ?>/auth/google-callback.php"
+                   data-callback="onGoogleAuthCallback"
                    data-auto_prompt="false">
               </div>
               <div class="g_id_signin w-full flex justify-center"
@@ -230,16 +231,10 @@ require_once __DIR__ . '/includes/header.php';
                    data-logo_alignment="left"
                    data-width="100%">
               </div>
-
-              <a href="https://accounts.google.com/o/oauth2/v2/auth?client_id=<?= urlencode($google_client_id) ?>&redirect_uri=<?= urlencode(SITE_URL . '/auth/google-callback.php') ?>&response_type=code&scope=openid%20profile%20email"
-                 class="w-full py-2.5 px-4 bg-white border border-gray-300 hover:bg-stone-50 text-gray-700 font-bold rounded-xl text-xs transition flex items-center justify-center gap-2 shadow-xs">
-                <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" class="w-4 h-4" alt="Google">
-                <span>Sign up with Google</span>
-              </a>
             <?php endif; ?>
 
             <?php if ($facebook_enabled && !empty($facebook_app_id)): ?>
-              <a href="https://www.facebook.com/v18.0/dialog/oauth?client_id=<?= urlencode($facebook_app_id) ?>&redirect_uri=<?= urlencode(SITE_URL . '/auth/facebook-callback.php') ?>&scope=email,public_profile"
+              <a href="https://www.facebook.com/v18.0/dialog/oauth?client_id=<?= urlencode($facebook_app_id) ?>&redirect_uri=<?= urlencode((defined('SITE_URL') ? rtrim(SITE_URL, '/') : 'https://ganvgalihat.com') . '/auth/facebook-callback.php') ?>&scope=email,public_profile"
                  class="w-full py-2.5 px-4 bg-[#1877F2] hover:bg-[#166fe5] text-white font-bold rounded-xl text-xs transition flex items-center justify-center gap-2 shadow-xs">
                 <i class="fa-brands fa-facebook-f text-sm"></i>
                 <span>Sign up with Facebook</span>
@@ -256,6 +251,23 @@ require_once __DIR__ . '/includes/header.php';
 
   </div>
 </div>
+
+<script>
+function onGoogleAuthCallback(response) {
+  if (response && response.credential) {
+    const form = document.createElement('form');
+    form.method = 'POST';
+    form.action = '<?= rtrim(defined('SITE_URL') ? SITE_URL : 'https://ganvgalihat.com', '/') ?>/auth/google-callback.php';
+    const input = document.createElement('input');
+    input.type = 'hidden';
+    input.name = 'credential';
+    input.value = response.credential;
+    form.appendChild(input);
+    document.body.appendChild(form);
+    form.submit();
+  }
+}
+</script>
 
 <?php if ($google_enabled): ?>
   <script src="https://accounts.google.com/gsi/client" async defer></script>
