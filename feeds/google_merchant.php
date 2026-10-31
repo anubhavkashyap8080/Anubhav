@@ -83,7 +83,7 @@ foreach ($products as $p) {
     $ship_cost = number_format($ship_calc['shipping_fee'], 2, '.', '');
 
     $google_cat = get_google_category($p['category_slug'] ?? '');
-    $brand_name = !empty($p['vendor_name']) ? $p['vendor_name'] : 'GaunGaliHat';
+    $brand_name = !empty($p['vendor_name']) ? str_ireplace('S S Industries', 'Kalyani agrofood pvt ltd', $p['vendor_name']) : 'GaunGaliHat';
 
     $xml .= '    <item>' . "\n";
     $xml .= '      <g:id>' . htmlspecialchars($item_id) . '</g:id>' . "\n";

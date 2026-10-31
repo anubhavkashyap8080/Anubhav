@@ -38,6 +38,12 @@ $vendors_stmt = $pdo->query("SELECT * FROM vendors WHERE verified = 1");
 $all_vendors = $vendors_stmt->fetchAll();
 
 foreach ($all_vendors as &$v) {
+    if (isset($v['name'])) {
+        $v['name'] = str_ireplace('S S Industries', 'Kalyani agrofood pvt ltd', $v['name']);
+    }
+    if (isset($v['business_name'])) {
+        $v['business_name'] = str_ireplace('S S Industries', 'Kalyani agrofood pvt ltd', $v['business_name']);
+    }
     // Village / District coordinates
     $v_lat = 27.1264;
     $v_lng = 80.1444;
@@ -151,7 +157,7 @@ if ($hero_theme === 'crimson') {
         <?php if (!empty($nearest_vendors[0])): ?>
           <span class="hidden md:inline text-stone-400 ml-2">|</span>
           <span class="hidden md:inline text-emerald-400 font-semibold ml-2">
-            🚀 Nearest Forge: <?= htmlspecialchars($nearest_vendors[0]['name']) ?> (<?= $nearest_vendors[0]['distance_km'] ?> km away)
+            🚀 Nearest Forge: <?= htmlspecialchars(str_ireplace('S S Industries', 'Kalyani agrofood pvt ltd', $nearest_vendors[0]['name'])) ?> (<?= $nearest_vendors[0]['distance_km'] ?> km away)
           </span>
         <?php endif; ?>
       </div>

@@ -483,6 +483,18 @@ function ensure_platform_schema($pdo) {
         $pdo->exec("UPDATE site_settings SET setting_value = '🌾 Kalyani agrofood pvt ltd • Hunar desh ka, ganv se ghar tak' WHERE setting_key = 'hero_badge_text' AND setting_value LIKE '%S S Industries%'");
         $pdo->exec("UPDATE site_settings SET setting_value = 'G145 Phase 2 Industrial Area, UPSIDA Sandila, Hardoi, UP' WHERE setting_key = 'head_office_address' AND (setting_value = '0' OR setting_value = '' OR setting_value IS NULL)");
         $pdo->exec("UPDATE site_settings SET setting_value = 'GaunGaliHat — Desh ki mitti ka swad | Rural Tools & Farm Staples' WHERE setting_key IN ('homepage_title', 'seo_meta_title') AND (setting_value = '0' OR setting_value LIKE '0 %' OR setting_value LIKE '0-%' OR setting_value LIKE '0—%' OR setting_value LIKE '0_%')");
+        
+        // Auto-heal legacy vendor records and product descriptions containing 'S S Industries'
+        $pdo->exec("UPDATE vendors SET name = REPLACE(REPLACE(REPLACE(REPLACE(name, 'S. S. Industries', 'Kalyani agrofood pvt ltd'), 'S.S. Industries', 'Kalyani agrofood pvt ltd'), 'S S Industries', 'Kalyani agrofood pvt ltd'), 'SS Industries', 'Kalyani agrofood pvt ltd'),
+                                       business_name = REPLACE(REPLACE(REPLACE(REPLACE(business_name, 'S. S. Industries', 'Kalyani agrofood pvt ltd'), 'S.S. Industries', 'Kalyani agrofood pvt ltd'), 'S S Industries', 'Kalyani agrofood pvt ltd'), 'SS Industries', 'Kalyani agrofood pvt ltd'),
+                                       story = REPLACE(REPLACE(story, 'S S Industries', 'Kalyani agrofood pvt ltd'), 'SS Industries', 'Kalyani agrofood pvt ltd'),
+                                       bank_beneficiary = REPLACE(REPLACE(bank_beneficiary, 'S S Industries', 'Kalyani agrofood pvt ltd'), 'SS Industries', 'Kalyani agrofood pvt ltd')
+                    WHERE name LIKE '%Industries%' OR business_name LIKE '%Industries%' OR story LIKE '%Industries%' OR bank_beneficiary LIKE '%Industries%'");
+        $pdo->exec("UPDATE users SET name = REPLACE(name, 'S S Industries', 'Kalyani agrofood pvt ltd') WHERE name LIKE '%S S Industries%'");
+        $pdo->exec("UPDATE products SET description = REPLACE(REPLACE(description, 'S S Industries', 'Kalyani agrofood pvt ltd'), 'SS Industries', 'Kalyani agrofood pvt ltd'),
+                                        specifications = REPLACE(REPLACE(specifications, 'S S Industries', 'Kalyani agrofood pvt ltd'), 'SS Industries', 'Kalyani agrofood pvt ltd')
+                    WHERE description LIKE '%Industries%' OR specifications LIKE '%Industries%'");
+        $pdo->exec("UPDATE site_settings SET setting_value = REPLACE(REPLACE(setting_value, 'S S Industries', 'Kalyani agrofood pvt ltd'), 'SS Industries', 'Kalyani agrofood pvt ltd') WHERE setting_value LIKE '%Industries%'");
     } catch (Throwable $e_heal0) {}
 
     // Default Settings

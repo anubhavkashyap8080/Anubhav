@@ -77,6 +77,12 @@ if ($pdo) {
         $stmt = $pdo->prepare($sql);
         $stmt->execute($params);
         $products = $stmt->fetchAll() ?: [];
+        foreach ($products as &$pr) {
+            if (isset($pr['vendor_name'])) {
+                $pr['vendor_name'] = str_ireplace('S S Industries', 'Kalyani agrofood pvt ltd', $pr['vendor_name']);
+            }
+        }
+        unset($pr);
     } catch (Throwable $e_p) {}
 }
 

@@ -251,6 +251,12 @@ if ($pdo) {
         $vendors = $vendors_stmt->fetchAll() ?: [];
 
         foreach ($vendors as $v) {
+            if (isset($v['name'])) {
+                $v['name'] = str_ireplace('S S Industries', 'Kalyani agrofood pvt ltd', $v['name']);
+            }
+            if (isset($v['business_name'])) {
+                $v['business_name'] = str_ireplace('S S Industries', 'Kalyani agrofood pvt ltd', $v['business_name']);
+            }
             $v_lat = 27.1264;
             $v_lng = 80.1444;
 

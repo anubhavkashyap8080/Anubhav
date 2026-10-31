@@ -38,6 +38,12 @@ $stmt = $pdo->query("
     ORDER BY p.id ASC
 ");
 $feed_products = $stmt->fetchAll();
+foreach ($feed_products as &$fp) {
+    if (isset($fp['vendor_name'])) {
+        $fp['vendor_name'] = str_ireplace('S S Industries', 'Kalyani agrofood pvt ltd', $fp['vendor_name']);
+    }
+}
+unset($fp);
 $total_products = count($feed_products);
 $in_stock_count = 0;
 foreach ($feed_products as $p) {

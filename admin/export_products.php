@@ -38,7 +38,7 @@ while ($row = $stmt->fetch()) {
         $row['category_id'],
         $row['category_name'] ?? '',
         $row['vendor_id'],
-        $row['vendor_name'] ?? '',
+        str_ireplace('S S Industries', 'Kalyani agrofood pvt ltd', $row['vendor_name'] ?? ''),
         $row['price'],
         $row['original_price'],
         $row['discount'],

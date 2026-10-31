@@ -20,6 +20,12 @@ if (!empty($wishlist_ids) && $pdo) {
         ");
         $stmt->execute($wishlist_ids);
         $wishlist_products = $stmt->fetchAll() ?: [];
+        foreach ($wishlist_products as &$wlp) {
+            if (isset($wlp['vendor_name'])) {
+                $wlp['vendor_name'] = str_ireplace('S S Industries', 'Kalyani agrofood pvt ltd', $wlp['vendor_name']);
+            }
+        }
+        unset($wlp);
     } catch (Throwable $e_wl) {
         $wishlist_products = [];
     }

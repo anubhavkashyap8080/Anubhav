@@ -1391,6 +1391,13 @@ function get_cart() {
         $stmt->execute($product_ids);
         $products = $stmt->fetchAll() ?: [];
 
+        foreach ($products as &$prod) {
+            if (isset($prod['vendor_name'])) {
+                $prod['vendor_name'] = str_ireplace('S S Industries', 'Kalyani agrofood pvt ltd', $prod['vendor_name']);
+            }
+        }
+        unset($prod);
+
         foreach ($products as $prod) {
             $qty = (int)($_SESSION['cart'][$prod['id']]['qty'] ?? 1);
             $cart_data[] = [

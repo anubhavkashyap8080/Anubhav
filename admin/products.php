@@ -107,6 +107,15 @@ $sql .= " ORDER BY p.id DESC";
 $stmt = $pdo->prepare($sql);
 $stmt->execute($params);
 $products = $stmt->fetchAll();
+foreach ($products as &$adm_p) {
+    if (isset($adm_p['vendor_name'])) {
+        $adm_p['vendor_name'] = str_ireplace('S S Industries', 'Kalyani agrofood pvt ltd', $adm_p['vendor_name']);
+    }
+    if (isset($adm_p['business_name'])) {
+        $adm_p['business_name'] = str_ireplace('S S Industries', 'Kalyani agrofood pvt ltd', $adm_p['business_name']);
+    }
+}
+unset($adm_p);
 
 $page_title = 'कैटलॉग एवं उत्पाद प्रशासन (Master Products Catalog)';
 require_once __DIR__ . '/admin_header.php';
