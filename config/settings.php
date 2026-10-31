@@ -112,10 +112,13 @@ define('PAYU_MODE', (string)(getenv('PAYU_MODE') ?: ($cfg_payments['payu']['mode
 define('PAYU_URL', PAYU_MODE === 'live' ? 'https://secure.payu.in/_payment' : 'https://test.payu.in/_payment');
 
 // Social Auth Constants (Item 10: config/env priority)
-$cfg_social = function_exists('get_platform_config') ? get_platform_config('social') : [];
-define('GOOGLE_AUTH_ENABLED', (bool)(getenv('GOOGLE_AUTH_ENABLED') !== false ? getenv('GOOGLE_AUTH_ENABLED') : ($cfg_social['google']['enabled'] ?? get_setting('google_auth_enabled', 1))));
-define('GOOGLE_CLIENT_ID', (string)(getenv('GOOGLE_CLIENT_ID') ?: ($cfg_social['google']['client_id'] ?? get_setting('google_client_id', ''))));
-$raw_google_secret = getenv('GOOGLE_CLIENT_SECRET') ?: ($cfg_social['google']['client_secret'] ?? '');
+$cfg_social = function_exists('get_platform_config') ? (get_platform_config('social') ?: []) : [];
+$cfg_google_top = function_exists('get_platform_config') ? (get_platform_config('google') ?: []) : [];
+$cfg_google = !empty($cfg_social['google']) ? $cfg_social['google'] : $cfg_google_top;
+
+define('GOOGLE_AUTH_ENABLED', (bool)(getenv('GOOGLE_AUTH_ENABLED') !== false ? getenv('GOOGLE_AUTH_ENABLED') : ($cfg_google['enabled'] ?? get_setting('google_auth_enabled', 1))));
+define('GOOGLE_CLIENT_ID', (string)(getenv('GOOGLE_CLIENT_ID') ?: ($cfg_google['client_id'] ?? get_setting('google_client_id', ''))));
+$raw_google_secret = getenv('GOOGLE_CLIENT_SECRET') ?: ($cfg_google['client_secret'] ?? '');
 define('GOOGLE_CLIENT_SECRET', (string)(!empty($raw_google_secret) ? $raw_google_secret : get_setting('google_client_secret', '')));
 
 define('COD_ENABLED', (bool)get_setting('cod_enabled', 1));

@@ -48,9 +48,26 @@ return [
 
     // Google Identity & OAuth 2.0 Credentials
     'google' => [
-        'enabled'       => (bool)(getenv('GOOGLE_AUTH_ENABLED') ?: false),
+        'enabled'       => (bool)(getenv('GOOGLE_AUTH_ENABLED') ?: true),
         'client_id'     => getenv('GOOGLE_CLIENT_ID') ?: '',
         'client_secret' => getenv('GOOGLE_CLIENT_SECRET') ?: '',
+    ],
+
+    // Social Auth Providers
+    'social' => [
+        'google' => [
+            'enabled'       => (bool)(getenv('GOOGLE_AUTH_ENABLED') ?: true),
+            'client_id'     => getenv('GOOGLE_CLIENT_ID') ?: '',
+            'client_secret' => getenv('GOOGLE_CLIENT_SECRET') ?: '',
+        ],
+    ],
+
+    // Firebase Cloud Messaging (FCM) & Push Notifications
+    'firebase' => [
+        'enabled'       => (bool)(getenv('FIREBASE_ENABLED') ?: true),
+        'project_id'    => getenv('FIREBASE_PROJECT_ID') ?: 'gaungalihat-rural-apps',
+        'server_key'    => getenv('FIREBASE_SERVER_KEY') ?: '',
+        'vapid_key'     => getenv('FIREBASE_VAPID_KEY') ?: '',
     ],
 
     // Optional: Cloudflare cache purge from Admin > Cache Manager (token needs only "Zone > Cache Purge")
@@ -61,7 +78,7 @@ return [
 
     // Security Governance & Administrative Alerts
     'security' => [
-        'owner_alert_email' => getenv('OWNER_ALERT_EMAIL') ?: '',
+        'owner_alert_email' => getenv('OWNER_ALERT_EMAIL') ?: 'info@ganvgalihat.com',
         'session_lifetime'  => 1800, // 30 minutes admin idle timeout
         'admin_require_2fa' => false,
         'setup_secret'      => getenv('SETUP_SECRET') ?: 'ChangeThisToRandomSecretKey32Chars',
