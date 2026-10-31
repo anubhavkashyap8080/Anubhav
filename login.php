@@ -47,6 +47,11 @@ try {
     }
 } catch (Exception $e) {}
 
+if (defined('GOOGLE_CLIENT_ID') && GOOGLE_CLIENT_ID !== '') {
+    $google_client_id = GOOGLE_CLIENT_ID;
+    $google_enabled = defined('GOOGLE_AUTH_ENABLED') ? GOOGLE_AUTH_ENABLED : true;
+}
+
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     // Item 15: CSRF Token Check on Login Form
     $csrf = $_POST['csrf_token'] ?? '';

@@ -121,6 +121,14 @@ define('GOOGLE_CLIENT_ID', (string)(getenv('GOOGLE_CLIENT_ID') ?: ($cfg_google['
 $raw_google_secret = getenv('GOOGLE_CLIENT_SECRET') ?: ($cfg_google['client_secret'] ?? '');
 define('GOOGLE_CLIENT_SECRET', (string)(!empty($raw_google_secret) ? $raw_google_secret : get_setting('google_client_secret', '')));
 
+$cfg_facebook_top = function_exists('get_platform_config') ? (get_platform_config('facebook') ?: []) : [];
+$cfg_facebook = !empty($cfg_social['facebook']) ? $cfg_social['facebook'] : $cfg_facebook_top;
+
+define('FACEBOOK_AUTH_ENABLED', (bool)(getenv('FACEBOOK_AUTH_ENABLED') !== false ? getenv('FACEBOOK_AUTH_ENABLED') : ($cfg_facebook['enabled'] ?? get_setting('facebook_auth_enabled', 0))));
+define('FACEBOOK_APP_ID', (string)(getenv('FACEBOOK_APP_ID') ?: ($cfg_facebook['app_id'] ?? get_setting('facebook_app_id', ''))));
+$raw_facebook_secret = getenv('FACEBOOK_APP_SECRET') ?: ($cfg_facebook['app_secret'] ?? '');
+define('FACEBOOK_APP_SECRET', (string)(!empty($raw_facebook_secret) ? $raw_facebook_secret : get_setting('facebook_app_secret', '')));
+
 define('COD_ENABLED', (bool)get_setting('cod_enabled', 1));
 
 // Shipping Constants

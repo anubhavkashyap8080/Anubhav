@@ -52,6 +52,11 @@ return [
         'client_id'     => getenv('GOOGLE_CLIENT_ID') ?: '',
         'client_secret' => getenv('GOOGLE_CLIENT_SECRET') ?: '',
     ],
+    'facebook' => [
+        'enabled'       => (bool)(getenv('FACEBOOK_AUTH_ENABLED') ?: false),
+        'app_id'        => getenv('FACEBOOK_APP_ID') ?: '',
+        'app_secret'    => getenv('FACEBOOK_APP_SECRET') ?: '',
+    ],
 
     // Social Auth Providers
     'social' => [
@@ -59,6 +64,11 @@ return [
             'enabled'       => (bool)(getenv('GOOGLE_AUTH_ENABLED') ?: true),
             'client_id'     => getenv('GOOGLE_CLIENT_ID') ?: '',
             'client_secret' => getenv('GOOGLE_CLIENT_SECRET') ?: '',
+        ],
+        'facebook' => [
+            'enabled'       => (bool)(getenv('FACEBOOK_AUTH_ENABLED') ?: false),
+            'app_id'        => getenv('FACEBOOK_APP_ID') ?: '',
+            'app_secret'    => getenv('FACEBOOK_APP_SECRET') ?: '',
         ],
     ],
 

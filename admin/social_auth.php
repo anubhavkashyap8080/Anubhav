@@ -149,7 +149,7 @@ require_once __DIR__ . '/admin_header.php';
       </div>
 
       <label class="relative inline-flex items-center cursor-pointer">
-        <input type="checkbox" name="facebook_auth_enabled" value="1" <?= get_soc_val('facebook_auth_enabled', '0') == '1' ? 'checked' : '' ?> class="sr-only peer">
+        <input type="checkbox" name="facebook_auth_enabled" value="1" <?= (defined('FACEBOOK_AUTH_ENABLED') ? FACEBOOK_AUTH_ENABLED : (get_soc_val('facebook_auth_enabled', '0') == '1')) ? 'checked' : '' ?> class="sr-only peer">
         <div class="w-11 h-6 bg-gray-300 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
         <span class="ml-2 text-xs font-bold text-gray-700">Facebook लॉगिन सक्रिय</span>
       </label>
@@ -159,15 +159,17 @@ require_once __DIR__ . '/admin_header.php';
       <div>
         <label class="block text-xs font-bold text-gray-700 mb-1">Facebook App ID</label>
         <input type="text" name="facebook_app_id"
-          value="<?= htmlspecialchars(get_soc_val('facebook_app_id', '')) ?>" placeholder="उदा. 109283746592817"
+          value="<?= htmlspecialchars(defined('FACEBOOK_APP_ID') && FACEBOOK_APP_ID !== '' ? FACEBOOK_APP_ID : get_soc_val('facebook_app_id', '')) ?>" placeholder="उदा. 109283746592817"
           class="w-full px-3.5 py-2.5 bg-stone-50 border border-gray-200 rounded-xl text-xs font-mono focus:bg-white focus:outline-none focus:border-blue-500">
+        <p class="text-[11px] text-gray-400 mt-1">Meta for Developers से प्राप्त App ID</p>
       </div>
 
       <div>
-        <label class="block text-xs font-bold text-gray-700 mb-1">Facebook App Secret</label>
-        <input type="password" name="facebook_app_secret"
-          value="<?= htmlspecialchars(get_soc_val('facebook_app_secret', '')) ?>"
-          class="w-full px-3.5 py-2.5 bg-stone-50 border border-gray-200 rounded-xl text-xs font-mono focus:bg-white focus:outline-none focus:border-blue-500">
+        <label class="block text-xs font-bold text-gray-700 mb-1">Facebook App Secret (Masked, Config/Env)</label>
+        <input type="text" name="facebook_app_secret" readonly
+          value="<?= htmlspecialchars(mask_secret(defined('FACEBOOK_APP_SECRET') ? FACEBOOK_APP_SECRET : get_soc_val('facebook_app_secret', ''))) ?>"
+          class="w-full px-3.5 py-2.5 bg-stone-100 border border-gray-200 rounded-xl text-xs font-mono text-gray-600 cursor-not-allowed">
+        <p class="text-[11px] text-gray-400 mt-1">पर्यावरण चर (config/env) से सुरक्षित पढ़ा गया; डेटाबेस में संग्रहीत नहीं</p>
       </div>
     </div>
   </div>
