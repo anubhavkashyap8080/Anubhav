@@ -7,7 +7,7 @@ $page_title = "Google Merchant Center XML फ़ीड";
 require_once __DIR__ . '/admin_header.php';
 require_once __DIR__ . '/../config/shipping.php';
 
-$base_domain = defined('SITE_URL') ? rtrim(SITE_URL, '/') : 'https://gaungalihat.womenvission.in';
+$base_domain = defined('SITE_URL') ? rtrim(SITE_URL, '/') : 'https://ganvgalihat.com';
 $feed_live_url = "$base_domain/feeds/google_merchant.php";
 $feed_static_url = "$base_domain/feeds/google_merchant.xml";
 $static_file_path = __DIR__ . '/../feeds/google_merchant.xml';

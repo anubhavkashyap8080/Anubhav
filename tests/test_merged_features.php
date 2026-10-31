@@ -3,7 +3,7 @@ if (session_status() === PHP_SESSION_NONE) {
     session_start();
 }
 define('TESTING_MOCK_DB', true);
-define('SITE_URL', 'https://gaungalihat.womenvission.in');
+define('SITE_URL', 'https://ganvgalihat.com');
 
 require_once __DIR__ . '/../includes/functions.php';
 

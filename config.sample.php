@@ -23,7 +23,7 @@ return [
 
     // Platform Canonical Domain & Environment
     'app' => [
-        'site_url' => getenv('SITE_URL') ?: 'https://gaungalihat.womenvission.in', // No trailing slash
+        'site_url' => getenv('SITE_URL') ?: 'https://ganvgalihat.com', // No trailing slash
         'env'      => getenv('APP_ENV') ?: 'production', // 'production' or 'development'
         'debug'    => false, // Keep false in production to prevent displaying raw errors
     ],

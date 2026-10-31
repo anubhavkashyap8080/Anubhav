@@ -4,7 +4,7 @@ ini_set('display_errors', '1');
 
 echo "=== TESTING ROUTES SIMULATION ===\n";
 
-$_SERVER['HTTP_HOST'] = 'gaungalihat.womenvission.in';
+$_SERVER['HTTP_HOST'] = 'ganvgalihat.com';
 $_SERVER['REMOTE_ADDR'] = '127.0.0.1';
 $_SERVER['SERVER_PROTOCOL'] = 'HTTP/1.1';
 

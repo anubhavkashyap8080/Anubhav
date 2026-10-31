@@ -5,7 +5,7 @@
 
 // Define environment mock
 define('TESTING_MOCK_DB', true);
-define('SITE_URL', 'https://gaungalihat.womenvission.in');
+define('SITE_URL', 'https://ganvgalihat.com');
 
 require_once __DIR__ . '/../includes/functions.php';
 
@@ -41,7 +41,7 @@ assert_test("Local uploads directory traversal blocked", !is_valid_product_image
 assert_test("Local uploads PHP file blocked", !is_valid_product_image_url("/uploads/shell.php"));
 assert_test("HTTPS Unsplash allowed", is_valid_product_image_url("https://images.unsplash.com/photo-1544717305-2782549b5136?w=600"));
 assert_test("HTTPS Cloudinary allowed", is_valid_product_image_url("https://res.cloudinary.com/demo/image/upload/sample.jpg"));
-assert_test("Site domain allowed", is_valid_product_image_url("https://gaungalihat.womenvission.in/uploads/test.png"));
+assert_test("Site domain allowed", is_valid_product_image_url("https://ganvgalihat.com/uploads/test.png"));
 assert_test("HTTP insecure blocked", !is_valid_product_image_url("http://images.unsplash.com/photo.jpg"));
 assert_test("Untrusted domain blocked", !is_valid_product_image_url("https://malicious-site.com/exploit.jpg"));
 assert_test("Internal SSRF IP blocked", !is_valid_product_image_url("https://127.0.0.1/admin.png"));
@@ -110,7 +110,7 @@ assert_test("No gaungalihat_database.sql in deploy directory", !$db_sql_exists);
 
 echo "\n=== 10. Web Server Security (.htaccess & CSP - Item 5) ===\n";
 $htaccess = file_get_contents(__DIR__ . '/../.htaccess');
-assert_test("HTTPS 301 redirect present in .htaccess", strpos($htaccess, 'RewriteCond %{HTTPS} off') !== false && strpos($htaccess, 'gaungalihat.womenvission.in') !== false);
+assert_test("HTTPS 301 redirect present in .htaccess", strpos($htaccess, 'RewriteCond %{HTTPS} off') !== false && strpos($htaccess, 'ganvgalihat.com') !== false);
 assert_test("CSP frame-ancestors 'self' present", strpos($htaccess, "frame-ancestors 'self'") !== false);
 assert_test("CSP form-action includes payu", strpos($htaccess, "form-action 'self' https://secure.payu.in https://test.payu.in") !== false);
 

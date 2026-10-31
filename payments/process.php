@@ -413,7 +413,7 @@ if ($payment_method === 'payu') {
     $phone = $customer_phone;
     $udf1 = (string)$order_id;
 
-    $base_site_url = defined('SITE_URL') ? SITE_URL : 'https://gaungalihat.womenvission.in';
+    $base_site_url = defined('SITE_URL') ? SITE_URL : 'https://ganvgalihat.com';
     $surl = $base_site_url . '/payments/payu_callback.php';
     $furl = $base_site_url . '/payments/payu_callback.php';
 

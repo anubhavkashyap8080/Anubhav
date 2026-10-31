@@ -201,7 +201,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         <?php if ($is_reset_mode): ?>
           <div>
             <label class="block text-xs font-bold text-gray-700 mb-1">सुपर एडमिन यूजरनेम या ईमेल (Username or Email) <span class="text-red-500">*</span></label>
-            <input type="text" name="identifier" required placeholder="उदा. anubhav या admin@womenvission.in"
+            <input type="text" name="identifier" required placeholder="उदा. anubhav या admin@ganvgalihat.com"
               class="w-full px-3.5 py-2.5 bg-stone-50 border border-gray-200 rounded-xl text-xs focus:bg-white focus:outline-none focus:border-amber-600 transition">
           </div>
 
@@ -242,7 +242,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
           <div>
             <label class="block text-xs font-bold text-gray-700 mb-1">ईमेल (Email Address) <span class="text-red-500">*</span></label>
-            <input type="email" name="email" required placeholder="admin@womenvission.in"
+            <input type="email" name="email" required placeholder="admin@ganvgalihat.com"
               class="w-full px-3.5 py-2.5 bg-stone-50 border border-gray-200 rounded-xl text-xs focus:bg-white focus:outline-none focus:border-amber-600 transition">
           </div>
 

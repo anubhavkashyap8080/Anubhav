@@ -71,7 +71,7 @@ if (empty($cur_home_title) || $cur_home_title === '0') {
 }
 $cur_meta_desc = get_seo_val('seo_meta_description', 'Direct from Indian village foundries & self-help groups. Authentic hand-forged agricultural sickles, khurpis, unpolished Awadh pulses, and Banarasi achar.');
 $cur_meta_kw = get_seo_val('seo_meta_keywords', 'farming tools, sickle, hansiya, khurpi, unpolished dal, banarasi achar, rural artisans, Hardoi foundries');
-$default_site_canonical = defined('SITE_URL') ? rtrim(SITE_URL, '/') : 'https://gaungalihat.womenvission.in';
+$default_site_canonical = defined('SITE_URL') ? rtrim(SITE_URL, '/') : 'https://ganvgalihat.com';
 $cur_robots = get_seo_val('seo_robots_meta', 'index, follow');
 $cur_canonical = get_seo_val('seo_canonical_url', $default_site_canonical);
 $cur_og_image = get_seo_val('seo_og_image', 'https://images.unsplash.com/photo-1504148455328-c376907d081c?w=1200');

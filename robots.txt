@@ -18,4 +18,4 @@ Allow: /artisans.php
 Allow: /about.php
 Allow: /contact.php
 
-Sitemap: https://gaungalihat.womenvission.in/sitemap.xml
+Sitemap: https://ganvgalihat.com/sitemap.xml

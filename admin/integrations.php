@@ -65,7 +65,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['save_integrations']))
 // Handle Test Notification Trigger
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['test_notification'])) {
     if (verify_csrf($_POST['csrf_token'] ?? '')) {
-        $default_admin_mail = 'admin@' . (parse_url(SITE_URL, PHP_URL_HOST) ?: 'gaungalihat.womenvission.in');
+        $default_admin_mail = 'admin@' . (parse_url(SITE_URL, PHP_URL_HOST) ?: 'ganvgalihat.com');
         $test_recipient = clean_input($_POST['test_recipient'] ?? $default_admin_mail);
         $nid = queue_notification($_SESSION['user_id'] ?? null, $test_recipient, 'email', 'GaunGaliHat Integration Test', 'यह एक परीक्षण सूचना है। आपकी नोटिफिकेशन प्रणाली पूर्ण रूप से कार्यरत है।');
         log_audit_action('test_notification_sent', 'integrations', 'notification', $nid, 'Test notification queued to ' . $test_recipient);
@@ -193,7 +193,7 @@ if (!function_exists('mask_secret')) {
           <label class="text-xs font-bold uppercase tracking-wider text-gray-600 block mb-1.5">
             प्रॉपर्टी URL (Canonical Domain)
           </label>
-          <input type="text" name="gsc_property_url" value="<?= htmlspecialchars($settings_raw['gsc_property_url'] ?? $settings_raw['seo_canonical_url'] ?? (defined('SITE_URL') ? SITE_URL : 'https://gaungalihat.womenvission.in')) ?>"
+          <input type="text" name="gsc_property_url" value="<?= htmlspecialchars($settings_raw['gsc_property_url'] ?? $settings_raw['seo_canonical_url'] ?? (defined('SITE_URL') ? SITE_URL : 'https://ganvgalihat.com')) ?>"
             class="w-full px-4 py-2.5 bg-stone-50 border border-gray-300 rounded-xl text-xs font-mono focus:bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500">
         </div>
       </div>

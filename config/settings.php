@@ -48,7 +48,12 @@ function get_setting($key, $default = '') {
 
 // Item 26: Canonical Platform URL Definition (no trailing slash)
 $cfg_app = function_exists('get_platform_config') ? get_platform_config('app') : [];
-$resolved_site_url = rtrim((string)(getenv('SITE_URL') ?: ($cfg_app['site_url'] ?? 'https://gaungalihat.womenvission.in')), '/');
+$raw_site_url = (string)(getenv('SITE_URL') ?: ($cfg_app['site_url'] ?? 'https://ganvgalihat.com'));
+// Automatically migrate legacy testing subdomain if still present in config
+if (strpos($raw_site_url, 'gaungalihat.womenvission.in') !== false) {
+    $raw_site_url = 'https://ganvgalihat.com';
+}
+$resolved_site_url = rtrim($raw_site_url, '/');
 if (!defined('SITE_URL')) {
     define('SITE_URL', $resolved_site_url);
 }
@@ -86,7 +91,7 @@ if (empty($raw_tagline) || $raw_tagline === '0') {
     $raw_tagline = 'S S Industries Enterprise • Ganv se ghar tak';
 }
 define('APP_TAGLINE', $raw_tagline);
-$canonical_host_fallback = parse_url(SITE_URL, PHP_URL_HOST) ?: 'gaungalihat.womenvission.in';
+$canonical_host_fallback = parse_url(SITE_URL, PHP_URL_HOST) ?: 'ganvgalihat.com';
 define('APP_PHONE', get_setting('contact_phone', '+91 7897492100'));
 define('APP_EMAIL', get_setting('contact_email', 'namaste@' . $canonical_host_fallback));
 define('APP_CURRENCY', '₹');

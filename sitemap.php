@@ -18,7 +18,7 @@ if (!empty($db_canonical)) {
 } elseif (defined('SITE_URL')) {
     $base_url = rtrim(SITE_URL, '/');
 } else {
-    $base_url = 'https://gaungalihat.womenvission.in';
+    $base_url = 'https://ganvgalihat.com';
 }
 
 $type = trim($_GET['type'] ?? '');

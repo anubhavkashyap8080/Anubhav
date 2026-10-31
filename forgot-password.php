@@ -49,7 +49,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
                     $reset_url = SITE_URL . '/reset-password.php?token=' . $plain_token . '&email=' . urlencode($email);
 
-                    $email_domain = parse_url(defined('SITE_URL') ? SITE_URL : '', PHP_URL_HOST) ?: 'gaungalihat.womenvission.in';
+                    $email_domain = parse_url(defined('SITE_URL') ? SITE_URL : '', PHP_URL_HOST) ?: 'ganvgalihat.com';
                     $subject = "Reset your GaunGaliHat Password";
                     $headers = "MIME-Version: 1.0\r\nContent-Type: text/html; charset=UTF-8\r\nFrom: GaunGaliHat Security <no-reply@" . $email_domain . ">\r\n";
                     $body = "

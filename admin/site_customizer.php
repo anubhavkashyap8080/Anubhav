@@ -113,7 +113,7 @@ require_once __DIR__ . '/admin_header.php';
         </div>
         <div>
           <label class="block text-xs font-bold text-gray-700 mb-1">आधिकारिक ईमेल</label>
-          <?php $site_custom_host = parse_url(defined('SITE_URL') ? SITE_URL : '', PHP_URL_HOST) ?: 'gaungalihat.womenvission.in'; ?>
+          <?php $site_custom_host = parse_url(defined('SITE_URL') ? SITE_URL : '', PHP_URL_HOST) ?: 'ganvgalihat.com'; ?>
           <input type="email" name="contact_email"
             value="<?= htmlspecialchars(get_cfg_val('contact_email', 'namaste@' . $site_custom_host)) ?>"
             class="w-full px-3.5 py-2.5 bg-stone-50 border border-gray-200 rounded-xl text-xs focus:bg-white focus:outline-none focus:border-indigo-600 transition">

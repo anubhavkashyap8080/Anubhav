@@ -95,9 +95,11 @@ Options -Indexes
     RewriteEngine On
     RewriteBase /
 
-    # Item 5: HTTPS Enforcement using canonical SITE_URL host (not HTTP_HOST)
-    RewriteCond %{HTTPS} off
-    RewriteRule ^ https://gaungalihat.womenvission.in%{REQUEST_URI} [L,R=301]
+    # Item 5: HTTPS & Canonical Domain Enforcement (Primary: ganvgalihat.com)
+    RewriteCond %{HTTPS} off [OR]
+    RewriteCond %{HTTP_HOST} ^gaungalihat\.womenvission\.in$ [NC,OR]
+    RewriteCond %{HTTP_HOST} ^www\.ganvgalihat\.com$ [NC]
+    RewriteRule ^ https://ganvgalihat.com%{REQUEST_URI} [L,R=301]
 
     # Item 28: Deny direct web access to sensitive internal directories
     RewriteRule ^(config|includes|database|data|functions|src|scripts|\.git)(/|$) - [F,L,NC]

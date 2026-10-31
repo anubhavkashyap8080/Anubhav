@@ -9,7 +9,7 @@ require_once __DIR__ . '/../includes/functions.php';
 require_once __DIR__ . '/../config/shipping.php';
 
 // Canonical base URL
-$default_base = defined('SITE_URL') ? rtrim(SITE_URL, '/') : 'https://gaungalihat.womenvission.in';
+$default_base = defined('SITE_URL') ? rtrim(SITE_URL, '/') : 'https://ganvgalihat.com';
 $site_url = rtrim(get_setting('seo_canonical_url', $default_base), '/');
 
 // Fetch all active products with category and vendor details

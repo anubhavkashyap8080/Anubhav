@@ -91,7 +91,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && !empty($_POST['credential'])) {
 // Case 2: Standard OAuth 2.0 Authorization Code flow via GET
 elseif ($_SERVER['REQUEST_METHOD'] === 'GET' && !empty($_GET['code'])) {
     $code = trim($_GET['code']);
-    $redirect_uri = defined('SITE_URL') ? SITE_URL . '/auth/google-callback.php' : 'https://gaungalihat.womenvission.in/auth/google-callback.php';
+    $redirect_uri = defined('SITE_URL') ? SITE_URL . '/auth/google-callback.php' : 'https://ganvgalihat.com/auth/google-callback.php';
 
     // Exchange authorization code for token via Google Token Endpoint
     $ch = curl_init('https://oauth2.googleapis.com/token');

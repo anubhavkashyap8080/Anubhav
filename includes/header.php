@@ -65,7 +65,7 @@ if (empty($page_keywords)) {
     $page_keywords = $site_seo_keywords;
 }
 
-$canonical_base = get_site_setting('seo_canonical_url', defined('SITE_URL') ? SITE_URL : 'https://gaungalihat.womenvission.in');
+$canonical_base = get_site_setting('seo_canonical_url', defined('SITE_URL') ? SITE_URL : 'https://ganvgalihat.com');
 $current_canonical_url = rtrim($canonical_base, '/') . ($_SERVER['REQUEST_URI'] ?? '/');
 if (empty($og_image)) {
     $og_image = get_site_setting('seo_og_image', 'https://images.unsplash.com/photo-1504148455328-c376907d081c?w=1200');

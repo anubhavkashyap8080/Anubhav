@@ -703,8 +703,8 @@ function send_email_verification_link($user_id, $email, $name) {
         $stmt = $pdo->prepare("UPDATE users SET email_verification_token = ?, email_verification_expires = ? WHERE id = ?");
         $stmt->execute([$token_hash, $expires, $user_id]);
 
-        $site_url = defined('SITE_URL') ? SITE_URL : 'https://gaungalihat.womenvission.in';
-        $site_host = parse_url($site_url, PHP_URL_HOST) ?: 'gaungalihat.womenvission.in';
+        $site_url = defined('SITE_URL') ? SITE_URL : 'https://ganvgalihat.com';
+        $site_host = parse_url($site_url, PHP_URL_HOST) ?: 'ganvgalihat.com';
         $verify_url = $site_url . '/verify-email.php?token=' . $raw_token . '&email=' . urlencode($email);
 
         $subject = "Verify your GaunGaliHat Account Email";
@@ -735,11 +735,11 @@ function send_owner_security_alert($subject, $details) {
     $sec_cfg = function_exists('get_platform_config') ? get_platform_config('security') : [];
     $owner_email = $sec_cfg['owner_alert_email'] ?? getenv('OWNER_ALERT_EMAIL');
     if (empty($owner_email)) {
-        $owner_email = defined('APP_EMAIL') ? APP_EMAIL : 'admin@womenvission.in';
+        $owner_email = defined('APP_EMAIL') ? APP_EMAIL : 'admin@ganvgalihat.com';
     }
 
     if (!empty($owner_email)) {
-        $site_host = parse_url(defined('SITE_URL') ? SITE_URL : '', PHP_URL_HOST) ?: 'gaungalihat.womenvission.in';
+        $site_host = parse_url(defined('SITE_URL') ? SITE_URL : '', PHP_URL_HOST) ?: 'ganvgalihat.com';
         $full_subject = "[GaunGaliHat Security Alert] " . $subject;
         $headers = "MIME-Version: 1.0\r\nContent-Type: text/plain; charset=UTF-8\r\nFrom: security@" . $site_host . "\r\n";
         $body = "SECURITY EVENT NOTIFICATION\nTime: " . date('Y-m-d H:i:s T') . "\nIP: " . ($_SERVER['REMOTE_ADDR'] ?? 'Unknown') . "\n\nDetails:\n" . (is_array($details) ? json_encode($details, JSON_PRETTY_PRINT) : (string)$details);
