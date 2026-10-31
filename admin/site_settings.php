@@ -7,7 +7,7 @@ require_admin();
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['save_settings'])) {
     $allowed_keys = [
         'brand_name', 'company_name', 'brand_tagline', 'announcement_text',
-        'contact_phone', 'contact_email', 'factory_address', 'head_office_address',
+        'contact_phone', 'contact_email', 'factory_address', 'head_office_address', 'footer_copyright',
         'free_shipping_threshold', 'shipping_base_up', 'shipping_base_north', 'shipping_base_other', 'shipping_heavy_per_kg',
         'razorpay_enabled', 'razorpay_key_id', 'razorpay_key_secret',
         'payu_enabled', 'payu_merchant_key', 'payu_merchant_salt', 'payu_mode',

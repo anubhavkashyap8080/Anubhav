@@ -16,7 +16,7 @@
           </div>
           <div>
             <h4 class="font-bold text-gray-900 text-sm">Direct Village Forge</h4>
-            <p class="text-gray-500 mt-0.5">Manufactured by S S Industries & generational blacksmiths in Hardoi, UP.</p>
+            <p class="text-gray-500 mt-0.5">Manufactured by <?= htmlspecialchars(get_setting('company_name', 'S S Industries')) ?> & generational blacksmiths in Hardoi, UP.</p>
           </div>
         </div>
 
@@ -62,20 +62,25 @@
         <div class="lg:col-span-2 space-y-4">
           <?php 
             $footer_logo = (get_setting('use_gif_logo', '0') === '1' && !empty(get_setting('logo_gif_url'))) ? get_setting('logo_gif_url') : get_setting('site_logo_url', '/logo.png');
+            $active_company = get_setting('company_name', APP_COMPANY);
           ?>
           <a href="/" class="flex items-center gap-2">
             <img src="<?= htmlspecialchars($footer_logo) ?>" alt="<?= htmlspecialchars(APP_NAME) ?>" class="h-10 sm:h-12 w-auto object-contain bg-white/90 p-1 rounded-lg" onerror="this.onerror=null; this.src='/logo.png';" />
             <div>
-              <span class="font-extrabold text-lg sm:text-xl font-display text-white block">GaunGaliHat</span>
-              <span class="text-[10px] text-amber-300 font-semibold uppercase tracking-wider block">A Brand by S S Industries</span>
+              <span class="font-extrabold text-lg sm:text-xl font-display text-white block"><?= htmlspecialchars(APP_NAME) ?></span>
+              <span class="text-[10px] text-amber-300 font-semibold uppercase tracking-wider block">A Brand by <?= htmlspecialchars($active_company) ?></span>
             </div>
           </a>
           <p class="text-slate-400 text-xs leading-relaxed max-w-sm">
-            <?= htmlspecialchars(get_setting('company_name', 'S S Industries')) ?> enterprise initiative dedicated to empowering rural Indian smallholders, village foundries, and women self-help groups by delivering authentic farming tools, organic pulses and farm produce straight from rural Bharat.
+            <?= htmlspecialchars(get_setting('footer_about_text', $active_company . ' enterprise initiative dedicated to empowering rural Indian smallholders, village foundries, and women self-help groups by delivering authentic farming tools, organic pulses and farm produce straight from rural Bharat.')) ?>
           </p>
           <div class="space-y-1.5 text-[11px] text-slate-400 font-mono">
-            <p>📍 Factory: Madhoganj Baghauli Road, Newada, Hardoi, UP - 241126</p>
-            <p>🏭 Plant: G145 Phase 2 Industrial Area, UPSIDA Sandila, Hardoi</p>
+            <?php 
+              $footer_factory = get_setting('factory_address', 'Madhoganj Baghauli Road, Newada, Hardoi, Uttar Pradesh - 241126');
+              $footer_plant = get_setting('head_office_address', get_setting('plant_address', 'G145 Phase 2 Industrial Area, UPSIDA Sandila, Hardoi, UP'));
+            ?>
+            <p>📍 Factory: <?= htmlspecialchars($footer_factory) ?></p>
+            <p>🏭 Plant: <?= htmlspecialchars($footer_plant) ?></p>
             <p>📞 Phone: <?= htmlspecialchars(APP_PHONE) ?></p>
             <p>✉️ Email: <?= htmlspecialchars(APP_EMAIL) ?></p>
           </div>
@@ -85,12 +90,12 @@
         <div>
           <h4 class="font-bold text-white uppercase tracking-wider text-xs mb-3 font-display">Village Catalog</h4>
           <ul class="space-y-2 text-slate-400">
-            <li><a href="/products.php?category=farming-traditional-tools" class="hover:text-emerald-400">Agricultural Tools (Hansiya, Khurpi)</a></li>
-            <li><a href="/products.php?category=pulses-organic-grains" class="hover:text-emerald-400 font-bold text-emerald-400">Desi Pulses & Dal</a></li>
-            <li><a href="/products.php?category=pickles-village-murabba" class="hover:text-amber-400 font-bold text-amber-400">Banarasi Pickles & Murabba</a></li>
-            <li><a href="/products.php?category=hardware-cottage-implements" class="hover:text-emerald-400">Heavy Iron Implements</a></li>
-            <li><a href="/products.php?category=jute-bags-cloth-jholas" class="hover:text-emerald-400">Eco Jute Totes & Bags</a></li>
-            <li><a href="/products.php?category=handmade-by-rural-women" class="hover:text-emerald-400">Women SHG Products</a></li>
+            <li><a href="<?= htmlspecialchars(get_setting('footer_cat1_url', '/products.php?category=farming-traditional-tools')) ?>" class="hover:text-emerald-400"><?= htmlspecialchars(get_setting('footer_cat1_title', 'Agricultural Tools (Hansiya, Khurpi)')) ?></a></li>
+            <li><a href="<?= htmlspecialchars(get_setting('footer_cat2_url', '/products.php?category=pulses-organic-grains')) ?>" class="hover:text-emerald-400 font-bold text-emerald-400"><?= htmlspecialchars(get_setting('footer_cat2_title', 'Desi Pulses & Dal')) ?></a></li>
+            <li><a href="<?= htmlspecialchars(get_setting('footer_cat3_url', '/products.php?category=pickles-village-murabba')) ?>" class="hover:text-amber-400 font-bold text-amber-400"><?= htmlspecialchars(get_setting('footer_cat3_title', 'Banarasi Pickles & Murabba')) ?></a></li>
+            <li><a href="<?= htmlspecialchars(get_setting('footer_cat4_url', '/products.php?category=hardware-cottage-implements')) ?>" class="hover:text-emerald-400"><?= htmlspecialchars(get_setting('footer_cat4_title', 'Heavy Iron Implements')) ?></a></li>
+            <li><a href="<?= htmlspecialchars(get_setting('footer_cat5_url', '/products.php?category=jute-bags-cloth-jholas')) ?>" class="hover:text-emerald-400"><?= htmlspecialchars(get_setting('footer_cat5_title', 'Eco Jute Totes & Bags')) ?></a></li>
+            <li><a href="<?= htmlspecialchars(get_setting('footer_cat6_url', '/products.php?category=handmade-by-rural-women')) ?>" class="hover:text-emerald-400"><?= htmlspecialchars(get_setting('footer_cat6_title', 'Women SHG Products')) ?></a></li>
           </ul>
         </div>
 
@@ -98,13 +103,13 @@
         <div>
           <h4 class="font-bold text-white uppercase tracking-wider text-xs mb-3 font-display">Quick Access</h4>
           <ul class="space-y-2 text-slate-400">
-            <li><a href="/about.php" class="hover:text-white">About S S Industries</a></li>
-            <li><a href="/artisans.php" class="hover:text-amber-300 font-semibold text-amber-300">Nearby Artisans Directory</a></li>
-            <li><a href="/seller/dashboard.php" class="hover:text-brand-orange font-bold text-brand-orange">Artisan & Seller Portal</a></li>
-            <li><a href="/seller-register.php" class="hover:text-white">Register Artisan Workshop</a></li>
-            <li><a href="/account.php" class="hover:text-white">Track India Post Parcel</a></li>
-            <li><a href="/contact.php" class="hover:text-white">Customer Support Desk</a></li>
-            <li><a href="/admin/index.php" class="hover:text-indigo-400">Staff & Admin Gateway</a></li>
+            <li><a href="<?= htmlspecialchars(get_setting('footer_link1_url', '/about.php')) ?>" class="hover:text-white"><?= htmlspecialchars(get_setting('footer_link1_title', 'About ' . $active_company)) ?></a></li>
+            <li><a href="<?= htmlspecialchars(get_setting('footer_link2_url', '/artisans.php')) ?>" class="hover:text-amber-300 font-semibold text-amber-300"><?= htmlspecialchars(get_setting('footer_link2_title', 'Nearby Artisans Directory')) ?></a></li>
+            <li><a href="<?= htmlspecialchars(get_setting('footer_link3_url', '/seller/dashboard.php')) ?>" class="hover:text-brand-orange font-bold text-brand-orange"><?= htmlspecialchars(get_setting('footer_link3_title', 'Artisan & Seller Portal')) ?></a></li>
+            <li><a href="<?= htmlspecialchars(get_setting('footer_link4_url', '/seller-register.php')) ?>" class="hover:text-white"><?= htmlspecialchars(get_setting('footer_link4_title', 'Register Artisan Workshop')) ?></a></li>
+            <li><a href="<?= htmlspecialchars(get_setting('footer_link5_url', '/account.php')) ?>" class="hover:text-white"><?= htmlspecialchars(get_setting('footer_link5_title', 'Track India Post Parcel')) ?></a></li>
+            <li><a href="<?= htmlspecialchars(get_setting('footer_link6_url', '/contact.php')) ?>" class="hover:text-white"><?= htmlspecialchars(get_setting('footer_link6_title', 'Customer Support Desk')) ?></a></li>
+            <li><a href="<?= htmlspecialchars(get_setting('footer_link7_url', '/admin/index.php')) ?>" class="hover:text-indigo-400"><?= htmlspecialchars(get_setting('footer_link7_title', 'Staff & Admin Gateway')) ?></a></li>
           </ul>
         </div>
 
@@ -157,13 +162,13 @@
 
       <!-- Copyright & Bottom Bar -->
       <div class="border-t border-slate-900 pt-6 flex flex-col sm:flex-row items-center justify-between gap-3 text-[11px] text-slate-500">
-        <p>© <?= date('Y') ?> GaunGaliHat — S S Industries Enterprise. All Rights Reserved.</p>
+        <p><?= htmlspecialchars(get_setting('footer_copyright', '© ' . date('Y') . ' ' . APP_NAME . '. All Rights Reserved.')) ?></p>
         <div class="flex items-center gap-4">
-          <a href="/about.php" class="hover:text-slate-400">Privacy Policy</a>
+          <a href="<?= htmlspecialchars(get_setting('privacy_policy_url', '/about.php')) ?>" class="hover:text-slate-400">Privacy Policy</a>
           <span>•</span>
-          <a href="/about.php" class="hover:text-slate-400">Terms of Supply</a>
+          <a href="<?= htmlspecialchars(get_setting('terms_conditions_url', '/about.php')) ?>" class="hover:text-slate-400">Terms of Supply</a>
           <span>•</span>
-          <a href="/about.php" class="hover:text-slate-400">Shipping & Return Policy</a>
+          <a href="<?= htmlspecialchars(get_setting('shipping_policy_url', '/about.php')) ?>" class="hover:text-slate-400">Shipping & Return Policy</a>
         </div>
       </div>
     </div>

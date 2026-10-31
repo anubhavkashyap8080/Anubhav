@@ -13,6 +13,21 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['save_customizer'])) {
         'brand_name', 'company_name', 'brand_tagline', 'announcement_text',
         'show_announcement', 'contact_phone', 'contact_email',
         'factory_address', 'head_office_address', 'footer_copyright',
+        'footer_about_text',
+        'privacy_policy_url', 'terms_conditions_url', 'shipping_policy_url',
+        'footer_cat1_title', 'footer_cat1_url',
+        'footer_cat2_title', 'footer_cat2_url',
+        'footer_cat3_title', 'footer_cat3_url',
+        'footer_cat4_title', 'footer_cat4_url',
+        'footer_cat5_title', 'footer_cat5_url',
+        'footer_cat6_title', 'footer_cat6_url',
+        'footer_link1_title', 'footer_link1_url',
+        'footer_link2_title', 'footer_link2_url',
+        'footer_link3_title', 'footer_link3_url',
+        'footer_link4_title', 'footer_link4_url',
+        'footer_link5_title', 'footer_link5_url',
+        'footer_link6_title', 'footer_link6_url',
+        'footer_link7_title', 'footer_link7_url',
         'logo_url', 'favicon_url',
         'social_instagram', 'social_youtube', 'social_facebook', 'social_whatsapp',
         'custom_head_code', 'custom_css', 'custom_footer_code'
@@ -217,22 +232,31 @@ require_once __DIR__ . '/admin_header.php';
   <!-- 4. Footer Addresses & Legal Copyright -->
   <div class="bg-white rounded-2xl border border-gray-200 shadow-sm p-6 sm:p-8">
     <h2 class="text-sm font-bold text-gray-900 uppercase tracking-wider mb-4 flex items-center gap-2">
-      <i class="fa-solid fa-location-dot text-red-600"></i> फुटर पते व कॉपीराइट (Footer Details)
+      <i class="fa-solid fa-location-dot text-red-600"></i> फुटर पते व कॉपीराइट (Footer Details & Branding)
     </h2>
 
     <div class="space-y-4">
       <div>
-        <label class="block text-xs font-bold text-gray-700 mb-1">फ़ैक्टरी / निर्माण इकाई पता (Factory Address)</label>
-        <input type="text" name="factory_address"
-          value="<?= htmlspecialchars(get_cfg_val('factory_address', 'Madhoganj Baghauli Road, Newada, Hardoi, Uttar Pradesh - 241126')) ?>"
-          class="w-full px-3.5 py-2.5 bg-stone-50 border border-gray-200 rounded-xl text-xs focus:bg-white focus:outline-none focus:border-indigo-600 transition">
+        <label class="block text-xs font-bold text-gray-700 mb-1">लोगो के नीचे फुटर विवरण (Footer Logo Description)</label>
+        <textarea name="footer_about_text" rows="3"
+          class="w-full px-3.5 py-2.5 bg-stone-50 border border-gray-200 rounded-xl text-xs focus:bg-white focus:outline-none focus:border-indigo-600 transition"
+          placeholder="ब्रांड व ग्रामीण उद्यम का संक्षिप्त परिचय..."><?= htmlspecialchars(get_cfg_val('footer_about_text', get_cfg_val('company_name', 'S S Industries') . ' enterprise initiative dedicated to empowering rural Indian smallholders, village foundries, and women self-help groups by delivering authentic farming tools, organic pulses and farm produce straight from rural Bharat.')) ?></textarea>
       </div>
 
-      <div>
-        <label class="block text-xs font-bold text-gray-700 mb-1">मुख्य प्लांट / कार्यालय (Industrial Plant Address)</label>
-        <input type="text" name="head_office_address"
-          value="<?= htmlspecialchars(get_cfg_val('head_office_address', 'G145 Phase 2 Industrial Area, UPSIDA Sandila, Hardoi, UP')) ?>"
-          class="w-full px-3.5 py-2.5 bg-stone-50 border border-gray-200 rounded-xl text-xs focus:bg-white focus:outline-none focus:border-indigo-600 transition">
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <div>
+          <label class="block text-xs font-bold text-gray-700 mb-1">फ़ैक्टरी / निर्माण इकाई पता (Factory Address)</label>
+          <input type="text" name="factory_address"
+            value="<?= htmlspecialchars(get_cfg_val('factory_address', 'Madhoganj Baghauli Road, Newada, Hardoi, Uttar Pradesh - 241126')) ?>"
+            class="w-full px-3.5 py-2.5 bg-stone-50 border border-gray-200 rounded-xl text-xs focus:bg-white focus:outline-none focus:border-indigo-600 transition">
+        </div>
+
+        <div>
+          <label class="block text-xs font-bold text-gray-700 mb-1">मुख्य प्लांट / कार्यालय (Industrial Plant Address)</label>
+          <input type="text" name="head_office_address"
+            value="<?= htmlspecialchars(get_cfg_val('head_office_address', 'G145 Phase 2 Industrial Area, UPSIDA Sandila, Hardoi, UP')) ?>"
+            class="w-full px-3.5 py-2.5 bg-stone-50 border border-gray-200 rounded-xl text-xs focus:bg-white focus:outline-none focus:border-indigo-600 transition">
+        </div>
       </div>
 
       <div>
@@ -241,6 +265,121 @@ require_once __DIR__ . '/admin_header.php';
           value="<?= htmlspecialchars(get_cfg_val('footer_copyright', '© 2026 GaunGaliHat. A Unit of S S Industries Enterprise. All Rights Reserved.')) ?>"
           class="w-full px-3.5 py-2.5 bg-stone-50 border border-gray-200 rounded-xl text-xs focus:bg-white focus:outline-none focus:border-indigo-600 transition">
       </div>
+
+      <!-- Legal Policy URLs -->
+      <div class="pt-4 border-t border-gray-100">
+        <h3 class="text-xs font-bold text-gray-800 uppercase tracking-wider mb-3 flex items-center gap-2">
+          <i class="fa-solid fa-scale-balanced text-indigo-600"></i> कानूनी व नीतिगत लिंक्स (Policy & Terms URLs)
+        </h3>
+        <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+          <div>
+            <label class="block text-xs font-semibold text-gray-700 mb-1">गोपनीयता नीति (Privacy Policy URL)</label>
+            <input type="text" name="privacy_policy_url"
+              value="<?= htmlspecialchars(get_cfg_val('privacy_policy_url', '/about.php')) ?>"
+              placeholder="/privacy-policy.php या /about.php"
+              class="w-full px-3.5 py-2.5 bg-stone-50 border border-gray-200 rounded-xl text-xs focus:bg-white focus:outline-none focus:border-indigo-600 transition">
+          </div>
+          <div>
+            <label class="block text-xs font-semibold text-gray-700 mb-1">नियम व शर्तें (Terms & Conditions URL)</label>
+            <input type="text" name="terms_conditions_url"
+              value="<?= htmlspecialchars(get_cfg_val('terms_conditions_url', '/about.php')) ?>"
+              placeholder="/terms.php या /about.php"
+              class="w-full px-3.5 py-2.5 bg-stone-50 border border-gray-200 rounded-xl text-xs focus:bg-white focus:outline-none focus:border-indigo-600 transition">
+          </div>
+          <div>
+            <label class="block text-xs font-semibold text-gray-700 mb-1">शिपिंग व वापसी नीति (Shipping & Return URL)</label>
+            <input type="text" name="shipping_policy_url"
+              value="<?= htmlspecialchars(get_cfg_val('shipping_policy_url', '/about.php')) ?>"
+              placeholder="/shipping-policy.php या /about.php"
+              class="w-full px-3.5 py-2.5 bg-stone-50 border border-gray-200 rounded-xl text-xs focus:bg-white focus:outline-none focus:border-indigo-600 transition">
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 5. Footer Menu Links Manager -->
+  <div class="bg-white rounded-2xl border border-gray-200 shadow-sm p-6 sm:p-8">
+    <h2 class="text-sm font-bold text-gray-900 uppercase tracking-wider mb-2 flex items-center gap-2">
+      <i class="fa-solid fa-bars text-emerald-600"></i> फुटर मेनू लिंक्स प्रबंधक (Footer Menu Links Manager)
+    </h2>
+    <p class="text-xs text-gray-500 mb-6">
+      फुटर के दोनों कॉलम (विलेज कैटलॉग एवं क्विक एक्सेस) की प्रत्येक लिंक का नाम व URL यहाँ से अपडेट करें:
+    </p>
+
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+      
+      <!-- Column 1: Village Catalog -->
+      <div class="space-y-4 bg-stone-50 p-5 rounded-2xl border border-stone-200">
+        <h3 class="text-xs font-bold text-gray-800 uppercase tracking-wider flex items-center gap-2 pb-2 border-b border-stone-200">
+          <i class="fa-solid fa-store text-emerald-700"></i> कॉलम 1: विलेज कैटलॉग (Village Catalog)
+        </h3>
+        
+        <?php
+          $cats_default = [
+            1 => ['title' => 'Agricultural Tools (Hansiya, Khurpi)', 'url' => '/products.php?category=farming-traditional-tools'],
+            2 => ['title' => 'Desi Pulses & Dal', 'url' => '/products.php?category=pulses-organic-grains'],
+            3 => ['title' => 'Banarasi Pickles & Murabba', 'url' => '/products.php?category=pickles-village-murabba'],
+            4 => ['title' => 'Heavy Iron Implements', 'url' => '/products.php?category=hardware-cottage-implements'],
+            5 => ['title' => 'Eco Jute Totes & Bags', 'url' => '/products.php?category=jute-bags-cloth-jholas'],
+            6 => ['title' => 'Women SHG Products', 'url' => '/products.php?category=handmade-by-rural-women'],
+          ];
+          for ($i = 1; $i <= 6; $i++):
+            $d_title = $cats_default[$i]['title'];
+            $d_url = $cats_default[$i]['url'];
+        ?>
+          <div class="p-3 bg-white rounded-xl border border-gray-200 space-y-2">
+            <span class="text-[10px] font-bold text-gray-500 uppercase">कैटलॉग लिंक <?= $i ?></span>
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
+              <input type="text" name="footer_cat<?= $i ?>_title"
+                value="<?= htmlspecialchars(get_cfg_val('footer_cat' . $i . '_title', $d_title)) ?>"
+                placeholder="लिंक शीर्षक (Title)"
+                class="w-full px-3 py-1.5 bg-stone-50 border border-gray-200 rounded-lg text-xs font-semibold focus:bg-white">
+              <input type="text" name="footer_cat<?= $i ?>_url"
+                value="<?= htmlspecialchars(get_cfg_val('footer_cat' . $i . '_url', $d_url)) ?>"
+                placeholder="लिंक URL (/products.php?...)"
+                class="w-full px-3 py-1.5 bg-stone-50 border border-gray-200 rounded-lg text-xs font-mono focus:bg-white">
+            </div>
+          </div>
+        <?php endfor; ?>
+      </div>
+
+      <!-- Column 2: Quick Access Links -->
+      <div class="space-y-4 bg-stone-50 p-5 rounded-2xl border border-stone-200">
+        <h3 class="text-xs font-bold text-gray-800 uppercase tracking-wider flex items-center gap-2 pb-2 border-b border-stone-200">
+          <i class="fa-solid fa-link text-indigo-600"></i> कॉलम 2: क्विक एक्सेस लिंक्स (Quick Access)
+        </h3>
+
+        <?php
+          $links_default = [
+            1 => ['title' => 'About Us (कंपनी परिचय)', 'url' => '/about.php'],
+            2 => ['title' => 'Nearby Artisans Directory', 'url' => '/artisans.php'],
+            3 => ['title' => 'Artisan & Seller Portal', 'url' => '/seller/dashboard.php'],
+            4 => ['title' => 'Register Artisan Workshop', 'url' => '/seller-register.php'],
+            5 => ['title' => 'Track India Post Parcel', 'url' => '/account.php'],
+            6 => ['title' => 'Customer Support Desk', 'url' => '/contact.php'],
+            7 => ['title' => 'Staff & Admin Gateway', 'url' => '/admin/index.php'],
+          ];
+          for ($i = 1; $i <= 7; $i++):
+            $d_title = $links_default[$i]['title'];
+            $d_url = $links_default[$i]['url'];
+        ?>
+          <div class="p-3 bg-white rounded-xl border border-gray-200 space-y-2">
+            <span class="text-[10px] font-bold text-gray-500 uppercase">क्विक लिंक <?= $i ?></span>
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
+              <input type="text" name="footer_link<?= $i ?>_title"
+                value="<?= htmlspecialchars(get_cfg_val('footer_link' . $i . '_title', $d_title)) ?>"
+                placeholder="लिंक शीर्षक (Title)"
+                class="w-full px-3 py-1.5 bg-stone-50 border border-gray-200 rounded-lg text-xs font-semibold focus:bg-white">
+              <input type="text" name="footer_link<?= $i ?>_url"
+                value="<?= htmlspecialchars(get_cfg_val('footer_link' . $i . '_url', $d_url)) ?>"
+                placeholder="लिंक URL (/page.php)"
+                class="w-full px-3 py-1.5 bg-stone-50 border border-gray-200 rounded-lg text-xs font-mono focus:bg-white">
+            </div>
+          </div>
+        <?php endfor; ?>
+      </div>
+
     </div>
   </div>
 
