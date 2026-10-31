@@ -59,7 +59,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['save_settings'])) {
                 $val = 'GaunGaliHat';
             }
             if ($key === 'brand_tagline' && (empty($val) || $val === '0')) {
-                $val = 'Desh ki mitti ka swad | Ganv se ghar tak';
+                $val = 'Hunar desh ka, ganv se ghar tak';
             }
             $stmt_up->execute([$key, $val]);
         }
@@ -458,7 +458,7 @@ require_once __DIR__ . '/admin_header.php';
   <div class="bg-white rounded-2xl border border-gray-200 shadow-sm p-6 sm:p-8">
     <h3 class="text-base font-bold text-gray-900 pb-3 mb-6 border-b border-gray-100 flex items-center gap-2">
       <i class="fa-solid fa-building text-indigo-600"></i>
-      3. संस्था एवं संपर्क जानकारी (S S Industries Enterprise)
+      3. संस्था एवं संपर्क जानकारी (Kalyani agrofood pvt ltd)
     </h3>
 
     <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -470,13 +470,13 @@ require_once __DIR__ . '/admin_header.php';
 
       <div>
         <label class="block text-xs font-bold text-gray-700 mb-1">ब्रांड टैगलाइन (Brand Tagline)</label>
-        <input type="text" name="brand_tagline" value="<?= htmlspecialchars(get_setting_val('brand_tagline', 'Desh ki mitti ka swad | Ganv se ghar tak')) ?>"
+        <input type="text" name="brand_tagline" value="<?= htmlspecialchars(get_setting_val('brand_tagline', 'Hunar desh ka, ganv se ghar tak')) ?>"
           class="w-full px-3.5 py-2.5 bg-stone-50 border border-gray-200 rounded-xl text-xs font-bold">
       </div>
 
       <div>
         <label class="block text-xs font-bold text-gray-700 mb-1">कंपनी का नाम</label>
-        <input type="text" name="company_name" value="<?= htmlspecialchars(get_setting_val('company_name', 'S S Industries')) ?>"
+        <input type="text" name="company_name" value="<?= htmlspecialchars(get_setting_val('company_name', 'Kalyani agrofood pvt ltd')) ?>"
           class="w-full px-3.5 py-2.5 bg-stone-50 border border-gray-200 rounded-xl text-xs font-bold">
       </div>
 
@@ -507,7 +507,7 @@ require_once __DIR__ . '/admin_header.php';
 
       <div class="sm:col-span-2">
         <label class="block text-xs font-bold text-gray-700 mb-1">हेडर घोषणा पट्टी (Announcement Ticker)</label>
-        <textarea name="announcement_text" rows="2" class="w-full px-3.5 py-2.5 bg-stone-50 border border-gray-200 rounded-xl text-xs"><?= htmlspecialchars(get_setting_val('announcement_text', '🌾 S S Industries Tools, Awadh Pulses, Banarasi Pickles & Village Crafts: Direct from Rural Artisans | Free Delivery Over ₹499 | Cash on Delivery Available')) ?></textarea>
+        <textarea name="announcement_text" rows="2" class="w-full px-3.5 py-2.5 bg-stone-50 border border-gray-200 rounded-xl text-xs"><?= htmlspecialchars(get_setting_val('announcement_text', '🌾 Kalyani agrofood pvt ltd Tools, Awadh Pulses, Banarasi Pickles & Village Crafts: Direct from Rural Artisans | Free Delivery Over ₹499 | Cash on Delivery Available')) ?></textarea>
       </div>
     </div>
   </div>

@@ -172,7 +172,7 @@ if ($pdo) {
       </span>
     </div>
     <p class="text-xs sm:text-sm text-gray-500 mt-1">
-      S S Industries • ग्रामीण कारीगर, हथकरघा, जैविक दालें एवं अचार डिजिटल ई-कॉमर्स नेटवर्क
+      Kalyani agrofood pvt ltd • ग्रामीण कारीगर, हथकरघा, जैविक दालें एवं अचार डिजिटल ई-कॉमर्स नेटवर्क
     </p>
   </div>
 

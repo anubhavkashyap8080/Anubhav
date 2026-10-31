@@ -290,7 +290,7 @@ send_json_loc_response([
     'city' => $detected_city,
     'state' => $detected_state,
     'nearby_count' => count($nearby_vendors),
-    'nearest_vendor' => $nearby_vendors[0]['name'] ?? 'S S Industries Agro Workshop',
+    'nearest_vendor' => $nearby_vendors[0]['name'] ?? 'Kalyani agrofood pvt ltd Workshop',
     'nearest_distance' => ($nearby_vendors[0]['distance_km'] ?? 0) . ' km',
     'dispatch_eta' => $nearby_vendors[0]['dispatch_eta'] ?? 'Fastest dispatch direct from village'
 ]);

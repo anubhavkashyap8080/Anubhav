@@ -108,7 +108,7 @@ require_once __DIR__ . '/includes/header.php';
         <i class="fa-solid fa-wheat-awn text-2xl text-amber-300"></i>
       </div>
       <h1 class="text-2xl font-extrabold text-gray-900">Sign In (खाते में प्रवेश करें)</h1>
-      <p class="text-xs text-gray-500 mt-1">गाँव गली हाट • S S Industries Enterprise</p>
+      <p class="text-xs text-gray-500 mt-1">गाँव गली हाट • Kalyani agrofood pvt ltd</p>
     </div>
 
     <!-- Login Box Card -->

@@ -52,7 +52,7 @@ $flash = get_flash();
             </div>
             <div class="hidden md:block border-l border-indigo-800 pl-3">
               <span class="text-xs font-black uppercase tracking-wider text-amber-300 block">केंद्रीय प्रशासनिक नियंत्रण</span>
-              <span class="text-[10px] text-indigo-300 block">S S Industries • Central Governance Hub</span>
+              <span class="text-[10px] text-indigo-300 block">Kalyani agrofood pvt ltd • Central Governance Hub</span>
             </div>
           </a>
         </div>

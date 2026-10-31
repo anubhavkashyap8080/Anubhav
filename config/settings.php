@@ -80,15 +80,15 @@ if (empty($raw_brand_name) || $raw_brand_name === '0' || preg_match('/^0\b/', $r
 }
 define('APP_NAME', $raw_brand_name);
 
-$raw_company_name = trim((string)get_setting('company_name', 'S S Industries'));
+$raw_company_name = trim((string)get_setting('company_name', 'Kalyani agrofood pvt ltd'));
 if (empty($raw_company_name) || $raw_company_name === '0') {
-    $raw_company_name = 'S S Industries';
+    $raw_company_name = 'Kalyani agrofood pvt ltd';
 }
 define('APP_COMPANY', $raw_company_name);
 
-$raw_tagline = trim((string)get_setting('brand_tagline', 'S S Industries Enterprise • Ganv se ghar tak'));
+$raw_tagline = trim((string)get_setting('brand_tagline', 'Hunar desh ka, ganv se ghar tak'));
 if (empty($raw_tagline) || $raw_tagline === '0') {
-    $raw_tagline = 'S S Industries Enterprise • Ganv se ghar tak';
+    $raw_tagline = 'Hunar desh ka, ganv se ghar tak';
 }
 define('APP_TAGLINE', $raw_tagline);
 $canonical_host_fallback = parse_url(SITE_URL, PHP_URL_HOST) ?: 'ganvgalihat.com';

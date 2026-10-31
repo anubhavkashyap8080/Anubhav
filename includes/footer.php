@@ -16,7 +16,7 @@
           </div>
           <div>
             <h4 class="font-bold text-gray-900 text-sm">Direct Village Forge</h4>
-            <p class="text-gray-500 mt-0.5">Manufactured by <?= htmlspecialchars(get_setting('company_name', 'S S Industries')) ?> & generational blacksmiths in Hardoi, UP.</p>
+            <p class="text-gray-500 mt-0.5">Manufactured by <?= htmlspecialchars(get_setting('company_name', 'Kalyani agrofood pvt ltd')) ?> & generational blacksmiths in Hardoi, UP.</p>
           </div>
         </div>
 

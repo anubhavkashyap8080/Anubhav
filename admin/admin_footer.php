@@ -6,7 +6,7 @@
       <div class="flex items-center gap-2">
         <span class="font-extrabold text-indigo-950">GaunGaliHat Master Admin</span>
         <span>•</span>
-        <span>S S Industries Industrial Controls</span>
+        <span>Kalyani agrofood pvt ltd Industrial Controls</span>
       </div>
       <div>
         सुरक्षित Bcrypt पासवर्ड एन्क्रिप्शन • 256-Bit SSL • हार्डवेयर टोकन सुरक्षा

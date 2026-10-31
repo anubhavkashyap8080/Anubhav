@@ -1,11 +1,11 @@
 <?php
 /**
  * GaunGaliHat About Us & Heritage Page
- * S S Industries Enterprise • Rural Artisan Hub, Hand-Forged Tools, Unpolished Pulses & Women SHG Empowerment
+ * Kalyani agrofood pvt ltd Enterprise • Rural Artisan Hub, Hand-Forged Tools, Unpolished Pulses & Women SHG Empowerment
  */
 
-$page_title = 'हमारे बारे में (About S S Industries & GaunGaliHat)';
-$page_desc = 'गाँव, गली और हाट की धरोहर — एस. एस. इंडस्ट्रीज द्वारा संचालित हरदोई, उत्तर प्रदेश के ग्रामीण लोहारों, कुटीर कारीगरों और महिला स्वयं सहायता समूहों का सशक्त मंच।';
+$page_title = 'हमारे बारे में (About Kalyani agrofood pvt ltd & GaunGaliHat)';
+$page_desc = 'गाँव, गली और हाट की धरोहर — कल्याणी एग्रोफूड प्रा. लि. (Kalyani agrofood pvt ltd) द्वारा संचालित हरदोई, उत्तर प्रदेश के ग्रामीण लोहारों, कुटीर कारीगरों और महिला स्वयं सहायता समूहों का सशक्त मंच।';
 
 require_once __DIR__ . '/includes/header.php';
 ?>
@@ -29,7 +29,7 @@ require_once __DIR__ . '/includes/header.php';
     
     <div class="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-amber-400/20 text-amber-300 text-xs font-black uppercase tracking-wider border border-amber-400/30 shadow-xs">
       <i data-lucide="sparkles" class="w-4 h-4 text-amber-400"></i>
-      <span>S S Industries Enterprise • स्वदेशी ग्रामीण धरोहर</span>
+      <span>Kalyani agrofood pvt ltd • स्वदेशी ग्रामीण धरोहर</span>
     </div>
 
     <h1 class="text-3xl sm:text-5xl lg:text-6xl font-black font-display tracking-tight text-white leading-tight max-w-4xl mx-auto">
@@ -73,7 +73,7 @@ require_once __DIR__ . '/includes/header.php';
 
         <div class="space-y-3 text-xs sm:text-sm text-gray-600 leading-relaxed">
           <p>
-            <strong>एस. एस. इंडस्ट्रीज (S S Industries)</strong> द्वारा संचालित <em>'गाँव गली हाट'</em> का मुख्य उद्देश्य ग्रामीण क्षेत्रों के हुनरमंद कारीगरों को सशक्त बनाना और उनके उत्पादों को बिना किसी बिचौलिए के सीधे उपभोक्ताओं तक पहुँचाना है।
+            <strong>कल्याणी एग्रोफूड प्रा. लि. (Kalyani agrofood pvt ltd)</strong> द्वारा संचालित <em>'गाँव गली हाट'</em> का मुख्य उद्देश्य ग्रामीण क्षेत्रों के हुनरमंद कारीगरों को सशक्त बनाना और उनके उत्पादों को बिना किसी बिचौलिए के सीधे उपभोक्ताओं तक पहुँचाना है।
           </p>
           <p>
             हमारा विश्वास है कि भारत की असली ताकत उसकी मिट्टी, उसकी पारंपरिक भट्टियों और गाँव की पगडंडियों में बसती है। हम हर कारीगर को उसकी कड़ी मेहनत का 100% सही और पारदर्शी मूल्य दिलाते हैं।
@@ -122,7 +122,7 @@ require_once __DIR__ . '/includes/header.php';
         <div class="relative rounded-3xl overflow-hidden shadow-2xl border-4 border-amber-500/20 aspect-4/3 sm:aspect-square">
           <img
             src="https://images.unsplash.com/photo-1504917599217-d4dc5ebe6122?auto=format&fit=crop&w=1000&q=80"
-            alt="Traditional Blacksmith Forge S S Industries"
+            alt="Traditional Blacksmith Forge Kalyani agrofood pvt ltd"
             class="w-full h-full object-cover"
           />
           <div class="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent"></div>
@@ -132,7 +132,7 @@ require_once __DIR__ . '/includes/header.php';
               नेवादा, हरदोई (Hardoi Works)
             </span>
             <h4 class="font-black text-sm sm:text-base text-white">
-              एस. एस. इंडस्ट्रीज पारंपरिक लोहारी भट्टी
+              कल्याणी एग्रोफूड (Kalyani agrofood pvt ltd) पारंपरिक लोहारी भट्टी
             </h4>
             <p class="text-[11px] text-stone-300">
               भट्टी में तपाकर और पानी में बुझाकर तैयार अटूट कृषि औजार

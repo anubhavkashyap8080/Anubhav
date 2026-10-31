@@ -474,10 +474,13 @@ function ensure_platform_schema($pdo) {
         ");
     }
 
-    // Auto-heal corrupted '0' brand_name, brand_tagline, or '0 —' / '0 -' / '0 __' titles
+    // Auto-heal corrupted '0' brand_name, brand_tagline, or '0 —' / '0 -' / '0 __' titles and legacy company branding
     try {
         $pdo->exec("UPDATE site_settings SET setting_value = 'GaunGaliHat' WHERE setting_key = 'brand_name' AND (setting_value = '0' OR setting_value = '' OR setting_value IS NULL)");
-        $pdo->exec("UPDATE site_settings SET setting_value = 'Desh ki mitti ka swad | Ganv se ghar tak' WHERE setting_key = 'brand_tagline' AND (setting_value = '0' OR setting_value = '' OR setting_value IS NULL)");
+        $pdo->exec("UPDATE site_settings SET setting_value = 'Hunar desh ka, ganv se ghar tak' WHERE setting_key = 'brand_tagline' AND (setting_value = '0' OR setting_value = '' OR setting_value IS NULL OR setting_value LIKE '%S S Industries%' OR setting_value = 'Desh ki mitti ka swad | Ganv se ghar tak')");
+        $pdo->exec("UPDATE site_settings SET setting_value = 'Kalyani agrofood pvt ltd' WHERE setting_key = 'company_name' AND (setting_value = '0' OR setting_value = '' OR setting_value IS NULL OR setting_value = 'S S Industries')");
+        $pdo->exec("UPDATE site_settings SET setting_value = '© 2026 GaunGaliHat. A Unit of Kalyani agrofood pvt ltd. All Rights Reserved.' WHERE setting_key = 'footer_copyright' AND setting_value LIKE '%S S Industries%'");
+        $pdo->exec("UPDATE site_settings SET setting_value = '🌾 Kalyani agrofood pvt ltd • Hunar desh ka, ganv se ghar tak' WHERE setting_key = 'hero_badge_text' AND setting_value LIKE '%S S Industries%'");
         $pdo->exec("UPDATE site_settings SET setting_value = 'G145 Phase 2 Industrial Area, UPSIDA Sandila, Hardoi, UP' WHERE setting_key = 'head_office_address' AND (setting_value = '0' OR setting_value = '' OR setting_value IS NULL)");
         $pdo->exec("UPDATE site_settings SET setting_value = 'GaunGaliHat — Desh ki mitti ka swad | Rural Tools & Farm Staples' WHERE setting_key IN ('homepage_title', 'seo_meta_title') AND (setting_value = '0' OR setting_value LIKE '0 %' OR setting_value LIKE '0-%' OR setting_value LIKE '0—%' OR setting_value LIKE '0_%')");
     } catch (Throwable $e_heal0) {}
@@ -488,8 +491,8 @@ function ensure_platform_schema($pdo) {
         if ($chk == 0) {
             $defaults = [
                 'brand_name' => 'गाँव गली हाट (GaunGaliHat)',
-                'company_name' => 'S S Industries',
-                'brand_tagline' => 'Desh ki mitti ka swad | Ganv se ghar tak',
+                'company_name' => 'Kalyani agrofood pvt ltd',
+                'brand_tagline' => 'Hunar desh ka, ganv se ghar tak',
                 'announcement_text' => 'Direct from Rural Village Artisans • Free All-India Delivery on Orders ₹499+!',
                 'contact_phone' => '+91 7897492100',
                 'contact_email' => 'namaste@ganvgalihat.com',
@@ -528,7 +531,7 @@ function ensure_platform_schema($pdo) {
                 'show_announcement' => '1',
                 'logo_url' => '/logo.png',
                 'favicon_url' => '/favicon.png',
-                'footer_copyright' => '© 2026 GaunGaliHat. A Unit of S S Industries Enterprise. All Rights Reserved.',
+                'footer_copyright' => '© 2026 GaunGaliHat. A Unit of Kalyani agrofood pvt ltd. All Rights Reserved.',
                 'social_instagram' => 'https://instagram.com/ganvgalihat',
                 'social_youtube' => 'https://youtube.com/@ganvgalihat',
                 'social_facebook' => 'https://facebook.com/ganvgalihat',
@@ -536,7 +539,7 @@ function ensure_platform_schema($pdo) {
                 // Hero Section Customizer Defaults (Festivals, Sales, Seasonal)
                 'hero_festive_preset' => 'general',
                 'hero_theme_color' => 'emerald',
-                'hero_badge_text' => '🌾 S S Industries Enterprise • Desh ki mitti ka swad',
+                'hero_badge_text' => '🌾 Kalyani agrofood pvt ltd • Hunar desh ka, ganv se ghar tak',
                 'hero_title_line1' => 'Gaon ke hunar,',
                 'hero_title_line2' => 'ab har ghar tak',
                 'hero_subtitle' => 'Discover high-durability hand-forged agricultural sickles, garden khurpis, pure unpolished Awadh pulses, Banarasi mustard oil pickles, eco golden jute bags, and handlooms direct from rural Bharat.',
@@ -565,7 +568,7 @@ function ensure_platform_schema($pdo) {
             $hero_defs = [
                 'hero_festive_preset' => 'general',
                 'hero_theme_color' => 'emerald',
-                'hero_badge_text' => '🌾 S S Industries Enterprise • Desh ki mitti ka swad',
+                'hero_badge_text' => '🌾 Kalyani agrofood pvt ltd • Hunar desh ka, ganv se ghar tak',
                 'hero_title_line1' => 'Gaon ke hunar,',
                 'hero_title_line2' => 'ab har ghar tak',
                 'hero_subtitle' => 'Discover high-durability hand-forged agricultural sickles, garden khurpis, pure unpolished Awadh pulses, Banarasi mustard oil pickles, eco golden jute bags, and handlooms direct from rural Bharat.',

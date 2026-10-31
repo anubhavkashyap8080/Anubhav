@@ -241,7 +241,7 @@ if ($hero_theme === 'crimson') {
       <div class="lg:col-span-7 space-y-5 text-center lg:text-left">
         <div class="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full <?= $hero_badge_class ?> border text-xs font-semibold shadow-xs">
           <i data-lucide="sparkles" class="w-3.5 h-3.5 text-amber-300"></i>
-          <span><?= htmlspecialchars(get_setting('hero_badge_text', '🌾 S S Industries Enterprise • Empowering Rural Artisans, Dal Farmers & SHGs')) ?></span>
+          <span><?= htmlspecialchars(get_setting('hero_badge_text', '🌾 Kalyani agrofood pvt ltd • Hunar desh ka, ganv se ghar tak')) ?></span>
         </div>
 
         <h1 class="text-3xl sm:text-5xl lg:text-6xl font-black font-display tracking-tight text-white leading-tight">

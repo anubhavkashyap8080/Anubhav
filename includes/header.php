@@ -621,7 +621,7 @@ $active_site_logo = ($use_gif_logo && !empty($logo_gif_url)) ? $logo_gif_url : $
 
           <div class="pt-2 pb-1 text-[11px] font-bold text-gray-400 uppercase tracking-wider px-3">Information</div>
           <a href="/about.php" class="flex items-center gap-2.5 px-3 py-2 rounded-xl hover:bg-gray-50 text-gray-800">
-            <i data-lucide="info" class="w-4 h-4 text-gray-400"></i> About S S Industries
+            <i data-lucide="info" class="w-4 h-4 text-gray-400"></i> About Kalyani agrofood pvt ltd
           </a>
           <a href="/contact.php" class="flex items-center gap-2.5 px-3 py-2 rounded-xl hover:bg-gray-50 text-gray-800">
             <i data-lucide="headset" class="w-4 h-4 text-gray-400"></i> Help & Contact Desk

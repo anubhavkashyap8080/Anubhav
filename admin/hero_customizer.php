@@ -238,7 +238,7 @@ require_once __DIR__ . '/admin_header.php';
       <div class="sm:col-span-3">
         <label class="block text-xs font-bold text-gray-700 mb-2">उत्सव/सेल घोषणा बैज (Festive Top Badge Text)</label>
         <input type="text" name="hero_badge_text" id="hero_badge_text" required
-          value="<?= htmlspecialchars(get_h_val('hero_badge_text', '🌾 S S Industries Enterprise • Empowering Rural Artisans, Dal Farmers & SHGs')) ?>"
+          value="<?= htmlspecialchars(get_h_val('hero_badge_text', '🌾 Kalyani agrofood pvt ltd • Hunar desh ka, ganv se ghar tak')) ?>"
           class="w-full px-3.5 py-2.5 bg-stone-50 border border-gray-200 rounded-xl text-xs">
       </div>
     </div>
@@ -694,7 +694,7 @@ const presets = {
   },
   general: {
     theme: 'emerald',
-    badge: '🌾 S S Industries Enterprise • Empowering Rural Artisans, Dal Farmers & SHGs',
+    badge: '🌾 Kalyani agrofood pvt ltd • Hunar desh ka, ganv se ghar tak',
     title1: 'Gaon ke hunar,',
     title2: 'ab har ghar tak',
     subtitle: 'Discover high-durability hand-forged agricultural sickles, garden khurpis, pure unpolished Awadh pulses, Banarasi mustard oil pickles, eco golden jute bags, and handlooms direct from rural Bharat.',

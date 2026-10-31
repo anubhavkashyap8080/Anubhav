@@ -255,10 +255,10 @@ $items = $stmt_items->fetchAll();
       </div>
     </div>
 
-    <!-- Need Help & S S Industries Support -->
+    <!-- Need Help & Kalyani agrofood pvt ltd Support -->
     <div class="bg-white rounded-2xl border border-gray-200 p-5 shadow-sm text-center text-xs text-gray-500 space-y-1">
       <p class="font-bold text-gray-800">किसी भी सहायता के लिए संपर्क करें</p>
-      <p>एस. एस. इंडस्ट्रीज हेल्पलाइन: <a href="tel:<?= APP_PHONE ?>" class="text-brand-green font-bold"><?= APP_PHONE ?></a> | ईमेल: <a href="mailto:<?= APP_EMAIL ?>" class="text-brand-green font-bold"><?= APP_EMAIL ?></a></p>
+      <p>कल्याणी एग्रोफूड हेल्पलाइन: <a href="tel:<?= APP_PHONE ?>" class="text-brand-green font-bold"><?= APP_PHONE ?></a> | ईमेल: <a href="mailto:<?= APP_EMAIL ?>" class="text-brand-green font-bold"><?= APP_EMAIL ?></a></p>
       <p>पता: <?= APP_ADDRESS ?></p>
     </div>
 
