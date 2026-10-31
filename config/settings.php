@@ -111,23 +111,41 @@ define('PAYU_MERCHANT_SALT', (string)(!empty($raw_payu_salt) ? $raw_payu_salt : 
 define('PAYU_MODE', (string)(getenv('PAYU_MODE') ?: ($cfg_payments['payu']['mode'] ?? get_setting('payu_mode', 'test')))); // 'test' or 'live'
 define('PAYU_URL', PAYU_MODE === 'live' ? 'https://secure.payu.in/_payment' : 'https://test.payu.in/_payment');
 
-// Social Auth Constants (Item 10: config/env priority)
+// Social Auth Constants (Item 10: config/env priority with DB fallback)
 $cfg_social = function_exists('get_platform_config') ? (get_platform_config('social') ?: []) : [];
 $cfg_google_top = function_exists('get_platform_config') ? (get_platform_config('google') ?: []) : [];
 $cfg_google = !empty($cfg_social['google']) ? $cfg_social['google'] : $cfg_google_top;
 
-define('GOOGLE_AUTH_ENABLED', (bool)(getenv('GOOGLE_AUTH_ENABLED') !== false ? getenv('GOOGLE_AUTH_ENABLED') : ($cfg_google['enabled'] ?? get_setting('google_auth_enabled', 1))));
-define('GOOGLE_CLIENT_ID', (string)(getenv('GOOGLE_CLIENT_ID') ?: ($cfg_google['client_id'] ?? get_setting('google_client_id', ''))));
-$raw_google_secret = getenv('GOOGLE_CLIENT_SECRET') ?: ($cfg_google['client_secret'] ?? '');
-define('GOOGLE_CLIENT_SECRET', (string)(!empty($raw_google_secret) ? $raw_google_secret : get_setting('google_client_secret', '')));
+$db_google_client_id = get_setting('google_client_id', '');
+$resolved_google_client_id = getenv('GOOGLE_CLIENT_ID') ?: (!empty($cfg_google['client_id']) ? $cfg_google['client_id'] : $db_google_client_id);
+define('GOOGLE_CLIENT_ID', (string)$resolved_google_client_id);
+
+$db_google_secret = get_setting('google_client_secret', '');
+$resolved_google_secret = getenv('GOOGLE_CLIENT_SECRET') ?: (!empty($cfg_google['client_secret']) ? $cfg_google['client_secret'] : $db_google_secret);
+define('GOOGLE_CLIENT_SECRET', (string)$resolved_google_secret);
+
+$db_google_enabled = get_setting('google_auth_enabled', 1);
+$resolved_google_enabled = (getenv('GOOGLE_AUTH_ENABLED') !== false)
+    ? (bool)getenv('GOOGLE_AUTH_ENABLED')
+    : (!empty($resolved_google_client_id) && ((isset($cfg_google['enabled']) && $cfg_google['enabled']) || $db_google_enabled == 1));
+define('GOOGLE_AUTH_ENABLED', (bool)$resolved_google_enabled);
 
 $cfg_facebook_top = function_exists('get_platform_config') ? (get_platform_config('facebook') ?: []) : [];
 $cfg_facebook = !empty($cfg_social['facebook']) ? $cfg_social['facebook'] : $cfg_facebook_top;
 
-define('FACEBOOK_AUTH_ENABLED', (bool)(getenv('FACEBOOK_AUTH_ENABLED') !== false ? getenv('FACEBOOK_AUTH_ENABLED') : ($cfg_facebook['enabled'] ?? get_setting('facebook_auth_enabled', 0))));
-define('FACEBOOK_APP_ID', (string)(getenv('FACEBOOK_APP_ID') ?: ($cfg_facebook['app_id'] ?? get_setting('facebook_app_id', ''))));
-$raw_facebook_secret = getenv('FACEBOOK_APP_SECRET') ?: ($cfg_facebook['app_secret'] ?? '');
-define('FACEBOOK_APP_SECRET', (string)(!empty($raw_facebook_secret) ? $raw_facebook_secret : get_setting('facebook_app_secret', '')));
+$db_facebook_id = get_setting('facebook_app_id', '');
+$resolved_facebook_id = getenv('FACEBOOK_APP_ID') ?: (!empty($cfg_facebook['app_id']) ? $cfg_facebook['app_id'] : $db_facebook_id);
+define('FACEBOOK_APP_ID', (string)$resolved_facebook_id);
+
+$db_facebook_secret = get_setting('facebook_app_secret', '');
+$resolved_facebook_secret = getenv('FACEBOOK_APP_SECRET') ?: (!empty($cfg_facebook['app_secret']) ? $cfg_facebook['app_secret'] : $db_facebook_secret);
+define('FACEBOOK_APP_SECRET', (string)$resolved_facebook_secret);
+
+$db_facebook_enabled = get_setting('facebook_auth_enabled', 0);
+$resolved_facebook_enabled = (getenv('FACEBOOK_AUTH_ENABLED') !== false)
+    ? (bool)getenv('FACEBOOK_AUTH_ENABLED')
+    : (!empty($resolved_facebook_id) && ((isset($cfg_facebook['enabled']) && $cfg_facebook['enabled']) || $db_facebook_enabled == 1));
+define('FACEBOOK_AUTH_ENABLED', (bool)$resolved_facebook_enabled);
 
 define('COD_ENABLED', (bool)get_setting('cod_enabled', 1));
 

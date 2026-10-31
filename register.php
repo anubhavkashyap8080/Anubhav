@@ -1,31 +1,22 @@
 <?php
 require_once __DIR__ . '/includes/functions.php';
 
-// Fetch Google & Facebook Auth Settings
-$google_enabled = false;
-$google_client_id = '';
-$facebook_enabled = false;
-$facebook_app_id = '';
+// Fetch Google & Facebook Auth Settings (DB Site Settings first, then env/constants)
+$db_google_client_id = get_site_setting('google_client_id', '');
+$google_client_id = !empty($db_google_client_id)
+    ? trim($db_google_client_id)
+    : (defined('GOOGLE_CLIENT_ID') && !empty(GOOGLE_CLIENT_ID) ? trim(GOOGLE_CLIENT_ID) : (getenv('GOOGLE_CLIENT_ID') ?: ''));
 
-try {
-    $stmt_g = $pdo->query("SELECT setting_key, setting_value FROM site_settings WHERE setting_key IN ('google_auth_enabled', 'google_client_id', 'facebook_auth_enabled', 'facebook_app_id')");
-    while ($r = $stmt_g->fetch()) {
-        if ($r['setting_key'] === 'google_auth_enabled') $google_enabled = ($r['setting_value'] == '1');
-        if ($r['setting_key'] === 'google_client_id') $google_client_id = $r['setting_value'];
-        if ($r['setting_key'] === 'facebook_auth_enabled') $facebook_enabled = ($r['setting_value'] == '1');
-        if ($r['setting_key'] === 'facebook_app_id') $facebook_app_id = $r['setting_value'];
-    }
-} catch (Exception $e) {}
+$db_google_enabled = get_site_setting('google_auth_enabled', '1');
+$google_enabled = !empty($google_client_id) && ($db_google_enabled == '1' || (defined('GOOGLE_AUTH_ENABLED') && GOOGLE_AUTH_ENABLED));
 
-if (defined('GOOGLE_CLIENT_ID') && GOOGLE_CLIENT_ID !== '') {
-    $google_client_id = GOOGLE_CLIENT_ID;
-    $google_enabled = defined('GOOGLE_AUTH_ENABLED') ? GOOGLE_AUTH_ENABLED : true;
-}
+$db_facebook_id = get_site_setting('facebook_app_id', '');
+$facebook_app_id = !empty($db_facebook_id)
+    ? trim($db_facebook_id)
+    : (defined('FACEBOOK_APP_ID') && !empty(FACEBOOK_APP_ID) ? trim(FACEBOOK_APP_ID) : (getenv('FACEBOOK_APP_ID') ?: ''));
 
-if (defined('FACEBOOK_APP_ID') && FACEBOOK_APP_ID !== '') {
-    $facebook_app_id = FACEBOOK_APP_ID;
-    $facebook_enabled = defined('FACEBOOK_AUTH_ENABLED') ? FACEBOOK_AUTH_ENABLED : true;
-}
+$db_facebook_enabled = get_site_setting('facebook_auth_enabled', '0');
+$facebook_enabled = !empty($facebook_app_id) && ($db_facebook_enabled == '1' || (defined('FACEBOOK_AUTH_ENABLED') && FACEBOOK_AUTH_ENABLED));
 
 $name = '';
 $phone = '';
@@ -219,7 +210,6 @@ require_once __DIR__ . '/includes/header.php';
               <div id="g_id_onload"
                    data-client_id="<?= htmlspecialchars($google_client_id) ?>"
                    data-login_uri="<?= rtrim(defined('SITE_URL') ? SITE_URL : 'https://ganvgalihat.com', '/') ?>/auth/google-callback.php"
-                   data-callback="onGoogleAuthCallback"
                    data-auto_prompt="false">
               </div>
               <div class="g_id_signin w-full flex justify-center"

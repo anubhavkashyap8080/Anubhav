@@ -1157,9 +1157,10 @@ function get_flash() {
     if (isset($_SESSION['flash'])) {
         $flash = $_SESSION['flash'];
         unset($_SESSION['flash']);
+        $GLOBALS['cached_flash'] = $flash;
         return $flash;
     }
-    return null;
+    return $GLOBALS['cached_flash'] ?? null;
 }
 
 // Authentication Helpers (Re-reads user status & role from database on every request)
