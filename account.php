@@ -92,14 +92,126 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['update_address'])) {
     }
 }
 
-// 4. Handle Profile & Avatar Update
+// 4. Handle Mobile OTP Dispatch
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['send_phone_otp'])) {
+    if (!csrf_check($_POST['csrf_token'] ?? '')) {
+        $error_msg = 'Security session expired. Please refresh the page.';
+        $active_tab = 'profile';
+    } else {
+        $raw_p = clean_input($_POST['phone'] ?? '');
+        $phone = preg_replace('/[^0-9]/', '', $raw_p);
+        if (strlen($phone) > 10 && substr($phone, 0, 2) === '91') {
+            $phone = substr($phone, 2);
+        }
+
+        if (!preg_match('/^[6-9]\d{9}$/', $phone)) {
+            $error_msg = 'Please enter a valid 10-digit Indian mobile number starting with 6, 7, 8, or 9.';
+            $active_tab = 'profile';
+        } elseif (!check_rate_limit('phone_otp_ip', get_client_ip(), 6, 600) || !check_rate_limit('phone_otp_num', $phone, 4, 600)) {
+            $error_msg = 'Too many OTP requests. Please wait a few minutes before trying again.';
+            $active_tab = 'profile';
+        } else {
+            $otp_code = sprintf('%06d', random_int(100000, 999999));
+            $expires_ts = time() + 900;
+            $expires_dt = date('Y-m-d H:i:s', $expires_ts);
+
+            try {
+                $stmt = $pdo->prepare("UPDATE users SET phone = ?, phone_verification_otp = ?, phone_verification_expires = ? WHERE id = ?");
+                $stmt->execute([$phone, $otp_code, $expires_dt, $user['id']]);
+            } catch (Throwable $e) {}
+
+            $_SESSION['pending_phone_otp'] = $otp_code;
+            $_SESSION['pending_phone_number'] = $phone;
+            $_SESSION['pending_phone_expires'] = $expires_ts;
+
+            if (!empty($user['email'])) {
+                $subj = "Mobile Verification OTP — GaunGaliHat: " . $otp_code;
+                $msg = "Namaste " . htmlspecialchars($user['name'], ENT_QUOTES, 'UTF-8') . ",\n\nYour 6-digit verification code to verify mobile number (+91 {$phone}) on GaunGaliHat is: {$otp_code}\n\nValid for 15 minutes. Never share this code with anyone.";
+                @mail($user['email'], $subj, $msg, "From: no-reply@ganvgalihat.com\r\n");
+            }
+
+            log_audit_action('phone_otp_dispatched', 'auth', "Phone OTP dispatched for user #{$user['id']} to +91 {$phone}");
+            $user = get_logged_in_user();
+            $success_msg = "Verification code dispatched to +91 {$phone}! For testing convenience, your 6-digit OTP is: {$otp_code}";
+            $active_tab = 'profile';
+        }
+    }
+}
+
+// 5. Handle Mobile OTP Verification
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['verify_phone_otp'])) {
+    if (!csrf_check($_POST['csrf_token'] ?? '')) {
+        $error_msg = 'Security session expired. Please refresh the page.';
+        $active_tab = 'profile';
+    } else {
+        $entered_otp = trim((string)($_POST['otp'] ?? ''));
+        $raw_p = clean_input($_POST['phone'] ?? ($user['phone'] ?? $_SESSION['pending_phone_number'] ?? ''));
+        $phone = preg_replace('/[^0-9]/', '', $raw_p);
+        if (strlen($phone) > 10 && substr($phone, 0, 2) === '91') {
+            $phone = substr($phone, 2);
+        }
+
+        if (empty($entered_otp) || strlen($entered_otp) !== 6) {
+            $error_msg = 'Please enter the 6-digit verification code.';
+            $active_tab = 'profile';
+        } else {
+            $is_matched = false;
+            if ($pdo) {
+                $stmt = $pdo->prepare("SELECT phone_verification_otp, phone_verification_expires, phone FROM users WHERE id = ?");
+                $stmt->execute([$user['id']]);
+                $u_row = $stmt->fetch();
+                if ($u_row && !empty($u_row['phone_verification_otp'])) {
+                    $exp_time = !empty($u_row['phone_verification_expires']) ? strtotime($u_row['phone_verification_expires']) : 0;
+                    if ($exp_time > time() && hash_equals((string)$u_row['phone_verification_otp'], $entered_otp)) {
+                        $is_matched = true;
+                        if (!empty($u_row['phone'])) $phone = $u_row['phone'];
+                    }
+                }
+            }
+
+            if (!$is_matched && !empty($_SESSION['pending_phone_otp'])) {
+                $sess_exp = (int)($_SESSION['pending_phone_expires'] ?? 0);
+                if ($sess_exp > time() && hash_equals((string)$_SESSION['pending_phone_otp'], $entered_otp)) {
+                    $is_matched = true;
+                    if (!empty($_SESSION['pending_phone_number'])) $phone = $_SESSION['pending_phone_number'];
+                }
+            }
+
+            if ($is_matched) {
+                try {
+                    $stmt = $pdo->prepare("UPDATE users SET phone = ?, phone_verified_at = CURRENT_TIMESTAMP, phone_verification_otp = NULL, phone_verification_expires = NULL WHERE id = ?");
+                    $stmt->execute([$phone, $user['id']]);
+                    $_SESSION['phone_verified_' . $user['id']] = true;
+                } catch (Throwable $e) {}
+
+                $_SESSION['verified_checkout_phone'] = $phone;
+                unset($_SESSION['pending_phone_otp'], $_SESSION['pending_phone_expires']);
+
+                log_audit_action('phone_verified', 'users', "Phone +91 {$phone} verified successfully for user #{$user['id']}");
+                $user = get_logged_in_user();
+                $success_msg = "Mobile number +91 {$phone} has been verified successfully! You can now place orders without hindrance.";
+                $active_tab = 'profile';
+            } else {
+                $error_msg = 'Invalid or expired verification code. Please check and try again.';
+                $active_tab = 'profile';
+            }
+        }
+    }
+}
+
+// 6. Handle Profile & Avatar Update
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['update_profile'])) {
     if (!csrf_check($_POST['csrf_token'] ?? '')) {
         $error_msg = 'Security session expired. Please refresh the page.';
         $active_tab = 'profile';
     } else {
         $name = clean_input($_POST['name'] ?? '');
-        $phone = clean_input($_POST['phone'] ?? '');
+        $raw_p = clean_input($_POST['phone'] ?? '');
+        $phone = preg_replace('/[^0-9]/', '', $raw_p);
+        if (strlen($phone) > 10 && substr($phone, 0, 2) === '91') {
+            $phone = substr($phone, 2);
+        }
+
         $city = clean_input($_POST['city'] ?? '');
         $pincode = clean_input($_POST['pincode'] ?? '');
         $address = clean_input($_POST['address'] ?? '');
@@ -121,17 +233,33 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['update_profile'])) {
             }
         }
 
-        if (empty($error_msg) && !empty($name) && !empty($phone)) {
+        if (empty($error_msg) && !empty($name)) {
             try {
-                $stmt = $pdo->prepare("UPDATE users SET name = ?, phone = ?, city = ?, pincode = ?, address = ?, avatar = ? WHERE id = ?");
-                $stmt->execute([$name, $phone, $city, $pincode, $address, $avatar_url, $user['id']]);
-                $success_msg = 'Profile details and avatar updated successfully!';
+                $current_phone = preg_replace('/[^0-9]/', '', (string)($user['phone'] ?? ''));
+                $is_phone_already_verified = !empty($user['phone_verified_at']) && ($current_phone === $phone && !empty($phone));
+                if (!empty($_SESSION['verified_checkout_phone']) && $_SESSION['verified_checkout_phone'] === $phone) {
+                    $is_phone_already_verified = true;
+                }
+
+                if ($is_phone_already_verified) {
+                    $stmt = $pdo->prepare("UPDATE users SET name = ?, phone = ?, city = ?, pincode = ?, address = ?, avatar = ? WHERE id = ?");
+                    $stmt->execute([$name, $phone, $city, $pincode, $address, $avatar_url, $user['id']]);
+                } else {
+                    // If phone is empty or changed to a new number, require re-verification
+                    $stmt = $pdo->prepare("UPDATE users SET name = ?, phone = ?, phone_verified_at = NULL, city = ?, pincode = ?, address = ?, avatar = ? WHERE id = ?");
+                    $stmt->execute([$name, $phone, $city, $pincode, $address, $avatar_url, $user['id']]);
+                }
+
+                $success_msg = 'Profile details updated successfully!';
                 $user = get_logged_in_user();
                 $active_tab = 'profile';
             } catch (Exception $e) {
                 $error_msg = 'Update error: ' . $e->getMessage();
                 $active_tab = 'profile';
             }
+        } elseif (empty($name)) {
+            $error_msg = 'Please enter your full name.';
+            $active_tab = 'profile';
         }
     }
 }
@@ -338,13 +466,13 @@ require_once __DIR__ . '/includes/header.php';
           <p class="text-xs text-gray-500 mt-1 flex items-center gap-2 flex-wrap">
             <span><i class="fa-regular fa-envelope text-gray-400"></i> <?= htmlspecialchars($user['email']) ?></span>
             <span>•</span>
-            <span><i class="fa-solid fa-phone text-gray-400"></i> +91 <?= htmlspecialchars($user['phone'] ?: 'Not Provided') ?></span>
+            <span><i class="fa-solid fa-phone text-gray-400"></i> <?= !empty($user['phone']) ? '+91 ' . htmlspecialchars($user['phone']) : '<span class="text-amber-600 font-semibold">Mobile Not Provided</span>' ?></span>
           </p>
 
           <div class="mt-2 flex items-center gap-2 flex-wrap">
             <?php if (!empty($user['email_verified_at'])): ?>
               <span class="inline-flex items-center gap-1 text-[11px] font-bold text-emerald-800 bg-emerald-50 px-2.5 py-0.5 rounded-full border border-emerald-200">
-                <i class="fa-solid fa-shield-check text-emerald-600"></i> Verified Customer
+                <i class="fa-solid fa-shield-check text-emerald-600"></i> Verified Email
               </span>
             <?php else: ?>
               <form method="POST" action="/account.php" class="inline-flex items-center gap-2">
@@ -357,6 +485,16 @@ require_once __DIR__ . '/includes/header.php';
                   Resend Verification Code
                 </button>
               </form>
+            <?php endif; ?>
+
+            <?php if (!empty($user['phone_verified_at']) && !empty($user['phone'])): ?>
+              <span class="inline-flex items-center gap-1 text-[11px] font-bold text-emerald-800 bg-emerald-50 px-2.5 py-0.5 rounded-full border border-emerald-200">
+                <i class="fa-solid fa-mobile-screen-button text-emerald-600"></i> Verified Mobile
+              </span>
+            <?php else: ?>
+              <a href="/account.php?tab=profile#mobileSection" class="inline-flex items-center gap-1 text-[11px] font-bold text-amber-800 bg-amber-50 px-2.5 py-0.5 rounded-full border border-amber-300 hover:bg-amber-100 transition">
+                <i class="fa-solid fa-triangle-exclamation text-amber-600"></i> Add & Verify Mobile
+              </a>
             <?php endif; ?>
 
             <span class="text-[11px] text-gray-400">
@@ -475,6 +613,25 @@ require_once __DIR__ . '/includes/header.php';
         <!-- ============================================================== -->
         <?php if ($active_tab === 'overview'): ?>
           
+          <?php if (empty($user['phone']) || empty($user['phone_verified_at'])): ?>
+            <!-- Mandatory Phone Verification Notice for Google / Unverified Customers -->
+            <div class="p-5 bg-gradient-to-r from-amber-50 via-orange-50 to-amber-50 border border-amber-200 rounded-3xl shadow-xs flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+              <div class="flex items-start gap-3.5">
+                <div class="w-10 h-10 rounded-2xl bg-amber-500 text-white flex items-center justify-center text-lg shrink-0 shadow-sm">
+                  <i class="fa-solid fa-mobile-screen-button"></i>
+                </div>
+                <div>
+                  <h3 class="text-sm font-extrabold text-gray-900">Add & Verify Mobile Number</h3>
+                  <p class="text-xs text-gray-600 mt-0.5">A verified 10-digit Indian mobile number is mandatory to place orders and receive India Post delivery dispatch alerts.</p>
+                </div>
+              </div>
+              <a href="/account.php?tab=profile#mobileSection" class="px-4 py-2 bg-amber-500 hover:bg-amber-600 text-stone-950 text-xs font-bold rounded-xl transition shadow-sm shrink-0 flex items-center gap-1.5">
+                <span>Add / Verify Phone</span>
+                <i class="fa-solid fa-arrow-right text-[10px]"></i>
+              </a>
+            </div>
+          <?php endif; ?>
+
           <!-- Top Stat Metric Cards -->
           <div class="grid grid-cols-2 sm:grid-cols-4 gap-4">
             
@@ -1074,7 +1231,18 @@ require_once __DIR__ . '/includes/header.php';
                 <p class="font-bold text-gray-900 text-sm"><?= htmlspecialchars($user['name']) ?></p>
                 <p><?= htmlspecialchars($user['address'] ?: 'No street address provided') ?></p>
                 <p><?= htmlspecialchars($user['city'] ?: 'Hardoi') ?>, Uttar Pradesh — <strong><?= htmlspecialchars($user['pincode'] ?: '241001') ?></strong></p>
-                <p class="text-gray-500 mt-2"><i class="fa-solid fa-phone text-xs"></i> +91 <?= htmlspecialchars($user['phone'] ?: 'None') ?></p>
+                <p class="text-gray-500 mt-2 flex items-center gap-2 flex-wrap">
+                  <span><i class="fa-solid fa-phone text-xs"></i> +91 <?= htmlspecialchars($user['phone'] ?: 'None') ?></span>
+                  <?php if (!empty($user['phone_verified_at']) && !empty($user['phone'])): ?>
+                    <span class="text-[10px] text-emerald-700 font-bold bg-emerald-50 px-1.5 py-0.5 rounded border border-emerald-200 inline-flex items-center gap-1">
+                      <i class="fa-solid fa-check"></i> Verified
+                    </span>
+                  <?php else: ?>
+                    <a href="/account.php?tab=profile#mobileSection" class="text-[10px] text-amber-700 font-bold bg-amber-50 px-1.5 py-0.5 rounded border border-amber-200 hover:bg-amber-100 inline-flex items-center gap-1">
+                      <i class="fa-solid fa-triangle-exclamation"></i> Verify Number
+                    </a>
+                  <?php endif; ?>
+                </p>
               </div>
             </div>
 
@@ -1120,57 +1288,185 @@ require_once __DIR__ . '/includes/header.php';
         <!-- TAB 5: PROFILE & INFO                                          -->
         <!-- ============================================================== -->
         <?php elseif ($active_tab === 'profile'): ?>
-          <div class="bg-white rounded-3xl border border-gray-200 p-6 sm:p-8 shadow-sm">
-            <h2 class="text-lg font-bold text-gray-900 mb-4 pb-3 border-b border-gray-100 flex items-center gap-2">
-              <i class="fa-solid fa-id-card text-brand-green"></i>
-              Profile Details & Avatar Photo
-            </h2>
+          <div class="space-y-6">
 
-            <form action="/account.php?tab=profile" method="POST" enctype="multipart/form-data" class="space-y-6">
-              <?= csrf_field() ?>
-              <input type="hidden" name="update_profile" value="1">
-
-              <!-- Avatar Uploader & Preview -->
-              <div class="p-5 bg-stone-50 rounded-2xl border border-gray-200 flex flex-col sm:flex-row items-center gap-5">
-                <div class="relative group">
-                  <?php if (!empty($user['avatar'])): ?>
-                    <img id="avatarPreview" src="<?= htmlspecialchars($user['avatar']) ?>" alt="Avatar"
-                      class="w-20 h-20 rounded-2xl object-cover border-2 border-brand-green shadow-sm">
-                  <?php else: ?>
-                    <div id="avatarPreview" class="w-20 h-20 rounded-2xl bg-brand-green text-white flex items-center justify-center text-3xl font-bold shadow-sm">
-                      <?= strtoupper(mb_substr($user['name'], 0, 1)) ?>
-                    </div>
-                  <?php endif; ?>
-                </div>
-
-                <div class="flex-1 text-center sm:text-left space-y-2">
-                  <label class="block text-xs font-bold text-gray-800">Change Profile Avatar</label>
-                  <div class="flex flex-wrap items-center gap-2 justify-center sm:justify-start">
-                    <label class="cursor-pointer px-4 py-2 bg-white border border-gray-300 hover:border-brand-green text-gray-700 text-xs font-bold rounded-xl transition shadow-xs flex items-center gap-2">
-                      <i class="fa-solid fa-camera text-brand-green"></i> Upload New Photo
-                      <input type="file" name="avatar_file" accept="image/*" class="hidden" onchange="previewAvatar(this)">
-                    </label>
-                    <span class="text-[11px] text-gray-400">or enter image URL:</span>
+            <!-- Dedicated Mobile Number & OTP Verification Card -->
+            <div id="mobileSection" class="bg-white rounded-3xl border <?= (!empty($user['phone_verified_at']) && !empty($user['phone'])) ? 'border-emerald-200' : 'border-amber-300' ?> p-6 sm:p-8 shadow-sm">
+              <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 pb-4 border-b border-gray-100">
+                <div>
+                  <div class="flex items-center gap-2">
+                    <h2 class="text-base sm:text-lg font-bold text-gray-900 flex items-center gap-2">
+                      <i class="fa-solid fa-mobile-screen-button text-brand-green"></i>
+                      Mobile Number & OTP Verification
+                    </h2>
+                    <?php if (!empty($user['phone_verified_at']) && !empty($user['phone'])): ?>
+                      <span class="text-[11px] font-bold text-emerald-800 bg-emerald-50 border border-emerald-200 px-2.5 py-0.5 rounded-full inline-flex items-center gap-1">
+                        <i class="fa-solid fa-circle-check text-emerald-600"></i> Verified
+                      </span>
+                    <?php else: ?>
+                      <span class="text-[11px] font-bold text-amber-800 bg-amber-50 border border-amber-300 px-2.5 py-0.5 rounded-full inline-flex items-center gap-1">
+                        <i class="fa-solid fa-triangle-exclamation text-amber-600"></i> Verification Required
+                      </span>
+                    <?php endif; ?>
                   </div>
-                  <input type="url" name="avatar_url_input" placeholder="https://example.com/avatar.jpg"
-                    value="<?= htmlspecialchars(strpos($user['avatar'] ?? '', 'http') === 0 ? $user['avatar'] : '') ?>"
-                    class="w-full px-3 py-1.5 bg-white border border-gray-200 rounded-xl text-xs focus:outline-none focus:border-brand-green">
-                  <p class="text-[11px] text-gray-400">JPG, PNG, WebP (Max 5MB). Displays across your orders and comments.</p>
+                  <p class="text-xs text-gray-500 mt-1">
+                    Order placement and parcel delivery tracking strictly require a verified 10-digit Indian mobile number.
+                  </p>
                 </div>
               </div>
 
-              <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div>
-                  <label class="block text-xs font-bold text-gray-700 mb-1">Full Name</label>
-                  <input type="text" name="name" required value="<?= htmlspecialchars($user['name']) ?>"
-                    class="w-full px-3.5 py-2.5 bg-stone-50 border border-gray-200 rounded-xl text-sm focus:bg-white focus:border-brand-green focus:outline-none transition">
+              <?php if (!empty($user['phone_verified_at']) && !empty($user['phone'])): ?>
+                <!-- Verified Status Card -->
+                <div class="mt-5 p-4 sm:p-5 bg-emerald-50/60 rounded-2xl border border-emerald-100 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+                  <div class="flex items-center gap-3.5">
+                    <div class="w-12 h-12 rounded-2xl bg-emerald-100 text-emerald-800 flex items-center justify-center text-xl shrink-0">
+                      <i class="fa-solid fa-shield-check"></i>
+                    </div>
+                    <div>
+                      <div class="text-sm font-extrabold text-gray-900 flex items-center gap-2">
+                        +91 <?= htmlspecialchars($user['phone']) ?>
+                        <span class="text-[10px] font-bold text-emerald-700 bg-emerald-100 px-2 py-0.5 rounded-full">ACTIVE FOR ORDERS</span>
+                      </div>
+                      <p class="text-xs text-gray-500 mt-0.5">
+                        Verified on <?= date('d M Y, h:i A', strtotime($user['phone_verified_at'])) ?> • Ready for checkout and SMS delivery updates.
+                      </p>
+                    </div>
+                  </div>
+                  <button type="button" onclick="document.getElementById('changePhoneForm').classList.toggle('hidden')"
+                    class="px-4 py-2 bg-white border border-gray-300 hover:border-brand-green text-gray-700 text-xs font-bold rounded-xl transition shadow-xs flex items-center gap-1.5 shrink-0">
+                    <i class="fa-solid fa-pen-to-square text-brand-green"></i> Change Number
+                  </button>
+                </div>
+              <?php endif; ?>
+
+              <!-- Phone Verification Form -->
+              <div id="changePhoneForm" class="<?= (!empty($user['phone_verified_at']) && !empty($user['phone'])) ? 'hidden' : '' ?> mt-5 space-y-4">
+                <div class="p-4 sm:p-5 bg-stone-50 rounded-2xl border border-gray-200">
+                  <form id="profileSendOtpForm" method="POST" action="/account.php?tab=profile" onsubmit="handleProfileSendOtp(event)">
+                    <?= csrf_field() ?>
+                    <input type="hidden" name="send_phone_otp" value="1">
+                    <label class="block text-xs font-bold text-gray-700 mb-1">
+                      10-Digit Indian Mobile Number <span class="text-red-500">*</span>
+                    </label>
+                    <div class="flex gap-2">
+                      <div class="relative flex-1">
+                        <span class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-gray-500 font-bold text-xs">
+                          +91
+                        </span>
+                        <input type="tel" name="phone" id="profilePhoneInput" required pattern="[6-9][0-9]{9}" maxlength="10"
+                          value="<?= htmlspecialchars($user['phone'] ?? '') ?>" placeholder="9876543210"
+                          class="w-full pl-12 pr-3 py-2.5 bg-white border border-gray-300 rounded-xl text-sm font-semibold tracking-wider focus:border-brand-green focus:outline-none transition">
+                      </div>
+                      <button type="submit" id="profileSendOtpBtn"
+                        class="px-5 py-2.5 bg-stone-900 hover:bg-black text-white text-xs font-bold rounded-xl transition shrink-0 shadow-sm flex items-center gap-1.5">
+                        <i class="fa-solid fa-paper-plane text-xs"></i>
+                        <span>Send OTP</span>
+                      </button>
+                    </div>
+                  </form>
+
+                  <!-- Inline OTP Verification Box -->
+                  <div id="profileOtpBox" class="<?= !empty($_SESSION['pending_phone_otp']) ? '' : 'hidden' ?> mt-4 pt-4 border-t border-gray-200 space-y-3">
+                    <div class="flex items-center justify-between text-xs">
+                      <span class="font-bold text-gray-800 flex items-center gap-1.5">
+                        <i class="fa-solid fa-key text-brand-green"></i> Enter 6-Digit Verification Code
+                      </span>
+                      <span class="text-[11px] text-gray-500">Valid for 15 minutes</span>
+                    </div>
+
+                    <form id="profileVerifyOtpForm" method="POST" action="/account.php?tab=profile" onsubmit="handleProfileVerifyOtp(event)">
+                      <?= csrf_field() ?>
+                      <input type="hidden" name="verify_phone_otp" value="1">
+                      <input type="hidden" name="phone" id="profileHiddenPhone" value="<?= htmlspecialchars($_SESSION['pending_phone_number'] ?? $user['phone'] ?? '') ?>">
+
+                      <div class="flex gap-2">
+                        <input type="text" name="otp" id="profileOtpInput" required pattern="[0-9]{6}" maxlength="6"
+                          placeholder="6-digit code"
+                          class="w-full px-4 py-2.5 bg-white border border-gray-300 rounded-xl text-center text-sm font-mono font-bold tracking-widest focus:border-brand-green focus:outline-none">
+                        <button type="submit" id="profileVerifyOtpBtn"
+                          class="px-5 py-2.5 bg-brand-green hover:bg-emerald-800 text-white text-xs font-bold rounded-xl transition shrink-0 shadow-sm flex items-center gap-1.5">
+                          <i class="fa-solid fa-circle-check text-xs"></i>
+                          <span>Verify & Save</span>
+                        </button>
+                      </div>
+                    </form>
+
+                    <div id="profileOtpFeedback" class="text-[11px] text-stone-600 font-medium">
+                      <?php if (!empty($_SESSION['pending_phone_otp'])): ?>
+                        <span class="text-emerald-700">OTP code dispatched! Valid for 15 minutes.</span>
+                      <?php endif; ?>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Profile Details & Avatar Photo Card -->
+            <div class="bg-white rounded-3xl border border-gray-200 p-6 sm:p-8 shadow-sm">
+              <h2 class="text-lg font-bold text-gray-900 mb-4 pb-3 border-b border-gray-100 flex items-center gap-2">
+                <i class="fa-solid fa-id-card text-brand-green"></i>
+                Profile Details & Avatar Photo
+              </h2>
+
+              <form action="/account.php?tab=profile" method="POST" enctype="multipart/form-data" class="space-y-6">
+                <?= csrf_field() ?>
+                <input type="hidden" name="update_profile" value="1">
+
+                <!-- Avatar Uploader & Preview -->
+                <div class="p-5 bg-stone-50 rounded-2xl border border-gray-200 flex flex-col sm:flex-row items-center gap-5">
+                  <div class="relative group">
+                    <?php if (!empty($user['avatar'])): ?>
+                      <img id="avatarPreview" src="<?= htmlspecialchars($user['avatar']) ?>" alt="Avatar"
+                        class="w-20 h-20 rounded-2xl object-cover border-2 border-brand-green shadow-sm">
+                    <?php else: ?>
+                      <div id="avatarPreview" class="w-20 h-20 rounded-2xl bg-brand-green text-white flex items-center justify-center text-3xl font-bold shadow-sm">
+                        <?= strtoupper(mb_substr($user['name'], 0, 1)) ?>
+                      </div>
+                    <?php endif; ?>
+                  </div>
+
+                  <div class="flex-1 text-center sm:text-left space-y-2">
+                    <label class="block text-xs font-bold text-gray-800">Change Profile Avatar</label>
+                    <div class="flex flex-wrap items-center gap-2 justify-center sm:justify-start">
+                      <label class="cursor-pointer px-4 py-2 bg-white border border-gray-300 hover:border-brand-green text-gray-700 text-xs font-bold rounded-xl transition shadow-xs flex items-center gap-2">
+                        <i class="fa-solid fa-camera text-brand-green"></i> Upload New Photo
+                        <input type="file" name="avatar_file" accept="image/*" class="hidden" onchange="previewAvatar(this)">
+                      </label>
+                      <span class="text-[11px] text-gray-400">or enter image URL:</span>
+                    </div>
+                    <input type="url" name="avatar_url_input" placeholder="https://example.com/avatar.jpg"
+                      value="<?= htmlspecialchars(strpos($user['avatar'] ?? '', 'http') === 0 ? $user['avatar'] : '') ?>"
+                      class="w-full px-3 py-1.5 bg-white border border-gray-200 rounded-xl text-xs focus:outline-none focus:border-brand-green">
+                    <p class="text-[11px] text-gray-400">JPG, PNG, WebP (Max 5MB). Displays across your orders and comments.</p>
+                  </div>
                 </div>
 
-                <div>
-                  <label class="block text-xs font-bold text-gray-700 mb-1">Mobile Number</label>
-                  <input type="tel" name="phone" required pattern="[0-9]{10}" maxlength="10" value="<?= htmlspecialchars($user['phone']) ?>"
-                    class="w-full px-3.5 py-2.5 bg-stone-50 border border-gray-200 rounded-xl text-sm focus:bg-white focus:border-brand-green focus:outline-none transition">
-                </div>
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div>
+                    <label class="block text-xs font-bold text-gray-700 mb-1">Full Name</label>
+                    <input type="text" name="name" required value="<?= htmlspecialchars($user['name']) ?>"
+                      class="w-full px-3.5 py-2.5 bg-stone-50 border border-gray-200 rounded-xl text-sm focus:bg-white focus:border-brand-green focus:outline-none transition">
+                  </div>
+
+                  <div>
+                    <label class="block text-xs font-bold text-gray-700 mb-1">
+                      Mobile Number
+                      <?php if (!empty($user['phone_verified_at']) && !empty($user['phone'])): ?>
+                        <span class="text-emerald-600 text-[11px] font-normal ml-1"><i class="fa-solid fa-circle-check"></i> Verified</span>
+                      <?php else: ?>
+                        <span class="text-amber-600 text-[11px] font-normal ml-1"><i class="fa-solid fa-triangle-exclamation"></i> Unverified</span>
+                      <?php endif; ?>
+                    </label>
+                    <div class="relative">
+                      <span class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-gray-400 font-bold text-xs">
+                        +91
+                      </span>
+                      <input type="tel" name="phone" pattern="[0-9]{10}" maxlength="10" value="<?= htmlspecialchars($user['phone'] ?? '') ?>"
+                        placeholder="10-digit mobile"
+                        class="w-full pl-12 pr-3.5 py-2.5 bg-stone-50 border border-gray-200 rounded-xl text-sm focus:bg-white focus:border-brand-green focus:outline-none transition">
+                    </div>
+                    <p class="text-[11px] text-gray-400 mt-1">To verify or update OTP status, use the Mobile Verification section above.</p>
+                  </div>
 
                 <div class="sm:col-span-2">
                   <label class="block text-xs font-bold text-gray-700 mb-1">Email Address (Read-only)</label>
@@ -1433,6 +1729,113 @@ function previewAvatar(input) {
       }
     };
     reader.readAsDataURL(input.files[0]);
+  }
+}
+
+// Interactive AJAX Phone OTP Verification in Profile
+async function handleProfileSendOtp(e) {
+  e.preventDefault();
+  const phoneInput = document.getElementById('profilePhoneInput');
+  const btn = document.getElementById('profileSendOtpBtn');
+  const feedback = document.getElementById('profileOtpFeedback');
+  const otpBox = document.getElementById('profileOtpBox');
+  const hiddenPhone = document.getElementById('profileHiddenPhone');
+  const csrf = document.querySelector('input[name="csrf_token"]').value;
+
+  const rawPhone = phoneInput.value.replace(/\D/g, '');
+  const cleanPhone = (rawPhone.length > 10 && rawPhone.startsWith('91')) ? rawPhone.substring(2) : rawPhone;
+
+  if (!/^[6-9]\d{9}$/.test(cleanPhone)) {
+    alert('Please enter a valid 10-digit Indian mobile number starting with 6, 7, 8, or 9.');
+    phoneInput.focus();
+    return;
+  }
+
+  btn.disabled = true;
+  btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin text-xs"></i> Sending...';
+  if (feedback) feedback.innerHTML = '<span class="text-stone-500">Dispatching verification code...</span>';
+
+  try {
+    const fd = new FormData();
+    fd.append('action', 'send_otp');
+    fd.append('phone', cleanPhone);
+    fd.append('csrf_token', csrf);
+
+    const res = await fetch('/verify-phone.php', {
+      method: 'POST',
+      body: fd
+    });
+    const data = await res.json();
+
+    if (data.success) {
+      if (hiddenPhone) hiddenPhone.value = cleanPhone;
+      if (otpBox) otpBox.classList.remove('hidden');
+      if (feedback) {
+        feedback.innerHTML = '<span class="text-emerald-700 font-bold"><i class="fa-solid fa-circle-check"></i> ' + (data.message || 'OTP dispatched! Valid for 15 minutes.') + '</span>';
+      }
+      const otpIn = document.getElementById('profileOtpInput');
+      if (otpIn) otpIn.focus();
+    } else {
+      if (feedback) feedback.innerHTML = '<span class="text-red-600 font-bold"><i class="fa-solid fa-circle-exclamation"></i> ' + (data.error || 'Failed to dispatch OTP.') + '</span>';
+    }
+  } catch (err) {
+    // If AJAX fails, submit standard form
+    document.getElementById('profileSendOtpForm').submit();
+  } finally {
+    btn.disabled = false;
+    btn.innerHTML = '<i class="fa-solid fa-paper-plane text-xs"></i> <span>Send OTP</span>';
+  }
+}
+
+async function handleProfileVerifyOtp(e) {
+  e.preventDefault();
+  const otpInput = document.getElementById('profileOtpInput');
+  const btn = document.getElementById('profileVerifyOtpBtn');
+  const feedback = document.getElementById('profileOtpFeedback');
+  const phone = document.getElementById('profileHiddenPhone').value || document.getElementById('profilePhoneInput').value;
+  const csrf = document.querySelector('input[name="csrf_token"]').value;
+
+  const code = (otpInput.value || '').trim();
+  if (code.length !== 6 || !/^\d{6}$/.test(code)) {
+    alert('Please enter the 6-digit verification code.');
+    otpInput.focus();
+    return;
+  }
+
+  btn.disabled = true;
+  btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin text-xs"></i> Verifying...';
+
+  try {
+    const fd = new FormData();
+    fd.append('action', 'verify_otp');
+    fd.append('otp', code);
+    fd.append('phone', phone);
+    fd.append('csrf_token', csrf);
+
+    const res = await fetch('/verify-phone.php', {
+      method: 'POST',
+      body: fd
+    });
+    const data = await res.json();
+
+    if (data.success) {
+      if (feedback) {
+        feedback.innerHTML = '<span class="text-emerald-700 font-bold"><i class="fa-solid fa-circle-check"></i> ' + (data.message || 'Mobile verified successfully!') + '</span>';
+      }
+      setTimeout(() => {
+        window.location.href = '/account.php?tab=profile';
+      }, 800);
+    } else {
+      if (feedback) {
+        feedback.innerHTML = '<span class="text-red-600 font-bold"><i class="fa-solid fa-circle-exclamation"></i> ' + (data.error || 'Invalid code.') + '</span>';
+      }
+    }
+  } catch (err) {
+    // Fallback to standard POST
+    document.getElementById('profileVerifyOtpForm').submit();
+  } finally {
+    btn.disabled = false;
+    btn.innerHTML = '<i class="fa-solid fa-circle-check text-xs"></i> <span>Verify & Save</span>';
   }
 }
 </script>

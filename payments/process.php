@@ -54,9 +54,59 @@ if (!verify_turnstile_captcha()) {
     exit;
 }
 
-if (empty($customer_name) || empty($customer_phone) || empty($shipping_street) || empty($shipping_pincode)) {
-    set_flash('error', 'Please complete all required delivery address fields.');
+// Strict Security Enforcement: Complete Delivery Address & Verified Mobile Number
+if (empty($customer_name)) {
+    set_flash('error', 'Please enter your full name for order delivery.');
     header('Location: /checkout.php');
+    exit;
+}
+
+if (empty($customer_phone) || !preg_match('/^[6-9]\d{9}$/', $customer_phone)) {
+    set_flash('error', 'A valid 10-digit Indian mobile number is required before placing an order.');
+    header('Location: /checkout.php');
+    exit;
+}
+
+if (empty($shipping_street) || strlen($shipping_street) < 5) {
+    set_flash('error', 'A complete delivery street address (at least 5 characters) is required.');
+    header('Location: /checkout.php');
+    exit;
+}
+
+if (empty($shipping_city)) {
+    set_flash('error', 'Please enter your delivery city or district.');
+    header('Location: /checkout.php');
+    exit;
+}
+
+if (empty($shipping_pincode) || !preg_match('/^\d{6}$/', $shipping_pincode)) {
+    set_flash('error', 'A valid 6-digit delivery PIN code is required.');
+    header('Location: /checkout.php');
+    exit;
+}
+
+// Mandatory Mobile OTP Verification Check (Order blocked if phone unverified)
+$is_phone_verified = false;
+$user_id = $_SESSION['user_id'] ?? null;
+
+if (!empty($user_id) && $pdo) {
+    $stmt_u = $pdo->prepare("SELECT phone, phone_verified_at FROM users WHERE id = ?");
+    $stmt_u->execute([$user_id]);
+    $u_chk = $stmt_u->fetch();
+    if ($u_chk && !empty($u_chk['phone_verified_at']) && $u_chk['phone'] === $customer_phone) {
+        $is_phone_verified = true;
+    } elseif (!empty($_SESSION['phone_verified_' . $user_id])) {
+        $is_phone_verified = true;
+    }
+}
+
+if (!empty($_SESSION['verified_checkout_phone']) && $_SESSION['verified_checkout_phone'] === $customer_phone) {
+    $is_phone_verified = true;
+}
+
+if (!$is_phone_verified) {
+    set_flash('error', 'Order Blocked: Mobile number verification is mandatory before placing an order. Please verify your phone number with OTP.');
+    header('Location: /checkout.php?verify_phone=1');
     exit;
 }
 

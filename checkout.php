@@ -19,6 +19,13 @@ if (empty($cart)) {
 }
 
 $user = get_logged_in_user();
+$is_phone_verified = false;
+if ($user) {
+    $is_phone_verified = !empty($user['phone_verified_at']) || !empty($_SESSION['phone_verified_' . $user['id']]);
+}
+if (!empty($_SESSION['verified_checkout_phone']) && !empty($user['phone']) && $_SESSION['verified_checkout_phone'] === $user['phone']) {
+    $is_phone_verified = true;
+}
 $subtotal = get_cart_subtotal();
 $total_weight = get_cart_total_weight();
 $default_pincode = ($_SESSION['shipping_pincode'] ?? $_SESSION['delivery_pincode'] ?? '241126');
@@ -52,6 +59,16 @@ $grand_total = max(0, $subtotal + $shipping_fee - $discount_amount);
         <i class="fa-solid fa-lock"></i> 256-Bit SSL Encrypted
       </div>
     </div>
+
+    <?php if (isset($_GET['verify_phone'])): ?>
+      <div class="mb-6 p-4 bg-amber-50 border-2 border-amber-300 rounded-2xl flex items-center gap-3 text-amber-900 shadow-xs">
+        <i class="fa-solid fa-triangle-exclamation text-amber-600 text-lg shrink-0"></i>
+        <div class="text-xs">
+          <strong class="font-bold">Mobile Verification Required:</strong>
+          <span>For delivery dispatch and order safety, please verify your 10-digit mobile number with OTP below before completing checkout.</span>
+        </div>
+      </div>
+    <?php endif; ?>
 
     <form id="checkoutForm" action="/payments/process.php" method="POST">
       <input type="hidden" name="csrf_token" value="<?= csrf_token() ?>">
@@ -94,19 +111,59 @@ $grand_total = max(0, $subtotal + $shipping_fee - $discount_amount);
                 </div>
               </div>
 
-              <!-- Phone Number -->
+              <!-- Phone Number & OTP Verification -->
               <div>
-                <label class="block text-xs font-bold text-gray-700 mb-1">
-                  Mobile Number <span class="text-red-500">*</span>
-                </label>
-                <div class="relative">
-                  <span class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-gray-400 font-bold text-xs">
-                    +91
-                  </span>
-                  <input type="tel" name="phone" required pattern="[0-9]{10}" maxlength="10"
-                    value="<?= htmlspecialchars($user['phone'] ?? '') ?>"
-                    placeholder="10-digit mobile"
-                    class="w-full pl-12 pr-3 py-2.5 bg-stone-50 border border-gray-200 rounded-xl text-sm focus:bg-white focus:border-brand-green focus:outline-none transition">
+                <div class="flex items-center justify-between mb-1">
+                  <label class="block text-xs font-bold text-gray-700">
+                    Mobile Number <span class="text-red-500">*</span>
+                  </label>
+                  <div id="checkoutPhoneStatusBadge">
+                    <?php if ($is_phone_verified && !empty($user['phone'])): ?>
+                      <span class="text-[11px] font-bold text-emerald-700 bg-emerald-50 border border-emerald-200 px-2 py-0.5 rounded-full inline-flex items-center gap-1">
+                        <i class="fa-solid fa-circle-check text-emerald-600"></i> Verified
+                      </span>
+                    <?php else: ?>
+                      <span class="text-[11px] font-bold text-amber-800 bg-amber-50 border border-amber-300 px-2 py-0.5 rounded-full inline-flex items-center gap-1">
+                        <i class="fa-solid fa-triangle-exclamation text-amber-600"></i> Verification Required
+                      </span>
+                    <?php endif; ?>
+                  </div>
+                </div>
+
+                <input type="hidden" name="is_phone_verified" id="isPhoneVerifiedInput" value="<?= ($is_phone_verified && !empty($user['phone'])) ? '1' : '0' ?>">
+                <input type="hidden" id="verifiedPhoneNumber" value="<?= ($is_phone_verified && !empty($user['phone'])) ? htmlspecialchars($user['phone']) : '' ?>">
+
+                <div class="flex gap-2">
+                  <div class="relative flex-1">
+                    <span class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-gray-500 font-bold text-xs">
+                      +91
+                    </span>
+                    <input type="tel" name="phone" id="checkoutPhoneInput" required pattern="[6-9][0-9]{9}" maxlength="10"
+                      value="<?= htmlspecialchars($user['phone'] ?? '') ?>"
+                      placeholder="10-digit mobile"
+                      class="w-full pl-12 pr-3 py-2.5 bg-stone-50 border border-gray-200 rounded-xl text-sm font-semibold tracking-wider focus:bg-white focus:border-brand-green focus:outline-none transition">
+                  </div>
+                  <button type="button" id="sendCheckoutOtpBtn" onclick="sendCheckoutPhoneOtp()"
+                    class="px-3.5 py-2.5 bg-stone-900 hover:bg-black text-white text-xs font-bold rounded-xl transition shrink-0 shadow-xs <?= ($is_phone_verified && !empty($user['phone'])) ? 'hidden' : '' ?>">
+                    Send OTP
+                  </button>
+                </div>
+
+                <!-- Collapsible OTP Input Box -->
+                <div id="checkoutOtpBox" class="hidden mt-3 p-3 bg-stone-50 border border-stone-200 rounded-2xl space-y-2">
+                  <div class="text-xs font-bold text-gray-800 flex items-center justify-between">
+                    <span class="flex items-center gap-1.5"><i class="fa-solid fa-key text-brand-green"></i> Enter 6-Digit OTP</span>
+                    <span class="text-[11px] text-gray-500 font-normal">Valid for 15 mins</span>
+                  </div>
+                  <div class="flex gap-2">
+                    <input type="text" id="checkoutOtpCode" maxlength="6" pattern="[0-9]{6}" placeholder="e.g. 123456"
+                      class="w-full px-3 py-2 bg-white border border-gray-300 rounded-xl text-center text-sm font-mono tracking-widest font-bold focus:border-brand-green focus:outline-none">
+                    <button type="button" id="verifyCheckoutOtpBtn" onclick="verifyCheckoutPhoneOtp()"
+                      class="px-4 py-2 bg-brand-green hover:bg-emerald-800 text-white text-xs font-bold rounded-xl transition shrink-0 shadow-xs">
+                      Verify OTP
+                    </button>
+                  </div>
+                  <div id="checkoutOtpNotice" class="text-[11px] text-stone-600 font-medium"></div>
                 </div>
               </div>
 
@@ -460,6 +517,195 @@ if (typeof gtag === 'function') {
       },
       <?php endforeach; ?>
     ]
+  });
+}
+
+// Phone OTP Verification in Checkout
+async function sendCheckoutPhoneOtp() {
+  const phoneInput = document.getElementById('checkoutPhoneInput');
+  const btn = document.getElementById('sendCheckoutOtpBtn');
+  const notice = document.getElementById('checkoutOtpNotice');
+  const otpBox = document.getElementById('checkoutOtpBox');
+  const csrf = document.querySelector('input[name="csrf_token"]').value;
+
+  const rawPhone = phoneInput.value.replace(/\D/g, '');
+  const cleanPhone = (rawPhone.length > 10 && rawPhone.startsWith('91')) ? rawPhone.substring(2) : rawPhone;
+
+  if (!/^[6-9]\d{9}$/.test(cleanPhone)) {
+    alert('Please enter a valid 10-digit Indian mobile number starting with 6, 7, 8, or 9.');
+    phoneInput.focus();
+    return;
+  }
+
+  btn.disabled = true;
+  btn.innerText = 'Sending...';
+  if (notice) notice.innerHTML = '<span class="text-stone-500">Dispatching verification code...</span>';
+
+  try {
+    const fd = new FormData();
+    fd.append('action', 'send_otp');
+    fd.append('phone', cleanPhone);
+    fd.append('csrf_token', csrf);
+
+    const res = await fetch('/verify-phone.php', {
+      method: 'POST',
+      body: fd
+    });
+    const data = await res.json();
+
+    if (data.success) {
+      if (otpBox) otpBox.classList.remove('hidden');
+      if (notice) {
+        notice.innerHTML = '<span class="text-emerald-700 font-bold"><i class="fa-solid fa-circle-check"></i> ' + (data.message || 'OTP dispatched! Valid for 15 minutes.') + '</span>';
+      }
+      const codeIn = document.getElementById('checkoutOtpCode');
+      if (codeIn) codeIn.focus();
+    } else {
+      if (notice) {
+        notice.innerHTML = '<span class="text-red-600 font-bold"><i class="fa-solid fa-circle-exclamation"></i> ' + (data.error || 'Failed to send OTP.') + '</span>';
+      }
+    }
+  } catch (err) {
+    if (notice) notice.innerHTML = '<span class="text-red-600 font-bold">Network error. Please try again.</span>';
+  } finally {
+    btn.disabled = false;
+    btn.innerText = 'Resend OTP';
+  }
+}
+
+async function verifyCheckoutPhoneOtp() {
+  const codeInput = document.getElementById('checkoutOtpCode');
+  const phoneInput = document.getElementById('checkoutPhoneInput');
+  const btn = document.getElementById('verifyCheckoutOtpBtn');
+  const notice = document.getElementById('checkoutOtpNotice');
+  const badge = document.getElementById('checkoutPhoneStatusBadge');
+  const otpBox = document.getElementById('checkoutOtpBox');
+  const isVerifiedIn = document.getElementById('isPhoneVerifiedInput');
+  const verifiedPhoneIn = document.getElementById('verifiedPhoneNumber');
+  const csrf = document.querySelector('input[name="csrf_token"]').value;
+
+  const rawPhone = phoneInput.value.replace(/\D/g, '');
+  const cleanPhone = (rawPhone.length > 10 && rawPhone.startsWith('91')) ? rawPhone.substring(2) : rawPhone;
+  const code = (codeInput.value || '').trim();
+
+  if (code.length !== 6 || !/^\d{6}$/.test(code)) {
+    alert('Please enter the 6-digit verification code.');
+    codeInput.focus();
+    return;
+  }
+
+  btn.disabled = true;
+  btn.innerText = 'Verifying...';
+
+  try {
+    const fd = new FormData();
+    fd.append('action', 'verify_otp');
+    fd.append('otp', code);
+    fd.append('phone', cleanPhone);
+    fd.append('csrf_token', csrf);
+
+    const res = await fetch('/verify-phone.php', {
+      method: 'POST',
+      body: fd
+    });
+    const data = await res.json();
+
+    if (data.success) {
+      if (isVerifiedIn) isVerifiedIn.value = '1';
+      if (verifiedPhoneIn) verifiedPhoneIn.value = cleanPhone;
+      if (badge) {
+        badge.innerHTML = '<span class="text-[11px] font-bold text-emerald-700 bg-emerald-50 border border-emerald-200 px-2 py-0.5 rounded-full inline-flex items-center gap-1"><i class="fa-solid fa-circle-check text-emerald-600"></i> Verified</span>';
+      }
+      if (otpBox) otpBox.classList.add('hidden');
+      const sendBtn = document.getElementById('sendCheckoutOtpBtn');
+      if (sendBtn) sendBtn.classList.add('hidden');
+      alert('Mobile number +91 ' + cleanPhone + ' verified successfully! You can now proceed to place your order.');
+    } else {
+      if (notice) {
+        notice.innerHTML = '<span class="text-red-600 font-bold"><i class="fa-solid fa-circle-exclamation"></i> ' + (data.error || 'Invalid code.') + '</span>';
+      }
+    }
+  } catch (err) {
+    if (notice) notice.innerHTML = '<span class="text-red-600 font-bold">Network error verifying OTP. Please try again.</span>';
+  } finally {
+    btn.disabled = false;
+    btn.innerText = 'Verify OTP';
+  }
+}
+
+// Reset verification if user modifies phone number
+const checkoutPhoneIn = document.getElementById('checkoutPhoneInput');
+if (checkoutPhoneIn) {
+  checkoutPhoneIn.addEventListener('input', function() {
+    const verifiedPhone = (document.getElementById('verifiedPhoneNumber').value || '').trim();
+    const raw = this.value.replace(/\D/g, '');
+    const clean = (raw.length > 10 && raw.startsWith('91')) ? raw.substring(2) : raw;
+    const isVerifiedIn = document.getElementById('isPhoneVerifiedInput');
+    const badge = document.getElementById('checkoutPhoneStatusBadge');
+    const sendBtn = document.getElementById('sendCheckoutOtpBtn');
+
+    if (clean !== verifiedPhone || !clean) {
+      if (isVerifiedIn) isVerifiedIn.value = '0';
+      if (badge) {
+        badge.innerHTML = '<span class="text-[11px] font-bold text-amber-800 bg-amber-50 border border-amber-300 px-2 py-0.5 rounded-full inline-flex items-center gap-1"><i class="fa-solid fa-triangle-exclamation text-amber-600"></i> Verification Required</span>';
+      }
+      if (sendBtn) {
+        sendBtn.classList.remove('hidden');
+        sendBtn.innerText = 'Send OTP';
+      }
+    } else {
+      if (isVerifiedIn) isVerifiedIn.value = '1';
+      if (badge) {
+        badge.innerHTML = '<span class="text-[11px] font-bold text-emerald-700 bg-emerald-50 border border-emerald-200 px-2 py-0.5 rounded-full inline-flex items-center gap-1"><i class="fa-solid fa-circle-check text-emerald-600"></i> Verified</span>';
+      }
+      if (sendBtn) sendBtn.classList.add('hidden');
+      const otpBox = document.getElementById('checkoutOtpBox');
+      if (otpBox) otpBox.classList.add('hidden');
+    }
+  });
+}
+
+// Mandatory Verification & Complete Address Check before Order Placement
+const checkoutForm = document.getElementById('checkoutForm');
+if (checkoutForm) {
+  checkoutForm.addEventListener('submit', function(e) {
+    const isVerified = document.getElementById('isPhoneVerifiedInput').value === '1';
+    const phone = document.getElementById('checkoutPhoneInput').value.trim();
+    const street = document.querySelector('textarea[name="street"]').value.trim();
+    const city = document.querySelector('input[name="city"]').value.trim();
+    const pincode = document.getElementById('checkoutPincode').value.trim();
+
+    if (!isVerified) {
+      e.preventDefault();
+      alert('Order Blocked: Mobile number verification is mandatory before placing an order. Please click "Send OTP" to verify your mobile number.');
+      document.getElementById('checkoutPhoneInput').scrollIntoView({ behavior: 'smooth', block: 'center' });
+      document.getElementById('checkoutPhoneInput').focus();
+      return false;
+    }
+
+    if (street.length < 5) {
+      e.preventDefault();
+      alert('Order Blocked: Please enter a complete delivery street address (at least 5 characters).');
+      document.querySelector('textarea[name="street"]').scrollIntoView({ behavior: 'smooth', block: 'center' });
+      document.querySelector('textarea[name="street"]').focus();
+      return false;
+    }
+
+    if (!city) {
+      e.preventDefault();
+      alert('Order Blocked: Please enter your delivery city or district.');
+      document.querySelector('input[name="city"]').scrollIntoView({ behavior: 'smooth', block: 'center' });
+      document.querySelector('input[name="city"]').focus();
+      return false;
+    }
+
+    if (!/^\d{6}$/.test(pincode)) {
+      e.preventDefault();
+      alert('Order Blocked: Please enter a valid 6-digit delivery PIN code.');
+      document.getElementById('checkoutPincode').scrollIntoView({ behavior: 'smooth', block: 'center' });
+      document.getElementById('checkoutPincode').focus();
+      return false;
+    }
   });
 }
 </script>
