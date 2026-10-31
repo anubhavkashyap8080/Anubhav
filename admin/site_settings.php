@@ -1,19 +1,21 @@
 <?php
+/**
+ * GaunGaliHat Site & Platform Settings Manager
+ * Payment Gateways, Delivery Zones, Responsive Logo Sizing, and Company Identity
+ */
+
 require_once __DIR__ . '/../includes/functions.php';
 require_once __DIR__ . '/../includes/auth_check.php';
+
+// Strict Admin Clearance
 require_admin();
 
-// Handle Save Settings
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['save_settings'])) {
-    $allowed_keys = [
-        'brand_name', 'company_name', 'brand_tagline', 'announcement_text',
-        'contact_phone', 'contact_email', 'factory_address', 'head_office_address', 'footer_copyright',
-        'free_shipping_threshold', 'shipping_base_up', 'shipping_base_north', 'shipping_base_other', 'shipping_heavy_per_kg',
-        'razorpay_enabled', 'razorpay_key_id', 'razorpay_key_secret',
-        'payu_enabled', 'payu_merchant_key', 'payu_merchant_salt', 'payu_mode',
-        'cod_enabled', 'commission_rate_default',
-        'logo_height_mobile', 'logo_height_desktop', 'site_logo_url', 'logo_gif_url', 'use_gif_logo'
-    ];
+    if (!csrf_check($_POST['csrf_token'] ?? '')) {
+        set_flash('error', 'Security token invalid. Please refresh the page and try again.');
+        header('Location: /admin/site_settings.php');
+        exit;
+    }
 
     // Handle Standard Logo File Upload
     if (isset($_FILES['standard_logo_file']) && $_FILES['standard_logo_file']['error'] === UPLOAD_ERR_OK) {
@@ -21,7 +23,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['save_settings'])) {
         if ($upload_res['success']) {
             $_POST['site_logo_url'] = $upload_res['path'];
         } else {
-            set_flash('error', 'स्टैंडर्ड लोगो अपलोड विफल: ' . $upload_res['error']);
+            set_flash('error', 'Standard logo upload failed: ' . $upload_res['error']);
         }
     }
 
@@ -31,7 +33,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['save_settings'])) {
         if ($upload_res['success']) {
             $_POST['logo_gif_url'] = $upload_res['path'];
         } else {
-            set_flash('error', 'GIF लोगो अपलोड विफल: ' . $upload_res['error']);
+            set_flash('error', 'GIF logo upload failed: ' . $upload_res['error']);
         }
     }
 
@@ -50,9 +52,19 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['save_settings'])) {
             $stmt_up = $pdo->prepare("INSERT OR REPLACE INTO site_settings (setting_key, setting_value) VALUES (?, ?)");
         }
 
+        $allowed_keys = [
+            'brand_name', 'brand_tagline', 'company_name', 'contact_phone', 'contact_email',
+            'factory_address', 'head_office_address', 'announcement_text',
+            'site_logo_url', 'logo_gif_url', 'use_gif_logo', 'logo_height_mobile', 'logo_height_desktop',
+            'razorpay_enabled', 'razorpay_key_id',
+            'payu_enabled', 'payu_merchant_key', 'payu_mode',
+            'cod_enabled', 'cod_extra_charge_percent',
+            'shipping_free_threshold', 'shipping_zone1_rate', 'shipping_zone2_rate', 'shipping_zone3_rate', 'shipping_weight_slab_rate'
+        ];
+
         foreach ($allowed_keys as $key) {
             if (!isset($_POST[$key])) {
-                continue; // Never overwrite unsubmitted settings with '0'
+                continue;
             }
             $val = trim((string)$_POST[$key]);
             if ($key === 'brand_name' && (empty($val) || $val === '0')) {
@@ -64,11 +76,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['save_settings'])) {
             $stmt_up->execute([$key, $val]);
         }
 
-        set_flash('success', 'लोगो साइज़, GIF लोगो, पेमेंट गेटवे एवं साइट सेटिंग्स सफलतापूर्वक सहेजी गईं!');
+        set_flash('success', 'Logo sizes, payment gateways, and site settings saved successfully!');
         header('Location: /admin/site_settings.php');
         exit;
     } catch (Exception $e) {
-        set_flash('error', 'सेटिंग्स सहेजने में त्रुटि: ' . $e->getMessage());
+        set_flash('error', 'Error saving settings: ' . $e->getMessage());
     }
 }
 
@@ -84,7 +96,7 @@ function get_setting_val($key, $default = '') {
     return $curr_settings[$key] ?? $default;
 }
 
-$page_title = 'गेटवे एवं प्लेटफ़ॉर्म सेटिंग्स (Gateways & Shipping Settings)';
+$page_title = 'Gateways & Platform Settings — Super Admin';
 require_once __DIR__ . '/admin_header.php';
 ?>
 
@@ -92,10 +104,10 @@ require_once __DIR__ . '/admin_header.php';
 <div class="mb-6">
   <h1 class="text-2xl font-black text-gray-900 flex items-center gap-2">
     <i class="fa-solid fa-sliders text-indigo-600"></i>
-    पेमेंट गेटवे एवं सटीक शिपिंग कॉन्फ़िगरेशन
+    Payment Gateways & Shipping Configuration
   </h1>
   <p class="text-xs text-gray-500 mt-1">
-    Razorpay, PayU Money, Cash on Delivery (COD), एवं पिनकोड आधारित डिलीवरी दरें
+    Razorpay, PayU Money, Cash on Delivery (COD), and pincode-based delivery rates
   </p>
 </div>
 
@@ -107,15 +119,15 @@ require_once __DIR__ . '/admin_header.php';
     </div>
     <div>
       <h4 class="text-xs font-black text-gray-900 flex items-center gap-2">
-        होमपेज टाइटल एवं ऑन-पेज SEO (Homepage Title & On-Page SEO)
+        Homepage Title & On-Page SEO
       </h4>
       <p class="text-[11px] text-gray-600 mt-0.5">
-        होमपेज का ब्राउज़र टाइटल (&lt;title&gt;), मेटा विवरण, कीवर्ड्स, Google सर्च स्निपेट प्रिव्यू एवं सोशल कार्ड्स कॉन्फ़िगर करें।
+        Configure browser &lt;title&gt;, meta descriptions, keywords, Google search snippet preview, and social sharing cards.
       </p>
     </div>
   </div>
   <a href="/admin/seo_settings.php" class="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold rounded-xl transition flex items-center gap-1.5 shrink-0 shadow-xs">
-    <i class="fa-solid fa-gear"></i> On-Page SEO सेटिंग्स खोलें
+    <i class="fa-solid fa-gear"></i> Open SEO Settings
   </a>
 </div>
 
@@ -129,22 +141,22 @@ require_once __DIR__ . '/admin_header.php';
       <div>
         <h3 class="text-base font-bold text-gray-900 flex items-center gap-2">
           <i class="fa-solid fa-wand-magic-sparkles text-amber-500"></i>
-          1. ब्रांड लोगो एवं फेस्टिव GIF लोगो प्रबंधन (Brand & Festive Logo Controls)
+          1. Brand Logo & Festive GIF Logo Controls
         </h3>
         <p class="text-xs text-gray-500 mt-0.5">
-          मोबाइल एवं डेस्कटॉप पर लोगो का सटीक आकार (Height) नियंत्रित करें, तथा मुख्य त्योहारों / अवसरों पर एनिमेटेड GIF लोगो चालू करें।
+          Control exact logo height on mobile and desktop, or enable animated GIF logos for festivals.
         </p>
       </div>
       <div class="flex items-center gap-2">
-        <span class="text-xs font-bold text-gray-600">वर्तमान सक्रिय:</span>
+        <span class="text-xs font-bold text-gray-600">Currently Active:</span>
         <?php if (get_setting_val('use_gif_logo', '0') == '1' && !empty(get_setting_val('logo_gif_url'))): ?>
           <span class="px-2.5 py-1 bg-amber-100 text-amber-800 text-[11px] font-bold rounded-full flex items-center gap-1">
             <span class="w-2 h-2 rounded-full bg-amber-500 animate-ping"></span>
-            फेस्टिव GIF लोगो सक्रिय
+            Festive GIF Logo Active
           </span>
         <?php else: ?>
           <span class="px-2.5 py-1 bg-emerald-100 text-emerald-800 text-[11px] font-bold rounded-full">
-            स्टैंडर्ड लोगो सक्रिय
+            Standard Logo Active
           </span>
         <?php endif; ?>
       </div>
@@ -156,7 +168,7 @@ require_once __DIR__ . '/admin_header.php';
       <div class="space-y-5 bg-stone-50 p-5 rounded-2xl border border-gray-200">
         <h4 class="font-bold text-xs uppercase tracking-wider text-gray-700 flex items-center gap-2">
           <i class="fa-solid fa-arrows-up-down text-indigo-600"></i>
-          लोगो साइज़ नियंत्रण (Logo Heights in Pixels)
+          Logo Heights in Pixels
         </h4>
 
         <!-- Mobile Logo Height -->
@@ -164,7 +176,7 @@ require_once __DIR__ . '/admin_header.php';
           <div class="flex items-center justify-between">
             <label class="block text-xs font-bold text-gray-800 flex items-center gap-1.5">
               <i class="fa-solid fa-mobile-screen text-emerald-600"></i>
-              मोबाइल स्क्रीन पर लोगो ऊंचाई (Mobile Logo Height)
+              Mobile Logo Height
             </label>
             <span class="text-xs font-mono font-bold text-indigo-600 px-2 py-0.5 bg-indigo-50 rounded border border-indigo-200" id="mobile_val_badge">
               <?= htmlspecialchars(get_setting_val('logo_height_mobile', '46')) ?>px
@@ -181,7 +193,7 @@ require_once __DIR__ . '/admin_header.php';
               class="w-20 px-2.5 py-1 bg-white border border-gray-300 rounded-lg text-xs font-bold text-center">
           </div>
           <p class="text-[11px] text-gray-500">
-            सुझाव: 44px से 52px मोबाइल डिवाइसेस के लिए सबसे अनुकूल और स्पष्ट रहता है।
+            Recommended: 44px to 52px ensures clear brand visibility on mobile screens.
           </p>
         </div>
 
@@ -190,7 +202,7 @@ require_once __DIR__ . '/admin_header.php';
           <div class="flex items-center justify-between">
             <label class="block text-xs font-bold text-gray-800 flex items-center gap-1.5">
               <i class="fa-solid fa-laptop text-blue-600"></i>
-              डेस्कटॉप स्क्रीन पर लोगो ऊंचाई (Desktop Logo Height)
+              Desktop Logo Height
             </label>
             <span class="text-xs font-mono font-bold text-indigo-600 px-2 py-0.5 bg-indigo-50 rounded border border-indigo-200" id="desktop_val_badge">
               <?= htmlspecialchars(get_setting_val('logo_height_desktop', '62')) ?>px
@@ -207,96 +219,77 @@ require_once __DIR__ . '/admin_header.php';
               class="w-20 px-2.5 py-1 bg-white border border-gray-300 rounded-lg text-xs font-bold text-center">
           </div>
           <p class="text-[11px] text-gray-500">
-            सुझाव: 58px से 68px डेस्कटॉप हेडर के लिए संतुलित और बड़ा दिखता है।
+            Recommended: 58px to 68px looks balanced and crisp across desktop headers.
           </p>
         </div>
 
         <!-- Live Visual Preview Box -->
         <div class="pt-4 border-t border-gray-200">
-          <span class="text-[11px] font-bold uppercase tracking-wider text-gray-500 block mb-2">मोबाइल दृश्य प्रिव्यू (Header Preview):</span>
+          <span class="text-[11px] font-bold uppercase tracking-wider text-gray-500 block mb-2">Live Header Preview:</span>
           <div class="p-3 bg-white border border-gray-200 rounded-xl flex items-center justify-between shadow-2xs">
             <div class="flex items-center gap-2">
               <span class="text-gray-400 text-xs">☰</span>
               <img id="headerLivePreviewImg" src="<?= htmlspecialchars((get_setting_val('use_gif_logo', '0') == '1' && !empty(get_setting_val('logo_gif_url'))) ? get_setting_val('logo_gif_url') : get_setting_val('site_logo_url', '/logo.png')) ?>"
-                alt="Logo Preview" style="height: <?= htmlspecialchars(get_setting_val('logo_height_mobile', '38')) ?>px;" class="w-auto object-contain transition-all">
+                alt="Logo Preview" style="height: <?= htmlspecialchars(get_setting_val('logo_height_mobile', '46')) ?>px;" class="w-auto object-contain transition-all">
             </div>
             <div class="flex items-center gap-2 text-gray-400 text-xs">
-              <span>♡</span>
+              <span>🔍</span>
               <span>🛒</span>
-              <span class="w-6 h-6 rounded-full bg-emerald-100 text-emerald-800 text-[10px] flex items-center justify-center font-bold">A</span>
             </div>
           </div>
         </div>
-
       </div>
 
-      <!-- 2. Standard Logo & Occasion GIF Logo Selector -->
-      <div class="space-y-6">
+      <!-- 2. Logo Upload & URL Configuration -->
+      <div class="space-y-5">
         
-        <!-- Standard Logo Box -->
-        <div class="p-5 bg-stone-50 rounded-2xl border border-gray-200 space-y-3">
+        <!-- Standard Logo -->
+        <div class="p-4 bg-white rounded-xl border border-gray-200 space-y-3">
           <div class="flex items-center justify-between">
-            <h4 class="font-bold text-xs uppercase tracking-wider text-gray-700 flex items-center gap-2">
-              <i class="fa-solid fa-image text-emerald-600"></i>
-              प्राथमिक स्टैंडर्ड लोगो (Standard Logo)
-            </h4>
-            <span class="text-[11px] text-gray-400 font-mono">Default</span>
+            <h5 class="text-xs font-bold text-gray-900 flex items-center gap-1.5">
+              <i class="fa-regular fa-image text-emerald-600"></i> Standard Brand Logo
+            </h5>
+            <span class="text-[10px] text-gray-400">Default brand mark</span>
           </div>
-
           <div>
-            <label class="block text-xs font-bold text-gray-700 mb-1">लोगो इमेज URL या पाथ</label>
-            <input type="text" name="site_logo_url" id="site_logo_url" value="<?= htmlspecialchars(get_setting_val('site_logo_url', '/logo.png')) ?>"
-              class="w-full px-3.5 py-2 bg-white border border-gray-300 rounded-xl text-xs font-mono">
+            <label class="block text-xs font-bold text-gray-700 mb-1">Direct Logo URL or Path</label>
+            <input type="text" name="site_logo_url" value="<?= htmlspecialchars(get_setting_val('site_logo_url', '/logo.png')) ?>"
+              class="w-full px-3 py-2 bg-stone-50 border border-gray-200 rounded-xl text-xs font-mono">
           </div>
-
           <div>
-            <label class="block text-xs font-bold text-gray-700 mb-1">नया लोगो अपलोड करें (.png, .webp, .svg)</label>
-            <input type="file" name="standard_logo_file" accept="image/png,image/jpeg,image/webp,image/svg+xml"
-              class="w-full text-xs text-stone-600 file:mr-3 file:py-1.5 file:px-3 file:rounded-xl file:border-0 file:text-xs file:font-bold file:bg-emerald-50 file:text-emerald-700 hover:file:bg-emerald-100 cursor-pointer border border-gray-200 rounded-xl p-1 bg-white">
+            <label class="block text-xs font-bold text-gray-700 mb-1">Upload New Logo File (.png, .webp, .svg)</label>
+            <input type="file" name="standard_logo_file" accept="image/png,image/webp,image/svg+xml,image/jpeg"
+              class="w-full text-xs text-gray-500 file:mr-3 file:py-2 file:px-4 file:rounded-xl file:border-0 file:text-xs file:font-bold file:bg-emerald-50 file:text-emerald-700 hover:file:bg-emerald-100">
           </div>
         </div>
 
-        <!-- Festive / Occasion GIF Logo Box -->
-        <div class="p-5 bg-gradient-to-br from-amber-50 to-orange-50/60 rounded-2xl border border-amber-200 space-y-3">
+        <!-- Festive Animated GIF Logo -->
+        <div class="p-4 bg-amber-50/60 rounded-xl border border-amber-200 space-y-3">
           <div class="flex items-center justify-between">
-            <div>
-              <h4 class="font-bold text-xs uppercase tracking-wider text-amber-900 flex items-center gap-2">
-                <i class="fa-solid fa-wand-magic text-amber-600"></i>
-                अवसर / त्योहार GIF लोगो (Occasion GIF Logo)
-              </h4>
-              <p class="text-[11px] text-amber-700 mt-0.5">दिवाली, होली, स्वतंत्रता दिवस आदि मुख्य अवसरों पर विशेष एनिमेटेड लोगो</p>
-            </div>
-            
-            <!-- Toggle Switch -->
-            <label class="relative inline-flex items-center cursor-pointer shrink-0">
-              <input type="checkbox" name="use_gif_logo" value="1" <?= get_setting_val('use_gif_logo', '0') == '1' ? 'checked' : '' ?> class="sr-only peer">
-              <div class="w-11 h-6 bg-gray-300 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-amber-600"></div>
-            </label>
+            <h5 class="text-xs font-bold text-amber-900 flex items-center gap-1.5">
+              <i class="fa-solid fa-gift text-amber-600"></i> Occasion & Festive GIF Logo
+            </h5>
+            <span class="text-[10px] bg-amber-100 text-amber-800 font-bold px-2 py-0.5 rounded">Optional</span>
           </div>
-
-          <div class="pt-2 border-t border-amber-200/60 space-y-3">
-            <div>
-              <label class="block text-xs font-bold text-gray-800 mb-1">GIF लोगो URL या पाथ (.gif)</label>
-              <input type="text" name="logo_gif_url" id="logo_gif_url" value="<?= htmlspecialchars(get_setting_val('logo_gif_url', '')) ?>"
-                placeholder="उदा. /assets/images/diwali_logo.gif या https://..."
-                class="w-full px-3.5 py-2 bg-white border border-amber-300 rounded-xl text-xs font-mono">
-            </div>
-
-            <div>
-              <label class="block text-xs font-bold text-gray-800 mb-1">नया GIF लोगो अपलोड करें (.gif, .webp)</label>
-              <input type="file" name="gif_logo_file" accept="image/gif,image/webp,image/png"
-                class="w-full text-xs text-stone-600 file:mr-3 file:py-1.5 file:px-3 file:rounded-xl file:border-0 file:text-xs file:font-bold file:bg-amber-100 file:text-amber-800 hover:file:bg-amber-200 cursor-pointer border border-amber-200 rounded-xl p-1 bg-white">
-            </div>
-
-            <?php if (!empty(get_setting_val('logo_gif_url'))): ?>
-              <div class="p-2.5 bg-white/80 rounded-xl border border-amber-200 flex items-center gap-3">
-                <img src="<?= htmlspecialchars(get_setting_val('logo_gif_url')) ?>" alt="GIF Logo" class="h-10 w-auto object-contain border border-amber-100 rounded-lg p-1 bg-white">
-                <div class="text-[11px] text-amber-900">
-                  <span class="font-bold block">अपलोडेड GIF लोगो उपलब्ध</span>
-                  <span class="text-gray-500 font-mono text-[10px] truncate max-w-[200px] block"><?= htmlspecialchars(get_setting_val('logo_gif_url')) ?></span>
-                </div>
-              </div>
-            <?php endif; ?>
+          <div>
+            <label class="block text-xs font-bold text-gray-800 mb-1">GIF Logo URL or Path (.gif)</label>
+            <input type="text" name="logo_gif_url" value="<?= htmlspecialchars(get_setting_val('logo_gif_url', '')) ?>"
+              placeholder="e.g. /assets/images/diwali_logo.gif or https://..."
+              class="w-full px-3 py-2 bg-white border border-amber-200 rounded-xl text-xs font-mono">
+          </div>
+          <div>
+            <label class="block text-xs font-bold text-gray-800 mb-1">Upload New GIF Logo (.gif, .webp)</label>
+            <input type="file" name="gif_logo_file" accept="image/gif,image/webp"
+              class="w-full text-xs text-gray-500 file:mr-3 file:py-2 file:px-4 file:rounded-xl file:border-0 file:text-xs file:font-bold file:bg-amber-100 file:text-amber-800 hover:file:bg-amber-200">
+          </div>
+          <div class="pt-2 flex items-center gap-2">
+            <input type="checkbox" name="use_gif_logo" value="1" id="chk_use_gif"
+              <?= get_setting_val('use_gif_logo', '0') == '1' ? 'checked' : '' ?>
+              class="rounded text-amber-600 focus:ring-amber-500">
+            <label for="chk_use_gif" class="text-xs text-gray-800 cursor-pointer">
+              <span class="font-bold block">Activate Festive GIF Logo</span>
+              <span class="text-[11px] text-gray-500">When checked, the animated GIF logo will replace the standard logo site-wide.</span>
+            </label>
           </div>
         </div>
 
@@ -309,204 +302,181 @@ require_once __DIR__ . '/admin_header.php';
   <div class="bg-white rounded-2xl border border-gray-200 shadow-sm p-6 sm:p-8">
     <h3 class="text-base font-bold text-gray-900 pb-3 mb-6 border-b border-gray-100 flex items-center gap-2">
       <i class="fa-solid fa-credit-card text-emerald-600"></i>
-      2. भुगतान गेटवे एकीकरण (Payment Gateways Integration)
+      2. Payment Gateways Integration
     </h3>
 
-    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
       
       <!-- Razorpay Card -->
-      <div class="bg-stone-50 p-5 rounded-2xl border border-gray-200 flex flex-col justify-between space-y-4">
-        <div>
-          <div class="flex items-center justify-between mb-3">
-            <span class="font-bold text-sm text-gray-900 flex items-center gap-2">
-              <i class="fa-solid fa-bolt text-blue-600"></i> Razorpay
-            </span>
-            <label class="relative inline-flex items-center cursor-pointer">
-              <input type="checkbox" name="razorpay_enabled" value="1" <?= get_setting_val('razorpay_enabled', '1') == '1' ? 'checked' : '' ?> class="sr-only peer">
-              <div class="w-9 h-5 bg-gray-300 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-blue-600"></div>
-            </label>
+      <div class="p-5 rounded-2xl border border-gray-200 bg-stone-50 space-y-4">
+        <div class="flex items-center justify-between">
+          <div class="font-bold text-sm text-gray-900 flex items-center gap-2">
+            <span class="w-2.5 h-2.5 rounded-full bg-blue-500"></span> Razorpay
           </div>
-          <p class="text-xs text-gray-500 mb-4">UPI, Google Pay, PhonePe, Cards और NetBanking</p>
-
-          <div class="space-y-3">
-            <div>
-              <label class="block text-xs font-bold text-gray-700 mb-1">Razorpay Key ID</label>
-              <input type="text" name="razorpay_key_id" value="<?= htmlspecialchars(get_setting_val('razorpay_key_id', 'rzp_test_1DP5mmOlF5G5ag')) ?>"
-                class="w-full px-3 py-2 bg-white border border-gray-200 rounded-xl text-xs font-mono">
-            </div>
-            <div>
-              <label class="block text-xs font-bold text-gray-700 mb-1">Razorpay Key Secret</label>
-              <input type="password" name="razorpay_key_secret" value="<?= htmlspecialchars(get_setting_val('razorpay_key_secret', 's9F2xKlY02jK3991lmxO92aa')) ?>"
-                class="w-full px-3 py-2 bg-white border border-gray-200 rounded-xl text-xs font-mono">
-            </div>
-          </div>
+          <label class="relative inline-flex items-center cursor-pointer">
+            <input type="checkbox" name="razorpay_enabled" value="1" <?= get_setting_val('razorpay_enabled', '1') == '1' ? 'checked' : '' ?> class="sr-only peer">
+            <div class="w-9 h-5 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-brand-green"></div>
+          </label>
         </div>
-        <span class="text-[10px] text-gray-400">Webhook: /payments/razorpay_verify.php</span>
+        <p class="text-xs text-gray-500 mb-4">UPI, Google Pay, PhonePe, Cards and NetBanking</p>
+
+        <div>
+          <label class="block text-xs font-bold text-gray-700 mb-1">Key ID</label>
+          <input type="text" name="razorpay_key_id" value="<?= htmlspecialchars(get_setting_val('razorpay_key_id', 'rzp_test_1DP5mmOlF5G5ag')) ?>"
+            class="w-full px-3 py-2 bg-white border border-gray-200 rounded-xl text-xs font-mono">
+        </div>
       </div>
 
-      <!-- PayU Card -->
-      <div class="bg-stone-50 p-5 rounded-2xl border border-gray-200 flex flex-col justify-between space-y-4">
-        <div>
-          <div class="flex items-center justify-between mb-3">
-            <span class="font-bold text-sm text-gray-900 flex items-center gap-2">
-              <i class="fa-solid fa-lock text-emerald-600"></i> PayU Money
-            </span>
-            <label class="relative inline-flex items-center cursor-pointer">
-              <input type="checkbox" name="payu_enabled" value="1" <?= get_setting_val('payu_enabled', '1') == '1' ? 'checked' : '' ?> class="sr-only peer">
-              <div class="w-9 h-5 bg-gray-300 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-emerald-600"></div>
-            </label>
+      <!-- PayU India Card -->
+      <div class="p-5 rounded-2xl border border-gray-200 bg-stone-50 space-y-4">
+        <div class="flex items-center justify-between">
+          <div class="font-bold text-sm text-gray-900 flex items-center gap-2">
+            <span class="w-2.5 h-2.5 rounded-full bg-emerald-500"></span> PayU India
           </div>
-          <p class="text-xs text-gray-500 mb-4">RuPay, Credit/Debit Cards, NetBanking और Wallets</p>
-
-          <div class="space-y-3">
-            <div>
-              <label class="block text-xs font-bold text-gray-700 mb-1">Merchant Key</label>
-              <input type="text" name="payu_merchant_key" value="<?= htmlspecialchars(get_setting_val('payu_merchant_key', 'gtKFFx')) ?>"
-                class="w-full px-3 py-2 bg-white border border-gray-200 rounded-xl text-xs font-mono">
-            </div>
-            <div>
-              <label class="block text-xs font-bold text-gray-700 mb-1">Merchant Salt</label>
-              <input type="password" name="payu_merchant_salt" value="<?= htmlspecialchars(get_setting_val('payu_merchant_salt', 'eCwWELxi')) ?>"
-                class="w-full px-3 py-2 bg-white border border-gray-200 rounded-xl text-xs font-mono">
-            </div>
-            <div>
-              <label class="block text-xs font-bold text-gray-700 mb-1">गेटवे मोड</label>
-              <select name="payu_mode" class="w-full px-3 py-2 bg-white border border-gray-200 rounded-xl text-xs font-semibold">
-                <option value="test" <?= get_setting_val('payu_mode', 'test') === 'test' ? 'selected' : '' ?>>Test Mode (Sandbox)</option>
-                <option value="live" <?= get_setting_val('payu_mode') === 'live' ? 'selected' : '' ?>>Production (Live)</option>
-              </select>
-            </div>
-          </div>
+          <label class="relative inline-flex items-center cursor-pointer">
+            <input type="checkbox" name="payu_enabled" value="1" <?= get_setting_val('payu_enabled', '1') == '1' ? 'checked' : '' ?> class="sr-only peer">
+            <div class="w-9 h-5 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-brand-green"></div>
+          </label>
         </div>
-        <span class="text-[10px] text-gray-400">Callback: /payments/payu_callback.php</span>
+        <p class="text-xs text-gray-500 mb-4">RuPay, Credit/Debit Cards, NetBanking and Wallets</p>
+
+        <div>
+          <label class="block text-xs font-bold text-gray-700 mb-1">Merchant Key</label>
+          <input type="text" name="payu_merchant_key" value="<?= htmlspecialchars(get_setting_val('payu_merchant_key', 'gtKFFx')) ?>"
+            class="w-full px-3 py-2 bg-white border border-gray-200 rounded-xl text-xs font-mono">
+        </div>
+
+        <div>
+          <label class="block text-xs font-bold text-gray-700 mb-1">Mode</label>
+          <select name="payu_mode" class="w-full px-3 py-2 bg-white border border-gray-200 rounded-xl text-xs font-bold">
+            <option value="test" <?= get_setting_val('payu_mode', 'test') === 'test' ? 'selected' : '' ?>>Test / Sandbox</option>
+            <option value="live" <?= get_setting_val('payu_mode') === 'live' ? 'selected' : '' ?>>Live Production</option>
+          </select>
+        </div>
       </div>
 
       <!-- Cash on Delivery (COD) Card -->
-      <div class="bg-stone-50 p-5 rounded-2xl border border-gray-200 flex flex-col justify-between space-y-4">
-        <div>
-          <div class="flex items-center justify-between mb-3">
-            <span class="font-bold text-sm text-gray-900 flex items-center gap-2">
-              <i class="fa-solid fa-hand-holding-dollar text-brand-green"></i> कैश ऑन डिलीवरी (COD)
-            </span>
-            <label class="relative inline-flex items-center cursor-pointer">
-              <input type="checkbox" name="cod_enabled" value="1" <?= get_setting_val('cod_enabled', '1') == '1' ? 'checked' : '' ?> class="sr-only peer">
-              <div class="w-9 h-5 bg-gray-300 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-brand-green"></div>
-            </label>
+      <div class="p-5 rounded-2xl border border-gray-200 bg-stone-50 space-y-4">
+        <div class="flex items-center justify-between">
+          <div class="font-bold text-sm text-gray-900 flex items-center gap-2">
+            <i class="fa-solid fa-hand-holding-dollar text-brand-green"></i> Cash on Delivery (COD)
           </div>
-          <p class="text-xs text-gray-500 mb-4">भारतीय डाक (India Post) या कूरियर द्वारा घर पर नकद भुगतान</p>
-
-          <div class="space-y-3">
-            <div>
-              <label class="block text-xs font-bold text-gray-700 mb-1">डिफ़ॉल्ट कमीशन दर (%)</label>
-              <input type="number" step="0.1" name="commission_rate_default" value="<?= htmlspecialchars(get_setting_val('commission_rate_default', '4.00')) ?>"
-                class="w-full px-3 py-2 bg-white border border-gray-200 rounded-xl text-xs font-bold">
-            </div>
-          </div>
+          <label class="relative inline-flex items-center cursor-pointer">
+            <input type="checkbox" name="cod_enabled" value="1" <?= get_setting_val('cod_enabled', '1') == '1' ? 'checked' : '' ?> class="sr-only peer">
+            <div class="w-9 h-5 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-brand-green"></div>
+          </label>
         </div>
-        <span class="text-[10px] text-gray-400">COD आर्डर स्वतः कन्फर्म होकर डिस्पैच कतार में आते हैं</span>
+        <p class="text-xs text-gray-500 mb-4">India Post or courier collection at the customer's doorstep</p>
+
+        <div>
+          <label class="block text-xs font-bold text-gray-700 mb-1">Handling Surcharge (%)</label>
+          <input type="number" step="0.1" name="cod_extra_charge_percent" value="<?= htmlspecialchars(get_setting_val('cod_extra_charge_percent', '0')) ?>"
+            class="w-full px-3 py-2 bg-white border border-gray-200 rounded-xl text-xs">
+          <span class="text-[10px] text-gray-400 mt-0.5 block">Optional COD fee percentage. Set 0 for free COD.</span>
+        </div>
       </div>
 
     </div>
   </div>
 
-  <!-- Automatic Shipping Calculator Section -->
+  <!-- Shipping Price Calculator Rules -->
   <div class="bg-white rounded-2xl border border-gray-200 shadow-sm p-6 sm:p-8">
     <h3 class="text-base font-bold text-gray-900 pb-3 mb-6 border-b border-gray-100 flex items-center gap-2">
-      <i class="fa-solid fa-truck text-red-600"></i>
-      2. स्वचालित सटीक शिपिंग मूल्य कैलकुलेटर (Shipping Price Calculator Rules)
+      <i class="fa-solid fa-truck text-indigo-600"></i>
+      3. Shipping Rate & Delivery Zones Rules
     </h3>
 
     <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
       <div>
-        <label class="block text-xs font-bold text-gray-700 mb-1">मुफ़्त डिलीवरी थ्रेसहोल्ड (₹)</label>
-        <input type="number" name="free_shipping_threshold" value="<?= htmlspecialchars(get_setting_val('free_shipping_threshold', '499')) ?>"
+        <label class="block text-xs font-bold text-gray-700 mb-1">Free Shipping Threshold (₹)</label>
+        <input type="number" name="shipping_free_threshold" value="<?= htmlspecialchars(get_setting_val('shipping_free_threshold', '499')) ?>"
           class="w-full px-3.5 py-2.5 bg-stone-50 border border-gray-200 rounded-xl text-xs font-bold">
-        <p class="text-[10px] text-gray-400 mt-1">₹499 या अधिक के आर्डर पर मुफ़्त डिलीवरी</p>
+        <p class="text-[10px] text-gray-400 mt-1">Free shipping on orders above this amount</p>
       </div>
 
       <div>
-        <label class="block text-xs font-bold text-gray-700 mb-1">Zone 1 (उत्तर प्रदेश) बेस दर (₹)</label>
-        <input type="number" name="shipping_base_up" value="<?= htmlspecialchars(get_setting_val('shipping_base_up', '40')) ?>"
+        <label class="block text-xs font-bold text-gray-700 mb-1">Zone 1 (Awadh & UP) Rate (₹)</label>
+        <input type="number" name="shipping_zone1_rate" value="<?= htmlspecialchars(get_setting_val('shipping_zone1_rate', '49')) ?>"
           class="w-full px-3.5 py-2.5 bg-stone-50 border border-gray-200 rounded-xl text-xs font-bold">
-        <p class="text-[10px] text-gray-400 mt-1">पिनकोड 20xxxx से 28xxxx</p>
+        <p class="text-[10px] text-gray-400 mt-1">Pincodes starting 20xxxx to 28xxxx</p>
       </div>
 
       <div>
-        <label class="block text-xs font-bold text-gray-700 mb-1">Zone 2 (उत्तर भारत) बेस दर (₹)</label>
-        <input type="number" name="shipping_base_north" value="<?= htmlspecialchars(get_setting_val('shipping_base_north', '60')) ?>"
+        <label class="block text-xs font-bold text-gray-700 mb-1">Zone 2 (North India) Rate (₹)</label>
+        <input type="number" name="shipping_zone2_rate" value="<?= htmlspecialchars(get_setting_val('shipping_zone2_rate', '79')) ?>"
           class="w-full px-3.5 py-2.5 bg-stone-50 border border-gray-200 rounded-xl text-xs font-bold">
-        <p class="text-[10px] text-gray-400 mt-1">दिल्ली, हरियाणा, पंजाब, राजस्थान, MP, बिहार</p>
+        <p class="text-[10px] text-gray-400 mt-1">Delhi NCR, Haryana, Punjab, Rajasthan, MP, Bihar</p>
       </div>
 
       <div>
-        <label class="block text-xs font-bold text-gray-700 mb-1">Zone 3+ (शेष भारत) बेस दर (₹)</label>
-        <input type="number" name="shipping_base_other" value="<?= htmlspecialchars(get_setting_val('shipping_base_other', '80')) ?>"
+        <label class="block text-xs font-bold text-gray-700 mb-1">Zone 3+ (Rest of India) Rate (₹)</label>
+        <input type="number" name="shipping_zone3_rate" value="<?= htmlspecialchars(get_setting_val('shipping_zone3_rate', '99')) ?>"
           class="w-full px-3.5 py-2.5 bg-stone-50 border border-gray-200 rounded-xl text-xs font-bold">
-        <p class="text-[10px] text-gray-400 mt-1">दक्षिण, पश्चिम एवं पूर्वोत्तर राज्य</p>
+        <p class="text-[10px] text-gray-400 mt-1">South, West and Northeast states</p>
       </div>
 
       <div class="sm:col-span-2">
-        <label class="block text-xs font-bold text-gray-700 mb-1">भारी कृषि औजार अधिभार (>2kg होने पर प्रति 0.5kg दर ₹)</label>
-        <input type="number" name="shipping_heavy_per_kg" value="<?= htmlspecialchars(get_setting_val('shipping_heavy_per_kg', '15')) ?>"
+        <label class="block text-xs font-bold text-gray-700 mb-1">Heavy Weight Slab Rate (>2kg, per 0.5kg extra in ₹)</label>
+        <input type="number" name="shipping_weight_slab_rate" value="<?= htmlspecialchars(get_setting_val('shipping_weight_slab_rate', '20')) ?>"
           class="w-full px-3.5 py-2.5 bg-stone-50 border border-gray-200 rounded-xl text-xs font-bold">
-        <p class="text-[10px] text-gray-400 mt-1">लोहे के फावड़ा, कुल्हाड़ी व हथौड़ों पर स्वचालित रूप से जोड़ा जाएगा</p>
+        <p class="text-[10px] text-gray-400 mt-1">Fair freight adjustment for heavy forged tools and iron implements</p>
       </div>
     </div>
   </div>
 
-  <!-- Company & Contact Details -->
+  <!-- Company Identity & Factory Information -->
   <div class="bg-white rounded-2xl border border-gray-200 shadow-sm p-6 sm:p-8">
     <h3 class="text-base font-bold text-gray-900 pb-3 mb-6 border-b border-gray-100 flex items-center gap-2">
       <i class="fa-solid fa-building text-indigo-600"></i>
-      3. संस्था एवं संपर्क जानकारी (Kalyani agrofood pvt ltd)
+      4. Organization & Contact Information (Kalyani agrofood pvt ltd)
     </h3>
 
     <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
       <div>
-        <label class="block text-xs font-bold text-gray-700 mb-1">ब्रांड का नाम (Brand Name)</label>
+        <label class="block text-xs font-bold text-gray-700 mb-1">Brand Name</label>
         <input type="text" name="brand_name" value="<?= htmlspecialchars(get_setting_val('brand_name', 'GaunGaliHat')) ?>"
           class="w-full px-3.5 py-2.5 bg-stone-50 border border-gray-200 rounded-xl text-xs font-bold">
       </div>
 
       <div>
-        <label class="block text-xs font-bold text-gray-700 mb-1">ब्रांड टैगलाइन (Brand Tagline)</label>
+        <label class="block text-xs font-bold text-gray-700 mb-1">Brand Tagline</label>
         <input type="text" name="brand_tagline" value="<?= htmlspecialchars(get_setting_val('brand_tagline', 'Hunar desh ka, ganv se ghar tak')) ?>"
           class="w-full px-3.5 py-2.5 bg-stone-50 border border-gray-200 rounded-xl text-xs font-bold">
       </div>
 
       <div>
-        <label class="block text-xs font-bold text-gray-700 mb-1">कंपनी का नाम</label>
+        <label class="block text-xs font-bold text-gray-700 mb-1">Company Name</label>
         <input type="text" name="company_name" value="<?= htmlspecialchars(get_setting_val('company_name', 'Kalyani agrofood pvt ltd')) ?>"
           class="w-full px-3.5 py-2.5 bg-stone-50 border border-gray-200 rounded-xl text-xs font-bold">
       </div>
 
       <div>
-        <label class="block text-xs font-bold text-gray-700 mb-1">हेल्पलाइन फ़ोन</label>
+        <label class="block text-xs font-bold text-gray-700 mb-1">Helpline Phone</label>
         <input type="text" name="contact_phone" value="<?= htmlspecialchars(get_setting_val('contact_phone', '+91 7897492100')) ?>"
           class="w-full px-3.5 py-2.5 bg-stone-50 border border-gray-200 rounded-xl text-xs font-bold">
       </div>
 
       <div>
-        <label class="block text-xs font-bold text-gray-700 mb-1">आधिकारिक ईमेल</label>
+        <label class="block text-xs font-bold text-gray-700 mb-1">Official Email</label>
         <?php $settings_site_host = parse_url(defined('SITE_URL') ? SITE_URL : '', PHP_URL_HOST) ?: 'ganvgalihat.com'; ?>
         <input type="email" name="contact_email" value="<?= htmlspecialchars(get_setting_val('contact_email', 'namaste@' . $settings_site_host)) ?>"
           class="w-full px-3.5 py-2.5 bg-stone-50 border border-gray-200 rounded-xl text-xs font-bold">
       </div>
 
       <div>
-        <label class="block text-xs font-bold text-gray-700 mb-1">फ़ैक्टरी का पता (Works / Manufacturing)</label>
+        <label class="block text-xs font-bold text-gray-700 mb-1">Works / Factory Address</label>
         <input type="text" name="factory_address" value="<?= htmlspecialchars(get_setting_val('factory_address', 'Works / Factory: Madhoganj Baghauli Road, Newada, Hardoi, Uttar Pradesh - 241126')) ?>"
           class="w-full px-3.5 py-2.5 bg-stone-50 border border-gray-200 rounded-xl text-xs">
       </div>
 
       <div class="sm:col-span-2">
-        <label class="block text-xs font-bold text-gray-700 mb-1">प्रधान कार्यालय का पता (Head Office Address)</label>
-        <input type="text" name="head_office_address" value="<?= htmlspecialchars(get_setting_val('head_office_address', 'G145 Phase 2 Industrial Area, UPSIDA Sandila, Hardoi, UP')) ?>"
+        <label class="block text-xs font-bold text-gray-700 mb-1">Industrial Plant / Head Office Address</label>
+        <input type="text" name="head_office_address" value="<?= htmlspecialchars(get_setting_val('head_office_address', 'Madhoganj, Baghauli road Newada, Pahutera, Hardoi, Uttar Pradesh')) ?>"
           class="w-full px-3.5 py-2.5 bg-stone-50 border border-gray-200 rounded-xl text-xs">
       </div>
 
       <div class="sm:col-span-2">
-        <label class="block text-xs font-bold text-gray-700 mb-1">हेडर घोषणा पट्टी (Announcement Ticker)</label>
+        <label class="block text-xs font-bold text-gray-700 mb-1">Announcement Ticker Text</label>
         <textarea name="announcement_text" rows="2" class="w-full px-3.5 py-2.5 bg-stone-50 border border-gray-200 rounded-xl text-xs"><?= htmlspecialchars(get_setting_val('announcement_text', '🌾 Kalyani agrofood pvt ltd Tools, Awadh Pulses, Banarasi Pickles & Village Crafts: Direct from Rural Artisans | Free Delivery Over ₹499 | Cash on Delivery Available')) ?></textarea>
       </div>
     </div>
@@ -514,9 +484,9 @@ require_once __DIR__ . '/admin_header.php';
 
   <!-- Save Button -->
   <div class="flex items-center justify-end gap-3 pb-8">
-    <button type="submit" class="px-8 py-3 bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-xl text-sm transition shadow-lg flex items-center gap-2">
+    <button type="submit" class="px-8 py-3 bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-xl text-sm transition shadow-lg flex items-center gap-2 cursor-pointer">
       <i class="fa-solid fa-floppy-disk"></i>
-      सभी सेटिंग्स सहेजें (Save All Settings)
+      Save All Settings
     </button>
   </div>
 </form>

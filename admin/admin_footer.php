@@ -6,13 +6,13 @@
       <div class="flex items-center gap-2">
         <span class="font-extrabold text-indigo-950">GaunGaliHat Master Admin</span>
         <span>•</span>
-        <span>Kalyani agrofood pvt ltd Industrial Controls</span>
+        <span>Kalyani agrofood pvt ltd Enterprise Controls</span>
       </div>
       <div>
-        सुरक्षित Bcrypt पासवर्ड एन्क्रिप्शन • 256-Bit SSL • हार्डवेयर टोकन सुरक्षा
+        Secure Bcrypt Password Encryption • 256-Bit SSL • Hardened Security
       </div>
       <div class="text-[11px] text-gray-400">
-        हरदोई, उत्तर प्रदेश - 241126
+        Hardoi, Uttar Pradesh - 241126
       </div>
     </div>
   </footer>

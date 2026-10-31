@@ -32,13 +32,13 @@ if ($pdo) {
         $product = $stmt->fetch();
         if ($product) {
             if (isset($product['vendor_name'])) {
-                $product['vendor_name'] = str_ireplace('S S Industries', 'Kalyani agrofood pvt ltd', $product['vendor_name']);
+                $product['vendor_name'] = str_ireplace(['S S Industries', 'SS Industries', 'S. S. Industries', 'S.S. Industries'], 'Kalyani agrofood pvt ltd', $product['vendor_name']);
             }
             if (isset($product['vendor_business'])) {
-                $product['vendor_business'] = str_ireplace('S S Industries', 'Kalyani agrofood pvt ltd', $product['vendor_business']);
+                $product['vendor_business'] = str_ireplace(['S S Industries', 'SS Industries', 'S. S. Industries', 'S.S. Industries'], 'Kalyani agrofood pvt ltd', $product['vendor_business']);
             }
             if (isset($product['description'])) {
-                $product['description'] = str_ireplace('S S Industries', 'Kalyani agrofood pvt ltd', $product['description']);
+                $product['description'] = str_ireplace(['S S Industries', 'SS Industries', 'S. S. Industries', 'S.S. Industries'], 'Kalyani agrofood pvt ltd', $product['description']);
             }
         }
     } catch (Throwable $e_prod) {

@@ -1,6 +1,6 @@
 <?php
 /**
- * GaunGaliHat Password Reset Request Gateway (Item 10)
+ * GaunGaliHat Password Reset Request Gateway
  */
 
 require_once __DIR__ . '/includes/functions.php';
@@ -11,13 +11,13 @@ $error = '';
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $csrf = $_POST['csrf_token'] ?? '';
     if (!csrf_check($csrf)) {
-        $error = 'सुरक्षा टोकन अमान्य है। कृपया पृष्ठ रीफ़्रेश करके पुनः प्रयास करें। (Invalid CSRF Token)';
+        $error = 'Security session expired. Please refresh the page and try again.';
     } else {
         $email = clean_input($_POST['email'] ?? '');
         $ip = $_SERVER['REMOTE_ADDR'] ?? '127.0.0.1';
 
         if (empty($email) || !filter_var($email, FILTER_VALIDATE_EMAIL)) {
-            $error = 'कृपया एक मान्य ईमेल पता दर्ज करें।';
+            $error = 'Please enter a valid email address.';
         } else {
             // Rate limit: Max 3 reset requests per IP / email per 15 minutes
             $window = date('Y-m-d H:i:s', time() - 900);
@@ -29,7 +29,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $recent_resets = (int)$stmt_cnt->fetchColumn();
 
             if ($recent_resets >= 3) {
-                $message = 'यदि यह ईमेल हमारे सिस्टम में मौजूद है, तो पासवर्ड रीसेट निर्देश भेज दिए गए हैं।';
+                $message = 'If this email address exists in our system, password reset instructions have been sent.';
             } else {
                 // Check if user exists
                 $stmt_u = $pdo->prepare("SELECT id, name, email FROM users WHERE email = ? AND status != 'suspended' LIMIT 1");
@@ -53,13 +53,19 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     $subject = "Reset your GaunGaliHat Password";
                     $headers = "MIME-Version: 1.0\r\nContent-Type: text/html; charset=UTF-8\r\nFrom: GaunGaliHat Security <no-reply@" . $email_domain . ">\r\n";
                     $body = "
-                    <div style='font-family: sans-serif; max-width: 540px; margin: 0 auto; padding: 24px; border: 1px solid #e5e7eb; border-radius: 12px;'>
-                        <h2 style='color: #065f46; margin-top: 0;'>GaunGaliHat — Password Reset Request</h2>
-                        <p>Namaste " . htmlspecialchars($user['name'], ENT_QUOTES, 'UTF-8') . ",</p>
-                        <p>We received a request to reset your password. Click the button below to set a new password:</p>
-                        <p style='margin: 24px 0;'><a href='" . htmlspecialchars($reset_url, ENT_QUOTES, 'UTF-8') . "' style='background: #059669; color: white; padding: 12px 24px; text-decoration: none; border-radius: 8px; font-weight: bold; display: inline-block;'>Reset My Password</a></p>
-                        <p style='color: #6b7280; font-size: 13px;'>If the button does not work, copy and paste this link into your browser:<br>" . htmlspecialchars($reset_url, ENT_QUOTES, 'UTF-8') . "</p>
-                        <p style='color: #9ca3af; font-size: 12px;'>This single-use link expires in 60 minutes. If you did not request this change, please ignore this email.</p>
+                    <div style='font-family: -apple-system, BlinkMacSystemFont, Roboto, sans-serif; max-width: 540px; margin: 0 auto; padding: 28px; border: 1px solid #e5e7eb; border-radius: 16px; background: #ffffff;'>
+                        <div style='text-align: center; margin-bottom: 20px;'>
+                            <h2 style='color: #065f46; margin: 0; font-size: 22px;'>GaunGaliHat — Password Reset</h2>
+                            <p style='color: #d97706; font-size: 13px; font-weight: bold; margin: 4px 0 0 0;'>Hunar desh ka, ganv se ghar tak</p>
+                        </div>
+                        <p style='color: #374151; font-size: 14px;'>Namaste <strong>" . htmlspecialchars($user['name'], ENT_QUOTES, 'UTF-8') . "</strong>,</p>
+                        <p style='color: #4b5563; font-size: 14px; line-height: 1.6;'>We received a request to reset your password. Click the button below to choose a new password:</p>
+                        <div style='text-align: center; margin: 24px 0;'>
+                            <a href='" . htmlspecialchars($reset_url, ENT_QUOTES, 'UTF-8') . "' style='background: #059669; color: white; padding: 12px 28px; text-decoration: none; border-radius: 10px; font-weight: bold; font-size: 14px; display: inline-block;'>Reset My Password</a>
+                        </div>
+                        <p style='color: #6b7280; font-size: 12px; line-height: 1.5;'>If the button does not work, copy and paste this link into your browser:<br><a href='" . htmlspecialchars($reset_url, ENT_QUOTES, 'UTF-8') . "' style='color: #059669; word-break: break-all;'>" . htmlspecialchars($reset_url, ENT_QUOTES, 'UTF-8') . "</a></p>
+                        <hr style='border: none; border-top: 1px solid #f3f4f6; margin: 20px 0;'>
+                        <p style='color: #9ca3af; font-size: 11px; text-align: center;'>This single-use link expires in 60 minutes. If you did not request this, you can safely ignore this email.</p>
                     </div>";
 
                     @mail($email, $subject, $body, $headers);
@@ -67,13 +73,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 }
 
                 // Generic message to prevent account enumeration
-                $message = 'यदि यह ईमेल हमारे रिकॉर्ड में मौजूद है, तो पासवर्ड रीसेट लिंक भेज दिया गया है। कृपया अपना इनबॉक्स और स्पैम फ़ोल्डर देखें।';
+                $message = 'If this email address exists in our records, a password reset link has been dispatched. Please check your inbox and spam folder.';
             }
         }
     }
 }
 
-$page_title = 'पासवर्ड भूल गए (Forgot Password) — GaunGaliHat';
+$page_title = 'Forgot Password — GaunGaliHat';
 require_once __DIR__ . '/includes/header.php';
 ?>
 
@@ -84,8 +90,8 @@ require_once __DIR__ . '/includes/header.php';
       <div class="inline-flex items-center justify-center w-14 h-14 rounded-2xl bg-brand-green text-white shadow-lg mb-3">
         <i class="fa-solid fa-key text-2xl text-amber-300"></i>
       </div>
-      <h1 class="text-2xl font-extrabold text-gray-900">पासवर्ड रीसेट करें</h1>
-      <p class="text-xs text-gray-500 mt-1">अपने पंजीकृत ईमेल पते पर रीसेट लिंक प्राप्त करें</p>
+      <h1 class="text-2xl font-extrabold text-gray-900">Forgot Password</h1>
+      <p class="text-xs text-gray-500 mt-1">Receive secure reset instructions on your registered email</p>
     </div>
 
     <div class="bg-white rounded-3xl border border-gray-200 shadow-xl p-6 sm:p-8">
@@ -100,7 +106,7 @@ require_once __DIR__ . '/includes/header.php';
         <div class="mb-5 p-4 bg-emerald-50 border border-emerald-200 text-emerald-800 rounded-xl text-xs flex items-start gap-3">
           <i class="fa-solid fa-circle-check text-base text-emerald-600 mt-0.5 flex-shrink-0"></i>
           <div>
-            <p class="font-bold">अनुरोध प्राप्त हुआ!</p>
+            <p class="font-bold">Request Received!</p>
             <p class="mt-1"><?= htmlspecialchars($message) ?></p>
           </div>
         </div>
@@ -110,7 +116,7 @@ require_once __DIR__ . '/includes/header.php';
         <?= csrf_field() ?>
 
         <div>
-          <label class="block text-xs font-bold text-gray-700 mb-1">पंजीकृत ईमेल पता (Registered Email) <span class="text-red-500">*</span></label>
+          <label class="block text-xs font-bold text-gray-700 mb-1">Registered Email Address <span class="text-red-500">*</span></label>
           <div class="relative">
             <span class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-gray-400">
               <i class="fa-regular fa-envelope text-xs"></i>
@@ -123,16 +129,16 @@ require_once __DIR__ . '/includes/header.php';
         <button type="submit"
           class="w-full py-3 bg-brand-green text-white font-bold rounded-xl shadow-md hover:bg-emerald-800 active:scale-[0.98] transition flex items-center justify-center gap-2 text-sm mt-3">
           <i class="fa-solid fa-paper-plane"></i>
-          पासवर्ड रीसेट लिंक भेजें (Send Reset Link)
+          Send Password Reset Link
         </button>
       </form>
 
       <div class="mt-6 pt-5 border-t border-gray-100 text-center text-xs text-gray-600 flex items-center justify-between">
         <a href="/login.php" class="text-brand-green font-bold hover:underline">
-          <i class="fa-solid fa-arrow-left"></i> वापस लॉगिन पर जाएं
+          <i class="fa-solid fa-arrow-left"></i> Back to Sign In
         </a>
         <a href="/register.php" class="text-gray-500 hover:text-gray-800">
-          नया खाता बनाएं
+          Create New Account
         </a>
       </div>
     </div>

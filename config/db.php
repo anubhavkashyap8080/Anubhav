@@ -273,6 +273,10 @@ function ensure_platform_schema($pdo) {
                 'email_verified_at' => 'DATETIME DEFAULT NULL',
                 'email_verification_token' => 'TEXT DEFAULT NULL',
                 'email_verification_expires' => 'DATETIME DEFAULT NULL',
+                'email_verification_otp' => 'TEXT DEFAULT NULL',
+                'phone_verified_at' => 'DATETIME DEFAULT NULL',
+                'phone_verification_otp' => 'TEXT DEFAULT NULL',
+                'phone_verification_expires' => 'DATETIME DEFAULT NULL',
                 'force_password_change' => 'INTEGER DEFAULT 0',
                 'two_factor_secret' => 'TEXT DEFAULT NULL',
                 'two_factor_enabled' => 'INTEGER DEFAULT 0',
@@ -412,6 +416,10 @@ function ensure_platform_schema($pdo) {
             $check_and_add_col('users', 'email_verified_at', 'DATETIME DEFAULT NULL');
             $check_and_add_col('users', 'email_verification_token', 'VARCHAR(100) DEFAULT NULL');
             $check_and_add_col('users', 'email_verification_expires', 'DATETIME DEFAULT NULL');
+            $check_and_add_col('users', 'email_verification_otp', 'VARCHAR(20) DEFAULT NULL');
+            $check_and_add_col('users', 'phone_verified_at', 'DATETIME DEFAULT NULL');
+            $check_and_add_col('users', 'phone_verification_otp', 'VARCHAR(20) DEFAULT NULL');
+            $check_and_add_col('users', 'phone_verification_expires', 'DATETIME DEFAULT NULL');
             $check_and_add_col('users', 'force_password_change', 'TINYINT(1) DEFAULT 0');
             $check_and_add_col('users', 'two_factor_secret', 'VARCHAR(100) DEFAULT NULL');
             $check_and_add_col('users', 'two_factor_enabled', 'TINYINT(1) DEFAULT 0');
@@ -479,9 +487,10 @@ function ensure_platform_schema($pdo) {
         $pdo->exec("UPDATE site_settings SET setting_value = 'GaunGaliHat' WHERE setting_key = 'brand_name' AND (setting_value = '0' OR setting_value = '' OR setting_value IS NULL)");
         $pdo->exec("UPDATE site_settings SET setting_value = 'Hunar desh ka, ganv se ghar tak' WHERE setting_key = 'brand_tagline' AND (setting_value = '0' OR setting_value = '' OR setting_value IS NULL OR setting_value LIKE '%S S Industries%' OR setting_value = 'Desh ki mitti ka swad | Ganv se ghar tak')");
         $pdo->exec("UPDATE site_settings SET setting_value = 'Kalyani agrofood pvt ltd' WHERE setting_key = 'company_name' AND (setting_value = '0' OR setting_value = '' OR setting_value IS NULL OR setting_value = 'S S Industries')");
-        $pdo->exec("UPDATE site_settings SET setting_value = '© 2026 GaunGaliHat. A Unit of Kalyani agrofood pvt ltd. All Rights Reserved.' WHERE setting_key = 'footer_copyright' AND setting_value LIKE '%S S Industries%'");
-        $pdo->exec("UPDATE site_settings SET setting_value = '🌾 Kalyani agrofood pvt ltd • Hunar desh ka, ganv se ghar tak' WHERE setting_key = 'hero_badge_text' AND setting_value LIKE '%S S Industries%'");
-        $pdo->exec("UPDATE site_settings SET setting_value = 'G145 Phase 2 Industrial Area, UPSIDA Sandila, Hardoi, UP' WHERE setting_key = 'head_office_address' AND (setting_value = '0' OR setting_value = '' OR setting_value IS NULL)");
+        $pdo->exec("UPDATE site_settings SET setting_value = '© 2026 GaunGaliHat. A Unit of Kalyani agrofood pvt ltd. All Rights Reserved.' WHERE setting_key = 'footer_copyright' AND (setting_value LIKE '%S S Industries%' OR setting_value LIKE '%SS Industries%')");
+        $pdo->exec("UPDATE site_settings SET setting_value = '🌾 Kalyani agrofood pvt ltd • Hunar desh ka, ganv se ghar tak' WHERE setting_key = 'hero_badge_text' AND (setting_value LIKE '%S S Industries%' OR setting_value LIKE '%SS Industries%')");
+        $pdo->exec("UPDATE site_settings SET setting_value = 'Madhoganj, Baghauli road Newada, Pahutera, Hardoi, Uttar Pradesh' WHERE setting_key = 'head_office_address' AND (setting_value = '0' OR setting_value = '' OR setting_value IS NULL OR setting_value LIKE '%G145%')");
+        $pdo->exec("UPDATE site_settings SET setting_value = 'Madhoganj, Baghauli road Newada, Pahutera, Hardoi, Uttar Pradesh' WHERE setting_key = 'factory_address' AND (setting_value = '0' OR setting_value = '' OR setting_value IS NULL)");
         $pdo->exec("UPDATE site_settings SET setting_value = 'GaunGaliHat — Desh ki mitti ka swad | Rural Tools & Farm Staples' WHERE setting_key IN ('homepage_title', 'seo_meta_title') AND (setting_value = '0' OR setting_value LIKE '0 %' OR setting_value LIKE '0-%' OR setting_value LIKE '0—%' OR setting_value LIKE '0_%')");
         
         // Auto-heal legacy vendor records and product descriptions containing 'S S Industries'

@@ -9,7 +9,7 @@ require_once __DIR__ . '/../includes/auth_check.php';
 // Strict Vendor Authorization Check
 require_vendor();
 
-// Item 16: Central CSRF Protection for all Seller POST actions
+// Central CSRF Protection for all Seller POST actions
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     csrf_protect();
 }
@@ -31,12 +31,12 @@ $flash = get_flash();
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title><?= isset($page_title) ? htmlspecialchars($page_title) . ' — ' : '' ?>Seller Central (विक्रेता डैशबोर्ड) — GaunGaliHat</title>
+  <title><?= isset($page_title) ? htmlspecialchars($page_title) . ' — ' : '' ?>Seller Central — GaunGaliHat</title>
   <link rel="icon" type="image/x-icon" href="/favicon.ico">
   <link rel="icon" type="image/png" sizes="32x32" href="/favicon.png">
   <link rel="apple-touch-icon" href="/apple-touch-icon.png">
   
-  <!-- Static Compiled Tailwind CSS (Item 7 Hardening) -->
+  <!-- Static Compiled Tailwind CSS -->
   <link rel="stylesheet" href="/assets/css/tailwind.css">
   
   <!-- Font Awesome -->
@@ -49,7 +49,7 @@ $flash = get_flash();
 </head>
 <body class="h-full flex flex-col font-sans text-gray-800 antialiased bg-stone-100">
 
-  <!-- Item 7: Impersonation Notice Banner with POST + CSRF exit -->
+  <!-- Impersonation Notice Banner with POST + CSRF exit -->
   <?= function_exists('render_impersonation_banner') ? render_impersonation_banner() : '' ?>
 
   <!-- Top Seller Central Bar -->
@@ -64,8 +64,8 @@ $flash = get_flash();
               <img src="/logo.png" alt="GaunGaliHat" class="h-7 sm:h-9 w-auto object-contain" />
             </div>
             <div class="hidden sm:block border-l border-stone-700 pl-3">
-              <span class="text-xs font-black uppercase tracking-wider text-amber-400 block">Seller Central (विक्रेता हब)</span>
-              <span class="text-[10px] text-stone-400 block">Artisan Workshop Portal</span>
+              <span class="text-xs font-black uppercase tracking-wider text-amber-400 block">Seller Central</span>
+              <span class="text-[10px] text-stone-400 block">Artisan Workshop & Dispatch Portal</span>
             </div>
           </a>
 
@@ -73,7 +73,7 @@ $flash = get_flash();
             <div class="text-xs">
               <div class="font-bold text-gray-200 flex items-center gap-1.5">
                 <span><?= htmlspecialchars($vendor['business_name'] ?? $vendor['name'] ?? 'Artisan Workshop') ?></span>
-                <span class="text-[10px] bg-emerald-900/80 text-emerald-300 px-1.5 py-0.2 rounded font-semibold border border-emerald-700/50">Verified (सत्यापित)</span>
+                <span class="text-[10px] bg-emerald-900/80 text-emerald-300 px-1.5 py-0.2 rounded font-semibold border border-emerald-700/50">Verified Artisan</span>
               </div>
               <span class="text-[11px] text-stone-400"><?= htmlspecialchars($vendor['district'] ?? 'Hardoi') ?>, UP</span>
             </div>
@@ -83,7 +83,7 @@ $flash = get_flash();
         <!-- Right: Public Store Link & Profile -->
         <div class="flex items-center gap-3">
           <a href="/" target="_blank" class="hidden sm:inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-stone-800 hover:bg-stone-700 text-stone-300 text-xs font-semibold transition">
-            <i class="fa-solid fa-arrow-up-right-from-square text-[10px]"></i> Live Store (लाइव स्टोर)
+            <i class="fa-solid fa-arrow-up-right-from-square text-[10px]"></i> Live Store
           </a>
 
           <div class="flex items-center gap-3 pl-3 border-l border-stone-800">
@@ -103,7 +103,7 @@ $flash = get_flash();
               </div>
             </a>
 
-            <a href="/logout.php" class="p-2 text-stone-400 hover:text-red-400 rounded-lg hover:bg-stone-800 transition" title="Sign Out (लॉगआउट)">
+            <a href="/logout.php" class="p-2 text-stone-400 hover:text-red-400 rounded-lg hover:bg-stone-800 transition" title="Sign Out">
               <i class="fa-solid fa-power-off text-sm"></i>
             </a>
           </div>
@@ -112,37 +112,37 @@ $flash = get_flash();
       </div>
     </div>
 
-    <!-- Secondary Navigation Menu -->
+    <!-- Secondary Navigation Menu (English Default) -->
     <div class="bg-stone-800 border-t border-stone-700 px-4 sm:px-6 lg:px-8">
       <div class="max-w-7xl mx-auto flex items-center gap-1 overflow-x-auto py-1 scrollbar-none text-xs font-bold">
         <a href="/seller/dashboard.php"
           class="px-3.5 py-2 rounded-lg transition whitespace-nowrap flex items-center gap-2 <?= $current_page === 'dashboard.php' ? 'bg-amber-500 text-stone-900' : 'text-stone-300 hover:text-white hover:bg-stone-700' ?>">
-          <i class="fa-solid fa-chart-line"></i> Dashboard (डैशबोर्ड)
+          <i class="fa-solid fa-chart-line"></i> Dashboard
         </a>
 
         <a href="/seller/products.php"
           class="px-3.5 py-2 rounded-lg transition whitespace-nowrap flex items-center gap-2 <?= $current_page === 'products.php' ? 'bg-amber-500 text-stone-900' : 'text-stone-300 hover:text-white hover:bg-stone-700' ?>">
-          <i class="fa-solid fa-boxes-stacked"></i> Products (उत्पाद सूची)
+          <i class="fa-solid fa-boxes-stacked"></i> Products Catalog
         </a>
 
         <a href="/seller/orders.php"
           class="px-3.5 py-2 rounded-lg transition whitespace-nowrap flex items-center gap-2 <?= $current_page === 'orders.php' ? 'bg-amber-500 text-stone-900' : 'text-stone-300 hover:text-white hover:bg-stone-700' ?>">
-          <i class="fa-solid fa-truck-fast"></i> Orders (आर्डर व डिस्पैच)
+          <i class="fa-solid fa-truck-fast"></i> Orders & Dispatch
         </a>
 
         <a href="/seller/payments.php"
           class="px-3.5 py-2 rounded-lg transition whitespace-nowrap flex items-center gap-2 <?= $current_page === 'payments.php' ? 'bg-amber-500 text-stone-900' : 'text-stone-300 hover:text-white hover:bg-stone-700' ?>">
-          <i class="fa-solid fa-indian-rupee-sign"></i> Payments & Payouts (भुगतान व UTR)
+          <i class="fa-solid fa-indian-rupee-sign"></i> Payments & Payouts
         </a>
 
         <a href="/seller/profile.php"
           class="px-3.5 py-2 rounded-lg transition whitespace-nowrap flex items-center gap-2 <?= $current_page === 'profile.php' ? 'bg-amber-500 text-stone-900' : 'text-stone-300 hover:text-white hover:bg-stone-700' ?>">
-          <i class="fa-solid fa-gear"></i> Settings (कार्यशाला सेटिंग्स)
+          <i class="fa-solid fa-gear"></i> Workshop Settings
         </a>
 
         <?php if (in_array($user['role'], ['admin', 'super_admin'])): ?>
           <a href="/admin/index.php" class="ml-auto px-3 py-1.5 rounded-lg bg-indigo-600 text-white hover:bg-indigo-700 transition flex items-center gap-1.5 text-[11px]">
-            <i class="fa-solid fa-shield-halved"></i> Super Admin (सुपर एडमिन)
+            <i class="fa-solid fa-shield-halved"></i> Super Admin Hub
           </a>
         <?php endif; ?>
       </div>

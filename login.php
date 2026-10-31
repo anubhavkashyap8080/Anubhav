@@ -36,14 +36,19 @@ $error = '';
 $show_2fa_input = false;
 $cached_identifier = '';
 
-// Fetch Google Auth Settings
+// Fetch Google & Facebook Auth Settings
 $google_enabled = false;
 $google_client_id = '';
+$facebook_enabled = false;
+$facebook_app_id = '';
+
 try {
-    $stmt_g = $pdo->query("SELECT setting_key, setting_value FROM site_settings WHERE setting_key IN ('google_auth_enabled', 'google_client_id')");
+    $stmt_g = $pdo->query("SELECT setting_key, setting_value FROM site_settings WHERE setting_key IN ('google_auth_enabled', 'google_client_id', 'facebook_auth_enabled', 'facebook_app_id')");
     while ($r = $stmt_g->fetch()) {
         if ($r['setting_key'] === 'google_auth_enabled') $google_enabled = ($r['setting_value'] == '1');
         if ($r['setting_key'] === 'google_client_id') $google_client_id = $r['setting_value'];
+        if ($r['setting_key'] === 'facebook_auth_enabled') $facebook_enabled = ($r['setting_value'] == '1');
+        if ($r['setting_key'] === 'facebook_app_id') $facebook_app_id = $r['setting_value'];
     }
 } catch (Exception $e) {}
 
@@ -52,11 +57,16 @@ if (defined('GOOGLE_CLIENT_ID') && GOOGLE_CLIENT_ID !== '') {
     $google_enabled = defined('GOOGLE_AUTH_ENABLED') ? GOOGLE_AUTH_ENABLED : true;
 }
 
+if (defined('FACEBOOK_APP_ID') && FACEBOOK_APP_ID !== '') {
+    $facebook_app_id = FACEBOOK_APP_ID;
+    $facebook_enabled = defined('FACEBOOK_AUTH_ENABLED') ? FACEBOOK_AUTH_ENABLED : true;
+}
+
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    // Item 15: CSRF Token Check on Login Form
+    // CSRF Token Check on Login Form
     $csrf = $_POST['csrf_token'] ?? '';
     if (!csrf_check($csrf)) {
-        $error = 'सुरक्षा टोकन अमान्य है। कृपया पृष्ठ रीफ़्रेश करके पुनः प्रयास करें। (Invalid security token)';
+        $error = 'Security session expired. Please refresh the page and try again.';
     } else {
         $identifier = clean_input($_POST['identifier'] ?? '');
         $password = $_POST['password'] ?? '';
@@ -70,7 +80,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $result = authenticate_user($identifier, $password, $role_group, $two_factor_code);
         if ($result['success']) {
             $user = $result['user'];
-            set_flash('success', 'नमस्ते ' . htmlspecialchars($user['name']) . ', आपका स्वागत है!');
+            set_flash('success', 'Welcome back, ' . htmlspecialchars($user['name']) . '!');
 
             if (!empty($redirect) && strpos($redirect, 'http') === false) {
                 header('Location: /' . ltrim($redirect, '/'));
@@ -89,6 +99,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 exit;
             }
         } else {
+            if (!empty($result['require_verification'])) {
+                set_flash('info', 'Please verify your 6-digit email OTP to activate your account.');
+                header('Location: /verify-signup.php');
+                exit;
+            }
             $error = $result['error'];
             $active_tab = $tab;
             if (!empty($result['require_2fa'])) {
@@ -100,7 +115,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 }
 
 // Render Header only after all POST and redirect logic has executed
-$page_title = 'खाते में लॉगिन करें — GaunGaliHat';
+$page_title = 'Sign In — GaunGaliHat';
 require_once __DIR__ . '/includes/header.php';
 ?>
 
@@ -112,8 +127,8 @@ require_once __DIR__ . '/includes/header.php';
       <div class="inline-flex items-center justify-center w-14 h-14 rounded-2xl bg-brand-green text-white shadow-lg mb-3">
         <i class="fa-solid fa-wheat-awn text-2xl text-amber-300"></i>
       </div>
-      <h1 class="text-2xl font-extrabold text-gray-900">Sign In (खाते में प्रवेश करें)</h1>
-      <p class="text-xs text-gray-500 mt-1">गाँव गली हाट • Kalyani agrofood pvt ltd</p>
+      <h1 class="text-2xl font-extrabold text-gray-900">Sign In to Your Account</h1>
+      <p class="text-xs text-gray-500 mt-1">GaunGaliHat • Kalyani agrofood pvt ltd</p>
     </div>
 
     <!-- Login Box Card -->
@@ -124,17 +139,17 @@ require_once __DIR__ . '/includes/header.php';
         <button type="button" onclick="switchLoginTab('shopper')" id="tab-btn-shopper"
           class="py-3.5 px-2 transition border-b-2 <?= $active_tab === 'shopper' ? 'border-brand-green text-brand-green bg-white' : 'border-transparent hover:text-gray-800' ?>">
           <i class="fa-solid fa-bag-shopping block text-sm mb-1"></i>
-          Customer Login (ग्राहक)
+          Customer
         </button>
         <button type="button" onclick="switchLoginTab('seller')" id="tab-btn-seller"
           class="py-3.5 px-2 transition border-b-2 <?= $active_tab === 'seller' ? 'border-brand-green text-brand-green bg-white' : 'border-transparent hover:text-gray-800' ?>">
           <i class="fa-solid fa-store block text-sm mb-1"></i>
-          Seller / Artisan (विक्रेता)
+          Seller / Artisan
         </button>
         <button type="button" onclick="switchLoginTab('staff')" id="tab-btn-staff"
           class="py-3.5 px-2 transition border-b-2 <?= $active_tab === 'staff' ? 'border-brand-green text-brand-green bg-white' : 'border-transparent hover:text-gray-800' ?>">
           <i class="fa-solid fa-shield-halved block text-sm mb-1"></i>
-          Staff & Admin (स्टाफ)
+          Staff & Admin
         </button>
       </div>
 
@@ -150,7 +165,7 @@ require_once __DIR__ . '/includes/header.php';
         <div id="portal-banner" class="mb-5 p-3 rounded-xl text-xs flex items-center gap-2.5 <?= $active_tab === 'staff' ? 'bg-indigo-50 text-indigo-900 border border-indigo-200' : ($active_tab === 'seller' ? 'bg-amber-50 text-amber-900 border border-amber-200' : 'bg-emerald-50 text-emerald-900 border border-emerald-200') ?>">
           <i id="portal-banner-icon" class="fa-solid <?= $active_tab === 'staff' ? 'fa-user-tie' : ($active_tab === 'seller' ? 'fa-hammer' : 'fa-basket-shopping') ?>"></i>
           <span id="portal-banner-text">
-            <?= $active_tab === 'staff' ? 'Staff & Administrative Portal (स्टाफ एवं प्रशासनिक नियंत्रण पोर्टल)' : ($active_tab === 'seller' ? 'Artisan & Seller Portal (कारीगर व विक्रेता पोर्टल)' : 'Customer Shopping Account (ग्राहक शॉपिंग खाता)') ?>
+            <?= $active_tab === 'staff' ? 'Staff & Administrative Control Portal' : ($active_tab === 'seller' ? 'Artisan Workshop & Seller Central Portal' : 'Customer Shopping & Orders Account') ?>
           </span>
         </div>
 
@@ -159,17 +174,17 @@ require_once __DIR__ . '/includes/header.php';
           <input type="hidden" name="portal_tab" id="portal_tab_input" value="<?= htmlspecialchars($active_tab) ?>">
 
           <?php if ($show_2fa_input): ?>
-            <!-- Item 15: TOTP 2FA Verification Field -->
+            <!-- TOTP 2FA Verification Field -->
             <div class="p-3 bg-amber-50 border border-amber-300 rounded-2xl text-xs text-amber-900 mb-2">
               <div class="font-bold flex items-center gap-1.5 mb-1 text-amber-800">
                 <i class="fa-solid fa-shield-halved"></i>
                 Two-Factor Authentication Required (2FA)
               </div>
-              <span>कृपया अपने Google Authenticator या 2FA ऍप से 6-अंकीय कोड दर्ज करें।</span>
+              <span>Please enter the 6-digit code from your authenticator app.</span>
             </div>
             <div>
               <label class="block text-xs font-bold text-gray-700 mb-1">
-                2FA Verification Code (6-अंकीय सुरक्षा कोड) <span class="text-red-500">*</span>
+                2FA Verification Code <span class="text-red-500">*</span>
               </label>
               <input type="text" name="two_factor_code" autofocus pattern="[0-9]{6}" maxlength="6" placeholder="000000"
                 class="w-full text-center tracking-widest text-lg font-mono px-3.5 py-2.5 bg-amber-50 border border-amber-300 rounded-xl focus:bg-white focus:border-brand-green focus:outline-none transition">
@@ -179,14 +194,14 @@ require_once __DIR__ . '/includes/header.php';
           <!-- Username/Email/Phone -->
           <div>
             <label class="block text-xs font-bold text-gray-700 mb-1" id="identifier-label">
-              <?= $active_tab === 'staff' ? 'Admin Username or Official Email (एडमिन यूजरनेम / ईमेल)' : ($active_tab === 'seller' ? 'Seller Username / Email / Mobile (विक्रेता यूजरनेम / ईमेल / मोबाइल)' : 'Email Address / Mobile / Username (ईमेल / मोबाइल नंबर / यूजरनेम)') ?>
+              <?= $active_tab === 'staff' ? 'Admin Username or Official Email' : ($active_tab === 'seller' ? 'Seller Username / Email / Mobile' : 'Email Address or Mobile Number') ?>
             </label>
             <div class="relative">
               <span class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-gray-400">
                 <i class="fa-regular fa-user text-xs"></i>
               </span>
               <input type="text" name="identifier" required autofocus value="<?= htmlspecialchars($cached_identifier) ?>"
-                placeholder="उदा. mobile या email"
+                placeholder="e.g. mobile or email address"
                 class="w-full pl-10 pr-3 py-2.5 bg-stone-50 border border-gray-200 rounded-xl text-sm focus:bg-white focus:border-brand-green focus:outline-none transition">
             </div>
           </div>
@@ -194,8 +209,8 @@ require_once __DIR__ . '/includes/header.php';
           <!-- Password with Eye Toggle -->
           <div>
             <div class="flex items-center justify-between mb-1">
-              <label class="block text-xs font-bold text-gray-700">Password (पासवर्ड)</label>
-              <a href="/forgot-password.php" class="text-[11px] text-brand-green hover:underline">Forgot Password? (पासवर्ड भूल गए?)</a>
+              <label class="block text-xs font-bold text-gray-700">Password</label>
+              <a href="/forgot-password.php" class="text-[11px] text-brand-green hover:underline">Forgot Password?</a>
             </div>
             <div class="relative">
               <span class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-gray-400">
@@ -215,7 +230,7 @@ require_once __DIR__ . '/includes/header.php';
           <div class="flex items-center justify-between text-xs text-gray-600 pt-1">
             <label class="flex items-center gap-2 cursor-pointer">
               <input type="checkbox" name="remember" class="rounded text-brand-green focus:ring-brand-green">
-              <span>Remember me (मुझे याद रखें)</span>
+              <span>Remember me</span>
             </label>
           </div>
 
@@ -224,41 +239,51 @@ require_once __DIR__ . '/includes/header.php';
             class="w-full py-3 bg-brand-green text-white font-bold rounded-xl shadow-md hover:bg-emerald-800 active:scale-[0.98] transition flex items-center justify-center gap-2 text-sm mt-2">
             <i class="fa-solid fa-right-to-bracket"></i>
             <span id="submit-btn-label">
-              <?= $active_tab === 'staff' ? 'Sign In as Staff (स्टाफ लॉगिन करें)' : ($active_tab === 'seller' ? 'Open Seller Dashboard (विक्रेता डैशबोर्ड खोलें)' : 'Sign In (लॉगिन करें)') ?>
+              <?= $active_tab === 'staff' ? 'Sign In as Staff' : ($active_tab === 'seller' ? 'Open Seller Dashboard' : 'Sign In') ?>
             </span>
           </button>
         </form>
 
         <!-- Social Sign-in Block (For Shoppers) -->
-        <?php if ($google_enabled): ?>
+        <?php if ($google_enabled || $facebook_enabled): ?>
           <div id="google-auth-container" class="<?= $active_tab === 'shopper' ? 'block' : 'hidden' ?> mt-5 pt-4 border-t border-gray-100">
             <div class="relative flex py-2 items-center">
               <div class="flex-grow border-t border-gray-200"></div>
-              <span class="flex-shrink mx-3 text-[11px] font-bold text-gray-400 uppercase">Or Sign In with Google (या Google से लॉगिन करें)</span>
+              <span class="flex-shrink mx-3 text-[11px] font-bold text-gray-400 uppercase tracking-wider">Or Sign In with Social</span>
               <div class="flex-grow border-t border-gray-200"></div>
             </div>
 
-            <div class="mt-2 flex flex-col items-center justify-center space-y-2">
-              <div id="g_id_onload"
-                   data-client_id="<?= htmlspecialchars($google_client_id) ?>"
-                   data-login_uri="/auth/google-callback.php"
-                   data-auto_prompt="false">
-              </div>
-              <div class="g_id_signin w-full flex justify-center"
-                   data-type="standard"
-                   data-size="large"
-                   data-theme="outline"
-                   data-text="sign_in_with"
-                   data-shape="rectangular"
-                   data-logo_alignment="left"
-                   data-width="100%">
-              </div>
-              
-              <a href="https://accounts.google.com/o/oauth2/v2/auth?client_id=<?= urlencode($google_client_id) ?>&redirect_uri=<?= urlencode(SITE_URL . '/auth/google-callback.php') ?>&response_type=code&scope=openid%20profile%20email"
-                 class="w-full py-2.5 px-4 bg-white border border-gray-300 hover:bg-stone-50 text-gray-700 font-bold rounded-xl text-xs transition flex items-center justify-center gap-2 shadow-xs">
-                <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" class="w-4 h-4" alt="Google">
-                <span>Sign in with Google (Google खाते से प्रवेश)</span>
-              </a>
+            <div class="mt-2 flex flex-col gap-2">
+              <?php if ($google_enabled && !empty($google_client_id)): ?>
+                <div id="g_id_onload"
+                     data-client_id="<?= htmlspecialchars($google_client_id) ?>"
+                     data-login_uri="/auth/google-callback.php"
+                     data-auto_prompt="false">
+                </div>
+                <div class="g_id_signin w-full flex justify-center"
+                     data-type="standard"
+                     data-size="large"
+                     data-theme="outline"
+                     data-text="sign_in_with"
+                     data-shape="rectangular"
+                     data-logo_alignment="left"
+                     data-width="100%">
+                </div>
+                
+                <a href="https://accounts.google.com/o/oauth2/v2/auth?client_id=<?= urlencode($google_client_id) ?>&redirect_uri=<?= urlencode(SITE_URL . '/auth/google-callback.php') ?>&response_type=code&scope=openid%20profile%20email"
+                   class="w-full py-2.5 px-4 bg-white border border-gray-300 hover:bg-stone-50 text-gray-700 font-bold rounded-xl text-xs transition flex items-center justify-center gap-2 shadow-xs">
+                  <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" class="w-4 h-4" alt="Google">
+                  <span>Sign in with Google</span>
+                </a>
+              <?php endif; ?>
+
+              <?php if ($facebook_enabled && !empty($facebook_app_id)): ?>
+                <a href="https://www.facebook.com/v18.0/dialog/oauth?client_id=<?= urlencode($facebook_app_id) ?>&redirect_uri=<?= urlencode(SITE_URL . '/auth/facebook-callback.php') ?>&scope=email,public_profile"
+                   class="w-full py-2.5 px-4 bg-[#1877F2] hover:bg-[#166fe5] text-white font-bold rounded-xl text-xs transition flex items-center justify-center gap-2 shadow-xs">
+                  <i class="fa-brands fa-facebook-f text-sm"></i>
+                  <span>Sign in with Facebook</span>
+                </a>
+              <?php endif; ?>
             </div>
           </div>
         <?php endif; ?>
@@ -268,10 +293,10 @@ require_once __DIR__ . '/includes/header.php';
       <!-- Footer Action Links -->
       <div class="bg-stone-50 px-6 py-4 border-t border-gray-200 text-center text-xs text-gray-600 space-y-1.5">
         <div id="shopper-footer-links">
-          Don't have an account? <a href="/register.php" class="text-brand-green font-bold hover:underline">Register as Customer (नया ग्राहक पंजीकरण करें)</a>
+          Don't have an account? <a href="/register.php" class="text-brand-green font-bold hover:underline">Register as Customer</a>
         </div>
         <div>
-          Are you a rural artisan or SHG? <a href="/seller-register.php" class="text-amber-800 font-bold hover:underline">Register as Seller (कारीगर विक्रेता के रूप में जुड़ें)</a>
+          Are you a rural artisan or producer? <a href="/seller-register.php" class="text-amber-800 font-bold hover:underline">Register as Seller</a>
         </div>
       </div>
 
@@ -303,21 +328,21 @@ function switchLoginTab(tab) {
   if (tab === 'staff') {
     banner.className = 'mb-5 p-3 rounded-xl text-xs flex items-center gap-2.5 bg-indigo-50 text-indigo-900 border border-indigo-200';
     icon.className = 'fa-solid fa-user-tie';
-    text.innerText = 'Staff & Administrative Portal (स्टाफ एवं प्रशासनिक नियंत्रण पोर्टल)';
-    btnLabel.innerText = 'Sign In as Staff (स्टाफ लॉगिन करें)';
-    idLabel.innerText = 'Admin Username or Official Email (एडमिन यूजरनेम / ईमेल)';
+    text.innerText = 'Staff & Administrative Control Portal';
+    btnLabel.innerText = 'Sign In as Staff';
+    idLabel.innerText = 'Admin Username or Official Email';
   } else if (tab === 'seller') {
     banner.className = 'mb-5 p-3 rounded-xl text-xs flex items-center gap-2.5 bg-amber-50 text-amber-900 border border-amber-200';
     icon.className = 'fa-solid fa-hammer';
-    text.innerText = 'Artisan & Seller Portal (कारीगर व विक्रेता पोर्टल)';
-    btnLabel.innerText = 'Open Seller Dashboard (विक्रेता डैशबोर्ड खोलें)';
-    idLabel.innerText = 'Seller Username / Email / Mobile (विक्रेता यूजरनेम / ईमेल / मोबाइल)';
+    text.innerText = 'Artisan Workshop & Seller Central Portal';
+    btnLabel.innerText = 'Open Seller Dashboard';
+    idLabel.innerText = 'Seller Username / Email / Mobile';
   } else {
     banner.className = 'mb-5 p-3 rounded-xl text-xs flex items-center gap-2.5 bg-emerald-50 text-emerald-900 border border-emerald-200';
     icon.className = 'fa-solid fa-basket-shopping';
-    text.innerText = 'Customer Shopping Account (ग्राहक शॉपिंग खाता)';
-    btnLabel.innerText = 'Sign In (लॉगिन करें)';
-    idLabel.innerText = 'Email Address / Mobile / Username (ईमेल / मोबाइल नंबर / यूजरनेम)';
+    text.innerText = 'Customer Shopping & Orders Account';
+    btnLabel.innerText = 'Sign In';
+    idLabel.innerText = 'Email Address or Mobile Number';
   }
 
   const googleBox = document.getElementById('google-auth-container');

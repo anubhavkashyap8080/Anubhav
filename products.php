@@ -79,7 +79,7 @@ if ($pdo) {
         $products = $stmt->fetchAll() ?: [];
         foreach ($products as &$pr) {
             if (isset($pr['vendor_name'])) {
-                $pr['vendor_name'] = str_ireplace('S S Industries', 'Kalyani agrofood pvt ltd', $pr['vendor_name']);
+                $pr['vendor_name'] = str_ireplace(['S S Industries', 'SS Industries', 'S. S. Industries', 'S.S. Industries'], 'Kalyani agrofood pvt ltd', $pr['vendor_name']);
             }
         }
         unset($pr);

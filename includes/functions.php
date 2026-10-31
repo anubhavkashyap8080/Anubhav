@@ -693,41 +693,115 @@ function verify_totp_code($secret, $code) {
     return false;
 }
 
-// Item 10: Email Verification Link Dispatcher (Stored as SHA-256 hash)
-function send_email_verification_link($user_id, $email, $name) {
+// Item 10: Email Verification Link Dispatcher (Stored as SHA-256 hash & 6-Digit OTP)
+function send_email_verification_link($user_id, $email, $name, $phone = '') {
     global $pdo;
     try {
         $raw_token = bin2hex(random_bytes(32));
         $token_hash = hash('sha256', $raw_token);
+        $otp_code = sprintf('%06d', random_int(100000, 999999));
+        $phone_otp = sprintf('%06d', random_int(100000, 999999));
         $expires = date('Y-m-d H:i:s', time() + 86400); // 24 hours validity
-        $stmt = $pdo->prepare("UPDATE users SET email_verification_token = ?, email_verification_expires = ? WHERE id = ?");
-        $stmt->execute([$token_hash, $expires, $user_id]);
+
+        $stmt = $pdo->prepare("
+            UPDATE users 
+            SET email_verification_token = ?, 
+                email_verification_otp = ?, 
+                email_verification_expires = ?,
+                phone_verification_otp = ?,
+                phone_verification_expires = ?
+            WHERE id = ?
+        ");
+        $stmt->execute([$token_hash, $otp_code, $expires, $phone_otp, $expires, $user_id]);
 
         $site_url = defined('SITE_URL') ? SITE_URL : 'https://ganvgalihat.com';
         $site_host = parse_url($site_url, PHP_URL_HOST) ?: 'ganvgalihat.com';
         $verify_url = $site_url . '/verify-email.php?token=' . $raw_token . '&email=' . urlencode($email);
 
-        $subject = "Verify your GaunGaliHat Account Email";
+        $subject = "Verify your GaunGaliHat Account — OTP: " . $otp_code;
         $headers = "MIME-Version: 1.0\r\n";
         $headers .= "Content-Type: text/html; charset=UTF-8\r\n";
         $headers .= "From: GaunGaliHat Security <no-reply@" . $site_host . ">\r\n";
+        $headers .= "Reply-To: info@" . $site_host . "\r\n";
 
         $message = "
-        <div style='font-family: sans-serif; max-width: 540px; margin: 0 auto; padding: 24px; border: 1px solid #e5e7eb; border-radius: 12px;'>
-            <h2 style='color: #065f46; margin-top: 0;'>GaunGaliHat — Email Verification</h2>
-            <p>Namaste " . htmlspecialchars($name, ENT_QUOTES, 'UTF-8') . ",</p>
-            <p>Thank you for registering. Please click below to verify your email address and secure your account:</p>
-            <p style='margin: 24px 0;'><a href='" . htmlspecialchars($verify_url, ENT_QUOTES, 'UTF-8') . "' style='background: #059669; color: white; padding: 12px 24px; text-decoration: none; border-radius: 8px; font-weight: bold; display: inline-block;'>Verify My Email Address</a></p>
-            <p style='color: #6b7280; font-size: 13px;'>If the button does not work, copy and paste this URL into your browser:<br>" . htmlspecialchars($verify_url, ENT_QUOTES, 'UTF-8') . "</p>
-            <p style='color: #9ca3af; font-size: 12px;'>This link expires in 24 hours.</p>
+        <div style='font-family: -apple-system, BlinkMacSystemFont, Roboto, sans-serif; max-width: 540px; margin: 0 auto; padding: 28px; border: 1px solid #e5e7eb; border-radius: 16px; background: #ffffff;'>
+            <div style='text-align: center; margin-bottom: 20px;'>
+                <h2 style='color: #065f46; margin: 0; font-size: 22px;'>GaunGaliHat — Email Verification</h2>
+                <p style='color: #d97706; font-size: 13px; font-weight: bold; margin: 4px 0 0 0;'>Hunar desh ka, ganv se ghar tak</p>
+            </div>
+            <p style='color: #374151; font-size: 14px;'>Namaste <strong>" . htmlspecialchars($name, ENT_QUOTES, 'UTF-8') . "</strong>,</p>
+            <p style='color: #4b5563; font-size: 14px; line-height: 1.6;'>Thank you for joining GaunGaliHat. Please use the 6-digit verification code below or click the button to verify your email address and activate your account:</p>
+            
+            <div style='background: #f0fdf4; border: 2px dashed #059669; border-radius: 12px; padding: 18px; text-align: center; margin: 24px 0;'>
+                <div style='font-size: 12px; color: #065f46; font-weight: 800; text-transform: uppercase; letter-spacing: 1px;'>Your 6-Digit Email OTP Code</div>
+                <div style='font-size: 34px; font-weight: 900; letter-spacing: 8px; color: #047857; margin-top: 6px; font-family: monospace;'>" . $otp_code . "</div>
+                <div style='font-size: 11px; color: #6b7280; margin-top: 6px;'>Valid for 24 hours. Never share this code with anyone.</div>
+            </div>
+
+            <div style='text-align: center; margin: 24px 0;'>
+                <a href='" . htmlspecialchars($verify_url, ENT_QUOTES, 'UTF-8') . "' style='background: #059669; color: white; padding: 12px 28px; text-decoration: none; border-radius: 10px; font-weight: bold; font-size: 14px; display: inline-block; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1);'>Verify with One Click</a>
+            </div>
+
+            <p style='color: #6b7280; font-size: 12px; line-height: 1.5;'>If the button does not work, copy and paste this verification URL into your browser:<br><a href='" . htmlspecialchars($verify_url, ENT_QUOTES, 'UTF-8') . "' style='color: #059669; word-break: break-all;'>" . htmlspecialchars($verify_url, ENT_QUOTES, 'UTF-8') . "</a></p>
+            <hr style='border: none; border-top: 1px solid #f3f4f6; margin: 20px 0;'>
+            <p style='color: #9ca3af; font-size: 11px; text-align: center;'>© " . date('Y') . " GaunGaliHat. A Unit of Kalyani agrofood pvt ltd. All rights reserved.</p>
         </div>";
 
         @mail($email, $subject, $message, $headers);
-        return true;
+        return [
+            'success' => true,
+            'otp' => $otp_code,
+            'phone_otp' => $phone_otp
+        ];
     } catch (Throwable $e) {
         error_log("[Email Verification Error] " . $e->getMessage());
         return false;
     }
+}
+
+// Send Platform Welcome Email
+function send_welcome_email($user_id, $email, $name) {
+    $site_url = defined('SITE_URL') ? SITE_URL : 'https://ganvgalihat.com';
+    $site_host = parse_url($site_url, PHP_URL_HOST) ?: 'ganvgalihat.com';
+    $brand_name = defined('APP_NAME') ? APP_NAME : 'GaunGaliHat';
+    $subject = "Welcome to " . $brand_name . " — Hunar desh ka, ganv se ghar tak";
+    $headers = "MIME-Version: 1.0\r\n";
+    $headers .= "Content-Type: text/html; charset=UTF-8\r\n";
+    $headers .= "From: " . $brand_name . " <namaste@" . $site_host . ">\r\n";
+    $headers .= "Reply-To: info@" . $site_host . "\r\n";
+
+    $message = "
+    <div style='font-family: -apple-system, BlinkMacSystemFont, Roboto, sans-serif; max-width: 580px; margin: 0 auto; padding: 28px; border: 1px solid #e5e7eb; border-radius: 16px; background: #ffffff;'>
+        <div style='text-align: center; margin-bottom: 20px;'>
+            <h1 style='color: #065f46; margin: 0; font-size: 24px;'>Welcome to " . htmlspecialchars($brand_name) . "!</h1>
+            <p style='color: #d97706; font-weight: bold; margin: 4px 0 0 0; font-size: 14px;'>Hunar desh ka, ganv se ghar tak</p>
+        </div>
+        <p style='font-size: 14px; color: #374151;'>Dear <strong>" . htmlspecialchars($name) . "</strong>,</p>
+        <p style='font-size: 14px; color: #4b5563; line-height: 1.6;'>Your account has been successfully verified and activated. You can now explore authentic hand-forged agricultural sickles, khurpis, pure stone-ground unpolished Awadh pulses, Banarasi pickles, and rural handicrafts directly from certified village clusters.</p>
+        <div style='text-align: center; margin: 28px 0;'>
+            <a href='" . htmlspecialchars($site_url) . "/products.php' style='background: #059669; color: #ffffff; padding: 14px 28px; text-decoration: none; border-radius: 12px; font-weight: bold; font-size: 14px; display: inline-block;'>Explore Marketplace</a>
+        </div>
+        <p style='color: #6b7280; font-size: 13px; line-height: 1.5;'>If you ever need help or have questions regarding dispatch and orders, feel free to reply directly to this email or reach us at <a href='mailto:info@" . $site_host . "' style='color: #059669;'>info@" . $site_host . "</a>.</p>
+        <hr style='border: none; border-top: 1px solid #f3f4f6; margin: 24px 0;'>
+        <p style='color: #9ca3af; font-size: 12px; text-align: center;'>© " . date('Y') . " " . htmlspecialchars($brand_name) . ". A Unit of Kalyani agrofood pvt ltd. All rights reserved.</p>
+    </div>";
+
+    @mail($email, $subject, $message, $headers);
+    return true;
+}
+
+// Universal Platform Email Dispatcher (Transactional & Marketing)
+function send_platform_email($to_email, $subject, $html_body, $from_name = 'GaunGaliHat', $from_email = null) {
+    $site_host = parse_url(defined('SITE_URL') ? SITE_URL : '', PHP_URL_HOST) ?: 'ganvgalihat.com';
+    $sender = $from_email ?: ('namaste@' . $site_host);
+    
+    $headers = "MIME-Version: 1.0\r\n";
+    $headers .= "Content-Type: text/html; charset=UTF-8\r\n";
+    $headers .= "From: " . $from_name . " <" . $sender . ">\r\n";
+    $headers .= "Reply-To: info@" . $site_host . "\r\n";
+
+    return @mail($to_email, $subject, $html_body, $headers);
 }
 
 // Item 32: Owner Security Alert Dispatcher
@@ -1204,7 +1278,7 @@ function authenticate_user($identifier, $password, $expected_role_group = null, 
         record_security_event('login_rate_limit_triggered', ['identifier' => $identifier, 'ip' => $ip, 'retry_after' => $throttle['retry_after']]);
         return [
             'success' => false, 
-            'error' => "सुरक्षा अवरोध: बार-बार असफल प्रयासों के कारण लॉगिन अस्थायी रूप से ब्लॉक किया गया है। कृपया {$retry_mins} मिनट बाद पुनः प्रयास करें।"
+            'error' => "Security alert: Too many login attempts. For security reasons, please try again in {$retry_mins} minutes."
         ];
     }
     
@@ -1236,12 +1310,12 @@ function authenticate_user($identifier, $password, $expected_role_group = null, 
     if (!$user) {
         record_login_attempt($identifier, $ip, false);
         record_security_event('login_failed_unknown_user', ['identifier' => $identifier]);
-        return ['success' => false, 'error' => 'अमान्य क्रेडेंशियल दर्ज किए गए (Invalid credentials).'];
+        return ['success' => false, 'error' => 'Invalid credentials provided.'];
     }
 
     if ($user['status'] === 'suspended') {
         record_security_event('login_attempt_suspended_account', ['user_id' => $user['id']]);
-        return ['success' => false, 'error' => 'यह खाता निलंबित (Suspended) है। कृपया प्रशासन से संपर्क करें।'];
+        return ['success' => false, 'error' => 'This account has been suspended. Please contact platform administration.'];
     }
 
     if (!password_verify($password, $user['password'])) {
@@ -1268,17 +1342,31 @@ function authenticate_user($identifier, $password, $expected_role_group = null, 
         }
 
         record_security_event('login_failed_bad_password', ['user_id' => $user['id'], 'ip' => $ip]);
-        return ['success' => false, 'error' => 'अमान्य क्रेडेंशियल दर्ज किए गए (Invalid credentials).'];
+        return ['success' => false, 'error' => 'Invalid credentials provided.'];
+    }
+
+    // Check if account is still pending verification
+    if (($user['status'] ?? '') === 'pending') {
+        $_SESSION['pending_verification_user_id'] = $user['id'];
+        $_SESSION['pending_verification_email'] = $user['email'];
+        $_SESSION['pending_verification_name'] = $user['name'];
+        $_SESSION['pending_verification_phone'] = $user['phone'] ?? '';
+        return [
+            'success' => false,
+            'require_verification' => true,
+            'user' => $user,
+            'error' => 'Your account requires email verification. Please enter the 6-digit verification code.'
+        ];
     }
 
     // Role check if specific portal tab was chosen
     if ($expected_role_group === 'admin' && !in_array($user['role'], ['admin', 'super_admin'])) {
         record_security_event('login_unauthorized_portal_access', ['user_id' => $user['id'], 'expected' => 'admin']);
-        return ['success' => false, 'error' => 'यह खाता स्टाफ या एडमिनिस्ट्रेशन पोर्टल के लिए अधिकृत नहीं है।'];
+        return ['success' => false, 'error' => 'This account is not authorized for staff or administration access.'];
     }
     if ($expected_role_group === 'seller' && !in_array($user['role'], ['vendor', 'admin', 'super_admin'])) {
         record_security_event('login_unauthorized_portal_access', ['user_id' => $user['id'], 'expected' => 'seller']);
-        return ['success' => false, 'error' => 'यह खाता विक्रेता / कारीगर पोर्टल के लिए अधिकृत नहीं है।'];
+        return ['success' => false, 'error' => 'This account is not authorized for the artisan / vendor portal.'];
     }
 
     // Item 15: Optional TOTP 2FA Verification for Admin/Super_admin
@@ -1292,7 +1380,7 @@ function authenticate_user($identifier, $password, $expected_role_group = null, 
                 'user_id' => $user['id'],
                 'identifier' => $identifier,
                 'portal_tab' => $expected_role_group,
-                'error' => 'कृपया अपना 6-अंकीय टू-फैक्टर प्रमाणीकरण कोड (TOTP Code) दर्ज करें।'
+                'error' => 'Please enter your 6-digit Two-Factor Authentication (TOTP) code.'
             ];
         }
         if (!verify_totp_code($user['two_factor_secret'], $two_factor_code)) {
@@ -1303,7 +1391,7 @@ function authenticate_user($identifier, $password, $expected_role_group = null, 
                 'user_id' => $user['id'],
                 'identifier' => $identifier,
                 'portal_tab' => $expected_role_group,
-                'error' => 'अमान्य 2FA कोड दर्ज किया गया। कृपया नया 6-अंकीय कोड दर्ज करें।'
+                'error' => 'Invalid 2FA code. Please enter the current code from your authenticator app.'
             ];
         }
     }
