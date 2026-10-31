@@ -75,10 +75,12 @@ $gsc_tag = get_site_setting('seo_google_console', '');
 $ga4_id = get_site_setting('ga4_measurement_id', get_site_setting('seo_google_analytics', ''));
 
 // Brand Logo Sizing & Occasion GIF Logo Settings (clamped safely)
-$logo_height_mobile = (int)get_setting('logo_height_mobile', 38);
-$logo_height_desktop = (int)get_setting('logo_height_desktop', 48);
-$logo_height_mobile = max(20, min(80, $logo_height_mobile));
-$logo_height_desktop = max(24, min(120, $logo_height_desktop));
+$raw_mobile = (int)get_setting('logo_height_mobile', 46);
+$raw_desktop = (int)get_setting('logo_height_desktop', 62);
+if ($raw_mobile <= 40) $raw_mobile = 46;
+if ($raw_desktop <= 50) $raw_desktop = 62;
+$logo_height_mobile = max(28, min(80, $raw_mobile));
+$logo_height_desktop = max(40, min(120, $raw_desktop));
 
 $use_gif_logo = (get_setting('use_gif_logo', '0') === '1');
 $logo_gif_url = get_setting('logo_gif_url', '');
@@ -201,6 +203,31 @@ $active_site_logo = ($use_gif_logo && !empty($logo_gif_url)) ? $logo_gif_url : $
   <link rel="stylesheet" href="<?= $av('/assets/css/style.css') ?>">
   <meta name="csrf-token" content="<?= htmlspecialchars(csrf_token(), ENT_QUOTES, 'UTF-8') ?>">
   <script src="<?= $av('/assets/js/main.js') ?>"></script>
+  <style>
+    /* Responsive High-Definition Brand Logo & Zero-Overflow Layout */
+    .site-header-brand-logo {
+      height: <?= (int)$logo_height_mobile ?>px !important;
+      max-height: 54px;
+      width: auto !important;
+      max-width: 185px;
+      object-fit: contain;
+      display: block;
+    }
+    @media (min-width: 640px) {
+      .site-header-brand-logo {
+        height: <?= (int)$logo_height_desktop ?>px !important;
+        max-height: 72px;
+        max-width: 270px;
+      }
+    }
+    @media (min-width: 1024px) {
+      .site-header-brand-logo {
+        height: <?= max(62, (int)$logo_height_desktop) ?>px !important;
+        max-height: 78px;
+        max-width: 320px;
+      }
+    }
+  </style>
 </head>
 <body class="flex flex-col min-h-screen text-gray-800 antialiased selection:bg-emerald-200 overflow-x-hidden">
 
@@ -243,7 +270,7 @@ $active_site_logo = ($use_gif_logo && !empty($logo_gif_url)) ? $logo_gif_url : $
   <!-- 2. Primary Sticky Header (Unified Full Sticky Header across Desktop & Mobile) -->
   <header class="sticky top-0 z-40 bg-white border-b border-gray-100 shadow-sm transition-all w-full max-w-full" style="position: -webkit-sticky; position: sticky; top: 0; z-index: 50;">
     <div class="max-w-7xl mx-auto px-2.5 sm:px-6 lg:px-8 w-full min-w-0">
-      <div class="flex items-center justify-between h-14 sm:h-20 gap-1.5 sm:gap-4 w-full min-w-0">
+      <div class="flex items-center justify-between h-16 sm:h-20 lg:h-22 gap-1.5 sm:gap-3 lg:gap-4 w-full min-w-0">
         
         <!-- Mobile Menu Hamburger Button -->
         <button
@@ -257,37 +284,36 @@ $active_site_logo = ($use_gif_logo && !empty($logo_gif_url)) ? $logo_gif_url : $
 
         <!-- Brand Logo Only (Configurable via Admin & Responsive) -->
         <a href="/" class="flex items-center shrink-0 group py-1" title="<?= htmlspecialchars(APP_NAME) ?> • Home">
-          <div class="relative w-auto flex items-center shrink-0" style="min-height: <?= $logo_height_mobile ?>px;">
+          <div class="relative w-auto flex items-center shrink-0">
             <img
               src="<?= htmlspecialchars($active_site_logo) ?>"
               alt="<?= htmlspecialchars(APP_NAME) ?> Logo"
-              style="height: <?= $logo_height_mobile ?>px;"
-              class="w-auto max-w-[150px] sm:max-w-[240px] object-contain transition-transform group-hover:scale-105 sm:!h-[<?= $logo_height_desktop ?>px]"
+              class="site-header-brand-logo object-contain transition-transform group-hover:scale-105"
               onerror="this.onerror=null; this.src='/logo.png';"
             />
           </div>
         </a>
 
         <!-- Delivery Location Selector (Pincode) -->
-        <div class="hidden md:flex items-center">
+        <div class="hidden md:flex items-center shrink-0">
           <button
             type="button"
             onclick="openPincodeModal()"
-            class="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-gray-200 bg-brand-cream/60 hover:border-brand-green hover:bg-emerald-50 transition-colors text-left group"
+            class="flex items-center gap-1.5 px-2.5 sm:px-3 py-1.5 rounded-lg border border-gray-200 bg-brand-cream/60 hover:border-brand-green hover:bg-emerald-50 transition-colors text-left group shrink-0"
           >
             <i data-lucide="map-pin" class="w-4 h-4 text-brand-orange shrink-0 group-hover:animate-bounce"></i>
             <div class="text-xs leading-tight">
-              <span class="block text-gray-500 text-[10px]">Express Village Dispatch</span>
-              <span class="font-semibold text-gray-800 truncate max-w-[140px] block" id="header-pincode-display">
+              <span class="block text-gray-500 text-[10px] whitespace-nowrap">Express Village Dispatch</span>
+              <span class="font-semibold text-gray-800 truncate max-w-[110px] sm:max-w-[130px] block" id="header-pincode-display">
                 <?= htmlspecialchars($_SESSION['delivery_location_text'] ?? ($_SESSION['shipping_pincode'] ?? 'Hardoi 241126')) ?>
               </span>
             </div>
-            <i data-lucide="chevron-down" class="w-3.5 h-3.5 text-gray-400 group-hover:text-gray-700"></i>
+            <i data-lucide="chevron-down" class="w-3.5 h-3.5 text-gray-400 group-hover:text-gray-700 shrink-0"></i>
           </button>
         </div>
 
         <!-- 3. AJAX Live Autocomplete Search Bar (Rounded-full Style) -->
-        <div class="flex-1 max-w-xl relative hidden sm:block" id="headerSearchContainer">
+        <div class="flex-1 min-w-[140px] max-w-xl relative hidden sm:block" id="headerSearchContainer">
           <form action="/products.php" method="GET" class="relative">
             <input
               type="text"
@@ -327,15 +353,15 @@ $active_site_logo = ($use_gif_logo && !empty($logo_gif_url)) ? $logo_gif_url : $
         </div>
 
         <!-- 4. Action Icons: Nearby Artisans, Seller Login, Wishlist, Cart, Profile -->
-        <div class="flex items-center gap-1 sm:gap-2.5 shrink-0">
+        <div class="flex items-center gap-1 sm:gap-2 lg:gap-2.5 shrink-0">
           
           <!-- Nearby Artisans Button -->
           <a
             href="/artisans.php"
-            class="hidden md:inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-emerald-600/30 text-brand-green bg-emerald-50 hover:bg-brand-green hover:text-white transition-all text-xs font-semibold"
+            class="hidden md:inline-flex items-center gap-1.5 px-2.5 sm:px-3 py-1.5 rounded-lg border border-emerald-600/30 text-brand-green bg-emerald-50 hover:bg-brand-green hover:text-white transition-all text-xs font-semibold whitespace-nowrap shrink-0"
             title="Locate rural artisans & foundries"
           >
-            <i data-lucide="map-pin" class="w-3.5 h-3.5 text-brand-orange"></i>
+            <i data-lucide="map-pin" class="w-3.5 h-3.5 text-brand-orange shrink-0"></i>
             <span>Nearby Artisans</span>
           </a>
 
@@ -343,18 +369,18 @@ $active_site_logo = ($use_gif_logo && !empty($logo_gif_url)) ? $logo_gif_url : $
           <?php if ($current_user && $current_user['role'] === 'vendor'): ?>
             <a
               href="/seller/dashboard.php"
-              class="hidden sm:inline-flex items-center gap-1 px-2.5 sm:px-3 py-1 sm:py-1.5 rounded-lg border border-brand-orange text-white bg-brand-orange hover:bg-orange-600 transition-all text-xs font-bold shadow-xs shrink-0"
+              class="hidden sm:inline-flex items-center gap-1 px-2 sm:px-2.5 lg:px-3 py-1 sm:py-1.5 rounded-lg border border-brand-orange text-white bg-brand-orange hover:bg-orange-600 transition-all text-xs font-bold shadow-xs whitespace-nowrap shrink-0"
             >
-              <i data-lucide="store" class="w-3.5 h-3.5"></i>
+              <i data-lucide="store" class="w-3.5 h-3.5 shrink-0"></i>
               <span>Seller Dashboard</span>
             </a>
           <?php else: ?>
             <a
               href="/login.php?tab=seller"
-              class="hidden sm:inline-flex items-center gap-1 px-2.5 sm:px-3 py-1 sm:py-1.5 rounded-lg border border-brand-orange/50 text-brand-orange bg-orange-50 hover:bg-brand-orange hover:text-white transition-all text-xs font-bold cursor-pointer shrink-0"
+              class="hidden sm:inline-flex items-center gap-1 px-2 sm:px-2.5 lg:px-3 py-1 sm:py-1.5 rounded-lg border border-brand-orange/50 text-brand-orange bg-orange-50 hover:bg-brand-orange hover:text-white transition-all text-xs font-bold cursor-pointer whitespace-nowrap shrink-0"
               title="Artisan & Seller Login"
             >
-              <i data-lucide="store" class="w-3.5 h-3.5"></i>
+              <i data-lucide="store" class="w-3.5 h-3.5 shrink-0"></i>
               <span>Seller Login</span>
             </a>
           <?php endif; ?>
@@ -375,7 +401,7 @@ $active_site_logo = ($use_gif_logo && !empty($logo_gif_url)) ? $logo_gif_url : $
           <!-- Cart Icon & Total -->
           <a
             href="/cart.php"
-            class="flex items-center gap-2 p-1.5 sm:px-3 sm:py-1.5 rounded-full sm:rounded-lg text-gray-700 hover:bg-emerald-50 hover:text-brand-green border border-transparent sm:border-gray-200 transition-all shrink-0"
+            class="flex items-center gap-1.5 sm:gap-2 p-1.5 sm:px-2.5 lg:px-3 sm:py-1.5 rounded-full sm:rounded-lg text-gray-700 hover:bg-emerald-50 hover:text-brand-green border border-transparent sm:border-gray-200 transition-all whitespace-nowrap shrink-0"
             title="Shopping Cart"
             aria-label="Shopping Cart"
           >

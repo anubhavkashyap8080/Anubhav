@@ -167,21 +167,21 @@ require_once __DIR__ . '/admin_header.php';
               मोबाइल स्क्रीन पर लोगो ऊंचाई (Mobile Logo Height)
             </label>
             <span class="text-xs font-mono font-bold text-indigo-600 px-2 py-0.5 bg-indigo-50 rounded border border-indigo-200" id="mobile_val_badge">
-              <?= htmlspecialchars(get_setting_val('logo_height_mobile', '38')) ?>px
+              <?= htmlspecialchars(get_setting_val('logo_height_mobile', '46')) ?>px
             </span>
           </div>
           <div class="flex items-center gap-3">
-            <input type="range" min="24" max="64" step="1" name="logo_height_mobile" id="range_logo_mobile"
-              value="<?= htmlspecialchars(get_setting_val('logo_height_mobile', '38')) ?>"
+            <input type="range" min="28" max="64" step="1" name="logo_height_mobile" id="range_logo_mobile"
+              value="<?= htmlspecialchars(get_setting_val('logo_height_mobile', '46')) ?>"
               oninput="document.getElementById('mobile_val_badge').innerText = this.value + 'px'; document.getElementById('num_logo_mobile').value = this.value; updateLogoPreview();"
               class="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-indigo-600">
-            <input type="number" min="24" max="64" id="num_logo_mobile"
-              value="<?= htmlspecialchars(get_setting_val('logo_height_mobile', '38')) ?>"
+            <input type="number" min="28" max="64" id="num_logo_mobile"
+              value="<?= htmlspecialchars(get_setting_val('logo_height_mobile', '46')) ?>"
               oninput="document.getElementById('range_logo_mobile').value = this.value; document.getElementById('mobile_val_badge').innerText = this.value + 'px'; updateLogoPreview();"
               class="w-20 px-2.5 py-1 bg-white border border-gray-300 rounded-lg text-xs font-bold text-center">
           </div>
           <p class="text-[11px] text-gray-500">
-            सुझाव: 36px से 42px मोबाइल डिवाइसेस के लिए सबसे अनुकूल और स्पष्ट रहता है।
+            सुझाव: 44px से 52px मोबाइल डिवाइसेस के लिए सबसे अनुकूल और स्पष्ट रहता है।
           </p>
         </div>
 
@@ -193,21 +193,21 @@ require_once __DIR__ . '/admin_header.php';
               डेस्कटॉप स्क्रीन पर लोगो ऊंचाई (Desktop Logo Height)
             </label>
             <span class="text-xs font-mono font-bold text-indigo-600 px-2 py-0.5 bg-indigo-50 rounded border border-indigo-200" id="desktop_val_badge">
-              <?= htmlspecialchars(get_setting_val('logo_height_desktop', '48')) ?>px
+              <?= htmlspecialchars(get_setting_val('logo_height_desktop', '62')) ?>px
             </span>
           </div>
           <div class="flex items-center gap-3">
-            <input type="range" min="30" max="80" step="1" name="logo_height_desktop" id="range_logo_desktop"
-              value="<?= htmlspecialchars(get_setting_val('logo_height_desktop', '48')) ?>"
+            <input type="range" min="36" max="90" step="1" name="logo_height_desktop" id="range_logo_desktop"
+              value="<?= htmlspecialchars(get_setting_val('logo_height_desktop', '62')) ?>"
               oninput="document.getElementById('desktop_val_badge').innerText = this.value + 'px'; document.getElementById('num_logo_desktop').value = this.value; updateLogoPreview();"
               class="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-indigo-600">
-            <input type="number" min="30" max="80" id="num_logo_desktop"
-              value="<?= htmlspecialchars(get_setting_val('logo_height_desktop', '48')) ?>"
+            <input type="number" min="36" max="90" id="num_logo_desktop"
+              value="<?= htmlspecialchars(get_setting_val('logo_height_desktop', '62')) ?>"
               oninput="document.getElementById('range_logo_desktop').value = this.value; document.getElementById('desktop_val_badge').innerText = this.value + 'px'; updateLogoPreview();"
               class="w-20 px-2.5 py-1 bg-white border border-gray-300 rounded-lg text-xs font-bold text-center">
           </div>
           <p class="text-[11px] text-gray-500">
-            सुझाव: 48px से 56px डेस्कटॉप हेडर के लिए संतुलित रहता है।
+            सुझाव: 58px से 68px डेस्कटॉप हेडर के लिए संतुलित और बड़ा दिखता है।
           </p>
         </div>
 
