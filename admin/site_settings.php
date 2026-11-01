@@ -54,6 +54,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['save_settings'])) {
 
         $allowed_keys = [
             'homepage_layout', 'homepage_youtube_url',
+            'slider_slide1_badge', 'slider_slide1_title', 'slider_slide1_subtitle', 'slider_slide1_btn1_text', 'slider_slide1_btn1_link', 'slider_slide1_btn2_text', 'slider_slide1_btn2_link', 'slider_slide1_image',
+            'slider_slide2_badge', 'slider_slide2_title', 'slider_slide2_subtitle', 'slider_slide2_btn1_text', 'slider_slide2_btn1_link', 'slider_slide2_btn2_text', 'slider_slide2_btn2_link', 'slider_slide2_image',
+            'slider_slide3_badge', 'slider_slide3_title', 'slider_slide3_subtitle', 'slider_slide3_btn1_text', 'slider_slide3_btn1_link', 'slider_slide3_btn2_text', 'slider_slide3_btn2_link', 'slider_slide3_image',
             'brand_name', 'brand_tagline', 'company_name', 'contact_phone', 'contact_email',
             'factory_address', 'head_office_address', 'announcement_text',
             'site_logo_url', 'logo_gif_url', 'use_gif_logo', 'logo_height_mobile', 'logo_height_desktop',

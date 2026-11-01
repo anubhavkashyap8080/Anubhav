@@ -1788,7 +1788,7 @@ if (!function_exists('get_setting')) {
  * Extract clean YouTube Embed URL from any standard YouTube link or video ID
  */
 if (!function_exists('get_youtube_embed_url')) {
-    function get_youtube_embed_url($url_or_id, $autoplay = 0) {
+    function get_youtube_embed_url($url_or_id, $autoplay = 0, $background_mode = false) {
         $raw = trim((string)$url_or_id);
         if (empty($raw)) {
             $raw = 'https://www.youtube.com/watch?v=k4m3y1eH5Ww';
@@ -1802,6 +1802,11 @@ if (!function_exists('get_youtube_embed_url')) {
         if (empty($video_id)) {
             $video_id = 'k4m3y1eH5Ww';
         }
+
+        if ($background_mode) {
+            return 'https://www.youtube-nocookie.com/embed/' . $video_id . '?autoplay=1&mute=1&controls=0&loop=1&playlist=' . $video_id . '&playsinline=1&rel=0&modestbranding=1&enablejsapi=1&iv_load_policy=3&disablekb=1';
+        }
+
         return 'https://www.youtube-nocookie.com/embed/' . $video_id . ($autoplay ? '?autoplay=1&mute=1' : '');
     }
 }
