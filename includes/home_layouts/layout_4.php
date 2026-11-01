@@ -98,7 +98,7 @@
 </section>
 
 <!-- 2. Modern Bento Grid Hero Section -->
-<section class="bg-stone-950 text-white py-8 sm:py-12 border-b border-stone-800 overflow-x-hidden">
+<section class="text-white py-8 sm:py-10 border-b border-stone-800 overflow-x-hidden" style="background: linear-gradient(135deg, #064e3b 0%, #032b1e 50%, #0f172a 100%);">
   <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
     
     <!-- Top Header -->
@@ -268,9 +268,11 @@
       <?php foreach (array_slice($featured_products, 0, 8) as $p): ?>
         <div class="bg-white rounded-2xl border border-gray-200 p-3 sm:p-4 hover:border-emerald-600 hover:shadow-md transition flex flex-col justify-between group">
           <div>
-            <div class="relative w-full aspect-square bg-stone-100 rounded-xl overflow-hidden mb-3">
-              <img src="<?= htmlspecialchars($p['image_url'] ?? '/assets/images/placeholder.jpg') ?>" 
+            <?php $feat_img = !empty($p['image']) ? $p['image'] : (!empty($p['image_url']) ? $p['image_url'] : '/assets/images/placeholder.jpg'); ?>
+            <div class="relative w-full aspect-square bg-stone-50 rounded-xl overflow-hidden mb-3 border border-gray-100">
+              <img src="<?= htmlspecialchars($feat_img) ?>" 
                    alt="<?= htmlspecialchars($p['name']) ?>"
+                   onerror="this.onerror=null; this.src='/assets/images/placeholder.jpg';"
                    class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
                    loading="lazy">
               <?php if (!empty($p['is_best_seller'])): ?>

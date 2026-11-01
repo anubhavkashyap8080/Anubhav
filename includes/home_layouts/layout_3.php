@@ -102,86 +102,78 @@ $yt_embed_url = get_youtube_embed_url($yt_setting, 1, true);
   </div>
 </section>
 
-<!-- 2. Cinematic Autoplay Video Hero (Zero Controls, Muted, Continuous Loop, Logo-Gradient Overlay) -->
-<section class="relative w-full min-h-[480px] sm:min-h-[540px] lg:min-h-[580px] overflow-hidden bg-stone-950 text-white flex items-center">
-  <!-- Muted Autoplay Video Background (Pointer Events None to completely isolate iframe) -->
-  <div class="absolute inset-0 pointer-events-none overflow-hidden select-none">
-    <iframe 
-      src="<?= htmlspecialchars($yt_embed_url) ?>" 
-      title="GanvGaliHat Rural Craft Video"
-      class="w-[300%] h-[300%] -top-[100%] -left-[100%] absolute object-cover border-0 filter brightness-[0.75] contrast-[1.1]"
-      loading="eager"
-      allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-      tabindex="-1">
-    </iframe>
-  </div>
-
-  <!-- Logo-Derived Rich Gradient Overlay (Forest Green to Amber-Stone) -->
-  <div class="absolute inset-0 bg-gradient-to-r from-stone-950/95 via-emerald-950/85 to-amber-950/70 z-10 pointer-events-none"></div>
-
-  <!-- Foreground Content -->
-  <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-20 w-full py-12">
+<!-- 2. Cinematic Autoplay Video Hero (Compact, Sleek 16:9 Responsive Player) -->
+<section class="relative w-full overflow-hidden text-white border-b border-stone-800" style="background: linear-gradient(135deg, #064e3b 0%, #032b1e 50%, #0f172a 100%);">
+  <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-10">
     <div class="grid grid-cols-1 lg:grid-cols-12 gap-8 items-center">
       
-      <div class="lg:col-span-8 space-y-5 text-left">
-        <div class="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-amber-500/20 border border-amber-400/40 text-amber-300 text-xs font-bold shadow-md">
+      <!-- Left Column: Story & CTAs (7 cols) -->
+      <div class="lg:col-span-7 space-y-4 text-left">
+        <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-amber-500/15 border border-amber-400/40 text-amber-300 text-xs font-bold shadow-xs">
           <span class="w-2 h-2 rounded-full bg-amber-400 animate-pulse"></span>
           <span>Village Forge Heritage • Hunar Desh Ka, Ganv Se Ghar Tak</span>
         </div>
 
-        <h1 class="text-3xl sm:text-5xl lg:text-6xl font-black text-white leading-tight tracking-tight">
+        <h1 class="text-2xl sm:text-4xl lg:text-5xl font-black text-white leading-tight tracking-tight">
           Grassroots Rural Forges & <span class="text-transparent bg-clip-text bg-gradient-to-r from-amber-400 via-amber-300 to-emerald-400">Pure Village Harvest</span>
         </h1>
 
-        <p class="text-xs sm:text-base text-stone-200 leading-relaxed max-w-2xl">
+        <p class="text-xs sm:text-sm text-stone-200 leading-relaxed max-w-xl">
           Direct from the charcoal hearths of Kalyani agrofood pvt ltd in Sandila, bullock-driven wooden mustard expellers in Madhoganj, and handloom cotton weavers in Mallawan. 100% authentic, zero middlemen.
         </p>
 
-        <div class="flex flex-wrap items-center gap-3 pt-2">
-          <a href="/products.php" class="px-6 py-3.5 bg-amber-500 hover:bg-amber-400 text-stone-950 font-black text-xs sm:text-sm rounded-xl shadow-lg transition flex items-center gap-2">
+        <div class="flex flex-wrap items-center gap-3 pt-1">
+          <a href="/products.php" class="px-5 py-3 bg-amber-500 hover:bg-amber-400 text-stone-950 font-black text-xs sm:text-sm rounded-xl shadow-lg transition flex items-center gap-2">
             <span>Shop Village Products</span>
             <i data-lucide="arrow-right" class="w-4 h-4"></i>
           </a>
-          <a href="/artisans.php" class="px-5 py-3.5 bg-white/10 hover:bg-white/20 text-white font-bold text-xs sm:text-sm rounded-xl transition backdrop-blur-md border border-white/20 flex items-center gap-2">
+          <a href="/artisans.php" class="px-5 py-3 bg-white/10 hover:bg-white/20 text-white font-bold text-xs sm:text-sm rounded-xl transition backdrop-blur-md border border-white/20 flex items-center gap-2">
             <i data-lucide="users" class="w-4 h-4 text-emerald-400"></i>
             <span>Meet Verified Artisans</span>
           </a>
         </div>
 
         <!-- Trust Stats Badges -->
-        <div class="pt-6 border-t border-stone-800/80 grid grid-cols-3 gap-4 max-w-lg">
+        <div class="pt-4 border-t border-emerald-800/60 grid grid-cols-3 gap-3 max-w-md">
           <div>
-            <span class="text-xl sm:text-2xl font-black text-white block">4,820+</span>
-            <span class="text-stone-400 text-[11px] font-semibold">Orders Dispatched</span>
+            <span class="text-lg sm:text-xl font-black text-white block">4,820+</span>
+            <span class="text-stone-300 text-[10px] font-medium">Orders Dispatched</span>
           </div>
           <div>
-            <span class="text-xl sm:text-2xl font-black text-emerald-400 block">42 Villages</span>
-            <span class="text-stone-400 text-[11px] font-semibold">Direct Maker Hubs</span>
+            <span class="text-lg sm:text-xl font-black text-emerald-400 block">42 Villages</span>
+            <span class="text-stone-300 text-[10px] font-medium">Direct Maker Hubs</span>
           </div>
           <div>
-            <span class="text-xl sm:text-2xl font-black text-amber-400 block">Speed Post</span>
-            <span class="text-stone-400 text-[11px] font-semibold">Pan-India Direct</span>
+            <span class="text-lg sm:text-xl font-black text-amber-400 block">Speed Post</span>
+            <span class="text-stone-300 text-[10px] font-medium">Pan-India Direct</span>
           </div>
         </div>
       </div>
 
-      <!-- Right Card: Live Video Spotlight Badge -->
-      <div class="lg:col-span-4 hidden lg:block">
-        <div class="bg-stone-900/90 rounded-3xl p-5 border border-amber-500/30 shadow-2xl backdrop-blur-md">
-          <div class="flex items-center gap-2 mb-3">
-            <span class="w-2.5 h-2.5 rounded-full bg-red-500 animate-ping"></span>
-            <span class="text-[10px] font-black uppercase tracking-wider text-amber-400">Cinematic Forge Documentary</span>
+      <!-- Right Column: Dedicated 16:9 Autoplay Video Showcase Player (5 cols) -->
+      <div class="lg:col-span-5">
+        <div class="bg-stone-950 rounded-2xl overflow-hidden border-2 border-amber-400/40 shadow-2xl group">
+          <!-- 16:9 Responsive Player Container -->
+          <div class="relative w-full aspect-video bg-black overflow-hidden">
+            <iframe 
+              src="<?= htmlspecialchars($yt_embed_url) ?>" 
+              title="GanvGaliHat Rural Craft Video"
+              class="w-full h-full border-0 absolute inset-0"
+              style="width: 100%; height: 100%; border: 0;"
+              loading="eager"
+              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+              tabindex="-1">
+            </iframe>
           </div>
-          <h3 class="font-extrabold text-base text-white mb-2">
-            The Charcoal Blacksmiths of Sandila
-          </h3>
-          <p class="text-xs text-stone-300 leading-relaxed mb-4">
-            Watch our generational masters forge heavy leaf-spring tools at over 1,200°C on open hearths by Kalyani agrofood pvt ltd.
-          </p>
-          <div class="p-3 bg-stone-950 rounded-xl border border-stone-800 flex items-center justify-between text-xs text-stone-400">
-            <span>Playing Continuously</span>
-            <span class="text-emerald-400 font-bold flex items-center gap-1">
-              <i data-lucide="volume-x" class="w-3.5 h-3.5"></i> Muted Background
+
+          <!-- Player Status Bar -->
+          <div class="p-3 bg-stone-900 border-t border-stone-800 flex items-center justify-between text-xs">
+            <div class="flex items-center gap-2">
+              <span class="w-2 h-2 rounded-full bg-red-500 animate-ping"></span>
+              <span class="font-extrabold text-amber-400 text-[11px]">The Charcoal Blacksmiths of Sandila</span>
+            </div>
+            <span class="text-emerald-400 font-bold flex items-center gap-1 text-[10px]">
+              <i data-lucide="volume-x" class="w-3 h-3"></i> Muted Autoplay
             </span>
           </div>
         </div>
@@ -210,9 +202,11 @@ $yt_embed_url = get_youtube_embed_url($yt_setting, 1, true);
       <?php foreach (array_slice($featured_products, 0, 8) as $p): ?>
         <div class="bg-white rounded-2xl border border-gray-200 p-3 sm:p-4 hover:border-emerald-600 hover:shadow-md transition flex flex-col justify-between group">
           <div>
-            <div class="relative w-full aspect-square bg-stone-100 rounded-xl overflow-hidden mb-3">
-              <img src="<?= htmlspecialchars($p['image_url'] ?? '/assets/images/placeholder.jpg') ?>" 
+            <?php $feat_img = !empty($p['image']) ? $p['image'] : (!empty($p['image_url']) ? $p['image_url'] : '/assets/images/placeholder.jpg'); ?>
+            <div class="relative w-full aspect-square bg-stone-50 rounded-xl overflow-hidden mb-3 border border-gray-100">
+              <img src="<?= htmlspecialchars($feat_img) ?>" 
                    alt="<?= htmlspecialchars($p['name']) ?>"
+                   onerror="this.onerror=null; this.src='/assets/images/placeholder.jpg';"
                    class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
                    loading="lazy">
               <?php if (!empty($p['is_best_seller'])): ?>
@@ -340,50 +334,55 @@ $yt_embed_url = get_youtube_embed_url($yt_setting, 1, true);
 </section>
 
 <!-- 5. Heavy Forged Agricultural Tools by Kalyani agrofood pvt ltd -->
-<section class="py-12 bg-stone-950 text-white border-b border-stone-800">
+<section class="py-12 bg-stone-50 border-b border-gray-200">
   <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
     <div class="flex flex-col sm:flex-row sm:items-end justify-between gap-4 mb-8">
       <div>
-        <span class="text-xs font-black text-amber-400 uppercase tracking-widest block mb-1">Sandila Industrial Hub</span>
-        <h2 class="text-2xl sm:text-3xl font-black text-white">Hand-Forged Implements by Kalyani agrofood pvt ltd</h2>
-        <p class="text-stone-400 text-xs sm:text-sm mt-1">High-carbon leaf-spring steel forged on charcoal hearths in Sandila, Hardoi</p>
+        <span class="text-xs font-black text-emerald-800 uppercase tracking-widest block mb-1">Sandila Industrial Hub</span>
+        <h2 class="text-2xl sm:text-3xl font-black text-gray-900">Hand-Forged Implements by Kalyani agrofood pvt ltd</h2>
+        <p class="text-gray-500 text-xs sm:text-sm mt-1">High-carbon leaf-spring steel forged on charcoal hearths in Sandila, Hardoi</p>
       </div>
-      <a href="/products.php?category=traditional-tools" class="inline-flex items-center gap-1.5 text-xs font-bold text-amber-400 hover:text-amber-300">
+      <a href="/products.php?category=traditional-tools" class="inline-flex items-center gap-1.5 text-xs font-bold text-emerald-800 hover:text-emerald-950">
         <span>View All Forged Tools</span>
         <i data-lucide="arrow-right" class="w-4 h-4"></i>
       </a>
     </div>
 
-    <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
-      <?php foreach (array_slice($box1_tools, 0, 4) as $tool): ?>
-        <div class="bg-stone-900 rounded-2xl border border-stone-800 p-3 sm:p-4 hover:border-amber-400 transition flex flex-col justify-between group">
+    <div class="grid grid-cols-2 md:grid-cols-4 gap-4 sm:gap-6">
+      <?php foreach (array_slice($box1_tools, 0, 4) as $tool): 
+        $tool_img = !empty($tool['image']) ? $tool['image'] : (!empty($tool['image_url']) ? $tool['image_url'] : '/assets/images/placeholder.jpg');
+      ?>
+        <div class="bg-white rounded-2xl border border-gray-200 p-3 sm:p-4 hover:border-emerald-600 hover:shadow-lg transition flex flex-col justify-between group">
           <div>
-            <div class="relative w-full aspect-square bg-stone-800 rounded-xl overflow-hidden mb-3">
-              <img src="<?= htmlspecialchars($tool['image_url'] ?? '/assets/images/placeholder.jpg') ?>" 
+            <div class="relative w-full aspect-square bg-stone-50 rounded-xl overflow-hidden mb-3 border border-gray-100">
+              <img src="<?= htmlspecialchars($tool_img) ?>" 
                    alt="<?= htmlspecialchars($tool['name']) ?>" 
+                   onerror="this.onerror=null; this.src='/assets/images/placeholder.jpg';"
                    class="w-full h-full object-cover group-hover:scale-105 transition-transform"
                    loading="lazy">
-              <span class="absolute top-2 left-2 px-2 py-0.5 bg-amber-500 text-stone-950 font-black text-[10px] rounded-md">
+              <span class="absolute top-2 left-2 px-2 py-0.5 bg-amber-500 text-stone-950 font-bold text-[10px] rounded-md shadow-xs">
                 55 HRC Tempered
               </span>
             </div>
-            <h3 class="font-bold text-xs sm:text-sm text-white line-clamp-2 mb-1 group-hover:text-amber-400 transition">
-              <?= htmlspecialchars($tool['name']) ?>
+            <h3 class="font-bold text-xs sm:text-sm text-gray-900 line-clamp-2 mb-1 group-hover:text-emerald-800 transition">
+              <a href="/product.php?id=<?= $tool['id'] ?>">
+                <?= htmlspecialchars($tool['name']) ?>
+              </a>
             </h3>
-            <span class="text-[11px] text-stone-400 block mb-2">Kalyani agrofood pvt ltd • Sandila</span>
+            <span class="text-[11px] text-emerald-700 font-bold block mb-2">Kalyani agrofood pvt ltd • Sandila</span>
           </div>
 
-          <div class="pt-2 border-t border-stone-800">
+          <div class="pt-2 border-t border-gray-100">
             <div class="flex items-baseline justify-between mb-2">
-              <span class="text-base sm:text-lg font-black text-amber-400">₹<?= number_format($tool['price'], 0) ?></span>
-              <span class="text-[10px] px-1.5 py-0.5 bg-emerald-950 text-emerald-400 font-bold rounded">In Stock</span>
+              <span class="text-base sm:text-lg font-black text-gray-900">₹<?= number_format($tool['price'], 0) ?></span>
+              <span class="text-[10px] px-1.5 py-0.5 bg-emerald-50 text-emerald-700 font-bold rounded">In Stock</span>
             </div>
             <form action="/cart.php" method="POST">
               <?= csrf_field() ?>
               <input type="hidden" name="action" value="add">
               <input type="hidden" name="product_id" value="<?= (int)$tool['id'] ?>">
               <input type="hidden" name="quantity" value="1">
-              <button type="submit" class="w-full py-2 bg-amber-500 hover:bg-amber-400 text-stone-950 font-black text-xs rounded-xl transition flex items-center justify-center gap-1 cursor-pointer">
+              <button type="submit" class="w-full py-2 bg-amber-500 hover:bg-amber-400 text-stone-950 font-bold text-xs rounded-xl transition flex items-center justify-center gap-1 shadow-xs cursor-pointer">
                 <i data-lucide="shopping-cart" class="w-3.5 h-3.5"></i>
                 <span>Add to Cart</span>
               </button>
