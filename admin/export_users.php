@@ -1,6 +1,6 @@
 <?php
 /**
- * GaunGaliHat Users CSV Exporter
+ * GanvGaliHat Users CSV Exporter
  */
 
 require_once __DIR__ . '/../includes/functions.php';
@@ -8,7 +8,7 @@ require_once __DIR__ . '/../includes/auth_check.php';
 require_admin();
 
 header('Content-Type: text/csv; charset=utf-8');
-header('Content-Disposition: attachment; filename="gaungalihat_users_' . date('Y-m-d_His') . '.csv"');
+header('Content-Disposition: attachment; filename="ganvgalihat_users_' . date('Y-m-d_His') . '.csv"');
 
 $output = fopen('php://output', 'w');
 // UTF-8 BOM

@@ -1,6 +1,6 @@
 <?php
 /**
- * GaunGaliHat Single Blog Article Detail View
+ * GanvGaliHat Single Blog Article Detail View
  */
 
 require_once __DIR__ . '/includes/functions.php';
@@ -24,7 +24,7 @@ if (!$blog) {
 $pdo->prepare("UPDATE blogs SET views = views + 1 WHERE id = ?")->execute([$blog['id']]);
 
 $page_title = $blog['title'] . ' — गाँव गली हाट ब्लॉग';
-$page_desc = $blog['excerpt'] ?? 'GaunGaliHat rural artisan and agricultural heritage story.';
+$page_desc = $blog['excerpt'] ?? 'GanvGaliHat rural artisan and agricultural heritage story.';
 require_once __DIR__ . '/includes/header.php';
 
 // Related blogs

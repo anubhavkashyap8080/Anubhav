@@ -15,7 +15,7 @@ if (!$is_support_authorized) {
     exit;
 }
 
-$page_title = 'Live Support Desk — GaunGaliHat';
+$page_title = 'Live Support Desk — GanvGaliHat';
 require_once __DIR__ . '/admin_header.php';
 ?>
 
@@ -122,7 +122,7 @@ require_once __DIR__ . '/admin_header.php';
       </span>
       <select onchange="insertCannedResponse(this)" class="flex-1 px-2.5 py-1 bg-white border border-gray-200 rounded-lg text-xs outline-none">
         <option value="">-- Select quick canned response --</option>
-        <option value="Hello! Welcome to GaunGaliHat Support Desk. How may we assist you today?">Welcome greeting...</option>
+        <option value="Hello! Welcome to GanvGaliHat Support Desk. How may we assist you today?">Welcome greeting...</option>
         <option value="Your India Post parcel tracking status is being verified. Please give us 2 minutes.">Checking India Post parcel tracking...</option>
         <option value="Free all-India shipping is automatically applied on all orders of ₹499 and above.">Free shipping threshold (₹499)...</option>
         <option value="All our tools and produce are 100% authentic, hand-forged in Hardoi foundries and directly harvested.">Product quality & authenticity assurance...</option>

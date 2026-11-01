@@ -1,6 +1,6 @@
 <?php
 /**
- * GaunGaliHat Master Footer
+ * GanvGaliHat Master Footer
  * Clean Brand Footer with Vertical Payment Modes List (COD, Net Banking, Cards, UPI)
  */
 ?>

@@ -1,6 +1,6 @@
 <?php
 /**
- * GaunGaliHat Cache Manager (Super Admin only)
+ * GanvGaliHat Cache Manager (Super Admin only)
  * One-click clearing of: PHP OPcache, LiteSpeed cache, Cloudflare CDN cache,
  * browser asset cache (version bump), temporary DB data and login lock-outs.
  */
@@ -286,7 +286,7 @@ function cm_dot($on) { return '<span style="display:inline-block;width:9px;heigh
 
   <div class="cm-card">
     <h3><i class="fa-solid fa-cloud"></i> Cloudflare Purge सेटअप (वैकल्पिक)</h3>
-    <p>अपने कॉन्फ़िग फ़ाइल (<code>/home/&lt;cpanel-user&gt;/gaungalihat_config.php</code>) में यह ब्लॉक जोड़ें। Token को Cloudflare में केवल <b>Zone → Cache Purge</b> अनुमति दें।</p>
+    <p>अपने कॉन्फ़िग फ़ाइल (<code>/home/&lt;cpanel-user&gt;/ganvgalihat_config.php</code>) में यह ब्लॉक जोड़ें। Token को Cloudflare में केवल <b>Zone → Cache Purge</b> अनुमति दें।</p>
     <pre class="cm-code">'cloudflare' =&gt; [
     'zone_id'   =&gt; 'YOUR_ZONE_ID',
     'api_token' =&gt; 'YOUR_API_TOKEN_WITH_CACHE_PURGE_PERMISSION',

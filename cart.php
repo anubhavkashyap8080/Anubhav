@@ -1,6 +1,6 @@
 <?php
 /**
- * GaunGaliHat Shopping Cart
+ * GanvGaliHat Shopping Cart
  * Interactive cart with automatic shipping price calculator
  */
 

@@ -1,6 +1,6 @@
 <?php
 /**
- * GaunGaliHat Initial Super Administrator Provisioning CLI Script
+ * GanvGaliHat Initial Super Administrator Provisioning CLI Script
  * Run from terminal / SSH:
  * php scripts/create_super_admin.php
  */
@@ -13,7 +13,7 @@ if (php_sapi_name() !== 'cli') {
 require_once __DIR__ . '/../config/db.php';
 
 echo "======================================================\n";
-echo "  GaunGaliHat Super Administrator Provisioning Tool\n";
+echo "  GanvGaliHat Super Administrator Provisioning Tool\n";
 echo "======================================================\n\n";
 
 if (!$pdo) {

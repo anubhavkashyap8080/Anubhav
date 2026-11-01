@@ -1,10 +1,10 @@
 <?php
 /**
- * GaunGaliHat About Us & Heritage Page
+ * GanvGaliHat About Us & Heritage Page
  * Kalyani agrofood pvt ltd Enterprise • Rural Artisan Hub, Hand-Forged Tools, Unpolished Pulses & Women SHG Empowerment
  */
 
-$page_title = 'हमारे बारे में (About Kalyani agrofood pvt ltd & GaunGaliHat)';
+$page_title = 'हमारे बारे में (About Kalyani agrofood pvt ltd & GanvGaliHat)';
 $page_desc = 'गाँव, गली और हाट की धरोहर — कल्याणी एग्रोफूड प्रा. लि. (Kalyani agrofood pvt ltd) द्वारा संचालित हरदोई, उत्तर प्रदेश के ग्रामीण लोहारों, कुटीर कारीगरों और महिला स्वयं सहायता समूहों का सशक्त मंच।';
 
 require_once __DIR__ . '/includes/header.php';
@@ -154,7 +154,7 @@ require_once __DIR__ . '/includes/header.php';
 
     </div>
 
-    <!-- 3. The 4 Pillars of GaunGaliHat -->
+    <!-- 3. The 4 Pillars of GanvGaliHat -->
     <div class="space-y-6">
       <div class="text-center max-w-2xl mx-auto space-y-1.5">
         <span class="text-xs font-black text-amber-700 uppercase tracking-wider">

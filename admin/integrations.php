@@ -1,6 +1,6 @@
 <?php
 /**
- * GaunGaliHat Central Integrations Hub
+ * GanvGaliHat Central Integrations Hub
  * Google Analytics 4, Search Console, Firebase Cloud Messaging & Payment Gateways
  */
 
@@ -74,7 +74,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['test_notification']))
     if (verify_csrf($_POST['csrf_token'] ?? '')) {
         $default_admin_mail = 'info@' . (parse_url(SITE_URL, PHP_URL_HOST) ?: 'ganvgalihat.com');
         $test_recipient = clean_input($_POST['test_recipient'] ?? $default_admin_mail);
-        $nid = queue_notification($_SESSION['user_id'] ?? null, $test_recipient, 'email', 'GaunGaliHat Integration Test', 'This is a test notification. Your notification system is fully operational.');
+        $nid = queue_notification($_SESSION['user_id'] ?? null, $test_recipient, 'email', 'GanvGaliHat Integration Test', 'This is a test notification. Your notification system is fully operational.');
         log_audit_action('test_notification_sent', 'integrations', 'notification', $nid, 'Test notification queued to ' . $test_recipient);
         set_flash('success', "Test notification queued successfully (Queue ID #$nid)!");
         header('Location: /admin/integrations.php');
@@ -235,7 +235,7 @@ require_once __DIR__ . '/admin_header.php';
           <label class="text-xs font-bold uppercase tracking-wider text-gray-600 block mb-1.5">
             Firebase Project ID
           </label>
-          <input type="text" name="firebase_project_id" value="<?= htmlspecialchars($settings_raw['firebase_project_id'] ?? 'gaungalihat-rural-apps') ?>"
+          <input type="text" name="firebase_project_id" value="<?= htmlspecialchars($settings_raw['firebase_project_id'] ?? 'ganvgalihat-rural-apps') ?>"
             class="w-full px-4 py-2.5 bg-stone-50 border border-gray-300 rounded-xl text-xs font-mono focus:bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500">
         </div>
 

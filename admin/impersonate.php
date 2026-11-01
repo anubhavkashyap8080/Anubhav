@@ -1,6 +1,6 @@
 <?php
 /**
- * GaunGaliHat Administrative Impersonation Gateway
+ * GanvGaliHat Administrative Impersonation Gateway
  * Security Hardened:
  * 1. Strictly restricted to 'super_admin' role only
  * 2. Mandatory POST + CSRF validation (all GET endpoints disabled)

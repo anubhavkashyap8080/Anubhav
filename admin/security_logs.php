@@ -1,6 +1,6 @@
 <?php
 /**
- * GaunGaliHat Advanced Security Log Console (Super Admin only)
+ * GanvGaliHat Advanced Security Log Console (Super Admin only)
  * - Severity classification, filters, search, pagination, CSV export
  * - 7-day threat trend chart, top attacking IPs, suspicious login detection
  * - IP block / unblock list, log retention purge
@@ -124,7 +124,7 @@ $from_sql = "FROM security_logs s LEFT JOIN users u ON u.id = s.user_id WHERE $w
 if (isset($_GET['export']) && $_GET['export'] === 'csv') {
     while (ob_get_level() > 0) { ob_end_clean(); }
     header('Content-Type: text/csv; charset=utf-8');
-    header('Content-Disposition: attachment; filename=GaunGaliHat_Security_Logs_' . date('Ymd_His') . '.csv');
+    header('Content-Disposition: attachment; filename=GanvGaliHat_Security_Logs_' . date('Ymd_His') . '.csv');
     $out = fopen('php://output', 'w');
     fwrite($out, "\xEF\xBB\xBF");
     fputcsv($out, ['ID', 'Time', 'Severity', 'Event', 'IP', 'User', 'Method', 'URL', 'User Agent', 'Details']);

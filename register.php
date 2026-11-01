@@ -103,7 +103,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
 }
 
-$page_title = 'Create an Account — GaunGaliHat';
+$page_title = 'Create an Account — GanvGaliHat';
 require_once __DIR__ . '/includes/header.php';
 ?>
 

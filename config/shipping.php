@@ -1,6 +1,6 @@
 <?php
 /**
- * GaunGaliHat Automatic Shipping Price & Delivery ETA Calculator
+ * GanvGaliHat Automatic Shipping Price & Delivery ETA Calculator
  * Accurate Indian Pincode & Weight-based dispatch fee engine
  */
 

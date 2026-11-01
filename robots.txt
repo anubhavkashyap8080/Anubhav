@@ -1,4 +1,4 @@
-# GaunGaliHat Robots.txt
+# GanvGaliHat Robots.txt
 # User-Agent Directives for Web Crawlers and Search Engines
 
 User-agent: *

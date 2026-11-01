@@ -1,6 +1,6 @@
 <?php
 /**
- * GaunGaliHat Central Governance & Super Admin Control Center
+ * GanvGaliHat Central Governance & Super Admin Control Center
  * Comprehensive Financial Accounting, Marketplace Health, Role-based Visibility & CSV Exports
  */
 
@@ -24,7 +24,7 @@ if ($date_filter === 'today') {
 // 2. CSV Financial Export Handler
 if (isset($_GET['export']) && $_GET['export'] === 'csv') {
     header('Content-Type: text/csv; charset=utf-8');
-    header('Content-Disposition: attachment; filename=GaunGaliHat_Financial_Report_' . date('Ymd_His') . '.csv');
+    header('Content-Disposition: attachment; filename=GanvGaliHat_Financial_Report_' . date('Ymd_His') . '.csv');
     $out = fopen('php://output', 'w');
     fputcsv($out, ['Order Number', 'Date', 'Customer Name', 'City', 'Pincode', 'Subtotal', 'Shipping', 'Total GMV', 'Payment Method', 'Payment Status', 'Order Status']);
     

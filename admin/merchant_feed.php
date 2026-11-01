@@ -1,6 +1,6 @@
 <?php
 /**
- * GaunGaliHat - Google Merchant Center XML Feed Management & Shipping Audit
+ * GanvGaliHat - Google Merchant Center XML Feed Management & Shipping Audit
  */
 
 $page_title = "Google Merchant Center XML फ़ीड";
@@ -225,7 +225,7 @@ foreach ($feed_products as $p) {
                       <?= htmlspecialchars($p['name']) ?>
                     </a>
                     <span class="text-[10px] text-gray-500 block">
-                      <?= htmlspecialchars($p['vendor_name'] ?? 'GaunGaliHat Craft') ?> (<?= htmlspecialchars($p['vendor_district'] ?? 'Hardoi') ?>)
+                      <?= htmlspecialchars($p['vendor_name'] ?? 'GanvGaliHat Craft') ?> (<?= htmlspecialchars($p['vendor_district'] ?? 'Hardoi') ?>)
                     </span>
                   </div>
                 </div>

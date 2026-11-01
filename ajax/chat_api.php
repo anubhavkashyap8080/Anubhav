@@ -1,6 +1,6 @@
 <?php
 /**
- * GaunGaliHat Real-time Live Chat API Endpoint
+ * GanvGaliHat Real-time Live Chat API Endpoint
  */
 
 require_once __DIR__ . '/../includes/functions.php';
@@ -47,7 +47,7 @@ function get_or_create_customer_session() {
         // Send automated welcome message from support in English
         $stmt_wel = $pdo->prepare("
             INSERT INTO chat_messages (session_id, sender_type, sender_name, message, is_read, created_at)
-            VALUES (?, 'support', 'GaunGaliHat Support Desk', 'Hello! Welcome to GaunGaliHat Live Support. How may we assist you today?', 0, CURRENT_TIMESTAMP)
+            VALUES (?, 'support', 'GanvGaliHat Support Desk', 'Hello! Welcome to GanvGaliHat Live Support. How may we assist you today?', 0, CURRENT_TIMESTAMP)
         ");
         $stmt_wel->execute([$session['id']]);
     }

@@ -1,5 +1,5 @@
 <?php
-$page_title = 'Secure Checkout — GaunGaliHat';
+$page_title = 'Secure Checkout — GanvGaliHat';
 require_once __DIR__ . '/includes/header.php';
 
 $cart = get_cart();

@@ -1,6 +1,6 @@
 <?php
 /**
- * GaunGaliHat Nearby Artisans & Hyperlocal Workshop Directory
+ * GanvGaliHat Nearby Artisans & Hyperlocal Workshop Directory
  * Discovers verified rural workshops, foundries, and direct-from-forge products based on visitor's location.
  */
 

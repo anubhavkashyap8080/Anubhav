@@ -1,6 +1,6 @@
 <?php
 /**
- * GaunGaliHat Security Center & Intrusion Defense Console
+ * GanvGaliHat Security Center & Intrusion Defense Console
  * Real-time Security Monitoring, Login Rate Limiting, File Integrity & Disaster Recovery
  */
 
@@ -25,8 +25,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['create_backup'])) {
     }
     
     $timestamp = date('Ymd_His');
-    $sourceSqlite = __DIR__ . '/../data/gaungalihat.sqlite';
-    $backupDest = $backupDir . '/gaungalihat_manual_backup_' . $timestamp . '.sqlite';
+    $sourceSqlite = file_exists(__DIR__ . '/../data/ganvgalihat.sqlite') ? (__DIR__ . '/../data/ganvgalihat.sqlite') : (__DIR__ . '/../data/gaungalihat.sqlite');
+    $backupDest = $backupDir . '/ganvgalihat_manual_backup_' . $timestamp . '.sqlite';
     
     if (file_exists($sourceSqlite)) {
         copy($sourceSqlite, $backupDest);

@@ -1,6 +1,6 @@
 <?php
 /**
- * GaunGaliHat Administrative Audit Trail Console
+ * GanvGaliHat Administrative Audit Trail Console
  * Immutable record of all administrative, financial, and security actions
  */
 
@@ -13,7 +13,7 @@ require_super_admin();
 // CSV Export Handler
 if (isset($_GET['export']) && $_GET['export'] === 'csv') {
     header('Content-Type: text/csv; charset=utf-8');
-    header('Content-Disposition: attachment; filename=GaunGaliHat_Audit_Logs_' . date('Ymd_His') . '.csv');
+    header('Content-Disposition: attachment; filename=GanvGaliHat_Audit_Logs_' . date('Ymd_His') . '.csv');
     $out = fopen('php://output', 'w');
     fputcsv($out, ['ID', 'User ID', 'User Name', 'Role', 'Action', 'Module', 'Entity Type', 'Entity ID', 'Details', 'IP Address', 'Timestamp']);
     

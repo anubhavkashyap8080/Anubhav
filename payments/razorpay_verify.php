@@ -1,6 +1,6 @@
 <?php
 /**
- * GaunGaliHat Razorpay Verification Endpoint
+ * GanvGaliHat Razorpay Verification Endpoint
  * Security Hardened:
  * 1. Cryptographic HMAC-SHA256 signature verification (order_id|payment_id, secret)
  * 2. Session / user ownership confirmation

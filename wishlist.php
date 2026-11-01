@@ -1,6 +1,6 @@
 <?php
 /**
- * GaunGaliHat Wishlist Page
+ * GanvGaliHat Wishlist Page
  */
 
 require_once __DIR__ . '/includes/header.php';

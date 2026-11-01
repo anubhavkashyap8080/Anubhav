@@ -1,7 +1,7 @@
-# GaunGaliHat Security Hardening Audit & Remediation Log (Items 1–32)
+# GanvGaliHat Security Hardening Audit & Remediation Log (Items 1–32)
 
-**Project:** GaunGaliHat Rural Artisan Marketplace  
-**Domain:** `https://gaungalihat.womenvission.in`  
+**Project:** GanvGaliHat Rural Artisan Marketplace  
+**Domain:** `https://ganvgalihat.com`  
 **Deployment Environment:** cPanel (Apache 2.4+, PHP 8.1+, MySQL 5.7+ / 8.0+)  
 **Audit Scope:** Full codebase security audit and production hardening across 5 phases (32 numbered vulnerability remediations).
 
@@ -9,7 +9,7 @@
 
 ## Executive Summary
 
-A comprehensive security hardening was performed on the GaunGaliHat platform. All 32 security issues identified in the audit were resolved in code without regressions to features, existing database records, or user-facing Hindi/English bilingual UI text.
+A comprehensive security hardening was performed on the GanvGaliHat platform. All 32 security issues identified in the audit were resolved in code without regressions to features, existing database records, or user-facing Hindi/English bilingual UI text.
 
 Before beginning code modifications, a complete project backup was created at `../ganvgalihat_backup_pre_security`.
 
@@ -34,15 +34,15 @@ Before beginning code modifications, a complete project backup was created at `.
 
 4. **Credential Isolation & Diagnostic Error Suppression (`config/db.php`, `config/settings.php`)**
    - **Vulnerability:** Database credentials, fallback root accounts without passwords, and test payment gateway keys were hardcoded in web-accessible scripts. Raw PDO connection exceptions leaked server paths and credentials.
-   - **Fix:** Replaced hardcoded credentials with `load_platform_config()` which reads credentials outside the web root (`/home/<user>/gaungalihat_config.php`), from `config/config.local.php` (git-ignored), or from environment variables (`DB_HOST`, `DB_NAME`, `DB_USER`, `DB_PASS`). Created `config.sample.php` and `config/config.sample.php`. Eliminated all root fallback accounts and default API keys. Replaced database connection error dumps with a generic, user-safe HTTP 500 error page (`GGH-DB-ERR-500`) and logged errors to server logs.
+   - **Fix:** Replaced hardcoded credentials with `load_platform_config()` which reads credentials outside the web root (`/home/<user>/ganvgalihat_config.php`), from `config/config.local.php` (git-ignored), or from environment variables (`DB_HOST`, `DB_NAME`, `DB_USER`, `DB_PASS`). Created `config.sample.php` and `config/config.sample.php`. Eliminated all root fallback accounts and default API keys. Replaced database connection error dumps with a generic, user-safe HTTP 500 error page (`GGH-DB-ERR-500`) and logged errors to server logs.
 
 5. **Elimination of Auto-Installation & Schema Seeding on Web Requests (`install.php`, `config/db.php`)**
    - **Vulnerability:** `install.php` remained in the web root, and `config/db.php` automatically ran schema and seed scripts during runtime web requests.
    - **Fix:** Completely removed `install.php` from the codebase. Disabled runtime schema execution and auto-seeding in `config/db.php`.
 
-6. **Default Account & Seeded Credential Removal (`database/schema.sql`, `gaungalihat_database.sql`, `admin/import_users.php`, `scripts/create_super_admin.php`)**
+6. **Default Account & Seeded Credential Removal (`database/schema.sql`, `ganvgalihat_database.sql`, `admin/import_users.php`, `scripts/create_super_admin.php`)**
    - **Vulnerability:** Seeded default user accounts (`anubhav`, `sunil_ops`, etc.) with predictable passwords existed in database schemas.
-   - **Fix:** Purged all default user accounts and hardcoded credentials from `database/schema.sql` and `gaungalihat_database.sql`. Built a standalone CLI utility `scripts/create_super_admin.php` for initial provisioning. Updated `admin/import_users.php` to generate unique cryptographically random passwords (`random_bytes()`) per user and enforce `force_password_change = 1` on first sign-in.
+   - **Fix:** Purged all default user accounts and hardcoded credentials from `database/schema.sql` and `ganvgalihat_database.sql`. Built a standalone CLI utility `scripts/create_super_admin.php` for initial provisioning. Updated `admin/import_users.php` to generate unique cryptographically random passwords (`random_bytes()`) per user and enforce `force_password_change = 1` on first sign-in.
 
 7. **Secure Impersonation Architecture (`admin/impersonate.php`, `includes/functions.php`, headers)**
    - **Vulnerability:** Impersonation allowed GET requests, lacked audit logging, allowed non-super admins to impersonate, and lacked visual indicators.
@@ -183,7 +183,7 @@ Before beginning code modifications, a complete project backup was created at `.
 
 31. **Robots.txt & XML Sitemap Domain Alignment (`robots.php`, `sitemap.php`)**
     - **Vulnerability:** Fallback domains defaulted to `'ganvgalihat.com'` instead of the active production domain.
-    - **Fix:** Aligned `robots.php` and `sitemap.php` with `SITE_URL` (`https://gaungalihat.womenvission.in`).
+    - **Fix:** Aligned `robots.php` and `sitemap.php` with `SITE_URL` (`https://ganvgalihat.com`).
 
 32. **Security Audit Logging & Real-time Owner Alerts (`includes/functions.php`, `admin/users.php`, `login.php`)**
     - **Vulnerability:** Administrative privilege escalation and brute force attacks did not alert system owners.
@@ -220,7 +220,7 @@ Before beginning code modifications, a complete project backup was created at `.
 - `contact.php` — Added CSRF check, IP/phone rate limiting, Turnstile verification, and widget.
 - `database/schema.sql` — Purged default accounts, added `rate_limits` and `coupon_usages` tables.
 - `feeds/google_merchant.php` — Replaced `$_SERVER['HTTP_HOST']` with `SITE_URL`.
-- `gaungalihat_database.sql` — Purged default accounts and passwords.
+- `ganvgalihat_database.sql` — Purged default accounts and passwords.
 - `includes/auth_check.php` — Re-read user status on each request, immediate suspension enforcement, 30-min admin idle timeout.
 - `includes/functions.php` — Added `check_rate_limit()`, `verify_turnstile_captcha()`, `render_turnstile_widget()`, `is_valid_product_image_url()`, `escape_csv_cell()`, fixed `add_to_cart()` stock bug, DOMDocument HTML sanitizer, Cloudflare IP range check.
 - `includes/header.php` — Injected CSRF meta tag and impersonation banner.
@@ -278,12 +278,12 @@ This script safely creates the necessary tables (`password_resets`, `login_attem
 To complete production setup after deploying this hardened codebase:
 
 1. **Rotate Credentials & Move Config Outside Web Root:**
-   - Copy `config.sample.php` to your user home directory on cPanel (e.g. `/home/username/gaungalihat_config.php`).
+   - Copy `config.sample.php` to your user home directory on cPanel (e.g. `/home/username/ganvgalihat_config.php`).
    - Fill in your database name, user, and strong database password.
    - Delete any local credentials from `config/config.local.php`.
 
 2. **Configure API Keys:**
-   - Update Razorpay Key ID and Secret in `/home/username/gaungalihat_config.php` or in Admin Integrations.
+   - Update Razorpay Key ID and Secret in `/home/username/ganvgalihat_config.php` or in Admin Integrations.
    - Update PayU Key and Salt if PayU is used.
    - Set Cloudflare Turnstile Site Key & Secret Key in environment variables or in Admin Site Settings.
 
@@ -328,7 +328,7 @@ To complete production setup after deploying this hardened codebase:
 - Added comprehensive audit log entries for every deletion action.
 
 ### 4. Deploy Cleanup & One-Time Setup Admin Script
-- Removed `data/backups/*.sqlite`, `gaungalihat_database.sql`, `database/schema.sql`, and `database/migration_*.sql` from the deployable repository into a private archive outside the web root (`ganvgalihat_private_archive`).
+- Removed `data/backups/*.sqlite`, `ganvgalihat_database.sql`, `database/schema.sql`, and `database/migration_*.sql` from the deployable repository into a private archive outside the web root (`ganvgalihat_private_archive`).
 - Removed SQLite fallback block in `config/db.php` so production database connectivity fails securely without exposing diagnostics or creating local file databases.
 - Hardened `setup_admin.php`: Enforces a 30-minute validity window based on `filemtime(__FILE__)`, requires `SETUP_SECRET` via `?key=` compared with `hash_equals()`, locks immediately if a super admin already exists, and self-deletes (`@unlink(__FILE__)`) upon successful account creation.
 
@@ -337,7 +337,7 @@ To complete production setup after deploying this hardened codebase:
   - Enforced 301 HTTPS redirect using canonical `SITE_URL` host:
     ```apache
     RewriteCond %{HTTPS} off
-    RewriteRule ^ https://gaungalihat.womenvission.in%{REQUEST_URI} [L,R=301]
+    RewriteRule ^ https://ganvgalihat.com%{REQUEST_URI} [L,R=301]
     ```
   - Strengthened Content-Security-Policy (CSP): Added `frame-ancestors 'self'` and `form-action 'self' https://secure.payu.in https://test.payu.in`.
   - Removed `cdn.tailwindcss.com` from CSP.

@@ -1,6 +1,6 @@
 <?php
 /**
- * GaunGaliHat Phone Verification & OTP Gateway
+ * GanvGaliHat Phone Verification & OTP Gateway
  * Handles AJAX & POST requests for sending and verifying phone OTPs
  */
 
@@ -63,8 +63,8 @@ if ($action === 'send_otp') {
 
     // Send email notification if user has registered email
     if ($user && !empty($user['email'])) {
-        $subj = "Mobile Verification OTP — GaunGaliHat: " . $otp_code;
-        $msg = "Namaste " . htmlspecialchars($user['name'], ENT_QUOTES, 'UTF-8') . ",\n\nYour 6-digit verification code to verify mobile number (+91 {$phone}) on GaunGaliHat is: {$otp_code}\n\nValid for 15 minutes. Never share this code with anyone.";
+        $subj = "Mobile Verification OTP — GanvGaliHat: " . $otp_code;
+        $msg = "Namaste " . htmlspecialchars($user['name'], ENT_QUOTES, 'UTF-8') . ",\n\nYour 6-digit verification code to verify mobile number (+91 {$phone}) on GanvGaliHat is: {$otp_code}\n\nValid for 15 minutes. Never share this code with anyone.";
         @mail($user['email'], $subj, $msg, "From: no-reply@ganvgalihat.com\r\n");
     }
 

@@ -1,5 +1,5 @@
 <?php
-$page_title = 'संपर्क करें (Contact Us) — GaunGaliHat';
+$page_title = 'संपर्क करें (Contact Us) — GanvGaliHat';
 require_once __DIR__ . '/includes/header.php';
 
 $sent = false;

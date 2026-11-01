@@ -1,6 +1,6 @@
 <?php
 /**
- * GaunGaliHat Security Hardening Unit Tests
+ * GanvGaliHat Security Hardening Unit Tests
  */
 
 // Define environment mock

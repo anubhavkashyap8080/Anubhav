@@ -1,6 +1,6 @@
 <?php
 /**
- * GaunGaliHat Secure One-Time Web Setup Script
+ * GanvGaliHat Secure One-Time Web Setup Script
  * Use this in your browser if your cPanel hosting does not have SSH/Terminal access.
  * 
  * SECURITY SAFEGUARDS:
@@ -13,17 +13,17 @@
 require_once __DIR__ . '/includes/functions.php';
 
 if (!$pdo) {
-    die("<h3>डेटाबेस कनेक्शन त्रुटि (Database Connection Failed)</h3><p>कृपया सुनिश्चित करें कि config/config.local.php या gaungalihat_config.php में डेटाबेस विवरण सही हैं।</p>");
+    die("<h3>डेटाबेस कनेक्शन त्रुटि (Database Connection Failed)</h3><p>कृपया सुनिश्चित करें कि config/config.local.php या ganvgalihat_config.php में डेटाबेस विवरण सही हैं।</p>");
 }
 
 // Item 4: Require SETUP_SECRET via ?key= with hash_equals
 $cfg_sec = function_exists('get_platform_config') ? get_platform_config('security') : [];
-$expected_secret = (string)(getenv('SETUP_SECRET') ?: ($cfg_sec['setup_secret'] ?? 'GaunGaliHatSetup2026Key'));
+$expected_secret = (string)(getenv('SETUP_SECRET') ?: ($cfg_sec['setup_secret'] ?? 'GanvGaliHatSetup2026Key'));
 $provided_key = (string)($_GET['key'] ?? $_POST['setup_key'] ?? '');
 
 if (empty($provided_key) || !hash_equals($expected_secret, $provided_key)) {
     http_response_code(403);
-    die("<!DOCTYPE html><html lang='hi'><head><meta charset='UTF-8'><title>Access Denied — GaunGaliHat Setup</title></head>
+    die("<!DOCTYPE html><html lang='hi'><head><meta charset='UTF-8'><title>Access Denied — GanvGaliHat Setup</title></head>
     <body style='font-family:sans-serif;padding:40px;text-align:center;'>
     <h2 style='color:#dc2626;'>अमान्य या अनुपस्थित सेटअप कुंजी (Unauthorized Access)</h2>
     <p>इस पृष्ठ को खोलने के लिए ?key= पैरामीटर आवश्यक है। (उदा: setup_admin.php?key=" . htmlspecialchars($expected_secret) . ")</p>
@@ -38,7 +38,7 @@ if (!file_exists($setup_session_file)) {
 $first_access = (int)@file_get_contents($setup_session_file);
 if ($first_access > 0 && (time() - $first_access) > 1800) {
     http_response_code(403);
-    die("<!DOCTYPE html><html lang='hi'><head><meta charset='UTF-8'><title>Expired — GaunGaliHat Setup</title></head>
+    die("<!DOCTYPE html><html lang='hi'><head><meta charset='UTF-8'><title>Expired — GanvGaliHat Setup</title></head>
     <body style='font-family:sans-serif;padding:40px;text-align:center;'>
     <h2 style='color:#dc2626;'>सेटअप समय सीमा समाप्त (Setup Expired - 30 Minutes Elapsed)</h2>
     <p>सुरक्षा कारणों से, प्रारंभिक सेटअप कुंजी का उपयोग 30 मिनट के भीतर ही किया जा सकता है।</p>
@@ -52,7 +52,7 @@ $is_reset_mode = (isset($_GET['reset']) && $_GET['reset'] == '1');
 if ($existing_supers > 0 && !$is_reset_mode) {
     die("<!DOCTYPE html>
     <html lang='hi'>
-    <head><meta charset='UTF-8'><title>Super Admin Status — GaunGaliHat</title>
+    <head><meta charset='UTF-8'><title>Super Admin Status — GanvGaliHat</title>
     <style>body{font-family:sans-serif;background:#fdfbf7;display:flex;align-items:center;justify-content:center;height:90vh;margin:0;}
     .box{max-width:480px;background:#fff;padding:32px;border-radius:16px;border:1px solid #e5e7eb;text-align:center;box-shadow:0 4px 16px rgba(0,0,0,0.06);}
     h2{color:#059669;margin-top:0;}p{color:#4b5563;font-size:14px;line-height:1.6;}
@@ -174,7 +174,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>प्रारंभिक सुपर एडमिन सेटअप — GaunGaliHat</title>
+  <title>प्रारंभिक सुपर एडमिन सेटअप — GanvGaliHat</title>
   <link rel="stylesheet" href="/assets/css/tailwind.css">
 </head>
 <body class="bg-stone-50 min-h-screen py-10 flex items-center justify-center font-sans">
@@ -184,7 +184,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"></path></svg>
       </div>
       <h1 class="text-2xl font-black text-gray-900">प्रारंभिक सुपर एडमिन सेटअप</h1>
-      <p class="text-xs text-gray-500 mt-1">GaunGaliHat Rural Artisan Marketplace (cPanel No-SSH Setup)</p>
+      <p class="text-xs text-gray-500 mt-1">GanvGaliHat Rural Artisan Marketplace (cPanel No-SSH Setup)</p>
     </div>
 
     <div class="bg-white rounded-3xl border border-gray-200 shadow-xl p-6 sm:p-8">

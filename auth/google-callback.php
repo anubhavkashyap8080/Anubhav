@@ -1,6 +1,6 @@
 <?php
 /**
- * GaunGaliHat Google Identity Services & OAuth 2.0 Callback
+ * GanvGaliHat Google Identity Services & OAuth 2.0 Callback
  * Security Hardened: Full ID Token Verification (Signature, aud, iss, exp, email_verified)
  * Authenticates users and redirects seamlessly to the Shopper Dashboard (/account.php)
  */

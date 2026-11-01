@@ -1,6 +1,6 @@
 <?php
 /**
- * GaunGaliHat Product CSV Importer
+ * GanvGaliHat Product CSV Importer
  * Hardened CSV Parser with 1MB Size Limit, 500-Row Boundary,
  * Numeric Validation, Category/Vendor Whitelisting, Formula Neutralization & CSRF.
  */

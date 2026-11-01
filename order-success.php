@@ -1,6 +1,6 @@
 <?php
 /**
- * GaunGaliHat Order Confirmation & Receipt (Item 11 Hardened Access)
+ * GanvGaliHat Order Confirmation & Receipt (Item 11 Hardened Access)
  */
 
 require_once __DIR__ . '/includes/functions.php';
@@ -19,7 +19,7 @@ $stmt->execute([$order_id]);
 $order = $stmt->fetch();
 
 if (!$order) {
-    $page_title = 'Order Not Found — GaunGaliHat';
+    $page_title = 'Order Not Found — GanvGaliHat';
     require_once __DIR__ . '/includes/header.php';
     echo '<div class="max-w-xl mx-auto py-20 px-4 text-center">
             <h2 class="text-xl font-bold text-gray-800">आर्डर नहीं मिला (Order Not Found)</h2>
@@ -62,7 +62,7 @@ if (!$is_authorized) {
     exit;
 }
 
-$page_title = 'Order Confirmation — GaunGaliHat';
+$page_title = 'Order Confirmation — GanvGaliHat';
 require_once __DIR__ . '/includes/header.php';
 
 // Fetch items

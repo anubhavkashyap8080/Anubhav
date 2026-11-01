@@ -1,6 +1,6 @@
 <?php
 /**
- * GaunGaliHat Password Reset Request Gateway
+ * GanvGaliHat Password Reset Request Gateway
  */
 
 require_once __DIR__ . '/includes/functions.php';
@@ -50,12 +50,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     $reset_url = SITE_URL . '/reset-password.php?token=' . $plain_token . '&email=' . urlencode($email);
 
                     $email_domain = parse_url(defined('SITE_URL') ? SITE_URL : '', PHP_URL_HOST) ?: 'ganvgalihat.com';
-                    $subject = "Reset your GaunGaliHat Password";
-                    $headers = "MIME-Version: 1.0\r\nContent-Type: text/html; charset=UTF-8\r\nFrom: GaunGaliHat Security <no-reply@" . $email_domain . ">\r\n";
+                    $subject = "Reset your GanvGaliHat Password";
+                    $headers = "MIME-Version: 1.0\r\nContent-Type: text/html; charset=UTF-8\r\nFrom: GanvGaliHat Security <no-reply@" . $email_domain . ">\r\n";
                     $body = "
                     <div style='font-family: -apple-system, BlinkMacSystemFont, Roboto, sans-serif; max-width: 540px; margin: 0 auto; padding: 28px; border: 1px solid #e5e7eb; border-radius: 16px; background: #ffffff;'>
                         <div style='text-align: center; margin-bottom: 20px;'>
-                            <h2 style='color: #065f46; margin: 0; font-size: 22px;'>GaunGaliHat — Password Reset</h2>
+                            <h2 style='color: #065f46; margin: 0; font-size: 22px;'>GanvGaliHat — Password Reset</h2>
                             <p style='color: #d97706; font-size: 13px; font-weight: bold; margin: 4px 0 0 0;'>Hunar desh ka, ganv se ghar tak</p>
                         </div>
                         <p style='color: #374151; font-size: 14px;'>Namaste <strong>" . htmlspecialchars($user['name'], ENT_QUOTES, 'UTF-8') . "</strong>,</p>
@@ -79,7 +79,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
 }
 
-$page_title = 'Forgot Password — GaunGaliHat';
+$page_title = 'Forgot Password — GanvGaliHat';
 require_once __DIR__ . '/includes/header.php';
 ?>
 

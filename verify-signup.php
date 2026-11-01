@@ -1,6 +1,6 @@
 <?php
 /**
- * GaunGaliHat Mandatory Signup OTP & Email Verification Screen
+ * GanvGaliHat Mandatory Signup OTP & Email Verification Screen
  */
 
 require_once __DIR__ . '/includes/functions.php';
@@ -137,7 +137,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && (!isset($_POST['action']) || $_POST
                         unset($_SESSION['pending_verification_user_id'], $_SESSION['pending_verification_email'], $_SESSION['pending_verification_name']);
 
                         log_audit_action('user_signup_verified', 'auth', 'user', $user['id'], 'Account verified via OTP code');
-                        set_flash('success', 'Account verified successfully! Welcome to GaunGaliHat.');
+                        set_flash('success', 'Account verified successfully! Welcome to GanvGaliHat.');
                         header('Location: /account.php');
                         exit;
                     } catch (Exception $e) {
@@ -168,7 +168,7 @@ function mask_phone_display($phone) {
     return substr($phone, 0, 2) . '••••••' . substr($phone, -2);
 }
 
-$page_title = 'Verify Your Account — GaunGaliHat';
+$page_title = 'Verify Your Account — GanvGaliHat';
 require_once __DIR__ . '/includes/header.php';
 ?>
 
@@ -218,7 +218,7 @@ require_once __DIR__ . '/includes/header.php';
           </label>
           <input type="text" name="otp_code" required autofocus pattern="[0-9]{6}" maxlength="6" placeholder="000000"
             class="w-full text-center text-2xl font-black font-mono tracking-[0.5em] px-4 py-3 bg-stone-50 border border-gray-300 rounded-2xl focus:bg-white focus:border-brand-green focus:outline-none transition shadow-inner">
-          <p class="text-[11px] text-gray-400 text-center mt-1.5">Check your inbox or spam folder for your email from GaunGaliHat.</p>
+          <p class="text-[11px] text-gray-400 text-center mt-1.5">Check your inbox or spam folder for your email from GanvGaliHat.</p>
         </div>
 
         <button type="submit"

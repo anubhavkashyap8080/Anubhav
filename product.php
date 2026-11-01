@@ -1,6 +1,6 @@
 <?php
 /**
- * GaunGaliHat Single Product Detail Page
+ * GanvGaliHat Single Product Detail Page
  */
 
 require_once __DIR__ . '/includes/functions.php';

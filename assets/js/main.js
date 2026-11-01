@@ -1,5 +1,5 @@
 /**
- * GaunGaliHat Core JavaScript Layer
+ * GanvGaliHat Core JavaScript Layer
  * AJAX Live Search, Cart, Wishlist & Shipping Estimator
  * Security Hardened: DOM XSS Mitigated & CSRF Protected (Item 16, 19)
  */

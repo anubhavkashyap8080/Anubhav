@@ -1,6 +1,6 @@
 <?php
 /**
- * GaunGaliHat Rural Editorial & Blog CMS
+ * GanvGaliHat Rural Editorial & Blog CMS
  */
 
 require_once __DIR__ . '/../includes/functions.php';

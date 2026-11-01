@@ -1,6 +1,6 @@
 <?php
 /**
- * GaunGaliHat Password Reset Submission Handler
+ * GanvGaliHat Password Reset Submission Handler
  */
 
 require_once __DIR__ . '/includes/functions.php';
@@ -82,7 +82,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $is_token_valid) {
     }
 }
 
-$page_title = 'Reset Password — GaunGaliHat';
+$page_title = 'Reset Password — GanvGaliHat';
 require_once __DIR__ . '/includes/header.php';
 ?>
 

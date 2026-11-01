@@ -1,4 +1,4 @@
-# GaunGaliHat Uploads Security Hardening (Item 17)
+# GanvGaliHat Uploads Security Hardening (Item 17)
 # Prevent script execution with Apache 2.4 ("Require all denied") and legacy 2.2 fallback
 <FilesMatch "\.(?i:php|phtml|php[3-8]|phps|phar|cgi|pl|exe|sh|py|shtml|pht)$">
     <IfModule mod_authz_core.c>

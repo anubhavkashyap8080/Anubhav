@@ -1,6 +1,6 @@
 <?php
 /**
- * GaunGaliHat Product Catalog CSV Exporter
+ * GanvGaliHat Product Catalog CSV Exporter
  */
 
 require_once __DIR__ . '/../includes/functions.php';
@@ -8,7 +8,7 @@ require_once __DIR__ . '/../includes/auth_check.php';
 require_admin();
 
 header('Content-Type: text/csv; charset=utf-8');
-header('Content-Disposition: attachment; filename="gaungalihat_products_' . date('Y-m-d_His') . '.csv"');
+header('Content-Disposition: attachment; filename="ganvgalihat_products_' . date('Y-m-d_His') . '.csv"');
 
 $output = fopen('php://output', 'w');
 // UTF-8 BOM for Excel compatibility

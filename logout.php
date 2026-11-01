@@ -1,6 +1,6 @@
 <?php
 /**
- * GaunGaliHat Secure Logout Handler
+ * GanvGaliHat Secure Logout Handler
  */
 
 if (session_status() === PHP_SESSION_NONE) {

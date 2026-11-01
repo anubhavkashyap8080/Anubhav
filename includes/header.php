@@ -1,6 +1,6 @@
 <?php
 /**
- * GaunGaliHat Master Header
+ * GanvGaliHat Master Header
  * Restores original AJAX Site Header, Authentic Logo & Interactive Controls
  */
 
@@ -70,7 +70,7 @@ $current_canonical_url = rtrim($canonical_base, '/') . ($_SERVER['REQUEST_URI'] 
 if (empty($og_image)) {
     $og_image = get_site_setting('seo_og_image', 'https://images.unsplash.com/photo-1504148455328-c376907d081c?w=1200');
 }
-$twitter_handle = get_site_setting('seo_twitter_handle', '@GaunGaliHat');
+$twitter_handle = get_site_setting('seo_twitter_handle', '@GanvGaliHat');
 $gsc_tag = get_site_setting('seo_google_console', '');
 $ga4_id = get_site_setting('ga4_measurement_id', get_site_setting('seo_google_analytics', ''));
 
@@ -500,7 +500,7 @@ $active_site_logo = ($use_gif_logo && !empty($logo_gif_url)) ? $logo_gif_url : $
                 <!-- Guest visitor state -->
                 <div class="p-3 space-y-2.5">
                   <div class="text-center pb-2 border-b border-gray-100">
-                    <p class="text-xs font-bold text-gray-900">Welcome to GaunGaliHat</p>
+                    <p class="text-xs font-bold text-gray-900">Welcome to GanvGaliHat</p>
                     <p class="text-[11px] text-gray-500 mt-0.5">Please sign in to access your orders and account</p>
                   </div>
 

@@ -1,6 +1,6 @@
 <?php
 /**
- * GaunGaliHat Header & Footer Live Customizer
+ * GanvGaliHat Header & Footer Live Customizer
  */
 
 require_once __DIR__ . '/../includes/functions.php';
@@ -45,7 +45,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['save_customizer'])) {
             }
             $val = trim((string)$_POST[$k]);
             if ($k === 'brand_name' && (empty($val) || $val === '0')) {
-                $val = 'GaunGaliHat';
+                $val = 'GanvGaliHat';
             }
             $stmt_up->execute([$k, $val]);
         }
@@ -171,7 +171,7 @@ require_once __DIR__ . '/admin_header.php';
       <div>
         <label class="block text-xs font-bold text-gray-700 mb-1">ब्रांड का नाम (Brand Display Name)</label>
         <input type="text" name="brand_name"
-          value="<?= htmlspecialchars(get_cfg_val('brand_name', 'गाँव गली हाट (GaunGaliHat)')) ?>"
+          value="<?= htmlspecialchars(get_cfg_val('brand_name', 'गाँव गली हाट (GanvGaliHat)')) ?>"
           class="w-full px-3.5 py-2.5 bg-stone-50 border border-gray-200 rounded-xl text-xs focus:bg-white focus:outline-none focus:border-indigo-600 transition">
       </div>
 
@@ -262,7 +262,7 @@ require_once __DIR__ . '/admin_header.php';
       <div>
         <label class="block text-xs font-bold text-gray-700 mb-1">कॉपीराइट पाठ (Copyright Notice)</label>
         <input type="text" name="footer_copyright"
-          value="<?= htmlspecialchars(get_cfg_val('footer_copyright', '© 2026 GaunGaliHat. A Unit of Kalyani agrofood pvt ltd. All Rights Reserved.')) ?>"
+          value="<?= htmlspecialchars(get_cfg_val('footer_copyright', '© 2026 GanvGaliHat. A Unit of Kalyani agrofood pvt ltd. All Rights Reserved.')) ?>"
           class="w-full px-3.5 py-2.5 bg-stone-50 border border-gray-200 rounded-xl text-xs focus:bg-white focus:outline-none focus:border-indigo-600 transition">
       </div>
 

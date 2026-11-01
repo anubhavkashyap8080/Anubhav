@@ -1,6 +1,6 @@
 <?php
 /**
- * GaunGaliHat Shopper & Customer Account Hub
+ * GanvGaliHat Shopper & Customer Account Hub
  * Comprehensive E-Commerce Customer Dashboard:
  * - Live Shopping Cart & Instant Checkout CTA
  * - Detailed Order History with Visual Shipment Tracking Stepper
@@ -125,8 +125,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['send_phone_otp'])) {
             $_SESSION['pending_phone_expires'] = $expires_ts;
 
             if (!empty($user['email'])) {
-                $subj = "Mobile Verification OTP — GaunGaliHat: " . $otp_code;
-                $msg = "Namaste " . htmlspecialchars($user['name'], ENT_QUOTES, 'UTF-8') . ",\n\nYour 6-digit verification code to verify mobile number (+91 {$phone}) on GaunGaliHat is: {$otp_code}\n\nValid for 15 minutes. Never share this code with anyone.";
+                $subj = "Mobile Verification OTP — GanvGaliHat: " . $otp_code;
+                $msg = "Namaste " . htmlspecialchars($user['name'], ENT_QUOTES, 'UTF-8') . ",\n\nYour 6-digit verification code to verify mobile number (+91 {$phone}) on GanvGaliHat is: {$otp_code}\n\nValid for 15 minutes. Never share this code with anyone.";
                 @mail($user['email'], $subj, $msg, "From: no-reply@ganvgalihat.com\r\n");
             }
 
@@ -436,7 +436,7 @@ foreach ($user_tickets as $tkt) {
     }
 }
 
-$page_title = 'Shopper Dashboard — GaunGaliHat';
+$page_title = 'Shopper Dashboard — GanvGaliHat';
 require_once __DIR__ . '/includes/header.php';
 ?>
 

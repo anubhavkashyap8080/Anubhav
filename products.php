@@ -1,6 +1,6 @@
 <?php
 /**
- * GaunGaliHat Products Catalog Page
+ * GanvGaliHat Products Catalog Page
  */
 
 require_once __DIR__ . '/includes/header.php';

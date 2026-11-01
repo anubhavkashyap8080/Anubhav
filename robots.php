@@ -1,6 +1,6 @@
 <?php
 /**
- * GaunGaliHat Enterprise Dynamic Robots.txt Engine
+ * GanvGaliHat Enterprise Dynamic Robots.txt Engine
  */
 
 require_once __DIR__ . '/includes/functions.php';
@@ -22,7 +22,7 @@ if (!empty($db_canonical)) {
 
 header('Content-Type: text/plain; charset=utf-8');
 
-echo "# GaunGaliHat Robots.txt\n";
+echo "# GanvGaliHat Robots.txt\n";
 echo "# User-Agent Directives for Web Crawlers and Search Engines\n\n";
 
 echo "User-agent: *\n";

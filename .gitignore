@@ -35,6 +35,8 @@ data/backups/*.db
 config/config.local.php
 *config.local.php
 .env
-gaungalihat_config.php
+# Production Archives
+*.zip
+ganvgalihat_config.php
 *_backup_untrimmed.png
 

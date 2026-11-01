@@ -434,9 +434,9 @@ require_once __DIR__ . '/admin_header.php';
 
         <div>
           <label class="block text-xs font-bold text-gray-800 mb-1">SEO Title Tag (सर्च रिजल्ट शीर्षक)</label>
-          <input type="text" name="seo_title" id="edit_p_seo_title" maxlength="70" placeholder="उदा. Buy Heavy Forged Kulhadi Online | GaunGaliHat"
+          <input type="text" name="seo_title" id="edit_p_seo_title" maxlength="70" placeholder="उदा. Buy Heavy Forged Kulhadi Online | GanvGaliHat"
             class="w-full px-3.5 py-2 bg-white border border-indigo-200 rounded-xl text-xs focus:outline-none focus:border-indigo-600 transition">
-          <p class="text-[10px] text-gray-500 mt-0.5">खाली रहने पर स्वतः '[Product Name] — GaunGaliHat' उपयोग होगा।</p>
+          <p class="text-[10px] text-gray-500 mt-0.5">खाली रहने पर स्वतः '[Product Name] — GanvGaliHat' उपयोग होगा।</p>
         </div>
 
         <div>

@@ -1,6 +1,6 @@
 <?php
 /**
- * GaunGaliHat Enterprise Automated Verification & Regression Test Suite
+ * GanvGaliHat Enterprise Automated Verification & Regression Test Suite
  * Tests Security Hardening, Multi-Tenant Isolation, RBAC, Hero Campaigns, GMC Feeds, and Sitemaps
  */
 

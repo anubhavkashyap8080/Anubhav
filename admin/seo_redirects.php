@@ -1,6 +1,6 @@
 <?php
 /**
- * GaunGaliHat SEO Redirects & 404 Broken Link Governance
+ * GanvGaliHat SEO Redirects & 404 Broken Link Governance
  * Super Admin Management Console for 301/302 Redirects and Real-time 404 Crawl Monitoring
  */
 

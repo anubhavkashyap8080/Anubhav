@@ -1,6 +1,6 @@
 <?php
 /**
- * GaunGaliHat Email & Marketing Campaign Center
+ * GanvGaliHat Email & Marketing Campaign Center
  * Send Welcome Emails, Seasonal Promotions, and Broadcast Updates
  */
 
@@ -41,7 +41,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
     // Build Email HTML Template
     $site_url = defined('SITE_URL') ? SITE_URL : 'https://ganvgalihat.com';
     $site_host = parse_url($site_url, PHP_URL_HOST) ?: 'ganvgalihat.com';
-    $brand_name = defined('APP_NAME') ? APP_NAME : 'GaunGaliHat';
+    $brand_name = defined('APP_NAME') ? APP_NAME : 'GanvGaliHat';
 
     $accent_color = '#059669'; // brand green
     $badge_text = 'Authentic Rural Commerce';
@@ -91,7 +91,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
         <!-- Footer -->
         <div style='background-color:#f8fafc; border-top:1px solid #e2e8f0; padding:24px 28px; text-align:center; font-size:11px; color:#64748b;'>
           <p style='margin:0 0 8px 0; font-weight:600;'>Kalyani agrofood pvt ltd • Hardoi & Awadh Rural Artisan Network</p>
-          <p style='margin:0 0 12px 0;'>You received this email because you are a registered user of GaunGaliHat marketplace.</p>
+          <p style='margin:0 0 12px 0;'>You received this email because you are a registered user of GanvGaliHat marketplace.</p>
           <p style='margin:0;'>© " . date('Y') . " {$brand_name}. All rights reserved.</p>
         </div>
 
@@ -259,7 +259,7 @@ require_once __DIR__ . '/admin_header.php';
             <label class="text-xs font-bold uppercase tracking-wider text-gray-600 block mb-1">
               Button Label (CTA)
             </label>
-            <input type="text" name="cta_text" id="cta_text_input" value="Shop Now at GaunGaliHat"
+            <input type="text" name="cta_text" id="cta_text_input" value="Shop Now at GanvGaliHat"
               class="w-full px-3.5 py-2.5 bg-stone-50 border border-gray-300 rounded-xl text-xs font-bold text-gray-800">
           </div>
 
@@ -312,7 +312,7 @@ require_once __DIR__ . '/admin_header.php';
 
         <div class="p-4 bg-white space-y-4">
           <div class="bg-emerald-950 text-white text-center py-4 px-3 rounded-xl">
-            <div class="font-extrabold text-base tracking-tight">GaunGaliHat</div>
+            <div class="font-extrabold text-base tracking-tight">GanvGaliHat</div>
             <div class="text-[10px] text-amber-300 font-bold">Hunar desh ka, ganv se ghar tak</div>
           </div>
 
@@ -325,12 +325,12 @@ require_once __DIR__ . '/admin_header.php';
 
           <div class="text-center pt-2">
             <span class="inline-block px-4 py-2 bg-emerald-700 text-white font-bold text-xs rounded-lg shadow-xs" id="preview_btn">
-              Shop Now at GaunGaliHat
+              Shop Now at GanvGaliHat
             </span>
           </div>
 
           <div class="text-center text-[10px] text-gray-400 pt-3 border-t border-gray-100">
-            © <?= date('Y') ?> GaunGaliHat • A Unit of Kalyani agrofood pvt ltd
+            © <?= date('Y') ?> GanvGaliHat • A Unit of Kalyani agrofood pvt ltd
           </div>
         </div>
       </div>
@@ -356,7 +356,7 @@ function updateLivePreview() {
   prevSubj.innerText = subjIn.value || 'Preview: Subject';
   prevHead.innerText = headIn.value || subjIn.value || 'Campaign Headline';
   prevBody.innerText = bodyIn.value || 'Your message body preview will dynamically render here as you type in the composer form.';
-  prevBtn.innerText  = ctaIn.value || 'Shop Now at GaunGaliHat';
+  prevBtn.innerText  = ctaIn.value || 'Shop Now at GanvGaliHat';
 }
 
 subjIn.addEventListener('input', updateLivePreview);

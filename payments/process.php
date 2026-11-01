@@ -1,6 +1,6 @@
 <?php
 /**
- * GaunGaliHat Payment Gateway Processor
+ * GanvGaliHat Payment Gateway Processor
  * Handles COD, Razorpay, and PayU Order Execution
  */
 
@@ -298,7 +298,7 @@ try {
 
 } catch (Exception $e) {
     if ($pdo->inTransaction()) $pdo->rollBack();
-    error_log('[GaunGaliHat Order Error] ' . $e->getMessage());
+    error_log('[GanvGaliHat Order Error] ' . $e->getMessage());
     set_flash('error', 'Order placement failed. Please try again or contact support.');
     header('Location: /checkout.php');
     exit;
@@ -457,7 +457,7 @@ if ($payment_method === 'payu') {
 
     $txnid = $order_number;
     $amount_str = number_format($final_total, 2, '.', '');
-    $productinfo = "Order $order_number from GaunGaliHat";
+    $productinfo = "Order $order_number from GanvGaliHat";
     $firstname = $customer_name;
     $email = $customer_email ?: 'customer@ganvgalihat.com';
     $phone = $customer_phone;

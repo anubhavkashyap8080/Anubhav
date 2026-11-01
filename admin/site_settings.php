@@ -1,6 +1,6 @@
 <?php
 /**
- * GaunGaliHat Site & Platform Settings Manager
+ * GanvGaliHat Site & Platform Settings Manager
  * Payment Gateways, Delivery Zones, Responsive Logo Sizing, and Company Identity
  */
 
@@ -53,6 +53,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['save_settings'])) {
         }
 
         $allowed_keys = [
+            'homepage_layout', 'homepage_youtube_url',
             'brand_name', 'brand_tagline', 'company_name', 'contact_phone', 'contact_email',
             'factory_address', 'head_office_address', 'announcement_text',
             'site_logo_url', 'logo_gif_url', 'use_gif_logo', 'logo_height_mobile', 'logo_height_desktop',
@@ -68,7 +69,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['save_settings'])) {
             }
             $val = trim((string)$_POST[$key]);
             if ($key === 'brand_name' && (empty($val) || $val === '0')) {
-                $val = 'GaunGaliHat';
+                $val = 'GanvGaliHat';
             }
             if ($key === 'brand_tagline' && (empty($val) || $val === '0')) {
                 $val = 'Hunar desh ka, ganv se ghar tak';
@@ -434,7 +435,7 @@ require_once __DIR__ . '/admin_header.php';
     <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
       <div>
         <label class="block text-xs font-bold text-gray-700 mb-1">Brand Name</label>
-        <input type="text" name="brand_name" value="<?= htmlspecialchars(get_setting_val('brand_name', 'GaunGaliHat')) ?>"
+        <input type="text" name="brand_name" value="<?= htmlspecialchars(get_setting_val('brand_name', 'GanvGaliHat')) ?>"
           class="w-full px-3.5 py-2.5 bg-stone-50 border border-gray-200 rounded-xl text-xs font-bold">
       </div>
 

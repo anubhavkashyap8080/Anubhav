@@ -1,6 +1,6 @@
 <?php
 /**
- * GaunGaliHat Platform Settings & Gateway Configurations
+ * GanvGaliHat Platform Settings & Gateway Configurations
  */
 
 require_once __DIR__ . '/db.php';
@@ -74,9 +74,9 @@ if (PHP_SAPI !== 'cli' && !empty($_SERVER['HTTP_HOST'])) {
 }
 
 // Global Platform Constants
-$raw_brand_name = trim((string)get_setting('brand_name', 'GaunGaliHat'));
+$raw_brand_name = trim((string)get_setting('brand_name', 'GanvGaliHat'));
 if (empty($raw_brand_name) || $raw_brand_name === '0' || preg_match('/^0\b/', $raw_brand_name)) {
-    $raw_brand_name = 'GaunGaliHat';
+    $raw_brand_name = 'GanvGaliHat';
 }
 define('APP_NAME', $raw_brand_name);
 

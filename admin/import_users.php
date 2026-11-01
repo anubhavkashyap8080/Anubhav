@@ -1,6 +1,6 @@
 <?php
 /**
- * GaunGaliHat Users CSV Importer
+ * GanvGaliHat Users CSV Importer
  * Secure CSV Import Engine with Role Whitelisting, CSRF Protection,
  * 1MB Size Bound, 500-Row Boundary, Formula Neutralization, and Unique Random Credentials.
  */

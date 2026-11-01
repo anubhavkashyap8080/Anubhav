@@ -1,10 +1,10 @@
 <?php
 /**
- * GaunGaliHat Enterprise Platform Configuration Sample
+ * GanvGaliHat Enterprise Platform Configuration Sample
  * 
  * Instructions:
  * 1. Copy this file to a location OUTSIDE the web root (recommended on cPanel):
- *    e.g. /home/<your-cpanel-user>/gaungalihat_config.php
+ *    e.g. /home/<your-cpanel-user>/ganvgalihat_config.php
  *    OR place as config/config.local.php (which is strictly blocked by .htaccess)
  * 2. Fill in your actual production database credentials and API keys.
  * 3. Never commit the actual config with real passwords to version control.
@@ -75,7 +75,7 @@ return [
     // Firebase Cloud Messaging (FCM) & Push Notifications
     'firebase' => [
         'enabled'       => (bool)(getenv('FIREBASE_ENABLED') ?: true),
-        'project_id'    => getenv('FIREBASE_PROJECT_ID') ?: 'gaungalihat-rural-apps',
+        'project_id'    => getenv('FIREBASE_PROJECT_ID') ?: 'ganvgalihat-rural-apps',
         'server_key'    => getenv('FIREBASE_SERVER_KEY') ?: '',
         'vapid_key'     => getenv('FIREBASE_VAPID_KEY') ?: '',
     ],

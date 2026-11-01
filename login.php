@@ -1,6 +1,6 @@
 <?php
 /**
- * GaunGaliHat Secure Unified Login Gateway
+ * GanvGaliHat Secure Unified Login Gateway
  */
 
 require_once __DIR__ . '/includes/functions.php';
@@ -107,7 +107,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 }
 
 // Render Header only after all POST and redirect logic has executed
-$page_title = 'Sign In — GaunGaliHat';
+$page_title = 'Sign In — GanvGaliHat';
 require_once __DIR__ . '/includes/header.php';
 ?>
 
@@ -120,7 +120,7 @@ require_once __DIR__ . '/includes/header.php';
         <i class="fa-solid fa-wheat-awn text-2xl text-amber-300"></i>
       </div>
       <h1 class="text-2xl font-extrabold text-gray-900">Sign In to Your Account</h1>
-      <p class="text-xs text-gray-500 mt-1">GaunGaliHat • Kalyani agrofood pvt ltd</p>
+      <p class="text-xs text-gray-500 mt-1">GanvGaliHat • Kalyani agrofood pvt ltd</p>
     </div>
 
     <!-- Login Box Card -->

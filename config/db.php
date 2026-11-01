@@ -1,6 +1,6 @@
 <?php
 /**
- * GaunGaliHat Enterprise E-Commerce Platform
+ * GanvGaliHat Enterprise E-Commerce Platform
  * Database Connection & Platform Configuration Layer (PDO MySQL)
  */
 
@@ -107,7 +107,7 @@ if (!empty($db_name) && !empty($db_user)) {
         $db_driver = 'mysql';
     } catch (Throwable $e) {
         $last_mysql_error = $e->getMessage();
-        error_log("[GaunGaliHat DB Error] Connection failed: " . $e->getMessage());
+        error_log("[GanvGaliHat DB Error] Connection failed: " . $e->getMessage());
     }
 }
 
@@ -178,13 +178,13 @@ if ($pdo) {
     }
     // Generic error page for visitors; no sensitive connection parameters or raw errors displayed.
     http_response_code(500);
-    error_log("[GaunGaliHat DB Fatal] Database connection could not be established: " . ($last_mysql_error ?: 'No driver response'));
+    error_log("[GanvGaliHat DB Fatal] Database connection could not be established: " . ($last_mysql_error ?: 'No driver response'));
     die("<!DOCTYPE html>
 <html lang='en'>
 <head>
   <meta charset='UTF-8'>
   <meta name='viewport' content='width=device-width, initial-scale=1.0'>
-  <title>Service Unavailable — GaunGaliHat</title>
+  <title>Service Unavailable — GanvGaliHat</title>
   <style>
     body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: #fdfbf7; color: #1f2937; padding: 40px 20px; display: flex; align-items: center; justify-content: center; min-height: 80vh; margin: 0; }
     .card { max-width: 500px; width: 100%; background: #ffffff; border: 1px solid #e5e7eb; border-radius: 16px; padding: 32px; box-shadow: 0 4px 16px rgba(0,0,0,0.06); text-align: center; }
@@ -298,6 +298,20 @@ function ensure_platform_schema($pdo) {
             $oi_cols = $pdo->query("PRAGMA table_info(order_items)")->fetchAll(PDO::FETCH_COLUMN, 1);
             if (!in_array('item_status', $oi_cols)) {
                 $pdo->exec("ALTER TABLE order_items ADD COLUMN item_status TEXT DEFAULT 'Confirmed'");
+            }
+            $v_cols = $pdo->query("PRAGMA table_info(vendors)")->fetchAll(PDO::FETCH_COLUMN, 1);
+            $mig_v = [
+                'pan_number' => 'TEXT DEFAULT NULL',
+                'aadhaar_number' => 'TEXT DEFAULT NULL',
+                'gstin' => 'TEXT DEFAULT NULL',
+                'document_file' => 'TEXT DEFAULT NULL',
+                'terms_accepted_at' => 'DATETIME DEFAULT NULL',
+                'address' => 'TEXT DEFAULT NULL'
+            ];
+            foreach ($mig_v as $vcol => $vtype) {
+                if (!in_array($vcol, $v_cols)) {
+                    $pdo->exec("ALTER TABLE vendors ADD COLUMN {$vcol} {$vtype}");
+                }
             }
         } else {
             $pdo->exec("
@@ -430,6 +444,12 @@ function ensure_platform_schema($pdo) {
             $check_and_add_col('orders', 'order_access_token', 'VARCHAR(64) DEFAULT NULL');
             $check_and_add_col('orders', 'gateway_order_id', 'VARCHAR(100) DEFAULT NULL');
             $check_and_add_col('order_items', 'item_status', "VARCHAR(50) DEFAULT 'Confirmed'");
+            $check_and_add_col('vendors', 'pan_number', 'VARCHAR(20) DEFAULT NULL');
+            $check_and_add_col('vendors', 'aadhaar_number', 'VARCHAR(20) DEFAULT NULL');
+            $check_and_add_col('vendors', 'gstin', 'VARCHAR(20) DEFAULT NULL');
+            $check_and_add_col('vendors', 'document_file', 'VARCHAR(255) DEFAULT NULL');
+            $check_and_add_col('vendors', 'terms_accepted_at', 'DATETIME DEFAULT NULL');
+            $check_and_add_col('vendors', 'address', 'TEXT DEFAULT NULL');
 
             // Advanced Security Log columns (severity, user agent, request URI, details)
             $check_and_add_col('security_logs', 'details', 'TEXT DEFAULT NULL');
@@ -484,14 +504,14 @@ function ensure_platform_schema($pdo) {
 
     // Auto-heal corrupted '0' brand_name, brand_tagline, or '0 —' / '0 -' / '0 __' titles and legacy company branding
     try {
-        $pdo->exec("UPDATE site_settings SET setting_value = 'GaunGaliHat' WHERE setting_key = 'brand_name' AND (setting_value = '0' OR setting_value = '' OR setting_value IS NULL)");
+        $pdo->exec("UPDATE site_settings SET setting_value = 'GanvGaliHat' WHERE setting_key = 'brand_name' AND (setting_value = '0' OR setting_value = '' OR setting_value IS NULL)");
         $pdo->exec("UPDATE site_settings SET setting_value = 'Hunar desh ka, ganv se ghar tak' WHERE setting_key = 'brand_tagline' AND (setting_value = '0' OR setting_value = '' OR setting_value IS NULL OR setting_value LIKE '%S S Industries%' OR setting_value = 'Desh ki mitti ka swad | Ganv se ghar tak')");
         $pdo->exec("UPDATE site_settings SET setting_value = 'Kalyani agrofood pvt ltd' WHERE setting_key = 'company_name' AND (setting_value = '0' OR setting_value = '' OR setting_value IS NULL OR setting_value = 'S S Industries')");
-        $pdo->exec("UPDATE site_settings SET setting_value = '© 2026 GaunGaliHat. A Unit of Kalyani agrofood pvt ltd. All Rights Reserved.' WHERE setting_key = 'footer_copyright' AND (setting_value LIKE '%S S Industries%' OR setting_value LIKE '%SS Industries%')");
+        $pdo->exec("UPDATE site_settings SET setting_value = '© 2026 GanvGaliHat. A Unit of Kalyani agrofood pvt ltd. All Rights Reserved.' WHERE setting_key = 'footer_copyright' AND (setting_value LIKE '%S S Industries%' OR setting_value LIKE '%SS Industries%')");
         $pdo->exec("UPDATE site_settings SET setting_value = '🌾 Kalyani agrofood pvt ltd • Hunar desh ka, ganv se ghar tak' WHERE setting_key = 'hero_badge_text' AND (setting_value LIKE '%S S Industries%' OR setting_value LIKE '%SS Industries%')");
         $pdo->exec("UPDATE site_settings SET setting_value = 'Madhoganj, Baghauli road Newada, Pahutera, Hardoi, Uttar Pradesh' WHERE setting_key = 'head_office_address' AND (setting_value = '0' OR setting_value = '' OR setting_value IS NULL OR setting_value LIKE '%G145%')");
         $pdo->exec("UPDATE site_settings SET setting_value = 'Madhoganj, Baghauli road Newada, Pahutera, Hardoi, Uttar Pradesh' WHERE setting_key = 'factory_address' AND (setting_value = '0' OR setting_value = '' OR setting_value IS NULL)");
-        $pdo->exec("UPDATE site_settings SET setting_value = 'GaunGaliHat — Desh ki mitti ka swad | Rural Tools & Farm Staples' WHERE setting_key IN ('homepage_title', 'seo_meta_title') AND (setting_value = '0' OR setting_value LIKE '0 %' OR setting_value LIKE '0-%' OR setting_value LIKE '0—%' OR setting_value LIKE '0_%')");
+        $pdo->exec("UPDATE site_settings SET setting_value = 'GanvGaliHat — Desh ki mitti ka swad | Rural Tools & Farm Staples' WHERE setting_key IN ('homepage_title', 'seo_meta_title') AND (setting_value = '0' OR setting_value LIKE '0 %' OR setting_value LIKE '0-%' OR setting_value LIKE '0—%' OR setting_value LIKE '0_%')");
         
         // Auto-heal legacy vendor records and product descriptions containing 'S S Industries'
         $pdo->exec("UPDATE vendors SET name = REPLACE(REPLACE(REPLACE(REPLACE(name, 'S. S. Industries', 'Kalyani agrofood pvt ltd'), 'S.S. Industries', 'Kalyani agrofood pvt ltd'), 'S S Industries', 'Kalyani agrofood pvt ltd'), 'SS Industries', 'Kalyani agrofood pvt ltd'),
@@ -511,7 +531,9 @@ function ensure_platform_schema($pdo) {
         $chk = $pdo->query("SELECT COUNT(*) FROM site_settings")->fetchColumn();
         if ($chk == 0) {
             $defaults = [
-                'brand_name' => 'गाँव गली हाट (GaunGaliHat)',
+                'brand_name' => 'गाँव गली हाट (GanvGaliHat)',
+                'homepage_layout' => 'layout_1',
+                'homepage_youtube_url' => 'https://www.youtube.com/watch?v=dQw4w9WgXcQ',
                 'company_name' => 'Kalyani agrofood pvt ltd',
                 'brand_tagline' => 'Hunar desh ka, ganv se ghar tak',
                 'announcement_text' => 'Direct from Rural Village Artisans • Free All-India Delivery on Orders ₹499+!',
@@ -536,7 +558,7 @@ function ensure_platform_schema($pdo) {
                 'default_language' => 'en',
                 'site_default_language' => 'en',
                 // SEO Settings
-                'seo_meta_title' => 'GaunGaliHat — Desh ki mitti ka swad | Rural Tools & Farm Staples',
+                'seo_meta_title' => 'GanvGaliHat — Desh ki mitti ka swad | Rural Tools & Farm Staples',
                 'seo_meta_description' => 'Direct from Indian village foundries & self-help groups. Authentic hand-forged agricultural sickles, khurpis, unpolished Awadh pulses, and Banarasi achar.',
                 'seo_meta_keywords' => 'farming tools, sickle, hansiya, khurpi, unpolished dal, banarasi achar, rural artisans, Hardoi foundries, organic pulses',
                 'seo_canonical_url' => 'https://ganvgalihat.com',
@@ -552,7 +574,7 @@ function ensure_platform_schema($pdo) {
                 'show_announcement' => '1',
                 'logo_url' => '/logo.png',
                 'favicon_url' => '/favicon.png',
-                'footer_copyright' => '© 2026 GaunGaliHat. A Unit of Kalyani agrofood pvt ltd. All Rights Reserved.',
+                'footer_copyright' => '© 2026 GanvGaliHat. A Unit of Kalyani agrofood pvt ltd. All Rights Reserved.',
                 'social_instagram' => 'https://instagram.com/ganvgalihat',
                 'social_youtube' => 'https://youtube.com/@ganvgalihat',
                 'social_facebook' => 'https://facebook.com/ganvgalihat',
@@ -1067,9 +1089,9 @@ function seed_rbac_and_templates($pdo) {
         $n_cnt = $pdo->query("SELECT COUNT(*) FROM notification_templates")->fetchColumn();
         if ($n_cnt == 0) {
             $ntemplates = [
-                ['order_confirmed', 'Order Confirmation', 'Your GaunGaliHat Order #{order_number} is Confirmed!', 'Namaste {customer_name}, your order of {total_amount} has been received and sent to village workshops for dispatch.'],
+                ['order_confirmed', 'Order Confirmation', 'Your GanvGaliHat Order #{order_number} is Confirmed!', 'Namaste {customer_name}, your order of {total_amount} has been received and sent to village workshops for dispatch.'],
                 ['order_dispatched', 'Order Dispatched', 'Your Order #{order_number} has been Dispatched via India Post', 'Your parcel tracking number is {tracking_consignment_no}. Estimated delivery in 2-4 business days.'],
-                ['vendor_kyc_approved', 'Artisan Store Approved', 'Welcome to GaunGaliHat Artisan Network!', 'Congratulations! Your workshop profile has been verified. You can now list products and receive nationwide orders.'],
+                ['vendor_kyc_approved', 'Artisan Store Approved', 'Welcome to GanvGaliHat Artisan Network!', 'Congratulations! Your workshop profile has been verified. You can now list products and receive nationwide orders.'],
                 ['payout_settled', 'Bank Settlement Completed', 'Payout Ref #{payout_ref} Settled to Your Bank Account', 'Amount of {net_amount} has been credited to your bank account with UTR: {utr_number}.'],
             ];
             $ins_n = $pdo->prepare("INSERT INTO notification_templates (slug, name, subject, body_template) VALUES (?, ?, ?, ?)");

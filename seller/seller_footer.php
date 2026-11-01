@@ -4,7 +4,7 @@
   <footer class="bg-white border-t border-gray-200 py-6 text-center text-xs text-gray-500">
     <div class="max-w-7xl mx-auto px-4 flex flex-col sm:flex-row items-center justify-between gap-3">
       <div class="flex items-center gap-2">
-        <span class="font-extrabold text-stone-900">GaunGaliHat Seller Central</span>
+        <span class="font-extrabold text-stone-900">GanvGaliHat Seller Central</span>
         <span>•</span>
         <span>Kalyani agrofood pvt ltd Enterprise</span>
       </div>

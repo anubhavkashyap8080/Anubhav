@@ -1,6 +1,6 @@
 <?php
 /**
- * GaunGaliHat Intelligent Geolocation & Nearby Artisan Dispatch Engine
+ * GanvGaliHat Intelligent Geolocation & Nearby Artisan Dispatch Engine
  * Supports GPS Coordinates, 19,000+ Indian PIN Codes, and Reverse Geo-routing
  */
 

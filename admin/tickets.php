@@ -1,6 +1,6 @@
 <?php
 /**
- * GaunGaliHat Support Ticket & Helpdesk Management
+ * GanvGaliHat Support Ticket & Helpdesk Management
  */
 
 require_once __DIR__ . '/../includes/functions.php';

@@ -1,6 +1,6 @@
 <?php
 /**
- * GaunGaliHat PayU Gateway Callback Handler
+ * GanvGaliHat PayU Gateway Callback Handler
  * Security Hardened:
  * 1. Strict POST only (rejects GET requests)
  * 2. Cryptographic SHA-512 Reverse Hash Verification (salt, status, udfs, email, name, product, amount, txnid, key)

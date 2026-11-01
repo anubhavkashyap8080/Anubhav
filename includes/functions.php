@@ -1,6 +1,6 @@
 <?php
 /**
- * GaunGaliHat Platform Helper Functions
+ * GanvGaliHat Platform Helper Functions
  */
 
 if (ob_get_level() === 0) {
@@ -367,7 +367,7 @@ function get_sodium_encryption_key() {
     $cfg = function_exists('get_platform_config') ? get_platform_config('security') : [];
     $raw_key = getenv('APP_ENCRYPTION_KEY') ?: ($cfg['encryption_key'] ?? '');
     if (empty($raw_key)) {
-        $salt = defined('PAYU_MERCHANT_SALT') ? PAYU_MERCHANT_SALT : 'GaunGaliHat_Default_Salt_Hardened';
+        $salt = defined('PAYU_MERCHANT_SALT') ? PAYU_MERCHANT_SALT : 'GanvGaliHat_Default_Salt_Hardened';
         $raw_key = hash('sha256', 'GGH_SECRET_BOX_KEY_' . $salt, true);
     } elseif (defined('SODIUM_CRYPTO_SECRETBOX_KEYBYTES') && strlen($raw_key) !== SODIUM_CRYPTO_SECRETBOX_KEYBYTES) {
         $raw_key = hash('sha256', $raw_key, true);
@@ -718,20 +718,20 @@ function send_email_verification_link($user_id, $email, $name, $phone = '') {
         $site_host = parse_url($site_url, PHP_URL_HOST) ?: 'ganvgalihat.com';
         $verify_url = $site_url . '/verify-email.php?token=' . $raw_token . '&email=' . urlencode($email);
 
-        $subject = "Verify your GaunGaliHat Account — OTP: " . $otp_code;
+        $subject = "Verify your GanvGaliHat Account — OTP: " . $otp_code;
         $headers = "MIME-Version: 1.0\r\n";
         $headers .= "Content-Type: text/html; charset=UTF-8\r\n";
-        $headers .= "From: GaunGaliHat Security <no-reply@" . $site_host . ">\r\n";
+        $headers .= "From: GanvGaliHat Security <no-reply@" . $site_host . ">\r\n";
         $headers .= "Reply-To: info@" . $site_host . "\r\n";
 
         $message = "
         <div style='font-family: -apple-system, BlinkMacSystemFont, Roboto, sans-serif; max-width: 540px; margin: 0 auto; padding: 28px; border: 1px solid #e5e7eb; border-radius: 16px; background: #ffffff;'>
             <div style='text-align: center; margin-bottom: 20px;'>
-                <h2 style='color: #065f46; margin: 0; font-size: 22px;'>GaunGaliHat — Email Verification</h2>
+                <h2 style='color: #065f46; margin: 0; font-size: 22px;'>GanvGaliHat — Email Verification</h2>
                 <p style='color: #d97706; font-size: 13px; font-weight: bold; margin: 4px 0 0 0;'>Hunar desh ka, ganv se ghar tak</p>
             </div>
             <p style='color: #374151; font-size: 14px;'>Namaste <strong>" . htmlspecialchars($name, ENT_QUOTES, 'UTF-8') . "</strong>,</p>
-            <p style='color: #4b5563; font-size: 14px; line-height: 1.6;'>Thank you for joining GaunGaliHat. Please use the 6-digit verification code below or click the button to verify your email address and activate your account:</p>
+            <p style='color: #4b5563; font-size: 14px; line-height: 1.6;'>Thank you for joining GanvGaliHat. Please use the 6-digit verification code below or click the button to verify your email address and activate your account:</p>
             
             <div style='background: #f0fdf4; border: 2px dashed #059669; border-radius: 12px; padding: 18px; text-align: center; margin: 24px 0;'>
                 <div style='font-size: 12px; color: #065f46; font-weight: 800; text-transform: uppercase; letter-spacing: 1px;'>Your 6-Digit Email OTP Code</div>
@@ -745,7 +745,7 @@ function send_email_verification_link($user_id, $email, $name, $phone = '') {
 
             <p style='color: #6b7280; font-size: 12px; line-height: 1.5;'>If the button does not work, copy and paste this verification URL into your browser:<br><a href='" . htmlspecialchars($verify_url, ENT_QUOTES, 'UTF-8') . "' style='color: #059669; word-break: break-all;'>" . htmlspecialchars($verify_url, ENT_QUOTES, 'UTF-8') . "</a></p>
             <hr style='border: none; border-top: 1px solid #f3f4f6; margin: 20px 0;'>
-            <p style='color: #9ca3af; font-size: 11px; text-align: center;'>© " . date('Y') . " GaunGaliHat. A Unit of Kalyani agrofood pvt ltd. All rights reserved.</p>
+            <p style='color: #9ca3af; font-size: 11px; text-align: center;'>© " . date('Y') . " GanvGaliHat. A Unit of Kalyani agrofood pvt ltd. All rights reserved.</p>
         </div>";
 
         @mail($email, $subject, $message, $headers);
@@ -764,7 +764,7 @@ function send_email_verification_link($user_id, $email, $name, $phone = '') {
 function send_welcome_email($user_id, $email, $name) {
     $site_url = defined('SITE_URL') ? SITE_URL : 'https://ganvgalihat.com';
     $site_host = parse_url($site_url, PHP_URL_HOST) ?: 'ganvgalihat.com';
-    $brand_name = defined('APP_NAME') ? APP_NAME : 'GaunGaliHat';
+    $brand_name = defined('APP_NAME') ? APP_NAME : 'GanvGaliHat';
     $subject = "Welcome to " . $brand_name . " — Hunar desh ka, ganv se ghar tak";
     $headers = "MIME-Version: 1.0\r\n";
     $headers .= "Content-Type: text/html; charset=UTF-8\r\n";
@@ -792,7 +792,7 @@ function send_welcome_email($user_id, $email, $name) {
 }
 
 // Universal Platform Email Dispatcher (Transactional & Marketing)
-function send_platform_email($to_email, $subject, $html_body, $from_name = 'GaunGaliHat', $from_email = null) {
+function send_platform_email($to_email, $subject, $html_body, $from_name = 'GanvGaliHat', $from_email = null) {
     $site_host = parse_url(defined('SITE_URL') ? SITE_URL : '', PHP_URL_HOST) ?: 'ganvgalihat.com';
     $sender = $from_email ?: ('namaste@' . $site_host);
     
@@ -814,7 +814,7 @@ function send_owner_security_alert($subject, $details) {
 
     if (!empty($owner_email)) {
         $site_host = parse_url(defined('SITE_URL') ? SITE_URL : '', PHP_URL_HOST) ?: 'ganvgalihat.com';
-        $full_subject = "[GaunGaliHat Security Alert] " . $subject;
+        $full_subject = "[GanvGaliHat Security Alert] " . $subject;
         $headers = "MIME-Version: 1.0\r\nContent-Type: text/plain; charset=UTF-8\r\nFrom: security@" . $site_host . "\r\n";
         $body = "SECURITY EVENT NOTIFICATION\nTime: " . date('Y-m-d H:i:s T') . "\nIP: " . ($_SERVER['REMOTE_ADDR'] ?? 'Unknown') . "\n\nDetails:\n" . (is_array($details) ? json_encode($details, JSON_PRETTY_PRINT) : (string)$details);
         @mail($owner_email, $full_subject, $body, $headers);
@@ -1781,6 +1781,28 @@ function get_site_setting($key, $default = '') {
 if (!function_exists('get_setting')) {
     function get_setting($key, $default = '') {
         return get_site_setting($key, $default);
+    }
+}
+
+/**
+ * Extract clean YouTube Embed URL from any standard YouTube link or video ID
+ */
+if (!function_exists('get_youtube_embed_url')) {
+    function get_youtube_embed_url($url_or_id, $autoplay = 0) {
+        $raw = trim((string)$url_or_id);
+        if (empty($raw)) {
+            $raw = 'https://www.youtube.com/watch?v=k4m3y1eH5Ww';
+        }
+        $video_id = '';
+        if (preg_match('/(?:youtube\.com\/(?:[^\/]+\/.+\/|(?:v|e(?:mbed)?)\/|.*[?&]v=)|youtu\.be\/)([^"&?\/\s]{11})/i', $raw, $matches)) {
+            $video_id = $matches[1];
+        } elseif (preg_match('/^[a-zA-Z0-9_-]{11}$/', $raw)) {
+            $video_id = $raw;
+        }
+        if (empty($video_id)) {
+            $video_id = 'k4m3y1eH5Ww';
+        }
+        return 'https://www.youtube-nocookie.com/embed/' . $video_id . ($autoplay ? '?autoplay=1&mute=1' : '');
     }
 }
 

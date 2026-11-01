@@ -1,6 +1,6 @@
 <?php
 /**
- * GaunGaliHat Account Email Verification Handler
+ * GanvGaliHat Account Email Verification Handler
  */
 
 require_once __DIR__ . '/includes/functions.php';

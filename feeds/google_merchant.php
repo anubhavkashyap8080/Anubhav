@@ -1,6 +1,6 @@
 <?php
 /**
- * GaunGaliHat Official Google Merchant Center Product Feed (XML)
+ * GanvGaliHat Official Google Merchant Center Product Feed (XML)
  * 100% Google Shopping & Merchant Center Policy Compliant RSS 2.0 Feed
  * Includes individual product-level shipping rates, GTIN exemption & weight tags
  */
@@ -48,7 +48,7 @@ if (php_sapi_name() !== 'cli') {
 $xml = '<?xml version="1.0" encoding="UTF-8"?>' . "\n";
 $xml .= '<rss version="2.0" xmlns:g="http://base.google.com/ns/1.0">' . "\n";
 $xml .= '  <channel>' . "\n";
-$xml .= '    <title>' . htmlspecialchars(get_setting('brand_name', 'GaunGaliHat')) . ' — Rural Artisan Marketplace</title>' . "\n";
+$xml .= '    <title>' . htmlspecialchars(get_setting('brand_name', 'GanvGaliHat')) . ' — Rural Artisan Marketplace</title>' . "\n";
 $xml .= '    <link>' . htmlspecialchars($site_url) . '</link>' . "\n";
 $xml .= '    <description>Authentic hand-forged agricultural tools, stone-ground unpolished pulses, and Banarasi pickles direct from Indian village clusters.</description>' . "\n";
 
@@ -83,7 +83,7 @@ foreach ($products as $p) {
     $ship_cost = number_format($ship_calc['shipping_fee'], 2, '.', '');
 
     $google_cat = get_google_category($p['category_slug'] ?? '');
-    $brand_name = !empty($p['vendor_name']) ? str_ireplace('S S Industries', 'Kalyani agrofood pvt ltd', $p['vendor_name']) : 'GaunGaliHat';
+    $brand_name = !empty($p['vendor_name']) ? str_ireplace('S S Industries', 'Kalyani agrofood pvt ltd', $p['vendor_name']) : 'GanvGaliHat';
 
     $xml .= '    <item>' . "\n";
     $xml .= '      <g:id>' . htmlspecialchars($item_id) . '</g:id>' . "\n";

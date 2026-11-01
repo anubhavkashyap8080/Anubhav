@@ -1,6 +1,6 @@
 <?php
 /**
- * GaunGaliHat Enterprise Dynamic XML Sitemap Engine
+ * GanvGaliHat Enterprise Dynamic XML Sitemap Engine
  * Complies with Sitemaps.org 0.9 protocol and Google Webmaster Guidelines
  */
 

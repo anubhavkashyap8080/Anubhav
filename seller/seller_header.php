@@ -1,6 +1,6 @@
 <?php
 /**
- * GaunGaliHat Seller Central Layout Header
+ * GanvGaliHat Seller Central Layout Header
  */
 
 require_once __DIR__ . '/../includes/functions.php';
@@ -31,7 +31,7 @@ $flash = get_flash();
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title><?= isset($page_title) ? htmlspecialchars($page_title) . ' — ' : '' ?>Seller Central — GaunGaliHat</title>
+  <title><?= isset($page_title) ? htmlspecialchars($page_title) . ' — ' : '' ?>Seller Central — GanvGaliHat</title>
   <link rel="icon" type="image/x-icon" href="/favicon.ico">
   <link rel="icon" type="image/png" sizes="32x32" href="/favicon.png">
   <link rel="apple-touch-icon" href="/apple-touch-icon.png">
@@ -59,9 +59,9 @@ $flash = get_flash();
         
         <!-- Brand & Workshop Info with Authentic Logo -->
         <div class="flex items-center gap-3 sm:gap-4">
-          <a href="/seller/dashboard.php" class="flex items-center gap-3 group py-1" title="GaunGaliHat Seller Central">
+          <a href="/seller/dashboard.php" class="flex items-center gap-3 group py-1" title="GanvGaliHat Seller Central">
             <div class="h-10 sm:h-12 bg-white/95 px-3 py-1.5 rounded-2xl shadow-sm flex items-center border border-white/20 transition-transform group-hover:scale-105">
-              <img src="/logo.png" alt="GaunGaliHat" class="h-7 sm:h-9 w-auto object-contain" />
+              <img src="/logo.png" alt="GanvGaliHat" class="h-7 sm:h-9 w-auto object-contain" />
             </div>
             <div class="hidden sm:block border-l border-stone-700 pl-3">
               <span class="text-xs font-black uppercase tracking-wider text-amber-400 block">Seller Central</span>

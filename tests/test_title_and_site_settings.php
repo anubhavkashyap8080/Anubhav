@@ -21,7 +21,7 @@ $stmt = $pdo->prepare("SELECT setting_value FROM site_settings WHERE setting_key
 $stmt->execute(['brand_name']);
 $b_val = $stmt->fetchColumn();
 echo "brand_name after ensure_platform_schema: " . var_export($b_val, true) . PHP_EOL;
-assert($b_val === 'GaunGaliHat', 'brand_name must be healed to GaunGaliHat');
+assert($b_val === 'GanvGaliHat', 'brand_name must be healed to GanvGaliHat');
 
 $stmt->execute(['homepage_title']);
 $h_val = $stmt->fetchColumn();
@@ -31,7 +31,7 @@ assert(strpos($h_val, '0') !== 0, 'homepage_title must not start with 0');
 echo "=== 2. Testing APP_NAME defense in settings.php ===" . PHP_EOL;
 echo "APP_NAME constant: " . var_export(APP_NAME, true) . PHP_EOL;
 assert(APP_NAME !== '0', 'APP_NAME must never be 0');
-assert(APP_NAME === 'GaunGaliHat', 'APP_NAME must be GaunGaliHat');
+assert(APP_NAME === 'GanvGaliHat', 'APP_NAME must be GanvGaliHat');
 
 echo "=== 3. Testing header.php title resolution ===" . PHP_EOL;
 $_SERVER['REQUEST_METHOD'] = 'GET';
@@ -48,7 +48,7 @@ echo "Rendered Homepage Title: " . var_export($rendered_title, true) . PHP_EOL;
 
 assert(!empty($rendered_title), 'Title must not be empty');
 assert(strpos($rendered_title, '0') !== 0, 'Title must not start with 0');
-assert(strpos($rendered_title, 'GaunGaliHat') === 0, 'Title must start with GaunGaliHat');
+assert(strpos($rendered_title, 'GanvGaliHat') === 0, 'Title must start with GanvGaliHat');
 
 echo "=== 4. Testing Title Sanitization against all 0 patterns ===" . PHP_EOL;
 $dirty_patterns = [
@@ -62,10 +62,10 @@ $dirty_patterns = [
 ];
 
 foreach ($dirty_patterns as $dirty) {
-    $clean = preg_replace('/^0\s*[-—_:]+\s*/u', 'GaunGaliHat — ', trim((string)$dirty));
+    $clean = preg_replace('/^0\s*[-—_:]+\s*/u', 'GanvGaliHat — ', trim((string)$dirty));
     $clean = preg_replace('/^0\s+/u', '', trim((string)$clean));
     if (empty($clean) || $clean === '0') {
-        $clean = 'GaunGaliHat — Desh ki mitti ka swad | Rural Tools & Farm Staples';
+        $clean = 'GanvGaliHat — Desh ki mitti ka swad | Rural Tools & Farm Staples';
     }
     echo "Dirty: " . var_export($dirty, true) . " --> Clean: " . var_export($clean, true) . PHP_EOL;
     assert(strpos($clean, '0') !== 0, "Cleaned string must not start with 0: {$clean}");

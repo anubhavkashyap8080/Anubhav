@@ -1,6 +1,6 @@
 <?php
 /**
- * GaunGaliHat Rural Heritage & Artisan Blog
+ * GanvGaliHat Rural Heritage & Artisan Blog
  */
 
 $page_title = 'गाँव की कहानियाँ व ब्लॉग (Artisan Heritage & Farming Stories)';

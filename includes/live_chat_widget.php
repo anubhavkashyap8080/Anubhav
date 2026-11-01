@@ -1,4 +1,4 @@
-<!-- GaunGaliHat Real-time Customer Live Chat Support Widget -->
+<!-- GanvGaliHat Real-time Customer Live Chat Support Widget -->
 <div id="liveChatWidgetContainer" class="fixed bottom-5 right-4 z-50 flex flex-col items-end gap-2.5 font-sans">
 
   <!-- Live Chat Trigger Pill -->
@@ -23,7 +23,7 @@
           🌾
         </div>
         <div class="min-w-0">
-          <h4 class="text-xs font-bold truncate">GaunGaliHat Support</h4>
+          <h4 class="text-xs font-bold truncate">GanvGaliHat Support</h4>
           <span class="text-[10px] text-emerald-300 flex items-center gap-1 font-semibold truncate">
             <span class="w-1.5 h-1.5 rounded-full bg-emerald-400"></span> Online • Direct Help Desk
           </span>
