@@ -147,7 +147,21 @@ $active_site_logo = ($use_gif_logo && !empty($logo_gif_url)) ? $logo_gif_url : $
           "https://www.facebook.com/ganvgalihat",
           "https://twitter.com/ganvgalihat",
           "https://www.instagram.com/ganvgalihat"
-        ]
+        ],
+        "hasMerchantReturnPolicy": {
+          "@type": "MerchantReturnPolicy",
+          "applicableCountry": "IN",
+          "returnPolicyCategory": "https://schema.org/MerchantReturnFiniteReturnWindow",
+          "merchantReturnDays": 7,
+          "returnMethod": "https://schema.org/ReturnByMail",
+          "returnFees": "https://schema.org/FreeReturn",
+          "returnShippingFeesAmount": {
+            "@type": "MonetaryAmount",
+            "value": "0.00",
+            "currency": "INR"
+          },
+          "merchantReturnLink": "<?= htmlspecialchars($canonical_base) ?>/shipping-policy.php"
+        }
       },
       {
         "@type": "WebSite",
