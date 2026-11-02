@@ -240,6 +240,42 @@ function ensure_platform_schema($pdo) {
         }
     } catch (Throwable $e_seo_mig) {}
 
+    // Auto-migrate Package Dimensions columns in products table (length_cm, width_cm, height_cm, volumetric_weight)
+    try {
+        if ($is_sqlite) {
+            $cols = $pdo->query("PRAGMA table_info(products)")->fetchAll(PDO::FETCH_COLUMN, 1);
+            if (!in_array('length_cm', $cols)) {
+                $pdo->exec("ALTER TABLE products ADD COLUMN length_cm REAL DEFAULT 10.0");
+            }
+            if (!in_array('width_cm', $cols)) {
+                $pdo->exec("ALTER TABLE products ADD COLUMN width_cm REAL DEFAULT 10.0");
+            }
+            if (!in_array('height_cm', $cols)) {
+                $pdo->exec("ALTER TABLE products ADD COLUMN height_cm REAL DEFAULT 10.0");
+            }
+            if (!in_array('volumetric_weight', $cols)) {
+                $pdo->exec("ALTER TABLE products ADD COLUMN volumetric_weight REAL DEFAULT 0.2");
+            }
+        } else {
+            $col_l = $pdo->query("SHOW COLUMNS FROM `products` LIKE 'length_cm'")->fetch();
+            if (!$col_l) {
+                $pdo->exec("ALTER TABLE `products` ADD COLUMN `length_cm` DECIMAL(6,2) DEFAULT 10.00 COMMENT 'Package Length in cm'");
+            }
+            $col_w = $pdo->query("SHOW COLUMNS FROM `products` LIKE 'width_cm'")->fetch();
+            if (!$col_w) {
+                $pdo->exec("ALTER TABLE `products` ADD COLUMN `width_cm` DECIMAL(6,2) DEFAULT 10.00 COMMENT 'Package Width in cm'");
+            }
+            $col_h = $pdo->query("SHOW COLUMNS FROM `products` LIKE 'height_cm'")->fetch();
+            if (!$col_h) {
+                $pdo->exec("ALTER TABLE `products` ADD COLUMN `height_cm` DECIMAL(6,2) DEFAULT 10.00 COMMENT 'Package Height in cm'");
+            }
+            $col_vw = $pdo->query("SHOW COLUMNS FROM `products` LIKE 'volumetric_weight'")->fetch();
+            if (!$col_vw) {
+                $pdo->exec("ALTER TABLE `products` ADD COLUMN `volumetric_weight` DECIMAL(6,2) DEFAULT 0.20 COMMENT 'Volumetric Weight in kg'");
+            }
+        }
+    } catch (Throwable $e_dim_mig) {}
+
     // Security Hardening Schema Migration (Item 10, 11, 12, 15, 25)
     try {
         if ($is_sqlite) {

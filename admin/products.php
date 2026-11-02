@@ -46,7 +46,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['edit_product'])) {
     $orig_price = floatval($_POST['original_price'] ?? $price);
     $stock = intval($_POST['stock'] ?? 50);
     $stock_status = clean_input($_POST['stock_status'] ?? 'In Stock');
-    $weight_kg = floatval($_POST['weight_kg'] ?? 0.5);
+    $weight_kg = max(0.01, floatval($_POST['weight_kg'] ?? 0.5));
+    $length_cm = max(1.0, floatval($_POST['length_cm'] ?? 10.0));
+    $width_cm = max(1.0, floatval($_POST['width_cm'] ?? 10.0));
+    $height_cm = max(1.0, floatval($_POST['height_cm'] ?? 10.0));
+    $volumetric_weight = round(($length_cm * $width_cm * $height_cm) / 5000.0, 2);
     $image = clean_input($_POST['image'] ?? '');
     $seo_title = clean_input($_POST['seo_title'] ?? '');
     $seo_description = clean_input($_POST['seo_description'] ?? '');
@@ -58,11 +62,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['edit_product'])) {
             $stmt = $pdo->prepare("
                 UPDATE products 
                 SET name = ?, hindi_name = ?, category_id = ?, vendor_id = ?, price = ?, original_price = ?,
-                    discount = ?, stock = ?, stock_status = ?, weight_kg = ?, image = ?,
+                    discount = ?, stock = ?, stock_status = ?, weight_kg = ?, length_cm = ?, width_cm = ?, height_cm = ?, volumetric_weight = ?, image = ?,
                     seo_title = ?, seo_description = ?, seo_keywords = ?
                 WHERE id = ?
             ");
-            $stmt->execute([$name, $hindi_name, $cat_id, $vendor_id, $price, $orig_price, $discount, $stock, $stock_status, $weight_kg, $image, $seo_title, $seo_description, $seo_keywords, $pid]);
+            $stmt->execute([$name, $hindi_name, $cat_id, $vendor_id, $price, $orig_price, $discount, $stock, $stock_status, $weight_kg, $length_cm, $width_cm, $height_cm, $volumetric_weight, $image, $seo_title, $seo_description, $seo_keywords, $pid]);
             log_audit_action('admin_edit_product', 'products', "Product #{$pid} edited by admin");
             set_flash('success', 'उत्पाद विवरण सफलतापूर्वक अपडेट किया गया!');
             header('Location: /admin/products.php');
@@ -394,9 +398,37 @@ require_once __DIR__ . '/admin_header.php';
         </div>
 
         <div>
-          <label class="block text-xs font-bold text-gray-700 mb-1">वजन (kg)</label>
-          <input type="number" step="0.01" name="weight_kg" id="edit_p_weight"
+          <label class="block text-xs font-bold text-gray-700 mb-1">वजन (kg) <span class="text-red-500">*</span></label>
+          <input type="number" step="0.01" name="weight_kg" id="edit_p_weight" oninput="updateAdminVolumetric()"
             class="w-full px-3 py-2 bg-stone-50 border border-gray-200 rounded-xl text-xs focus:bg-white focus:outline-none focus:border-indigo-600 transition">
+        </div>
+      </div>
+
+      <!-- Package Dimensions for Shipping -->
+      <div class="p-3 bg-stone-50 border border-stone-200 rounded-2xl space-y-2">
+        <span class="text-[11px] font-bold text-gray-700 flex items-center gap-1.5">
+          <i class="fa-solid fa-box text-indigo-600"></i> पार्सल माप (Package Dimensions - cm)
+        </span>
+        <div class="grid grid-cols-3 gap-3">
+          <div>
+            <label class="block text-[10px] text-gray-500 font-bold mb-0.5">लंबाई (Length cm)</label>
+            <input type="number" step="0.1" name="length_cm" id="edit_p_length" value="10.0" oninput="updateAdminVolumetric()"
+              class="w-full px-2.5 py-1.5 bg-white border border-gray-200 rounded-lg text-xs font-bold focus:border-indigo-600 outline-none">
+          </div>
+          <div>
+            <label class="block text-[10px] text-gray-500 font-bold mb-0.5">चौड़ाई (Width cm)</label>
+            <input type="number" step="0.1" name="width_cm" id="edit_p_width" value="10.0" oninput="updateAdminVolumetric()"
+              class="w-full px-2.5 py-1.5 bg-white border border-gray-200 rounded-lg text-xs font-bold focus:border-indigo-600 outline-none">
+          </div>
+          <div>
+            <label class="block text-[10px] text-gray-500 font-bold mb-0.5">ऊंचाई (Height cm)</label>
+            <input type="number" step="0.1" name="height_cm" id="edit_p_height" value="10.0" oninput="updateAdminVolumetric()"
+              class="w-full px-2.5 py-1.5 bg-white border border-gray-200 rounded-lg text-xs font-bold focus:border-indigo-600 outline-none">
+          </div>
+        </div>
+        <div class="text-[10px] text-gray-500 flex justify-between">
+          <span>Volumetric Weight: <strong id="admin_vol_preview" class="text-indigo-700">0.20 kg</strong></span>
+          <span>Formula: (L × W × H) / 5000</span>
         </div>
       </div>
 
@@ -467,6 +499,15 @@ require_once __DIR__ . '/admin_header.php';
 </div>
 
 <script>
+function updateAdminVolumetric() {
+  const l = parseFloat(document.getElementById('edit_p_length').value) || 0;
+  const w = parseFloat(document.getElementById('edit_p_width').value) || 0;
+  const h = parseFloat(document.getElementById('edit_p_height').value) || 0;
+  const vol = ((l * w * h) / 5000).toFixed(2);
+  const el = document.getElementById('admin_vol_preview');
+  if (el) el.innerText = vol + ' kg';
+}
+
 function openEditProductModal(p) {
   document.getElementById('edit_pid').value = p.id || '';
   document.getElementById('edit_p_name').value = p.name || '';
@@ -476,6 +517,10 @@ function openEditProductModal(p) {
   document.getElementById('edit_p_price').value = p.price || '';
   document.getElementById('edit_p_orig_price').value = p.original_price || p.price || '';
   document.getElementById('edit_p_weight').value = p.weight_kg || 0.5;
+  document.getElementById('edit_p_length').value = p.length_cm || 10.0;
+  document.getElementById('edit_p_width').value = p.width_cm || 10.0;
+  document.getElementById('edit_p_height').value = p.height_cm || 10.0;
+  updateAdminVolumetric();
   document.getElementById('edit_p_stock').value = p.stock || 50;
   document.getElementById('edit_p_stock_status').value = p.stock_status || 'In Stock';
   document.getElementById('edit_p_image').value = p.image || '';
