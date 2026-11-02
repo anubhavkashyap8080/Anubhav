@@ -35,7 +35,7 @@ require_once __DIR__ . '/includes/header.php';
 </div>
 
 <!-- 1. Hero Story Section with Village Backdrop & Theme Gradient -->
-<section class="relative bg-gradient-to-br from-emerald-950 via-[#064e3b] to-stone-950 text-white py-12 sm:py-16 overflow-hidden border-b border-emerald-900/50">
+<section class="relative text-white py-12 sm:py-16 overflow-hidden border-b border-emerald-900/50" style="background: linear-gradient(135deg, #022c22 0%, #064e3b 50%, #0c0a09 100%) !important;">
   <div class="absolute inset-0 opacity-10 bg-[radial-gradient(#ffffff_1px,transparent_1px)] [background-size:16px_16px]"></div>
   <div class="absolute -top-24 -right-24 w-80 h-80 rounded-full bg-amber-500/20 blur-3xl pointer-events-none"></div>
   <div class="absolute -bottom-24 -left-24 w-80 h-80 rounded-full bg-emerald-400/10 blur-3xl pointer-events-none"></div>
@@ -237,16 +237,16 @@ require_once __DIR__ . '/includes/header.php';
     </div>
 
     <!-- 4. Movement Banner -->
-    <div class="bg-gradient-to-r from-amber-500 via-amber-600 to-orange-600 text-stone-950 rounded-3xl p-8 sm:p-10 shadow-lg text-center space-y-3">
+    <div class="rounded-3xl p-8 sm:p-10 shadow-lg text-center space-y-3" style="background: linear-gradient(135deg, #f59e0b 0%, #d97706 50%, #ea580c 100%) !important; color: #1c1917 !important;">
       <span class="inline-block px-3 py-1 bg-stone-950 text-white text-[11px] font-black rounded-lg uppercase tracking-wider">
         <span class="lang-en">National Movement</span>
         <span class="lang-hi hidden">राष्ट्रीय जन-अभियान</span>
       </span>
-      <h3 class="text-2xl sm:text-3xl font-black font-display text-white">
+      <h3 class="text-2xl sm:text-3xl font-black font-display" style="color: #ffffff !important; text-shadow: 0 2px 4px rgba(0,0,0,0.3);">
         <span class="lang-en">Our Mission: Villager Products to National Market</span>
         <span class="lang-hi hidden">हमारा मिशन: ग्रामीण उत्पाद, राष्ट्रीय बाजार तक</span>
       </h3>
-      <p class="text-xs sm:text-sm text-stone-950 font-bold max-w-2xl mx-auto leading-relaxed">
+      <p class="text-xs sm:text-sm font-bold max-w-2xl mx-auto leading-relaxed" style="color: #1c1917 !important;">
         <span class="lang-en">GanvGaliHat is not just a store, it is a movement for Atmanirbhar Bharat and Vocal for Local.</span>
         <span class="lang-hi hidden">गाँव गली हाट केवल एक ऑनलाइन स्टोर नहीं, बल्कि यह आत्मनिर्भर भारत और वोकल फॉर लोकल का एक राष्ट्रव्यापी अभियान है।</span>
       </p>
@@ -386,21 +386,23 @@ require_once __DIR__ . '/includes/header.php';
     </div>
 
     <!-- 7. Call to Action Banner -->
-    <div class="bg-gradient-to-r from-emerald-900 to-emerald-950 text-white rounded-3xl p-8 sm:p-10 shadow-lg text-center space-y-4">
-      <h3 class="text-2xl sm:text-3xl font-black font-display text-white">
+    <div class="rounded-3xl p-8 sm:p-12 shadow-xl text-center space-y-4" style="background: linear-gradient(135deg, #064e3b 0%, #022c22 100%) !important; color: #ffffff !important;">
+      <h3 class="text-2xl sm:text-3xl font-black font-display" style="color: #ffffff !important; text-shadow: 0 2px 4px rgba(0,0,0,0.4);">
         <span class="lang-en">Bring Bharat's Craft & Harvest Home Today</span>
         <span class="lang-hi hidden">ग्रामीण भारत के हुनर को अपने घर लाएं</span>
       </h3>
-      <p class="text-xs sm:text-sm text-stone-300 max-w-xl mx-auto leading-relaxed">
+      <p class="text-xs sm:text-sm max-w-xl mx-auto leading-relaxed" style="color: #a7f3d0 !important;">
         <span class="lang-en">Every product you purchase brings dignity and fair livelihood directly to a village artisan family.</span>
         <span class="lang-hi hidden">आपके द्वारा खरीदा गया प्रत्येक उत्पाद किसी गाँव के लोहार, किसान या कुटीर कारीगर परिवार के चेहरे पर मुस्कान लाता है।</span>
       </p>
-      <div class="flex flex-wrap items-center justify-center gap-3 pt-2">
-        <a href="/products.php" class="px-6 py-2.5 bg-amber-500 hover:bg-amber-400 text-stone-950 font-black text-xs rounded-xl shadow transition">
+      <div class="flex flex-wrap items-center justify-center gap-3 pt-3">
+        <a href="/products.php" class="px-7 py-3 font-black text-xs sm:text-sm rounded-xl shadow-lg transition active:scale-95 flex items-center gap-2" style="background-color: #f59e0b !important; color: #1c1917 !important;">
+          <i data-lucide="shopping-bag" class="w-4 h-4"></i>
           <span class="lang-en">Shop Catalog</span>
           <span class="lang-hi hidden">उत्पाद देखें</span>
         </a>
-        <a href="/seller-register.php" class="px-6 py-2.5 bg-white/10 hover:bg-white/20 text-white font-bold text-xs rounded-xl border border-white/20 transition">
+        <a href="/seller-register.php" class="px-7 py-3 font-bold text-xs sm:text-sm rounded-xl transition flex items-center gap-2" style="background: rgba(255, 255, 255, 0.15) !important; color: #ffffff !important; border: 1.5px solid rgba(255, 255, 255, 0.45) !important;">
+          <i data-lucide="store" class="w-4 h-4"></i>
           <span class="lang-en">Register as Rural Seller</span>
           <span class="lang-hi hidden">विक्रेता के रूप में जुड़ें</span>
         </a>
