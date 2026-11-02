@@ -108,4 +108,13 @@ Options -Indexes
     RewriteRule ^sitemap\.xml$ sitemap.php [L]
     RewriteRule ^sitemap-([a-z]+)\.xml$ sitemap.php?type=$1 [L]
     RewriteRule ^robots\.txt$ robots.php [L]
+
+    # Friendly Policy and CMS URLs
+    RewriteRule ^about/?$ about.php [L,QSA]
+    RewriteRule ^contact/?$ contact.php [L,QSA]
+    RewriteRule ^privacy-policy/?$ privacy-policy.php [L,QSA]
+    RewriteRule ^terms-conditions/?$ terms-conditions.php [L,QSA]
+    RewriteRule ^shipping-policy/?$ shipping-policy.php [L,QSA]
+    RewriteRule ^terms-of-supply/?$ terms-of-supply.php [L,QSA]
+    RewriteRule ^page/([a-zA-Z0-9_-]+)/?$ page.php?slug=$1 [L,QSA]
 </IfModule>

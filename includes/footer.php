@@ -164,11 +164,13 @@
       <div class="border-t border-slate-900 pt-6 flex flex-col sm:flex-row items-center justify-between gap-3 text-[11px] text-slate-500">
         <p><?= htmlspecialchars(get_setting('footer_copyright', '© ' . date('Y') . ' ' . APP_NAME . '. All Rights Reserved.')) ?></p>
         <div class="flex items-center gap-4">
-          <a href="<?= htmlspecialchars(get_setting('privacy_policy_url', '/about.php')) ?>" class="hover:text-slate-400">Privacy Policy</a>
+          <a href="<?= htmlspecialchars(get_setting('privacy_policy_url', '/privacy-policy.php')) ?>" class="hover:text-slate-400">Privacy Policy</a>
           <span>•</span>
-          <a href="<?= htmlspecialchars(get_setting('terms_conditions_url', '/about.php')) ?>" class="hover:text-slate-400">Terms of Supply</a>
+          <a href="<?= htmlspecialchars(get_setting('terms_conditions_url', '/terms-conditions.php')) ?>" class="hover:text-slate-300">Terms & Conditions</a>
           <span>•</span>
-          <a href="<?= htmlspecialchars(get_setting('shipping_policy_url', '/about.php')) ?>" class="hover:text-slate-400">Shipping & Return Policy</a>
+          <a href="<?= htmlspecialchars(get_setting('terms_of_supply_url', '/terms-of-supply.php')) ?>" class="hover:text-slate-300">Terms of Supply</a>
+          <span>•</span>
+          <a href="<?= htmlspecialchars(get_setting('shipping_policy_url', '/shipping-policy.php')) ?>" class="hover:text-slate-400">Shipping & Return Policy</a>
         </div>
       </div>
     </div>

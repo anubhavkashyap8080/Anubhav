@@ -131,6 +131,11 @@ $flash = get_flash();
           <i class="fa-solid fa-newspaper"></i> Blogs CMS
         </a>
 
+        <a href="/admin/pages.php"
+          class="px-3 py-2 rounded-lg transition whitespace-nowrap flex items-center gap-1.5 <?= $current_page === 'pages.php' ? 'bg-indigo-600 text-white' : 'text-indigo-200 hover:text-white hover:bg-indigo-800' ?>">
+          <i class="fa-solid fa-file-lines text-amber-300"></i> Policy & CMS Pages
+        </a>
+
         <a href="/admin/tickets.php"
           class="px-3 py-2 rounded-lg transition whitespace-nowrap flex items-center gap-1.5 <?= $current_page === 'tickets.php' ? 'bg-indigo-600 text-white' : 'text-indigo-200 hover:text-white hover:bg-indigo-800' ?>">
           <i class="fa-solid fa-headset"></i> Support Tickets

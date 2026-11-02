@@ -1872,3 +1872,226 @@ if (php_sapi_name() !== 'cli') {
 
 // Enforce IP block list on every request
 enforce_ip_block();
+
+
+/**
+ * CMS & Bilingual Policy Pages Manager
+ */
+function get_cms_pages_file() {
+    return dirname(__DIR__) . '/data/pages.json';
+}
+
+function ensure_pages_table() {
+    global $pdo;
+    static $ensured = false;
+    if ($ensured || !$pdo) return;
+    try {
+        $pdo->exec("
+            CREATE TABLE IF NOT EXISTS `pages` (
+              `id` INT AUTO_INCREMENT PRIMARY KEY,
+              `slug` VARCHAR(100) UNIQUE NOT NULL,
+              `title` VARCHAR(255) NOT NULL,
+              `hindi_title` VARCHAR(255) DEFAULT '',
+              `content_en` MEDIUMTEXT,
+              `content_hi` MEDIUMTEXT,
+              `meta_description` VARCHAR(500) DEFAULT '',
+              `is_active` TINYINT(1) DEFAULT 1,
+              `is_system` TINYINT(1) DEFAULT 0,
+              `created_at` DATETIME DEFAULT CURRENT_TIMESTAMP,
+              `updated_at` DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+        ");
+        $ensured = true;
+    } catch (Throwable $e) {}
+}
+
+function get_all_cms_pages() {
+    global $pdo;
+    ensure_pages_table();
+    
+    // First try database
+    if ($pdo) {
+        try {
+            $stmt = $pdo->query("SELECT * FROM pages ORDER BY is_system DESC, id ASC");
+            $rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
+            if (!empty($rows)) {
+                $pages_map = [];
+                foreach ($rows as $r) {
+                    $pages_map[$r['slug']] = $r;
+                }
+                return $pages_map;
+            }
+        } catch (Throwable $e) {}
+    }
+
+    // Fallback to data/pages.json
+    $json_file = get_cms_pages_file();
+    if (file_exists($json_file)) {
+        $data = json_decode(file_get_contents($json_file), true);
+        if (is_array($data)) {
+            return $data;
+        }
+    }
+    return [];
+}
+
+function get_cms_page($slug) {
+    global $pdo;
+    $slug = trim(strtolower($slug));
+    ensure_pages_table();
+
+    if ($pdo) {
+        try {
+            $stmt = $pdo->prepare("SELECT * FROM pages WHERE slug = ? LIMIT 1");
+            $stmt->execute([$slug]);
+            $row = $stmt->fetch(PDO::FETCH_ASSOC);
+            if ($row) {
+                return $row;
+            }
+        } catch (Throwable $e) {}
+    }
+
+    $json_file = get_cms_pages_file();
+    if (file_exists($json_file)) {
+        $data = json_decode(file_get_contents($json_file), true);
+        if (isset($data[$slug])) {
+            return $data[$slug];
+        }
+    }
+    return null;
+}
+
+function save_cms_page($slug, $data) {
+    global $pdo;
+    $slug = trim(strtolower($slug));
+    ensure_pages_table();
+
+    $title = trim($data['title'] ?? '');
+    $hindi_title = trim($data['hindi_title'] ?? '');
+    $content_en = trim($data['content_en'] ?? '');
+    $content_hi = trim($data['content_hi'] ?? '');
+    $meta_desc = trim($data['meta_description'] ?? '');
+    $is_active = !empty($data['is_active']) ? 1 : 0;
+    $is_system = !empty($data['is_system']) ? 1 : 0;
+
+    // Save to DB
+    if ($pdo) {
+        try {
+            $stmt = $pdo->prepare("
+                INSERT INTO pages (slug, title, hindi_title, content_en, content_hi, meta_description, is_active, is_system)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+                ON DUPLICATE KEY UPDATE
+                    title = VALUES(title),
+                    hindi_title = VALUES(hindi_title),
+                    content_en = VALUES(content_en),
+                    content_hi = VALUES(content_hi),
+                    meta_description = VALUES(meta_description),
+                    is_active = VALUES(is_active)
+            ");
+            $stmt->execute([$slug, $title, $hindi_title, $content_en, $content_hi, $meta_desc, $is_active, $is_system]);
+        } catch (Throwable $e) {}
+    }
+
+    // Save to JSON
+    $json_file = get_cms_pages_file();
+    $all = [];
+    if (file_exists($json_file)) {
+        $all = json_decode(file_get_contents($json_file), true) ?: [];
+    }
+    $all[$slug] = [
+        'slug' => $slug,
+        'title' => $title,
+        'hindi_title' => $hindi_title,
+        'content_en' => $content_en,
+        'content_hi' => $content_hi,
+        'meta_description' => $meta_desc,
+        'is_active' => $is_active,
+        'is_system' => $is_system,
+        'updated_at' => date('Y-m-d H:i:s')
+    ];
+    file_put_contents($json_file, json_encode($all, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE));
+    return true;
+}
+
+function delete_cms_page($slug) {
+    global $pdo;
+    $slug = trim(strtolower($slug));
+
+    // Protect system pages from deletion
+    $system_pages = ['about-us', 'privacy-policy', 'terms-conditions', 'shipping-policy', 'terms-of-supply', 'support'];
+    if (in_array($slug, $system_pages, true)) {
+        return false;
+    }
+
+    if ($pdo) {
+        try {
+            $stmt = $pdo->prepare("DELETE FROM pages WHERE slug = ? AND is_system = 0");
+            $stmt->execute([$slug]);
+        } catch (Throwable $e) {}
+    }
+
+    $json_file = get_cms_pages_file();
+    if (file_exists($json_file)) {
+        $all = json_decode(file_get_contents($json_file), true) ?: [];
+        if (isset($all[$slug])) {
+            unset($all[$slug]);
+            file_put_contents($json_file, json_encode($all, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE));
+        }
+    }
+    return true;
+}
+
+function render_bilingual_toggle($active_lang = 'en') {
+    ob_start();
+    ?>
+    <div class="inline-flex items-center p-1 bg-stone-100 rounded-xl border border-stone-300 shadow-xs select-none" id="gghBilingualToggle">
+      <button type="button" onclick="gghSetLang('en')" id="gghBtnEn"
+              class="px-3 py-1.5 rounded-lg text-xs font-bold transition flex items-center gap-1.5 <?= $active_lang === 'en' ? 'bg-emerald-800 text-white shadow-xs' : 'text-stone-600 hover:text-stone-900' ?>">
+        <span class="w-2 h-2 rounded-full bg-emerald-400"></span>
+        <span>English</span>
+      </button>
+      <button type="button" onclick="gghSetLang('hi')" id="gghBtnHi"
+              class="px-3 py-1.5 rounded-lg text-xs font-bold transition flex items-center gap-1.5 <?= $active_lang === 'hi' ? 'bg-emerald-800 text-white shadow-xs' : 'text-stone-600 hover:text-stone-900' ?>">
+        <span>हिन्दी</span>
+      </button>
+    </div>
+    <script>
+    function gghSetLang(lang) {
+      try { localStorage.setItem('ggh_site_lang', lang); } catch (e) {}
+      var btnEn = document.getElementById('gghBtnEn');
+      var btnHi = document.getElementById('gghBtnHi');
+      var ens = document.querySelectorAll('.lang-en');
+      var his = document.querySelectorAll('.lang-hi');
+      
+      if (lang === 'hi') {
+        ens.forEach(function(el) { el.classList.add('hidden'); });
+        his.forEach(function(el) { el.classList.remove('hidden'); });
+        if (btnHi) {
+          btnHi.className = 'px-3 py-1.5 rounded-lg text-xs font-bold transition flex items-center gap-1.5 bg-emerald-800 text-white shadow-xs';
+        }
+        if (btnEn) {
+          btnEn.className = 'px-3 py-1.5 rounded-lg text-xs font-bold transition flex items-center gap-1.5 text-stone-600 hover:text-stone-900';
+        }
+      } else {
+        his.forEach(function(el) { el.classList.add('hidden'); });
+        ens.forEach(function(el) { el.classList.remove('hidden'); });
+        if (btnEn) {
+          btnEn.className = 'px-3 py-1.5 rounded-lg text-xs font-bold transition flex items-center gap-1.5 bg-emerald-800 text-white shadow-xs';
+        }
+        if (btnHi) {
+          btnHi.className = 'px-3 py-1.5 rounded-lg text-xs font-bold transition flex items-center gap-1.5 text-stone-600 hover:text-stone-900';
+        }
+      }
+    }
+    document.addEventListener('DOMContentLoaded', function() {
+      var urlParams = new URLSearchParams(window.location.search);
+      var urlLang = urlParams.get('lang');
+      var saved = null;
+      try { saved = localStorage.getItem('ggh_site_lang'); } catch (e) {}
+      var active = urlLang || saved || 'en';
+      gghSetLang(active);
+    });
+    </script>
+    <?php
+    return ob_get_clean();
+}
