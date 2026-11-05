@@ -42,6 +42,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['save_settings'])) {
     $_POST['razorpay_enabled'] = isset($_POST['razorpay_enabled']) ? '1' : '0';
     $_POST['payu_enabled'] = isset($_POST['payu_enabled']) ? '1' : '0';
     $_POST['cod_enabled'] = isset($_POST['cod_enabled']) ? '1' : '0';
+    $_POST['maintenance_mode_enabled'] = isset($_POST['maintenance_mode_enabled']) ? '1' : '0';
 
     try {
         $stmt_up = $pdo->prepare("INSERT INTO site_settings (setting_key, setting_value) VALUES (?, ?) ON DUPLICATE KEY UPDATE setting_value = VALUES(setting_value)");
@@ -63,7 +64,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['save_settings'])) {
             'razorpay_enabled', 'razorpay_key_id',
             'payu_enabled', 'payu_merchant_key', 'payu_mode',
             'cod_enabled', 'cod_extra_charge_percent',
-            'shipping_free_threshold', 'shipping_zone1_rate', 'shipping_zone2_rate', 'shipping_zone3_rate', 'shipping_weight_slab_rate'
+            'shipping_free_threshold', 'shipping_zone1_rate', 'shipping_zone2_rate', 'shipping_zone3_rate', 'shipping_weight_slab_rate',
+            'maintenance_mode_enabled', 'maintenance_mode_title', 'maintenance_mode_title_hi', 'maintenance_mode_message', 'maintenance_mode_message_hi', 'maintenance_mode_end_time', 'maintenance_mode_allowed_ips', 'maintenance_mode_secret_bypass', 'maintenance_mode_show_contact'
         ];
 
         foreach ($allowed_keys as $key) {
@@ -133,6 +135,34 @@ require_once __DIR__ . '/admin_header.php';
   <a href="/admin/seo_settings.php" class="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold rounded-xl transition flex items-center gap-1.5 shrink-0 shadow-xs">
     <i class="fa-solid fa-gear"></i> Open SEO Settings
   </a>
+</div>
+
+<!-- Quick Maintenance Mode Status & Control Card -->
+<div class="mb-6 p-5 rounded-2xl border shadow-xs transition-all <?= (function_exists('is_maintenance_mode_active') && is_maintenance_mode_active()) ? 'bg-red-50/80 border-red-200' : 'bg-emerald-50/80 border-emerald-200' ?> flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+  <div class="flex items-center gap-3.5">
+    <div class="w-11 h-11 rounded-xl flex items-center justify-center font-bold text-lg shrink-0 shadow-xs <?= (function_exists('is_maintenance_mode_active') && is_maintenance_mode_active()) ? 'bg-red-600 text-white animate-pulse' : 'bg-emerald-600 text-white' ?>">
+      <i class="fa-solid <?= (function_exists('is_maintenance_mode_active') && is_maintenance_mode_active()) ? 'fa-screwdriver-wrench' : 'fa-globe' ?>"></i>
+    </div>
+    <div>
+      <div class="flex items-center gap-2">
+        <span class="px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider <?= (function_exists('is_maintenance_mode_active') && is_maintenance_mode_active()) ? 'bg-red-600 text-white' : 'bg-emerald-700 text-white' ?>">
+          <?= (function_exists('is_maintenance_mode_active') && is_maintenance_mode_active()) ? 'Maintenance Mode Active' : 'Store Live & Online' ?>
+        </span>
+        <h4 class="text-xs font-black text-gray-900">
+          <?= (function_exists('is_maintenance_mode_active') && is_maintenance_mode_active()) ? 'Public Access is Blocked (HTTP 503)' : 'All Visitors Have Normal Access' ?>
+        </h4>
+      </div>
+      <p class="text-[11px] text-gray-600 mt-1">
+        Take site offline for updates, schedule maintenance countdown, or configure IP/secret bypass.
+      </p>
+    </div>
+  </div>
+  <div class="flex items-center gap-2 shrink-0">
+    <a href="/admin/maintenance.php" class="px-4 py-2 <?= (function_exists('is_maintenance_mode_active') && is_maintenance_mode_active()) ? 'bg-red-600 hover:bg-red-700' : 'bg-emerald-700 hover:bg-emerald-800' ?> text-white text-xs font-bold rounded-xl transition flex items-center gap-1.5 shadow-xs">
+      <i class="fa-solid fa-gear"></i>
+      <?= (function_exists('is_maintenance_mode_active') && is_maintenance_mode_active()) ? 'Open Maintenance Control' : 'Configure Maintenance Mode' ?>
+    </a>
+  </div>
 </div>
 
 <form action="/admin/site_settings.php" method="POST" enctype="multipart/form-data" class="space-y-8">

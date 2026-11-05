@@ -39,6 +39,25 @@ $flash = get_flash();
   <!-- Impersonation Notice Banner with POST + CSRF exit -->
   <?= function_exists('render_impersonation_banner') ? render_impersonation_banner() : '' ?>
 
+  <!-- Maintenance Mode Active Global Warning Banner -->
+  <?php if (function_exists('is_maintenance_mode_active') && is_maintenance_mode_active()): ?>
+    <div class="bg-gradient-to-r from-red-600 via-rose-600 to-amber-600 text-white px-4 py-2.5 text-xs font-bold shadow-lg flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b-2 border-red-700 sticky top-0 z-50">
+      <div class="flex items-center gap-2.5">
+        <span class="w-2.5 h-2.5 rounded-full bg-white animate-ping"></span>
+        <span class="px-2 py-0.5 rounded-md bg-white text-rose-700 text-[10px] font-black uppercase tracking-wider">Maintenance Mode Active</span>
+        <span>⚠️ <strong>Public store is currently OFFLINE to visitors.</strong> Search engines receive HTTP 503. Only authenticated staff and whitelisted IPs can access.</span>
+      </div>
+      <div class="flex items-center gap-2 shrink-0">
+        <a href="/admin/maintenance.php" class="px-3 py-1 bg-white text-rose-700 hover:bg-stone-100 rounded-lg text-xs font-black transition shadow-xs flex items-center gap-1.5">
+          <i class="fa-solid fa-power-off text-rose-600"></i> Manage / Turn Off
+        </a>
+        <a href="/maintenance.php?preview=1" target="_blank" class="px-2.5 py-1 bg-black/20 hover:bg-black/30 text-white rounded-lg text-xs font-semibold transition border border-white/30">
+          <i class="fa-solid fa-eye"></i> Preview Screen
+        </a>
+      </div>
+    </div>
+  <?php endif; ?>
+
   <!-- Top Admin Bar -->
   <header class="bg-indigo-950 text-white border-b border-indigo-900 sticky top-0 z-40">
     <div class="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8">
@@ -213,7 +232,12 @@ $flash = get_flash();
         </a>
         <?php endif; ?>
 
-        <a href="/admin/audit_logs.php"
+                <a href="/admin/maintenance.php"
+          class="px-3 py-2 rounded-lg transition whitespace-nowrap flex items-center gap-1.5 <?= $current_page === 'maintenance.php' ? 'bg-indigo-600 text-white' : (function_exists('is_maintenance_mode_active') && is_maintenance_mode_active() ? 'bg-rose-600 text-white animate-pulse' : 'text-indigo-200 hover:text-white hover:bg-indigo-800') ?>">
+          <i class="fa-solid fa-screwdriver-wrench <?= function_exists('is_maintenance_mode_active') && is_maintenance_mode_active() ? 'text-amber-200' : 'text-amber-300' ?>"></i> Maintenance Mode <?= function_exists('is_maintenance_mode_active') && is_maintenance_mode_active() ? '<span class="ml-1 px-1.5 py-0.5 bg-white text-rose-700 rounded text-[9px] font-black uppercase">Active</span>' : '' ?>
+        </a>
+
+<a href="/admin/audit_logs.php"
           class="px-3 py-2 rounded-lg transition whitespace-nowrap flex items-center gap-1.5 <?= $current_page === 'audit_logs.php' ? 'bg-indigo-600 text-white' : 'text-indigo-200 hover:text-white hover:bg-indigo-800' ?>">
           <i class="fa-solid fa-clipboard-check text-indigo-300"></i> Audit Logs
         </a>

@@ -1248,6 +1248,151 @@ function is_super_admin() {
     return $u && $u['role'] === 'super_admin';
 }
 
+/**
+ * Maintenance Mode Detection & Management Helpers
+ */
+function is_maintenance_mode_active() {
+    return (string)get_site_setting('maintenance_mode_enabled', '0') === '1';
+}
+
+function get_maintenance_settings() {
+    return [
+        'enabled'       => is_maintenance_mode_active(),
+        'title'         => get_site_setting('maintenance_mode_title', "We'll Be Back Shortly!"),
+        'title_hi'      => get_site_setting('maintenance_mode_title_hi', "हम जल्द ही वापस लौटेंगे!"),
+        'message'       => get_site_setting('maintenance_mode_message', "GanvGaliHat is currently undergoing scheduled platform upgrades to bring you an even better rural shopping experience. We will be back online shortly."),
+        'message_hi'    => get_site_setting('maintenance_mode_message_hi', "गाँव गली हाट पर वर्तमान में बेहतर सेवा और तकनीकी सुधार हेतु नियमित मेंटेनेंस कार्य प्रगति पर है। हुई असुविधा के लिए हमें खेद है।"),
+        'end_time'      => get_site_setting('maintenance_mode_end_time', ''),
+        'allowed_ips'   => get_site_setting('maintenance_mode_allowed_ips', ''),
+        'secret_bypass' => get_site_setting('maintenance_mode_secret_bypass', 'ganv_preview_2026'),
+        'show_contact'  => get_site_setting('maintenance_mode_show_contact', '1'),
+        'started_at'    => get_site_setting('maintenance_mode_started_at', ''),
+    ];
+}
+
+function can_bypass_maintenance_mode() {
+    // 1. Authenticated Staff / Super Admins always bypass
+    if (function_exists('is_admin') && is_admin()) {
+        return true;
+    }
+
+    $settings = get_maintenance_settings();
+
+    // 2. Secret Bypass Query Token (e.g. ?bypass=SECRET_TOKEN)
+    $secret = trim((string)$settings['secret_bypass']);
+    if (!empty($secret)) {
+        if (!empty($_GET['bypass']) && hash_equals($secret, (string)$_GET['bypass'])) {
+            $salt = defined('DB_PASS') ? DB_PASS : 'ganv_maint_key';
+            $cookie_val = hash_hmac('sha256', $secret, $salt);
+            if (!headers_sent()) {
+                setcookie('ganv_maint_bypass', $cookie_val, [
+                    'expires' => time() + 86400 * 7,
+                    'path' => '/',
+                    'secure' => (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off'),
+                    'httponly' => true,
+                    'samesite' => 'Lax'
+                ]);
+            }
+            $_COOKIE['ganv_maint_bypass'] = $cookie_val;
+            return true;
+        }
+
+        if (!empty($_COOKIE['ganv_maint_bypass'])) {
+            $salt = defined('DB_PASS') ? DB_PASS : 'ganv_maint_key';
+            $expected = hash_hmac('sha256', $secret, $salt);
+            if (hash_equals($expected, (string)$_COOKIE['ganv_maint_bypass'])) {
+                return true;
+            }
+        }
+    }
+
+    // 3. IP Whitelist
+    $allowed_ips_raw = trim((string)$settings['allowed_ips']);
+    if (!empty($allowed_ips_raw)) {
+        $client_ip = function_exists('get_client_ip') ? get_client_ip() : ($_SERVER['REMOTE_ADDR'] ?? '');
+        $allowed_ips = array_filter(array_map('trim', explode(',', $allowed_ips_raw)));
+        if (!empty($client_ip) && in_array($client_ip, $allowed_ips, true)) {
+            return true;
+        }
+    }
+
+    return false;
+}
+
+function check_maintenance_mode() {
+    if (PHP_SAPI === 'cli') {
+        return;
+    }
+
+    if (!is_maintenance_mode_active()) {
+        return;
+    }
+
+    $uri = $_SERVER['REQUEST_URI'] ?? '';
+    $script = $_SERVER['SCRIPT_NAME'] ?? '';
+    $script_base = basename($script);
+
+    // Exempt paths: Admin panel, Login/Logout, Static Assets, SEO files, and maintenance preview
+    if (strpos($uri, '/admin/') === 0 || strpos($script, '/admin/') === 0) {
+        return;
+    }
+    if ($script_base === 'login.php' || strpos($uri, '/login') === 0 || $script_base === 'logout.php' || strpos($uri, '/logout') === 0) {
+        return;
+    }
+    if (preg_match('#^/(assets|uploads|images|css|js|favicon\.ico)#i', $uri)) {
+        return;
+    }
+    if (in_array($script_base, ['robots.php', 'sitemap.php', 'maintenance.php'], true) || preg_match('#^/(robots\.txt|sitemap.*\.xml)#i', $uri)) {
+        return;
+    }
+
+    // Check if visitor has valid bypass
+    if (can_bypass_maintenance_mode()) {
+        return;
+    }
+
+    // Public visitor access: Send HTTP 503 Service Unavailable with Retry-After header
+    if (!headers_sent()) {
+        http_response_code(503);
+        header('HTTP/1.1 503 Service Unavailable');
+        header('Status: 503 Service Unavailable');
+        header('Retry-After: 3600');
+        header('Cache-Control: no-store, no-cache, must-revalidate, max-age=0');
+        header('Pragma: no-cache');
+    }
+
+    $is_ajax = (!empty($_SERVER['HTTP_X_REQUESTED_WITH']) && strtolower($_SERVER['HTTP_X_REQUESTED_WITH']) === 'xmlhttprequest')
+        || (strpos($_SERVER['HTTP_ACCEPT'] ?? '', 'application/json') !== false)
+        || (strpos($uri, '/ajax/') === 0);
+
+    if ($is_ajax) {
+        if (!headers_sent()) {
+            header('Content-Type: application/json; charset=UTF-8');
+        }
+        $settings = get_maintenance_settings();
+        echo json_encode([
+            'status' => 503,
+            'error' => 'maintenance_mode',
+            'maintenance' => true,
+            'message' => $settings['message'],
+            'message_hi' => $settings['message_hi'],
+            'expected_return' => $settings['end_time']
+        ]);
+        exit;
+    }
+
+    $maintenance_file = dirname(__DIR__) . '/maintenance.php';
+    if (file_exists($maintenance_file)) {
+        require $maintenance_file;
+    } else {
+        echo "<!DOCTYPE html><html><head><title>Under Maintenance - GanvGaliHat</title></head><body style='font-family:sans-serif;text-align:center;padding:50px;'><h1>Under Scheduled Maintenance</h1><p>We will be back shortly!</p></body></html>";
+    }
+    exit;
+}
+
+// Automatically check maintenance status on each request
+check_maintenance_mode();
+
 function get_vendor_for_current_user() {
     global $pdo;
     $user = get_logged_in_user();

@@ -245,6 +245,20 @@ $active_site_logo = ($use_gif_logo && !empty($logo_gif_url)) ? $logo_gif_url : $
 </head>
 <body class="flex flex-col min-h-screen text-gray-800 antialiased selection:bg-emerald-200 overflow-x-hidden">
 
+  <!-- Floating Alert Banner for Authenticated Admins / Bypass Users during Maintenance Mode -->
+  <?php if (function_exists('is_maintenance_mode_active') && is_maintenance_mode_active()): ?>
+    <div style="background: linear-gradient(90deg, #991b1b, #b91c1c); color: #ffffff; padding: 10px 16px; font-size: 13px; font-weight: 700; position: sticky; top: 0; z-index: 99999; box-shadow: 0 4px 12px rgba(0,0,0,0.3); border-bottom: 2px solid #fecaca; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 8px;">
+      <div style="display: flex; align-items: center; gap: 8px;">
+        <span style="background: #ffffff; color: #991b1b; padding: 2px 8px; border-radius: 9999px; font-size: 11px; font-weight: 900; text-transform: uppercase;">Live Alert</span>
+        <span>⚠️ <strong>MAINTENANCE MODE IS ACTIVE:</strong> Public shoppers see the maintenance screen. You are viewing this site via Admin / Authorized Bypass.</span>
+      </div>
+      <div style="display: flex; align-items: center; gap: 8px;">
+        <a href="/admin/maintenance.php" style="background: #ffffff; color: #991b1b; padding: 4px 12px; border-radius: 8px; text-decoration: none; font-size: 12px; font-weight: 800;">Open Maintenance Settings</a>
+        <a href="/maintenance.php?preview=1" target="_blank" style="background: rgba(255,255,255,0.2); color: #ffffff; border: 1px solid rgba(255,255,255,0.5); padding: 4px 10px; border-radius: 8px; text-decoration: none; font-size: 12px;">View Maintenance Page</a>
+      </div>
+    </div>
+  <?php endif; ?>
+
   <!-- Global Cart Popup Modal (Bottom on mobile / Top-Right on desktop) -->
   <div id="cartPopupModal" class="hidden fixed z-[9999] pointer-events-auto transition-all duration-300 transform bottom-3 inset-x-3 sm:bottom-auto sm:inset-x-auto sm:top-5 sm:right-5 sm:max-w-md sm:w-96"></div>
 

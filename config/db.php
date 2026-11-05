@@ -675,6 +675,26 @@ function ensure_platform_schema($pdo) {
                     $ins_stmt->execute([$k, $v]);
                 }
             }
+
+            // Ensure maintenance mode default settings are present
+            $maint_defs = [
+                'maintenance_mode_enabled' => '0',
+                'maintenance_mode_title' => "We'll Be Back Shortly!",
+                'maintenance_mode_title_hi' => 'हम जल्द ही वापस लौटेंगे!',
+                'maintenance_mode_message' => 'GanvGaliHat is currently undergoing scheduled platform upgrades to bring you an even better rural shopping experience. We will be back online shortly.',
+                'maintenance_mode_message_hi' => 'गाँव गली हाट पर वर्तमान में बेहतर सेवा और तकनीकी सुधार हेतु नियमित मेंटेनेंस कार्य प्रगति पर है। हुई असुविधा के लिए हमें खेद है।',
+                'maintenance_mode_end_time' => '',
+                'maintenance_mode_allowed_ips' => '',
+                'maintenance_mode_secret_bypass' => 'ganv_preview_2026',
+                'maintenance_mode_show_contact' => '1',
+                'maintenance_mode_started_at' => ''
+            ];
+            foreach ($maint_defs as $k => $v) {
+                $chk_stmt->execute([$k]);
+                if (!$chk_stmt->fetch()) {
+                    $ins_stmt->execute([$k, $v]);
+                }
+            }
         }
     } catch (Exception $e) {}
 
