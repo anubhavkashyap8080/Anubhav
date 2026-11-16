@@ -291,6 +291,11 @@ $active_site_logo = ($use_gif_logo && !empty($logo_gif_url)) ? $logo_gif_url : $
           <i data-lucide="store" class="w-3.5 h-3.5 text-brand-orange shrink-0"></i>
           <span>Seller Hub</span>
         </a>
+        <span class="text-emerald-700 hidden sm:inline">•</span>
+        <a href="/retailer/dashboard.php" class="hover:text-amber-300 flex items-center gap-1 font-bold text-amber-300 transition-colors" title="Retailer B2B Wholesale Hub">
+          <i class="fa-solid fa-boxes-packing text-amber-400 shrink-0 text-xs"></i>
+          <span>Retailer Hub (थोक खरीद)</span>
+        </a>
       </div>
     </div>
   </div>
@@ -413,6 +418,18 @@ $active_site_logo = ($use_gif_logo && !empty($logo_gif_url)) ? $logo_gif_url : $
             </a>
           <?php endif; ?>
 
+          <!-- Dedicated Retailer B2B Button -->
+          <?php if ($current_user && $current_user['role'] === 'retailer'): ?>
+            <a
+              href="/retailer/dashboard.php"
+              class="hidden sm:inline-flex items-center gap-1 px-2 sm:px-2.5 lg:px-3 py-1 sm:py-1.5 rounded-lg border border-amber-500 text-stone-950 bg-amber-400 hover:bg-amber-500 transition-all text-xs font-black shadow-xs whitespace-nowrap shrink-0"
+              title="Retailer B2B Dashboard"
+            >
+              <i class="fa-solid fa-boxes-packing text-xs"></i>
+              <span>Retailer Hub</span>
+            </a>
+          <?php endif; ?>
+
           <!-- Wishlist Icon -->
           <a
             href="/wishlist.php"
@@ -506,6 +523,12 @@ $active_site_logo = ($use_gif_logo && !empty($logo_gif_url)) ? $logo_gif_url : $
                     </a>
                   <?php endif; ?>
 
+                  <?php if ($current_user['role'] === 'retailer' || in_array($current_user['role'], ['super_admin', 'admin'])): ?>
+                    <a href="/retailer/dashboard.php" class="flex items-center gap-2 px-4 py-2 font-bold text-amber-800 hover:bg-amber-50">
+                      <i class="fa-solid fa-boxes-packing text-amber-600 w-4 h-4 text-center"></i> Retailer Hub (थोक डैशबोर्ड)
+                    </a>
+                  <?php endif; ?>
+
                   <a href="/account.php" class="flex items-center gap-2 px-4 py-2 font-medium text-gray-700 hover:bg-gray-50 hover:text-brand-green">
                     <i data-lucide="user" class="w-4 h-4 text-gray-400"></i> Buyer Profile & Orders
                   </a>
@@ -540,6 +563,11 @@ $active_site_logo = ($use_gif_logo && !empty($logo_gif_url)) ? $logo_gif_url : $
                   <a href="/login.php?tab=seller" class="w-full flex items-center justify-center gap-2 py-2.5 px-3 bg-orange-50 hover:bg-orange-100 text-brand-orange border border-brand-orange/30 rounded-xl text-xs font-bold transition-colors">
                     <i data-lucide="store" class="w-4 h-4 text-brand-orange"></i>
                     <span>Artisan & Seller Login</span>
+                  </a>
+
+                  <a href="/login.php?tab=retailer" class="w-full flex items-center justify-center gap-2 py-2.5 px-3 bg-amber-50 hover:bg-amber-100 text-amber-900 border border-amber-300 rounded-xl text-xs font-bold transition-colors">
+                    <i class="fa-solid fa-boxes-packing text-amber-600"></i>
+                    <span>Retailer (थोक खरीद) Login</span>
                   </a>
 
                   <div class="pt-1 text-center">
@@ -677,6 +705,9 @@ $active_site_logo = ($use_gif_logo && !empty($logo_gif_url)) ? $logo_gif_url : $
           </a>
           <a href="/login.php?tab=seller" class="w-full py-2.5 bg-brand-orange text-white font-bold rounded-xl text-center text-xs block shadow-sm">
             Artisan & Seller Login
+          </a>
+          <a href="/login.php?tab=retailer" class="w-full py-2.5 bg-amber-500 text-stone-950 font-black rounded-xl text-center text-xs block shadow-sm">
+            📦 Retailer & Wholesale Login
           </a>
           <a href="/login.php?tab=staff" class="text-center text-[11px] text-gray-400 hover:underline block pt-1">
             Staff & Administration Login →

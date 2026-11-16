@@ -53,6 +53,15 @@ function require_vendor($redirect_to = '/login.php?tab=seller') {
     }
 }
 
+function require_retailer($redirect_to = '/login.php?tab=retailer') {
+    send_no_cache_headers();
+    if (!function_exists('is_retailer') || !is_retailer()) {
+        set_flash('error', 'Retailer / B2B Wholesale clearance required. Please login with your registered business account.');
+        header("Location: $redirect_to");
+        exit;
+    }
+}
+
 function require_admin($redirect_to = '/login.php?tab=staff') {
     send_no_cache_headers();
     check_admin_idle_timeout();

@@ -15,7 +15,7 @@ dest_zips = [
 ]
 
 exclude_dirs = {
-    'node_modules', '.git', '.wrangler', 'tests', 'dist', 'backups'
+    'node_modules', '.git', '.wrangler', 'tests', 'dist', 'backups', 'scripts'
 }
 
 exclude_files = {
