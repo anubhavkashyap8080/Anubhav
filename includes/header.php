@@ -273,7 +273,7 @@ $active_site_logo = ($use_gif_logo && !empty($logo_gif_url)) ? $logo_gif_url : $
     <div class="max-w-7xl mx-auto flex items-center justify-between gap-2 sm:gap-4 whitespace-nowrap text-nowrap w-full">
       <div class="flex items-center gap-1.5 shrink-0 text-amber-300 font-bold text-[10px] sm:text-xs">
         <i data-lucide="sparkles" class="w-3.5 h-3.5 text-amber-300 shrink-0"></i>
-        <span><?= htmlspecialchars(APP_COMPANY) ?></span>
+        <span><?= htmlspecialchars(get_company_name()) ?></span>
         <span class="hidden md:inline text-emerald-400 font-normal">Enterprise</span>
       </div>
       <div class="flex-1 min-w-0 mx-1 sm:mx-3 text-center overflow-hidden">
@@ -294,8 +294,12 @@ $active_site_logo = ($use_gif_logo && !empty($logo_gif_url)) ? $logo_gif_url : $
         <span class="text-emerald-700 hidden sm:inline">•</span>
         <a href="/retailer/dashboard.php" class="hover:text-amber-300 flex items-center gap-1 font-bold text-amber-300 transition-colors" title="Retailer B2B Wholesale Hub">
           <i class="fa-solid fa-boxes-packing text-amber-400 shrink-0 text-xs"></i>
-          <span>Retailer Hub (थोक खरीद)</span>
+          <span>Retailer Hub</span>
         </a>
+        <span class="text-emerald-700 hidden sm:inline">•</span>
+        <div class="inline-block scale-90 origin-right">
+          <?= render_bilingual_toggle() ?>
+        </div>
       </div>
     </div>
   </div>
@@ -525,7 +529,7 @@ $active_site_logo = ($use_gif_logo && !empty($logo_gif_url)) ? $logo_gif_url : $
 
                   <?php if ($current_user['role'] === 'retailer' || in_array($current_user['role'], ['super_admin', 'admin'])): ?>
                     <a href="/retailer/dashboard.php" class="flex items-center gap-2 px-4 py-2 font-bold text-amber-800 hover:bg-amber-50">
-                      <i class="fa-solid fa-boxes-packing text-amber-600 w-4 h-4 text-center"></i> Retailer Hub (थोक डैशबोर्ड)
+                      <i class="fa-solid fa-boxes-packing text-amber-600 w-4 h-4 text-center"></i> Retailer Dashboard
                     </a>
                   <?php endif; ?>
 
@@ -567,14 +571,10 @@ $active_site_logo = ($use_gif_logo && !empty($logo_gif_url)) ? $logo_gif_url : $
 
                   <a href="/login.php?tab=retailer" class="w-full flex items-center justify-center gap-2 py-2.5 px-3 bg-amber-50 hover:bg-amber-100 text-amber-900 border border-amber-300 rounded-xl text-xs font-bold transition-colors">
                     <i class="fa-solid fa-boxes-packing text-amber-600"></i>
-                    <span>Retailer (थोक खरीद) Login</span>
+                    <span>Retailer & Wholesale Login</span>
                   </a>
 
-                  <div class="pt-1 text-center">
-                    <a href="/login.php?tab=staff" class="text-[10px] text-gray-400 hover:text-gray-700 hover:underline">
-                      Staff & Administration Login →
-                    </a>
-                  </div>
+
                 </div>
               <?php endif; ?>
             </div>
@@ -707,11 +707,11 @@ $active_site_logo = ($use_gif_logo && !empty($logo_gif_url)) ? $logo_gif_url : $
             Artisan & Seller Login
           </a>
           <a href="/login.php?tab=retailer" class="w-full py-2.5 bg-amber-500 text-stone-950 font-black rounded-xl text-center text-xs block shadow-sm">
-            📦 Retailer & Wholesale Login
+            Retailer & Wholesale Login
           </a>
-          <a href="/login.php?tab=staff" class="text-center text-[11px] text-gray-400 hover:underline block pt-1">
-            Staff & Administration Login →
-          </a>
+          <div class="pt-2 text-center flex justify-center">
+            <?= render_bilingual_toggle() ?>
+          </div>
         <?php endif; ?>
       </div>
     </div>

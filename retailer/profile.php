@@ -27,11 +27,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['save_profile'])) {
     $pincode        = clean_input($_POST['business_pincode'] ?? '');
 
     if (empty($business_name) || empty($contact_name)) {
-        $error = 'कृपया दुकान/फर्म का नाम और संपर्क व्यक्ति का नाम दर्ज करें।';
+        $error = 'Please enter business name and contact person name.';
     } elseif (!empty($email) && !filter_var($email, FILTER_VALIDATE_EMAIL)) {
-        $error = 'कृपया वैध ईमेल पता दर्ज करें।';
+        $error = 'Please enter a valid email address.';
     } elseif (empty($address) || empty($city) || empty($pincode)) {
-        $error = 'कृपया पूरा डिलीवरी पता, शहर और पिनकोड दर्ज करें।';
+        $error = 'Please enter full delivery address, city, and 6-digit PIN code.';
     } else {
         try {
             $stmt = $pdo->prepare("
@@ -51,11 +51,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['save_profile'])) {
             $_SESSION['business_name'] = $business_name;
 
             log_audit_action('retailer_updated_profile', 'users', "Retailer #{$user['id']} updated business profile: {$business_name}");
-            set_flash('success', 'व्यापार एवं टैक्स प्रोफाइल सफलतापूर्वक अपडेट किया गया!');
+            set_flash('success', 'Business profile and tax details updated successfully!');
             header('Location: /retailer/profile.php');
             exit;
         } catch (Exception $e) {
-            $error = 'प्रोफाइल सहेजने में त्रुटि: ' . $e->getMessage();
+            $error = 'Error saving profile: ' . $e->getMessage();
         }
     }
 }
@@ -63,7 +63,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['save_profile'])) {
 // Reload updated user
 $user = get_logged_in_user();
 
-$page_title = 'व्यापार प्रोफाइल (Retailer Profile & GST)';
+$page_title = 'Business Profile & Tax Details — GanvGaliHat';
 require_once __DIR__ . '/retailer_header.php';
 ?>
 
@@ -72,10 +72,10 @@ require_once __DIR__ . '/retailer_header.php';
     <div>
       <h1 class="text-2xl font-black text-gray-900 flex items-center gap-2">
         <i class="fa-solid fa-id-card text-amber-600"></i>
-        व्यापार व इनवॉइस प्रोफाइल (Business Profile)
+        <span class="lang-en">Business Profile & Tax Details</span><span class="lang-hi hidden">व्यापार प्रोफाइल</span>
       </h1>
       <p class="text-xs text-gray-500 mt-1">
-        दुकान का नाम, GSTIN, टैक्स इनपुट क्रेडिट विवरण एवं डिलीवरी गोदाम पता प्रबंधित करें
+        <span class="lang-en">Manage registered trade name, GSTIN for Input Tax Credit, and commercial delivery godowns</span><span class="lang-hi hidden">दुकान का नाम, GSTIN एवं गोदाम पता प्रबंधित करें</span>
       </p>
     </div>
   </div>
@@ -217,21 +217,21 @@ require_once __DIR__ . '/retailer_header.php';
 
           <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
             <div>
-              <label class="block text-xs font-bold text-gray-700 mb-1">शहर / कस्बा <span class="text-red-500">*</span></label>
+              <label class="block text-xs font-bold text-gray-700 mb-1"><span class="lang-en">City / Town</span><span class="lang-hi hidden">शहर / कस्बा</span> <span class="text-red-500">*</span></label>
               <input type="text" name="business_city" required
                 value="<?= htmlspecialchars($user['business_city'] ?? $user['city'] ?? '') ?>"
                 class="w-full px-3 py-2 bg-stone-50 border border-gray-200 rounded-xl text-xs font-semibold focus:bg-white focus:outline-none focus:border-amber-600 transition">
             </div>
 
             <div>
-              <label class="block text-xs font-bold text-gray-700 mb-1">राज्य <span class="text-red-500">*</span></label>
+              <label class="block text-xs font-bold text-gray-700 mb-1"><span class="lang-en">State</span><span class="lang-hi hidden">राज्य</span> <span class="text-red-500">*</span></label>
               <input type="text" name="business_state" required
                 value="<?= htmlspecialchars($user['business_state'] ?? $user['state'] ?? 'Uttar Pradesh') ?>"
                 class="w-full px-3 py-2 bg-stone-50 border border-gray-200 rounded-xl text-xs font-semibold focus:bg-white focus:outline-none focus:border-amber-600 transition">
             </div>
 
             <div>
-              <label class="block text-xs font-bold text-gray-700 mb-1">पिनकोड <span class="text-red-500">*</span></label>
+              <label class="block text-xs font-bold text-gray-700 mb-1"><span class="lang-en">PIN Code</span><span class="lang-hi hidden">पिनकोड</span> <span class="text-red-500">*</span></label>
               <input type="text" name="business_pincode" required maxlength="6"
                 value="<?= htmlspecialchars($user['business_pincode'] ?? $user['pincode'] ?? '') ?>"
                 class="w-full px-3 py-2 bg-stone-50 border border-gray-200 rounded-xl text-xs font-semibold focus:bg-white focus:outline-none focus:border-amber-600 transition">

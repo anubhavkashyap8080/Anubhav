@@ -82,6 +82,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['save_settings'])) {
             $stmt_up->execute([$key, $val]);
         }
 
+        if (isset($_POST['company_name']) && !empty(trim($_POST['company_name']))) {
+            $new_comp = trim((string)$_POST['company_name']);
+            try {
+                $pdo->prepare("UPDATE vendors SET name = ?, business_name = ? WHERE id = 1 OR slug LIKE 'ss-industries%' OR name LIKE '%Kalyani agrofood%' OR business_name LIKE '%Kalyani agrofood%'")->execute([$new_comp, $new_comp]);
+            } catch (Throwable $t) {}
+        }
+
         set_flash('success', 'Logo sizes, payment gateways, and site settings saved successfully!');
         header('Location: /admin/site_settings.php');
         exit;

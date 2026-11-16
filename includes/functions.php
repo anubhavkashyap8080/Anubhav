@@ -2068,6 +2068,19 @@ if (!function_exists('get_setting')) {
     }
 }
 
+if (!function_exists('get_company_name')) {
+    function get_company_name() {
+        $db_comp = get_site_setting('company_name');
+        if (!empty($db_comp)) {
+            return trim($db_comp);
+        }
+        if (defined('APP_COMPANY') && !empty(APP_COMPANY)) {
+            return APP_COMPANY;
+        }
+        return 'Kalyani agrofood pvt ltd';
+    }
+}
+
 /**
  * Extract clean YouTube Embed URL from any standard YouTube link or video ID
  */
@@ -2325,7 +2338,29 @@ function delete_cms_page($slug) {
     return true;
 }
 
-function render_bilingual_toggle($active_lang = 'en') {
+function get_current_lang() {
+    if (isset($_GET['lang']) && in_array($_GET['lang'], ['en', 'hi'], true)) {
+        $_SESSION['site_lang'] = $_GET['lang'];
+        return $_GET['lang'];
+    }
+    if (isset($_SESSION['site_lang']) && in_array($_SESSION['site_lang'], ['en', 'hi'], true)) {
+        return $_SESSION['site_lang'];
+    }
+    if (isset($_COOKIE['ggh_site_lang']) && in_array($_COOKIE['ggh_site_lang'], ['en', 'hi'], true)) {
+        return $_COOKIE['ggh_site_lang'];
+    }
+    return 'en'; // DEFAULT IS STRICTLY ENGLISH
+}
+
+function t_lang($en, $hi = '') {
+    if (empty($hi)) return htmlspecialchars($en);
+    return '<span class="lang-en">' . htmlspecialchars($en) . '</span><span class="lang-hi hidden">' . htmlspecialchars($hi) . '</span>';
+}
+
+function render_bilingual_toggle($active_lang = null) {
+    if ($active_lang === null) {
+        $active_lang = get_current_lang();
+    }
     ob_start();
     ?>
     <div class="inline-flex items-center p-1 bg-stone-100 rounded-xl border border-stone-300 shadow-xs select-none" id="gghBilingualToggle">
@@ -2341,7 +2376,10 @@ function render_bilingual_toggle($active_lang = 'en') {
     </div>
     <script>
     function gghSetLang(lang) {
-      try { localStorage.setItem('ggh_site_lang', lang); } catch (e) {}
+      try {
+        localStorage.setItem('ggh_site_lang', lang);
+        document.cookie = "ggh_site_lang=" + encodeURIComponent(lang) + ";path=/;max-age=31536000;SameSite=Lax";
+      } catch (e) {}
       var btnEn = document.getElementById('gghBtnEn');
       var btnHi = document.getElementById('gghBtnHi');
       var ens = document.querySelectorAll('.lang-en');

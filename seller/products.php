@@ -393,7 +393,7 @@ require_once __DIR__ . '/seller_header.php';
       <option value="">All Categories (सभी श्रेणियां)</option>
       <?php foreach ($categories as $cat): ?>
         <option value="<?= htmlspecialchars($cat['slug']) ?>" <?= $selected_category === $cat['slug'] ? 'selected' : '' ?>>
-          <?= htmlspecialchars(fix_utf8_mojibake($cat['hindi_name'] ?? $cat['name'])) ?>
+          <?= htmlspecialchars(fix_utf8_mojibake($cat['name'])) ?>
         </option>
       <?php endforeach; ?>
     </select>
@@ -586,7 +586,7 @@ require_once __DIR__ . '/seller_header.php';
           <label class="block text-xs font-bold text-gray-700 mb-1">श्रेणी (Category) <span class="text-red-500">*</span></label>
           <select name="category_id" required class="w-full px-3.5 py-2.5 bg-stone-50 border border-gray-200 rounded-xl text-xs focus:bg-white focus:outline-none focus:border-amber-500 transition">
             <?php foreach ($categories as $cat): ?>
-              <option value="<?= $cat['id'] ?>"><?= htmlspecialchars(fix_utf8_mojibake($cat['hindi_name'] ?? $cat['name'])) ?></option>
+              <option value="<?= $cat['id'] ?>"><?= htmlspecialchars(fix_utf8_mojibake($cat['name'])) ?></option>
             <?php endforeach; ?>
           </select>
         </div>
@@ -831,7 +831,7 @@ require_once __DIR__ . '/seller_header.php';
           <label class="block text-xs font-bold text-gray-700 mb-1">श्रेणी (Category) <span class="text-red-500">*</span></label>
           <select name="category_id" id="s_edit_cat" required class="w-full px-3.5 py-2.5 bg-stone-50 border border-gray-200 rounded-xl text-xs font-semibold focus:bg-white focus:outline-none focus:border-amber-500 transition">
             <?php foreach ($categories as $cat): ?>
-              <option value="<?= $cat['id'] ?>"><?= htmlspecialchars(fix_utf8_mojibake($cat['hindi_name'] ?? $cat['name'])) ?></option>
+              <option value="<?= $cat['id'] ?>"><?= htmlspecialchars(fix_utf8_mojibake($cat['name'])) ?></option>
             <?php endforeach; ?>
           </select>
         </div>

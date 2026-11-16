@@ -32,13 +32,13 @@ if ($pdo) {
         $product = $stmt->fetch();
         if ($product) {
             if (isset($product['vendor_name'])) {
-                $product['vendor_name'] = str_ireplace(['S S Industries', 'SS Industries', 'S. S. Industries', 'S.S. Industries'], 'Kalyani agrofood pvt ltd', $product['vendor_name']);
+                $product['vendor_name'] = str_ireplace(['S S Industries', 'SS Industries', 'S. S. Industries', 'S.S. Industries'], get_company_name(), $product['vendor_name']);
             }
             if (isset($product['vendor_business'])) {
-                $product['vendor_business'] = str_ireplace(['S S Industries', 'SS Industries', 'S. S. Industries', 'S.S. Industries'], 'Kalyani agrofood pvt ltd', $product['vendor_business']);
+                $product['vendor_business'] = str_ireplace(['S S Industries', 'SS Industries', 'S. S. Industries', 'S.S. Industries'], get_company_name(), $product['vendor_business']);
             }
             if (isset($product['description'])) {
-                $product['description'] = str_ireplace(['S S Industries', 'SS Industries', 'S. S. Industries', 'S.S. Industries'], 'Kalyani agrofood pvt ltd', $product['description']);
+                $product['description'] = str_ireplace(['S S Industries', 'SS Industries', 'S. S. Industries', 'S.S. Industries'], get_company_name(), $product['description']);
             }
         }
     } catch (Throwable $e_prod) {
@@ -300,7 +300,7 @@ document.addEventListener('DOMContentLoaded', function() {
           <?= htmlspecialchars($product['name']) ?>
         </h1>
         <?php if (!empty($product['hindi_name'])): ?>
-          <p class="text-base font-semibold text-gray-600 font-hindi"><?= htmlspecialchars($product['hindi_name']) ?></p>
+          <p class="text-base font-semibold text-gray-600 font-hindi lang-hi hidden"><?= htmlspecialchars($product['hindi_name']) ?></p>
         <?php endif; ?>
       </div>
 

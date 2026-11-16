@@ -1,7 +1,7 @@
 <?php
 require_once __DIR__ . '/includes/functions.php';
 
-// Fetch Google & Facebook Auth Settings (DB Site Settings first, then env/constants)
+// Fetch Google & Facebook Auth Settings
 $db_google_client_id = get_site_setting('google_client_id', '');
 $google_client_id = !empty($db_google_client_id)
     ? trim($db_google_client_id)
@@ -24,6 +24,11 @@ $email = '';
 $city = 'Hardoi';
 $pincode = '241001';
 $address = '';
+$business_name = '';
+$business_type = 'Kirana & Grocery Store';
+$gstin = '';
+$godown_address = '';
+$is_retailer = (!empty($_GET['type']) && $_GET['type'] === 'retailer') || (!empty($_GET['role']) && $_GET['role'] === 'retailer');
 $error = '';
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
@@ -40,6 +45,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $city = clean_input($_POST['city'] ?? 'Hardoi');
         $pincode = clean_input($_POST['pincode'] ?? '241001');
         $address = clean_input($_POST['address'] ?? '');
+        
+        $is_retailer = !empty($_POST['is_retailer']) || (isset($_POST['role']) && $_POST['role'] === 'retailer');
+        $business_name = clean_input($_POST['business_name'] ?? '');
+        $business_type = clean_input($_POST['business_type'] ?? 'Kirana & Grocery Store');
+        $gstin = strtoupper(clean_input($_POST['gstin'] ?? ''));
+        $godown_address = clean_input($_POST['godown_address'] ?? '');
 
         // Rate limiting and CAPTCHA
         $client_ip = get_client_ip();
@@ -58,7 +69,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             } elseif ($password !== $confirm_password) {
                 $error = 'Password and confirmation password do not match.';
             } elseif (!is_strong_password($password, $pwd_err)) {
-                // Strong Password Policy Enforcement - Only clear password fields, retain rest
                 $error = $pwd_err ?: 'Password must be at least 10 characters with uppercase, lowercase, number, and special character.';
             } else {
                 try {
@@ -71,15 +81,32 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     } else {
                         $base_username = strtolower(preg_replace('/[^a-zA-Z0-9]/', '', explode('@', $email)[0]));
                         $username = $base_username . random_int(10, 99);
-                        $unique_code = 'GGH-CUST-' . random_int(10000, 99999);
                         $hashed_password = password_hash($password, PASSWORD_BCRYPT);
 
-                        // Save as pending until OTP/email verification is complete
-                        $insert = $pdo->prepare("
-                            INSERT INTO users (unique_code, name, username, email, phone, password, role, city, pincode, address, status)
-                            VALUES (?, ?, ?, ?, ?, ?, 'customer', ?, ?, ?, 'pending')
-                        ");
-                        $insert->execute([$unique_code, $name, $username, $email, $phone, $hashed_password, $city, $pincode, $address]);
+                        if ($is_retailer) {
+                            $role = 'retailer';
+                            $unique_code = 'GGH-RET-' . random_int(10000, 99999);
+                            if (empty($business_name)) {
+                                $business_name = $name . ' Trading Co.';
+                            }
+                            $final_b_address = !empty($godown_address) ? $godown_address : $address;
+
+                            $insert = $pdo->prepare("
+                                INSERT INTO users (unique_code, name, username, email, phone, password, role, city, pincode, address, business_name, gstin, business_type, business_address, status)
+                                VALUES (?, ?, ?, ?, ?, ?, 'retailer', ?, ?, ?, ?, ?, ?, ?, 'pending')
+                            ");
+                            $insert->execute([$unique_code, $name, $username, $email, $phone, $hashed_password, $city, $pincode, $address, $business_name, $gstin, $business_type, $final_b_address]);
+                        } else {
+                            $role = 'customer';
+                            $unique_code = 'GGH-CUST-' . random_int(10000, 99999);
+
+                            $insert = $pdo->prepare("
+                                INSERT INTO users (unique_code, name, username, email, phone, password, role, city, pincode, address, status)
+                                VALUES (?, ?, ?, ?, ?, ?, 'customer', ?, ?, ?, 'pending')
+                            ");
+                            $insert->execute([$unique_code, $name, $username, $email, $phone, $hashed_password, $city, $pincode, $address]);
+                        }
+
                         $user_id = $pdo->lastInsertId();
 
                         // Send Email Verification with OTP & One-Click Link
@@ -90,6 +117,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                         $_SESSION['pending_verification_email'] = $email;
                         $_SESSION['pending_verification_phone'] = $phone;
                         $_SESSION['pending_verification_name'] = $name;
+                        $_SESSION['pending_verification_role'] = $role;
 
                         set_flash('info', 'Please verify your email address to complete registration. A 6-digit OTP has been sent to ' . htmlspecialchars($email) . '.');
                         header('Location: /verify-signup.php');
@@ -128,6 +156,59 @@ require_once __DIR__ . '/includes/header.php';
 
       <form action="/register.php" method="POST" class="space-y-4">
         <?= csrf_field() ?>
+
+        <!-- Retailer B2B Option Checkbox (Unified Registration) -->
+        <div class="p-3.5 bg-amber-50/70 border border-amber-300 rounded-2xl transition-all">
+          <label class="flex items-start gap-3 cursor-pointer select-none">
+            <input type="checkbox" name="is_retailer" id="is_retailer" value="1" <?= $is_retailer ? 'checked' : '' ?>
+              class="mt-0.5 h-4 w-4 rounded border-amber-400 text-amber-600 focus:ring-amber-500">
+            <div>
+              <div class="flex items-center gap-2">
+                <span class="text-xs font-black text-amber-950 uppercase tracking-wide">
+                  Register as Wholesale Retailer / Shopkeeper (B2B Bulk Buyer)
+                </span>
+                <span class="px-1.5 py-0.5 bg-amber-200 text-amber-900 text-[10px] font-bold rounded">B2B</span>
+              </div>
+              <p class="text-[11px] text-amber-800/90 mt-0.5 leading-relaxed">
+                Check this box to unlock tiered wholesale prices, direct village manufacturer supply, bulk carton delivery, and commercial GST invoices.
+              </p>
+            </div>
+          </label>
+
+          <!-- Expandable Retailer Business Information -->
+          <div id="retailer_fields" class="mt-3.5 pt-3 border-t border-amber-200/80 space-y-3" style="<?= $is_retailer ? 'display: block;' : 'display: none;' ?>">
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <div>
+                <label class="block text-[11px] font-bold text-amber-950 mb-1">Business / Shop Name <span class="text-red-500">*</span></label>
+                <input type="text" name="business_name" id="business_name" placeholder="e.g. Sharma General Store" value="<?= htmlspecialchars($business_name) ?>"
+                  class="w-full px-3 py-2 bg-white border border-amber-300 rounded-xl text-xs focus:outline-none focus:ring-2 focus:ring-amber-500">
+              </div>
+              <div>
+                <label class="block text-[11px] font-bold text-amber-950 mb-1">Trade Category</label>
+                <select name="business_category" class="w-full px-3 py-2 bg-white border border-amber-300 rounded-xl text-xs focus:outline-none focus:ring-2 focus:ring-amber-500">
+                  <option value="Kirana & Grocery Store" <?= $business_type === 'Kirana & Grocery Store' ? 'selected' : '' ?>>Kirana & Grocery Store</option>
+                  <option value="Handloom & Garments Retail" <?= $business_type === 'Handloom & Garments Retail' ? 'selected' : '' ?>>Handloom & Garments Retail</option>
+                  <option value="Organic & Health Food Outlet" <?= $business_type === 'Organic & Health Food Outlet' ? 'selected' : '' ?>>Organic & Health Food Outlet</option>
+                  <option value="Hardware & Agro Tools Dealer" <?= $business_type === 'Hardware & Agro Tools Dealer' ? 'selected' : '' ?>>Hardware & Agro Tools Dealer</option>
+                  <option value="Hotel / Restaurant / Catering (HoReCa)" <?= $business_type === 'Hotel / Restaurant / Catering (HoReCa)' ? 'selected' : '' ?>>Hotel / Restaurant / Catering (HoReCa)</option>
+                  <option value="Other Wholesale Trader" <?= $business_type === 'Other Wholesale Trader' ? 'selected' : '' ?>>Other Wholesale Trader</option>
+                </select>
+              </div>
+            </div>
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <div>
+                <label class="block text-[11px] font-bold text-amber-950 mb-1">GSTIN (Optional, for Input Tax Credit)</label>
+                <input type="text" name="gstin" maxlength="15" placeholder="15-digit GSTIN (e.g. 09ABCDE1234F1Z5)" value="<?= htmlspecialchars($gstin) ?>"
+                  class="w-full px-3 py-2 bg-white border border-amber-300 rounded-xl text-xs uppercase focus:outline-none focus:ring-2 focus:ring-amber-500">
+              </div>
+              <div>
+                <label class="block text-[11px] font-bold text-amber-950 mb-1">Godown / Commercial Delivery Point</label>
+                <input type="text" name="godown_address" placeholder="Commercial godown / unloading address" value="<?= htmlspecialchars($godown_address) ?>"
+                  class="w-full px-3 py-2 bg-white border border-amber-300 rounded-xl text-xs focus:outline-none focus:ring-2 focus:ring-amber-500">
+              </div>
+            </div>
+          </div>
+        </div>
         
         <!-- Name -->
         <div>
@@ -189,10 +270,10 @@ require_once __DIR__ . '/includes/header.php';
         <?= render_turnstile_widget() ?>
 
         <!-- Submit Button -->
-        <button type="submit"
+        <button type="submit" id="submitBtn"
           class="w-full py-3 bg-brand-green text-white font-bold rounded-xl shadow-md hover:bg-emerald-800 active:scale-[0.98] transition flex items-center justify-center gap-2 text-sm mt-3">
           <i class="fa-solid fa-check"></i>
-          Create Account & Continue
+          <span id="submitBtnText">Create Account & Continue</span>
         </button>
       </form>
 
@@ -243,6 +324,27 @@ require_once __DIR__ . '/includes/header.php';
 </div>
 
 <script>
+const isRetailerCb = document.getElementById('is_retailer');
+const retailerFields = document.getElementById('retailer_fields');
+const submitBtnText = document.getElementById('submitBtnText');
+
+function updateRetailerState() {
+  if (isRetailerCb && retailerFields) {
+    if (isRetailerCb.checked) {
+      retailerFields.style.display = 'block';
+      if (submitBtnText) submitBtnText.innerText = 'Register Wholesale Retailer Account & Continue';
+    } else {
+      retailerFields.style.display = 'none';
+      if (submitBtnText) submitBtnText.innerText = 'Create Account & Continue';
+    }
+  }
+}
+
+if (isRetailerCb) {
+  isRetailerCb.addEventListener('change', updateRetailerState);
+  updateRetailerState();
+}
+
 function onGoogleAuthCallback(response) {
   if (response && response.credential) {
     const form = document.createElement('form');

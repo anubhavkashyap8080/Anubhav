@@ -9,7 +9,8 @@ require_once __DIR__ . '/includes/functions.php';
 if (is_logged_in()) {
     $current_user = get_logged_in_user();
     if ($current_user && ($current_user['status'] ?? '') === 'active') {
-        header('Location: /account.php');
+        $target = (($current_user['role'] ?? '') === 'retailer') ? '/retailer/dashboard.php' : ((($current_user['role'] ?? '') === 'vendor') ? '/seller/dashboard.php' : '/account.php');
+        header('Location: ' . $target);
         exit;
     }
 }
@@ -53,7 +54,8 @@ if (($user['status'] ?? '') === 'active') {
     $_SESSION['user_role'] = $user['role'] ?? 'customer';
     $_SESSION['user_email'] = $user['email'];
     unset($_SESSION['pending_verification_user_id'], $_SESSION['pending_verification_email'], $_SESSION['pending_verification_name']);
-    header('Location: /account.php');
+    $target = (($user['role'] ?? '') === 'retailer') ? '/retailer/dashboard.php' : ((($user['role'] ?? '') === 'vendor') ? '/seller/dashboard.php' : '/account.php');
+header('Location: ' . $target);
     exit;
 }
 
@@ -138,7 +140,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && (!isset($_POST['action']) || $_POST
 
                         log_audit_action('user_signup_verified', 'auth', 'user', $user['id'], 'Account verified via OTP code');
                         set_flash('success', 'Account verified successfully! Welcome to GanvGaliHat.');
-                        header('Location: /account.php');
+                        $target = (($current_user['role'] ?? '') === 'retailer') ? '/retailer/dashboard.php' : ((($current_user['role'] ?? '') === 'vendor') ? '/seller/dashboard.php' : '/account.php');
+        header('Location: ' . $target);
                         exit;
                     } catch (Exception $e) {
                         $error = 'Verification error: ' . $e->getMessage();

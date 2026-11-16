@@ -11,7 +11,7 @@ require_retailer();
 
 $cart = get_bulk_cart();
 if (empty($cart)) {
-    set_flash('error', 'आपकी थोक कार्ट खाली है। कृपया चेकआउट करने से पहले उत्पाद जोड़ें।');
+    set_flash('error', 'Your wholesale cart is empty. Please add items before proceeding.');
     header('Location: /retailer/products.php');
     exit;
 }
@@ -45,11 +45,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['place_order'])) {
     $order_notes      = clean_input($_POST['order_notes'] ?? '');
 
     if (empty($business_name) || empty($contact_name)) {
-        $error = 'कृपया फर्म/दुकान का नाम और संपर्क व्यक्ति का नाम दर्ज करें।';
+        $error = 'Please enter business name and contact person name.';
     } elseif (empty($contact_phone) || strlen(preg_replace('/[^0-9]/', '', $contact_phone)) < 10) {
-        $error = 'कृपया वैध 10 अंकों का संपर्क फोन नंबर दर्ज करें।';
+        $error = 'Please enter a valid 10-digit mobile number.';
     } elseif (empty($shipping_street) || empty($shipping_city) || empty($shipping_pincode)) {
-        $error = 'कृपया माल डिलीवरी का पूरा पता, शहर और पिनकोड दर्ज करें।';
+        $error = 'Please enter full delivery address, city, and 6-digit PIN code.';
     } else {
         try {
             $pdo->beginTransaction();
@@ -152,7 +152,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['place_order'])) {
             clear_bulk_cart();
 
             log_audit_action('retailer_placed_b2b_order', 'orders', "B2B Order #{$order_number} placed by {$business_name} (User #{$user['id']}) for ₹{$grand_total}");
-            set_flash('success', "बधाई हो! आपका थोक आर्डर #{$order_number} सफलतापूर्वक दर्ज कर लिया गया है।");
+            set_flash('success', "Success! Your B2B wholesale order #{$order_number} has been placed successfully.");
             header('Location: /retailer/orders.php?order_id=' . $order_id . '&placed=1');
             exit;
 
@@ -160,12 +160,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['place_order'])) {
             if ($pdo->inTransaction()) {
                 $pdo->rollBack();
             }
-            $error = 'आर्डर सुरक्षित करने में त्रुटि: ' . $e->getMessage();
+            $error = 'Order processing error: ' . $e->getMessage();
         }
     }
 }
 
-$page_title = 'थोक चेकआउट (B2B Bulk Checkout)';
+$page_title = 'B2B Wholesale Checkout — GanvGaliHat';
 require_once __DIR__ . '/retailer_header.php';
 ?>
 
@@ -173,14 +173,14 @@ require_once __DIR__ . '/retailer_header.php';
   <div>
     <h1 class="text-2xl font-black text-gray-900 flex items-center gap-2">
       <i class="fa-solid fa-lock text-emerald-600"></i>
-      थोक चेकआउट (B2B Bulk Checkout)
+      <span class="lang-en">B2B Wholesale Checkout</span><span class="lang-hi hidden">थोक चेकआउट</span>
     </h1>
     <p class="text-xs text-gray-500 mt-1">
-      पक्का GST इनवॉइस एवं सुरक्षित फ्रेट डिलीवरी • आर्डर कुल <?= format_price($grand_total) ?>
+      <span class="lang-en">Commercial GST Tax Invoicing & Insured Freight Logistics • Order Total</span><span class="lang-hi hidden">पक्का GST इनवॉइस एवं सुरक्षित फ्रेट डिलीवरी • आर्डर कुल</span> <?= format_price($grand_total) ?>
     </p>
   </div>
   <a href="/retailer/cart.php" class="text-xs font-bold text-amber-600 hover:text-amber-700">
-    &larr; थोक कार्ट में वापस जाएं
+    <span class="lang-en">&larr; Back to Wholesale Cart</span><span class="lang-hi hidden">&larr; थोक कार्ट में वापस जाएं</span>
   </a>
 </div>
 
@@ -204,43 +204,43 @@ require_once __DIR__ . '/retailer_header.php';
       <div class="bg-white rounded-3xl border border-gray-200/90 shadow-xs p-6 space-y-4">
         <h2 class="text-sm font-black text-gray-900 uppercase tracking-wider flex items-center gap-2 pb-3 border-b border-gray-100">
           <span class="w-6 h-6 rounded-full bg-amber-600 text-white flex items-center justify-center text-xs font-bold">1</span>
-          व्यापार एवं इनवॉइस विवरण (GST & Business Details)
+          <span class="lang-en">Business & GST Invoice Details</span><span class="lang-hi hidden">व्यापार एवं इनवॉइस विवरण</span>
         </h2>
 
         <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div>
-            <label class="block text-xs font-bold text-gray-700 mb-1">दुकान / फर्म का नाम <span class="text-red-500">*</span></label>
+            <label class="block text-xs font-bold text-gray-700 mb-1"><span class="lang-en">Shop / Business Name</span><span class="lang-hi hidden">दुकान / फर्म का नाम</span> <span class="text-red-500">*</span></label>
             <input type="text" name="business_name" required
               value="<?= htmlspecialchars($_POST['business_name'] ?? ($user['business_name'] ?? $user['name'])) ?>"
               class="w-full px-3.5 py-2.5 bg-stone-50 border border-gray-200 rounded-xl text-xs font-bold text-gray-900 focus:bg-white focus:outline-none focus:border-amber-600 transition">
           </div>
 
           <div>
-            <label class="block text-xs font-bold text-gray-700 mb-1">GSTIN नंबर (ITC क्लेम हेतु)</label>
+            <label class="block text-xs font-bold text-gray-700 mb-1"><span class="lang-en">GSTIN (for Input Tax Credit)</span><span class="lang-hi hidden">GSTIN नंबर</span></label>
             <input type="text" name="gstin" maxlength="15"
               value="<?= htmlspecialchars($_POST['gstin'] ?? ($user['gstin'] ?? '')) ?>"
-              placeholder="उदा. 09ABCDE1234F1Z5"
+              placeholder="e.g. 09ABCDE1234F1Z5"
               class="w-full px-3.5 py-2.5 bg-stone-50 border border-gray-200 rounded-xl text-xs font-mono font-bold uppercase focus:bg-white focus:outline-none focus:border-amber-600 transition">
           </div>
         </div>
 
         <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
           <div>
-            <label class="block text-xs font-bold text-gray-700 mb-1">संपर्क व्यक्ति नाम <span class="text-red-500">*</span></label>
+            <label class="block text-xs font-bold text-gray-700 mb-1"><span class="lang-en">Contact Person Name</span><span class="lang-hi hidden">संपर्क व्यक्ति नाम</span> <span class="text-red-500">*</span></label>
             <input type="text" name="contact_name" required
               value="<?= htmlspecialchars($_POST['contact_name'] ?? $user['name']) ?>"
               class="w-full px-3 py-2 bg-stone-50 border border-gray-200 rounded-xl text-xs font-semibold focus:bg-white focus:outline-none focus:border-amber-600 transition">
           </div>
 
           <div>
-            <label class="block text-xs font-bold text-gray-700 mb-1">मोबाइल नंबर <span class="text-red-500">*</span></label>
+            <label class="block text-xs font-bold text-gray-700 mb-1"><span class="lang-en">Mobile Number</span><span class="lang-hi hidden">मोबाइल नंबर</span> <span class="text-red-500">*</span></label>
             <input type="tel" name="contact_phone" required maxlength="10"
               value="<?= htmlspecialchars($_POST['contact_phone'] ?? $user['phone']) ?>"
               class="w-full px-3 py-2 bg-stone-50 border border-gray-200 rounded-xl text-xs font-semibold focus:bg-white focus:outline-none focus:border-amber-600 transition">
           </div>
 
           <div>
-            <label class="block text-xs font-bold text-gray-700 mb-1">ईमेल पता</label>
+            <label class="block text-xs font-bold text-gray-700 mb-1"><span class="lang-en">Email Address</span><span class="lang-hi hidden">ईमेल पता</span></label>
             <input type="email" name="contact_email"
               value="<?= htmlspecialchars($_POST['contact_email'] ?? $user['email']) ?>"
               class="w-full px-3 py-2 bg-stone-50 border border-gray-200 rounded-xl text-xs font-semibold focus:bg-white focus:outline-none focus:border-amber-600 transition">
@@ -252,32 +252,32 @@ require_once __DIR__ . '/retailer_header.php';
       <div class="bg-white rounded-3xl border border-gray-200/90 shadow-xs p-6 space-y-4">
         <h2 class="text-sm font-black text-gray-900 uppercase tracking-wider flex items-center gap-2 pb-3 border-b border-gray-100">
           <span class="w-6 h-6 rounded-full bg-amber-600 text-white flex items-center justify-center text-xs font-bold">2</span>
-          डिलीवरी गोदाम / दुकान का पता (Delivery Destination)
+          <span class="lang-en">Commercial Delivery / Godown Address</span><span class="lang-hi hidden">डिलीवरी गोदाम / दुकान का पता</span>
         </h2>
 
         <div>
-          <label class="block text-xs font-bold text-gray-700 mb-1">पूरा पता व लैंडमार्क <span class="text-red-500">*</span></label>
+          <label class="block text-xs font-bold text-gray-700 mb-1"><span class="lang-en">Full Street Address & Landmark</span><span class="lang-hi hidden">पूरा पता व लैंडमार्क</span> <span class="text-red-500">*</span></label>
           <textarea name="shipping_street" rows="2" required
             class="w-full px-3.5 py-2.5 bg-stone-50 border border-gray-200 rounded-xl text-xs font-medium focus:bg-white focus:outline-none focus:border-amber-600 transition"><?= htmlspecialchars($_POST['shipping_street'] ?? ($user['business_address'] ?? $user['address'] ?? '')) ?></textarea>
         </div>
 
         <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
           <div>
-            <label class="block text-xs font-bold text-gray-700 mb-1">शहर / कस्बा <span class="text-red-500">*</span></label>
+            <label class="block text-xs font-bold text-gray-700 mb-1"><span class="lang-en">City / Town</span><span class="lang-hi hidden">शहर / कस्बा</span> <span class="text-red-500">*</span></label>
             <input type="text" name="shipping_city" required
               value="<?= htmlspecialchars($_POST['shipping_city'] ?? ($user['business_city'] ?? $user['city'] ?? '')) ?>"
               class="w-full px-3 py-2 bg-stone-50 border border-gray-200 rounded-xl text-xs font-semibold focus:bg-white focus:outline-none focus:border-amber-600 transition">
           </div>
 
           <div>
-            <label class="block text-xs font-bold text-gray-700 mb-1">राज्य <span class="text-red-500">*</span></label>
+            <label class="block text-xs font-bold text-gray-700 mb-1"><span class="lang-en">State</span><span class="lang-hi hidden">राज्य</span> <span class="text-red-500">*</span></label>
             <input type="text" name="shipping_state" required
               value="<?= htmlspecialchars($_POST['shipping_state'] ?? ($user['business_state'] ?? $user['state'] ?? 'Uttar Pradesh')) ?>"
               class="w-full px-3 py-2 bg-stone-50 border border-gray-200 rounded-xl text-xs font-semibold focus:bg-white focus:outline-none focus:border-amber-600 transition">
           </div>
 
           <div>
-            <label class="block text-xs font-bold text-gray-700 mb-1">पिनकोड <span class="text-red-500">*</span></label>
+            <label class="block text-xs font-bold text-gray-700 mb-1"><span class="lang-en">PIN Code</span><span class="lang-hi hidden">पिनकोड</span> <span class="text-red-500">*</span></label>
             <input type="text" name="shipping_pincode" required maxlength="6"
               value="<?= htmlspecialchars($_POST['shipping_pincode'] ?? ($user['business_pincode'] ?? $user['pincode'] ?? '')) ?>"
               class="w-full px-3 py-2 bg-stone-50 border border-gray-200 rounded-xl text-xs font-semibold focus:bg-white focus:outline-none focus:border-amber-600 transition">
@@ -367,7 +367,7 @@ require_once __DIR__ . '/retailer_header.php';
                 <img src="<?= htmlspecialchars($item['image']) ?>" alt="" class="w-10 h-10 rounded-xl object-cover border border-stone-200">
                 <div>
                   <div class="font-bold text-gray-900 line-clamp-1"><?= htmlspecialchars($item['name']) ?></div>
-                  <div class="text-[10px] text-gray-500"><?= $item['quantity'] ?> पीस × <?= format_price($item['bulk_price']) ?></div>
+                  <div class="text-[10px] text-gray-500"><?= $item['quantity'] ?> <span class="lang-en">pcs</span><span class="lang-hi hidden">पीस</span> × <?= format_price($item['bulk_price']) ?></div>
                 </div>
               </div>
               <div class="font-black text-gray-900">
@@ -380,7 +380,7 @@ require_once __DIR__ . '/retailer_header.php';
         <!-- Bill breakdown -->
         <div class="space-y-2.5 py-3 border-t border-b border-gray-100 text-xs">
           <div class="flex items-center justify-between text-gray-600">
-            <span>थोक माल मूल्य (Taxable):</span>
+            <span><span class="lang-en">Taxable Value:</span><span class="lang-hi hidden">थोक माल मूल्य:</span></span>
             <span class="font-bold text-gray-900"><?= format_price($subtotal) ?></span>
           </div>
 

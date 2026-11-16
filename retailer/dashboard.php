@@ -3,7 +3,7 @@
  * GanvGaliHat Retailer Hub — Dashboard
  */
 
-$page_title = 'थोक डैशबोर्ड (Retailer B2B Dashboard)';
+$page_title = 'Wholesale Dashboard — GanvGaliHat';
 require_once __DIR__ . '/retailer_header.php';
 
 $uid = $user['id'];
@@ -49,21 +49,21 @@ $wholesale_deals = $stmt_deals->fetchAll();
 <div class="bg-gradient-to-r from-amber-600 via-orange-600 to-amber-700 rounded-3xl p-6 sm:p-8 text-white shadow-xl mb-8 relative overflow-hidden">
   <div class="relative z-10 max-w-2xl">
     <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-white/20 backdrop-blur-xs text-white border border-white/20 mb-3">
-      <i class="fa-solid fa-store"></i> B2B थोक व्यापारी पोर्टल
+      <i class="fa-solid fa-store"></i> <span class="lang-en">B2B Wholesale Portal</span><span class="lang-hi hidden">B2B थोक व्यापारी पोर्टल</span>
     </span>
     <h1 class="text-xl sm:text-3xl font-black">
-      स्वागत है, <?= htmlspecialchars($user['business_name'] ?? $user['name']) ?>!
+      <span class="lang-en">Welcome,</span><span class="lang-hi hidden">स्वागत है,</span> <?= htmlspecialchars($user['business_name'] ?? $user['name']) ?>!
     </h1>
     <p class="text-amber-100 text-xs sm:text-sm mt-1.5 leading-relaxed font-medium">
-      सीधे ग्रामीण क्लस्टरों से थोक भाव पर प्रामाणिक उत्पाद मंगाएं और अपनी दुकान के लिए अधिकतम मार्जिन प्राप्त करें।
+      <span class="lang-en">Source directly from verified village artisan clusters at wholesale tier pricing to maximize retail margins for your store.</span><span class="lang-hi hidden">सीधे ग्रामीण क्लस्टरों से थोक भाव पर प्रामाणिक उत्पाद मंगाएं और अपनी दुकान के लिए अधिकतम <span class="lang-en">Margin</span><span class="lang-hi hidden">मार्जिन</span> प्राप्त करें।</span>
     </p>
 
     <div class="mt-5 flex flex-wrap items-center gap-3">
       <a href="/retailer/products.php" class="px-5 py-2.5 bg-stone-900 hover:bg-black text-amber-400 font-black text-xs sm:text-sm rounded-xl transition shadow flex items-center gap-2">
-        <i class="fa-solid fa-boxes-stacked"></i> थोक कैटलॉग देखें &rarr;
+        <i class="fa-solid fa-boxes-stacked"></i> <span class="lang-en">Browse Wholesale Catalog &rarr;</span><span class="lang-hi hidden">थोक कैटलॉग देखें &rarr;</span>
       </a>
       <a href="/retailer/cart.php" class="px-4 py-2.5 bg-white/20 hover:bg-white/30 text-white font-bold text-xs sm:text-sm rounded-xl transition backdrop-blur-xs flex items-center gap-1.5">
-        <i class="fa-solid fa-cart-flatbed"></i> थोक कार्ट (<?= $bulk_cart_count ?>)
+        <i class="fa-solid fa-cart-flatbed"></i> <span class="lang-en">Wholesale Cart (</span><span class="lang-hi hidden">थोक कार्ट (</span><?= $bulk_cart_count ?>)
       </a>
     </div>
   </div>
@@ -80,9 +80,9 @@ $wholesale_deals = $stmt_deals->fetchAll();
       <i class="fa-solid fa-file-invoice"></i>
     </div>
     <div>
-      <div class="text-[11px] font-bold text-gray-400 uppercase tracking-wider">कुल बल्क ऑर्डर्स</div>
+      <div class="text-[11px] font-bold text-gray-400 uppercase tracking-wider"><span class="lang-en">Total Bulk Orders</span><span class="lang-hi hidden">कुल बल्क ऑर्डर्स</span></div>
       <div class="text-2xl font-black text-gray-900"><?= $total_orders ?></div>
-      <div class="text-[10px] text-gray-500">B2B थोक खरीद</div>
+      <div class="text-[10px] text-gray-500"><span class="lang-en">B2B Wholesale Orders</span><span class="lang-hi hidden">B2B थोक खरीद</span></div>
     </div>
   </div>
 
@@ -91,9 +91,9 @@ $wholesale_deals = $stmt_deals->fetchAll();
       <i class="fa-solid fa-indian-rupee-sign"></i>
     </div>
     <div>
-      <div class="text-[11px] font-bold text-gray-400 uppercase tracking-wider">कुल थोक खरीदारी</div>
+      <div class="text-[11px] font-bold text-gray-400 uppercase tracking-wider"><span class="lang-en">Total Bulk Spend</span><span class="lang-hi hidden">कुल थोक खरीदारी</span></div>
       <div class="text-2xl font-black text-emerald-700"><?= format_price($total_spend) ?></div>
-      <div class="text-[10px] text-gray-500">GST इनवॉइस वैल्यू</div>
+      <div class="text-[10px] text-gray-500"><span class="lang-en">GST Invoiced Value</span><span class="lang-hi hidden">GST <span class="lang-en">Invoice</span><span class="lang-hi hidden">इनवॉइस</span> वैल्यू</span></div>
     </div>
   </div>
 
@@ -102,9 +102,9 @@ $wholesale_deals = $stmt_deals->fetchAll();
       <i class="fa-solid fa-truck-fast"></i>
     </div>
     <div>
-      <div class="text-[11px] font-bold text-gray-400 uppercase tracking-wider">सक्रिय शिपमेंट</div>
+      <div class="text-[11px] font-bold text-gray-400 uppercase tracking-wider"><span class="lang-en">Active Shipments</span><span class="lang-hi hidden">सक्रिय शिपमेंट</span></div>
       <div class="text-2xl font-black text-blue-700"><?= $active_orders ?></div>
-      <div class="text-[10px] text-gray-500">रास्ते में / प्रक्रियाधीन</div>
+      <div class="text-[10px] text-gray-500"><span class="lang-en">In Transit / Dispatch</span><span class="lang-hi hidden">रास्ते में / प्रक्रियाधीन</span></div>
     </div>
   </div>
 
@@ -113,9 +113,9 @@ $wholesale_deals = $stmt_deals->fetchAll();
       <i class="fa-solid fa-warehouse"></i>
     </div>
     <div>
-      <div class="text-[11px] font-bold text-gray-400 uppercase tracking-wider">उपलब्ध थोक उत्पाद</div>
+      <div class="text-[11px] font-bold text-gray-400 uppercase tracking-wider"><span class="lang-en">Wholesale Products</span><span class="lang-hi hidden">उपलब्ध थोक उत्पाद</span></div>
       <div class="text-2xl font-black text-purple-700"><?= $total_bulk_products ?></div>
-      <div class="text-[10px] text-gray-500">सीधे क्लस्टरों से</div>
+      <div class="text-[10px] text-gray-500"><span class="lang-en">Direct from Rural Hubs</span><span class="lang-hi hidden">सीधे क्लस्टरों से</span></div>
     </div>
   </div>
 </div>
@@ -154,7 +154,7 @@ $wholesale_deals = $stmt_deals->fetchAll();
               <th class="px-4 py-3">ऑर्डर सं.</th>
               <th class="px-4 py-3">दिनांक</th>
               <th class="px-4 py-3">राशि</th>
-              <th class="px-4 py-3">भुगतान</th>
+              <th class="px-4 py-3"><span class="lang-en">Payment</span><span class="lang-hi hidden">भुगतान</span></th>
               <th class="px-4 py-3">स्थिति</th>
               <th class="px-4 py-3 text-right">कार्रवाई</th>
             </tr>
@@ -269,7 +269,7 @@ $wholesale_deals = $stmt_deals->fetchAll();
     <div>
       <h2 class="text-base sm:text-lg font-black text-gray-900 flex items-center gap-2">
         <i class="fa-solid fa-tags text-amber-600"></i>
-        उच्च मार्जिन वाले थोक सौदे (High-Margin Wholesale Deals)
+        उच्च <span class="lang-en">Margin</span><span class="lang-hi hidden">मार्जिन</span> वाले थोक सौदे (High-Margin Wholesale Deals)
       </h2>
       <p class="text-xs text-gray-500">कारीगरों से सीधे कम से कम MOQ में थोक लॉट खरीदें और 25% से 45% तक मुनाफा कमाएं</p>
     </div>
@@ -309,21 +309,21 @@ $wholesale_deals = $stmt_deals->fetchAll();
               <?= htmlspecialchars($p['name']) ?>
             </h3>
             <div class="text-[11px] text-gray-400 line-clamp-1 mb-2">
-              <?= htmlspecialchars($p['artisan_vendor'] ?? 'Kalyani agrofood pvt ltd') ?> (<?= htmlspecialchars($p['district'] ?? 'Hardoi') ?>)
+              <?= htmlspecialchars($p['artisan_vendor'] ?? get_company_name()) ?> (<?= htmlspecialchars($p['district'] ?? 'Hardoi') ?>)
             </div>
 
             <!-- Price Compare Box -->
             <div class="bg-amber-50/70 p-3 rounded-2xl border border-amber-200/70 mb-3">
               <div class="flex items-baseline justify-between">
-                <span class="text-[11px] font-bold text-gray-600">थोक भाव:</span>
-                <span class="text-base font-black text-amber-800"><?= format_price($bulk_p) ?> <span class="text-[10px] text-gray-500 font-normal">/ पीस</span></span>
+                <span class="text-[11px] font-bold text-gray-600"><span class="lang-en">Wholesale:</span><span class="lang-hi hidden">थोक भाव:</span></span>
+                <span class="text-base font-black text-amber-800"><?= format_price($bulk_p) ?> <span class="text-[10px] text-gray-500 font-normal"><span class="lang-en">/ pc</span><span class="lang-hi hidden">/ <span class="lang-en">pcs</span><span class="lang-hi hidden">पीस</span></span></span></span>
               </div>
               <div class="flex items-baseline justify-between text-[11px] text-gray-500 mt-0.5">
-                <span>खुदरा बिक्री मूल्य (MRP):</span>
+                <span><span class="lang-en">Retail MRP:</span><span class="lang-hi hidden">खुदरा बिक्री मूल्य (MRP):</span></span>
                 <span class="line-through"><?= format_price($orig_p) ?></span>
               </div>
               <div class="flex items-baseline justify-between text-[11px] text-emerald-700 font-bold mt-1 pt-1 border-t border-amber-200/60">
-                <span>प्रति पीस आपका मुनाफा:</span>
+                <span>प्रति <span class="lang-en">pcs</span><span class="lang-hi hidden">पीस</span> आपका मुनाफा:</span>
                 <span>+<?= format_price($margin_pc) ?></span>
               </div>
             </div>

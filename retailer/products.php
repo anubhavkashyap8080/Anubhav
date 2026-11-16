@@ -34,7 +34,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
     exit;
 }
 
-$page_title = 'थोक कैटलॉग (Wholesale B2B Catalog)';
+$page_title = 'Wholesale Catalog — GanvGaliHat';
 require_once __DIR__ . '/retailer_header.php';
 
 // Fetch categories
@@ -81,17 +81,17 @@ $products = $stmt->fetchAll();
   <div>
     <h1 class="text-2xl font-black text-gray-900 flex items-center gap-2">
       <i class="fa-solid fa-boxes-stacked text-amber-600"></i>
-      थोक कैटलॉग (Wholesale B2B Catalog)
+      <span class="lang-en">Wholesale B2B Catalog</span><span class="lang-hi hidden">थोक कैटलॉग</span>
     </h1>
     <p class="text-xs text-gray-500 mt-1">
-      सीधे ग्रामीण क्लस्टरों से थोक भाव पर प्रामाणिक माल खरीदें • कुल <?= count($products) ?> उत्पाद उपलब्ध
+      <span class="lang-en">Direct sourcing from rural craft clusters at wholesale lot pricing • Total</span><span class="lang-hi hidden">सीधे ग्रामीण क्लस्टरों से थोक भाव पर प्रामाणिक माल खरीदें • कुल</span> <?= count($products) ?> <span class="lang-en">products available</span><span class="lang-hi hidden">उत्पाद उपलब्ध</span>
     </p>
   </div>
 
   <div class="flex items-center gap-2">
     <a href="/retailer/cart.php" class="px-4 py-2.5 bg-amber-600 hover:bg-amber-700 text-white font-bold text-xs rounded-xl shadow transition flex items-center gap-2">
       <i class="fa-solid fa-cart-flatbed"></i>
-      थोक कार्ट देखें (<?= $bulk_cart_count ?>)
+      <span class="lang-en">View Wholesale Cart (</span><span class="lang-hi hidden">थोक कार्ट देखें (</span><?= $bulk_cart_count ?>)
     </a>
   </div>
 </div>
@@ -105,24 +105,24 @@ $products = $stmt->fetchAll();
       <div class="relative flex-grow sm:flex-grow-0 sm:w-64">
         <i class="fa-solid fa-magnifying-glass absolute left-3.5 top-2.5 text-gray-400 text-xs"></i>
         <input type="text" name="q" value="<?= htmlspecialchars($q) ?>"
-          placeholder="उत्पाद या कोड खोजें..."
+          placeholder="Search product or SKU code..."
           class="w-full pl-9 pr-3 py-1.5 bg-stone-50 border border-gray-200 rounded-xl text-xs focus:bg-white focus:outline-none focus:border-amber-600 transition">
       </div>
 
       <!-- Category Filter -->
       <select name="category" onchange="this.form.submit()" class="px-3 py-1.5 bg-stone-50 border border-gray-200 rounded-xl text-xs font-semibold focus:outline-none">
-        <option value="">सभी श्रेणियां (All Categories)</option>
+        <option value="">All Categories</option>
         <?php foreach ($categories as $c): ?>
           <option value="<?= $c['slug'] ?>" <?= $cat_filter === $c['slug'] ? 'selected' : '' ?>>
-            <?= htmlspecialchars($c['hindi_name'] ?? $c['name']) ?>
+            <?= htmlspecialchars($c['name']) ?>
           </option>
         <?php endforeach; ?>
       </select>
 
       <!-- Bulk Only Filter Toggle -->
       <select name="bulk_only" onchange="this.form.submit()" class="px-3 py-1.5 bg-stone-50 border border-gray-200 rounded-xl text-xs font-semibold focus:outline-none">
-        <option value="1" <?= $only_bulk_preset === 1 ? 'selected' : '' ?>>विशेष B2B थोक उत्पाद (Ready Bulk Lots)</option>
-        <option value="0" <?= $only_bulk_preset === 0 ? 'selected' : '' ?>>समस्त उत्पाद कैटलॉग (All Catalog)</option>
+        <option value="1" <?= $only_bulk_preset === 1 ? 'selected' : '' ?>>Ready B2B Bulk Lots</option>
+        <option value="0" <?= $only_bulk_preset === 0 ? 'selected' : '' ?>>All Catalog Products</option>
       </select>
 
       <button type="submit" class="px-3 py-1.5 bg-stone-900 hover:bg-black text-white text-xs font-bold rounded-xl transition">
@@ -131,13 +131,13 @@ $products = $stmt->fetchAll();
 
       <?php if (!empty($q) || !empty($cat_filter) || $only_bulk_preset === 0): ?>
         <a href="/retailer/products.php" class="text-xs text-red-600 hover:underline font-bold px-2 py-1">
-          रीसेट करें &times;
+          <span class="lang-en">Reset &times;</span><span class="lang-hi hidden">रीसेट करें &times;</span>
         </a>
       <?php endif; ?>
     </div>
 
     <div class="text-[11px] text-gray-500 hidden sm:block">
-      <i class="fa-solid fa-truck-fast text-emerald-600 mr-1"></i> डोरस्टेप फ्रेट व पैन-इंडिया डिलीवरी
+      <i class="fa-solid fa-truck-fast text-emerald-600 mr-1"></i> <span class="lang-en">Doorstep Cargo & Pan-India Transport</span><span class="lang-hi hidden">डोरस्टेप फ्रेट व पैन-इंडिया डिलीवरी</span>
     </div>
 
   </form>
@@ -149,12 +149,12 @@ $products = $stmt->fetchAll();
     <div class="w-16 h-16 mx-auto rounded-full bg-amber-50 text-amber-600 flex items-center justify-center text-2xl mb-4">
       <i class="fa-solid fa-boxes-packing"></i>
     </div>
-    <h3 class="text-base font-black text-gray-900">कोई थोक उत्पाद नहीं मिला</h3>
+    <h3 class="text-base font-black text-gray-900"><span class="lang-en">No Wholesale Products Found</span><span class="lang-hi hidden">कोई थोक उत्पाद नहीं मिला</span></h3>
     <p class="text-xs text-gray-500 mt-1 max-w-sm mx-auto">
-      कृपया दूसरा सर्च शब्द आजमाएं या सभी उत्पादों को देखने के लिए फ़िल्टर रीसेट करें।
+      <span class="lang-en">Please try a different search keyword or reset filters to browse the complete catalog.</span><span class="lang-hi hidden">कृपया दूसरा सर्च शब्द आजमाएं या फ़िल्टर रीसेट करें।</span>
     </p>
     <a href="/retailer/products.php?bulk_only=0" class="mt-4 inline-flex items-center gap-1.5 px-4 py-2 bg-stone-900 text-amber-400 font-bold text-xs rounded-xl">
-      समस्त उत्पाद कैटलॉग देखें &rarr;
+      <span class="lang-en">View All Catalog Products &rarr;</span><span class="lang-hi hidden">समस्त उत्पाद देखें &rarr;</span>
     </a>
   </div>
 <?php else: ?>
@@ -201,7 +201,7 @@ $products = $stmt->fetchAll();
           <div class="mb-3">
             <div class="flex items-center justify-between text-[11px] text-gray-500 mb-1">
               <span class="font-bold text-stone-700 bg-stone-100 px-2 py-0.5 rounded">
-                <?= htmlspecialchars($p['cat_hindi'] ?? $p['cat_name'] ?? 'General') ?>
+                <?= htmlspecialchars($p['cat_name'] ?? 'General') ?>
               </span>
               <span class="font-mono text-gray-400">Code: <?= htmlspecialchars($p['code']) ?></span>
             </div>
@@ -210,7 +210,7 @@ $products = $stmt->fetchAll();
               <?= htmlspecialchars($p['name']) ?>
             </h3>
             <p class="text-xs text-gray-500 line-clamp-1 mt-0.5">
-              <?= htmlspecialchars($p['hindi_name'] ?? '') ?>
+              <span class="lang-hi hidden"><?= htmlspecialchars($p["hindi_name"] ?? "") ?></span>
             </p>
             <div class="text-[11px] text-stone-500 flex items-center gap-1.5 mt-1">
               <i class="fa-solid fa-industry text-amber-600"></i>
@@ -223,26 +223,26 @@ $products = $stmt->fetchAll();
           <!-- Wholesale Pricing Breakdown Box -->
           <div class="bg-gradient-to-br from-amber-50/70 to-orange-50/60 p-3.5 rounded-2xl border border-amber-200/70 mb-3 space-y-1.5 text-xs">
             <div class="flex items-baseline justify-between">
-              <span class="font-bold text-stone-700">थोक दर (Wholesale Price):</span>
+              <span class="font-bold text-stone-700"><span class="lang-en">Wholesale Price:</span><span class="lang-hi hidden">थोक दर:</span></span>
               <span class="text-lg font-black text-amber-900" id="display_price_<?= $p['id'] ?>">
-                <?= format_price($bulk_p) ?> <span class="text-[10px] text-gray-500 font-normal">/ पीस</span>
+                <?= format_price($bulk_p) ?> <span class="text-[10px] text-gray-500 font-normal"><span class="lang-en">/ pc</span><span class="lang-hi hidden">/ पीस</span></span>
               </span>
             </div>
             
             <div class="flex items-baseline justify-between text-[11px] text-gray-500">
-              <span>खुदरा बिक्री मूल्य (MRP):</span>
+              <span><span class="lang-en">Retail MRP:</span><span class="lang-hi hidden">खुदरा बिक्री मूल्य (MRP):</span></span>
               <span class="line-through"><?= format_price($orig_p) ?></span>
             </div>
 
             <div class="flex items-baseline justify-between text-[11px] text-emerald-700 font-bold pt-1 border-t border-amber-200/50">
-              <span>दुकान का शुद्ध मुनाफा:</span>
+              <span><span class="lang-en">Retailer Margin:</span><span class="lang-hi hidden">दुकान का शुद्ध मुनाफा:</span></span>
               <span id="display_margin_<?= $p['id'] ?>">+<?= format_price($margin_pc) ?> / pc (<?= $margin_pct ?>%)</span>
             </div>
           </div>
 
           <!-- Logistics Info -->
           <div class="flex items-center justify-between text-[11px] text-gray-500 px-1 mb-4">
-            <span title="डिस्पैच तैयारी"><i class="fa-solid fa-clock text-amber-600 mr-1"></i> डिस्पैच: <?= $lead_time ?> दिन</span>
+            <span title="डिस्पैच तैयारी"><i class="fa-solid fa-clock text-amber-600 mr-1"></i> <span class="lang-en">Dispatch: <?= $lead_time ?> days</span><span class="lang-hi hidden">डिस्पैच: <?= $lead_time ?> दिन</span></span>
             <span title="पैकेजिंग प्रकार"><i class="fa-solid fa-box text-stone-400 mr-1"></i> <?= $pkg ?></span>
           </div>
         </div>
@@ -284,7 +284,7 @@ $products = $stmt->fetchAll();
             <button type="submit"
               class="w-full py-2.5 bg-gradient-to-r from-amber-600 to-orange-600 hover:from-amber-700 hover:to-orange-700 text-white font-bold text-xs rounded-xl shadow-xs transition flex items-center justify-center gap-2">
               <i class="fa-solid fa-cart-flatbed"></i>
-              थोक कार्ट में जोड़ें (Add Lot)
+              थोक <span class="lang-en">Add to Cart</span><span class="lang-hi hidden">कार्ट में जोड़ें</span> (Add Lot)
             </button>
           </div>
         </form>
@@ -327,7 +327,7 @@ function recalcBulkLot(pid, baseBulkPrice, tier2Qty, tier2Price, retailPrice, mo
 
   const dispPrice = document.getElementById('display_price_' + pid);
   if (dispPrice) {
-    dispPrice.innerHTML = '₹' + unitPrice.toLocaleString('en-IN', {minimumFractionDigits: 2}) + ' <span class="text-[10px] text-gray-500 font-normal">/ पीस</span>';
+    dispPrice.innerHTML = '₹' + unitPrice.toLocaleString('en-IN', {minimumFractionDigits: 2}) + ' <span class="text-[10px] text-gray-500 font-normal"><span class="lang-en">/ pc</span><span class="lang-hi hidden">/ पीस</span></span>';
   }
 
   const dispMargin = document.getElementById('display_margin_' + pid);

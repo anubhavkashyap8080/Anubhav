@@ -8,7 +8,7 @@
  * 2. Circular Visual Category Tray (Strictly ordered by admin sort_order)
  * 3. Modern Bento Grid Hero Section:
  *    - Large Farm-Fresh Oil & Honey Spotlight Card
- *    - Sandila Industrial Forge Tools by Kalyani agrofood pvt ltd
+ *    - Sandila Industrial Forge Tools by <?= htmlspecialchars(get_company_name()) ?>
  *    - Women Self-Help Groups (SHGs) Heritage Handlooms Card
  *    - Live Pan-India Rural Dispatch & India Post Metric Ticker
  * 4. Interactive Category Navigation Pills
@@ -36,7 +36,7 @@
         <?php if (!empty($nearest_vendors[0])): ?>
           <span class="hidden md:inline text-stone-500 ml-2">|</span>
           <span class="hidden md:inline text-emerald-400 font-semibold ml-2">
-            🚀 Nearest Forge: <?= htmlspecialchars(str_ireplace(['S S Industries', 'SS Industries', 'S. S. Industries', 'S.S. Industries'], 'Kalyani agrofood pvt ltd', $nearest_vendors[0]['name'])) ?> (<?= $nearest_vendors[0]['distance_km'] ?> km away)
+            🚀 Nearest Forge: <?= htmlspecialchars(str_ireplace(['S S Industries', 'SS Industries', 'S. S. Industries', 'S.S. Industries'], get_company_name(), $nearest_vendors[0]['name'])) ?> (<?= $nearest_vendors[0]['distance_km'] ?> km away)
           </span>
         <?php endif; ?>
       </div>
@@ -153,7 +153,7 @@
         </div>
       </div>
 
-      <!-- Bento Item 2: Heavy-Duty Sandila Agricultural Forge (Kalyani agrofood pvt ltd) -->
+      <!-- Bento Item 2: Heavy-Duty Sandila Agricultural Forge (<?= htmlspecialchars(get_company_name()) ?>) -->
       <div class="bg-gradient-to-br from-stone-900 to-emerald-950/70 rounded-3xl p-6 border border-emerald-500/40 shadow-xl flex flex-col justify-between group hover:border-emerald-400 transition">
         <div>
           <div class="w-10 h-10 rounded-xl bg-emerald-500/20 text-emerald-400 flex items-center justify-center font-bold mb-4">
@@ -161,7 +161,7 @@
           </div>
           <span class="text-[10px] font-black text-emerald-400 tracking-wider uppercase block mb-1">Sandila Industrial Hub</span>
           <h3 class="text-lg font-black text-white leading-snug mb-2">
-            Kalyani agrofood pvt ltd Forged Tools
+            <?= htmlspecialchars(get_company_name()) ?> Forged Tools
           </h3>
           <p class="text-stone-300 text-xs leading-relaxed mb-4">
             High-tensile tempered steel agricultural implements: Khurpi, sickles, spades & axes built for lifetime durability.
@@ -292,7 +292,7 @@
             </h3>
             
             <p class="text-[11px] text-gray-500 mb-2">
-              By <?= htmlspecialchars(str_ireplace(['S S Industries', 'SS Industries', 'S. S. Industries', 'S.S. Industries'], 'Kalyani agrofood pvt ltd', $p['vendor_name'] ?? 'Local Maker')) ?>
+              By <?= htmlspecialchars(str_ireplace(['S S Industries', 'SS Industries', 'S. S. Industries', 'S.S. Industries'], get_company_name(), $p['vendor_name'] ?? 'Local Maker')) ?>
             </p>
           </div>
 
@@ -428,7 +428,7 @@
           <i data-lucide="chevron-down" class="w-4 h-4 text-gray-400 group-open:rotate-180 transition-transform"></i>
         </summary>
         <p class="text-xs text-gray-600 mt-3 leading-relaxed">
-          Yes! Every agricultural sickle, khurpi, and axe is forged using high-carbon leaf springs on charcoal hearths in our registered hubs like Kalyani agrofood pvt ltd in Sandila, Hardoi. Each tool undergoes oil hardening and water tempering.
+          Yes! Every agricultural sickle, khurpi, and axe is forged using high-carbon leaf springs on charcoal hearths in our registered hubs like <?= htmlspecialchars(get_company_name()) ?> in Sandila, Hardoi. Each tool undergoes oil hardening and water tempering.
         </p>
       </details>
 

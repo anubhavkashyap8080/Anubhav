@@ -50,6 +50,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['save_customizer'])) {
             $stmt_up->execute([$k, $val]);
         }
 
+        if (isset($_POST['company_name']) && !empty(trim($_POST['company_name']))) {
+            $new_comp = trim((string)$_POST['company_name']);
+            try {
+                $pdo->prepare("UPDATE vendors SET name = ?, business_name = ? WHERE id = 1 OR slug LIKE 'ss-industries%' OR name LIKE '%Kalyani agrofood%' OR business_name LIKE '%Kalyani agrofood%'")->execute([$new_comp, $new_comp]);
+            } catch (Throwable $t) {}
+        }
+
         set_flash('success', 'हेडर, फुटर, सोशल लिंक्स एवं ब्रांडिंग सेटिंग्स सफलतापूर्वक अपडेट की गईं!');
         header('Location: /admin/site_customizer.php');
         exit;

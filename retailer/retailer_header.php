@@ -24,7 +24,7 @@ $bulk_cart_count = get_bulk_cart_count();
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title><?= isset($page_title) ? htmlspecialchars($page_title) . ' — ' : '' ?>Retailer Hub (थोक बाजार) — GanvGaliHat</title>
+  <title><?= isset($page_title) ? htmlspecialchars($page_title) . ' — ' : '' ?>Retailer Hub — GanvGaliHat</title>
   <link rel="icon" type="image/x-icon" href="/favicon.ico">
   <link rel="icon" type="image/png" sizes="32x32" href="/favicon.png">
   <link rel="apple-touch-icon" href="/apple-touch-icon.png">
@@ -55,7 +55,10 @@ $bulk_cart_count = get_bulk_cart_count();
               <span class="text-xs font-black uppercase tracking-wider text-amber-400 block flex items-center gap-1.5">
                 <i class="fa-solid fa-boxes-packing"></i> Retailer Hub
               </span>
-              <span class="text-[10px] text-stone-400 block">थोक व्यापार एवं B2B खरीद पोर्टल</span>
+              <span class="text-[10px] text-stone-400 block">
+                <span class="lang-en">B2B Wholesale & Bulk Sourcing Portal</span>
+                <span class="lang-hi hidden">थोक व्यापार एवं B2B खरीद पोर्टल</span>
+              </span>
             </div>
           </a>
 
@@ -80,29 +83,44 @@ $bulk_cart_count = get_bulk_cart_count();
         <nav class="hidden md:flex items-center gap-1 text-xs font-bold">
           <a href="/retailer/dashboard.php"
              class="px-3 py-2 rounded-xl transition <?= $current_page === 'dashboard.php' ? 'bg-amber-500 text-stone-950 font-black' : 'text-stone-300 hover:text-white hover:bg-stone-800' ?>">
-            <i class="fa-solid fa-chart-pie mr-1.5"></i> डैशबोर्ड
+            <i class="fa-solid fa-chart-pie mr-1.5"></i>
+            <span class="lang-en">Dashboard</span>
+            <span class="lang-hi hidden">डैशबोर्ड</span>
           </a>
           <a href="/retailer/products.php"
              class="px-3 py-2 rounded-xl transition <?= $current_page === 'products.php' ? 'bg-amber-500 text-stone-950 font-black' : 'text-stone-300 hover:text-white hover:bg-stone-800' ?>">
-            <i class="fa-solid fa-boxes-stacked mr-1.5"></i> थोक कैटलॉग (Wholesale)
+            <i class="fa-solid fa-boxes-stacked mr-1.5"></i>
+            <span class="lang-en">Wholesale Catalog</span>
+            <span class="lang-hi hidden">थोक कैटलॉग</span>
           </a>
           <a href="/retailer/orders.php"
              class="px-3 py-2 rounded-xl transition <?= $current_page === 'orders.php' ? 'bg-amber-500 text-stone-950 font-black' : 'text-stone-300 hover:text-white hover:bg-stone-800' ?>">
-            <i class="fa-solid fa-truck-ramp-box mr-1.5"></i> बल्क ऑर्डर्स & इनवॉइस
+            <i class="fa-solid fa-truck-ramp-box mr-1.5"></i>
+            <span class="lang-en">Bulk Orders & Invoices</span>
+            <span class="lang-hi hidden">बल्क ऑर्डर्स व बिल</span>
           </a>
           <a href="/retailer/profile.php"
              class="px-3 py-2 rounded-xl transition <?= $current_page === 'profile.php' ? 'bg-amber-500 text-stone-950 font-black' : 'text-stone-300 hover:text-white hover:bg-stone-800' ?>">
-            <i class="fa-solid fa-id-card mr-1.5"></i> व्यापार प्रोफाइल
+            <i class="fa-solid fa-id-card mr-1.5"></i>
+            <span class="lang-en">Business Profile</span>
+            <span class="lang-hi hidden">व्यापार प्रोफाइल</span>
           </a>
         </nav>
 
-        <!-- Right Side: Bulk Cart & User Controls -->
+        <!-- Right Side: Bilingual Switcher, Bulk Cart & Controls -->
         <div class="flex items-center gap-2 sm:gap-3">
           
+          <div class="inline-block scale-90">
+            <?= render_bilingual_toggle() ?>
+          </div>
+
           <!-- Bulk Wholesale Cart -->
           <a href="/retailer/cart.php" class="relative px-3 py-2 bg-stone-800 hover:bg-stone-700 text-amber-400 border border-amber-500/30 rounded-xl text-xs font-bold transition flex items-center gap-1.5">
             <i class="fa-solid fa-cart-flatbed text-sm"></i>
-            <span class="hidden sm:inline">थोक कार्ट</span>
+            <span class="hidden sm:inline">
+              <span class="lang-en">Wholesale Cart</span>
+              <span class="lang-hi hidden">थोक कार्ट</span>
+            </span>
             <?php if ($bulk_cart_count > 0): ?>
               <span class="w-5 h-5 bg-amber-500 text-stone-950 rounded-full flex items-center justify-center text-[11px] font-black">
                 <?= $bulk_cart_count ?>
@@ -113,66 +131,61 @@ $bulk_cart_count = get_bulk_cart_count();
           <!-- Public Site Link -->
           <a href="/index.php" target="_blank"
              class="hidden sm:flex items-center gap-1 text-xs text-stone-300 hover:text-white px-2.5 py-1.5 rounded-lg hover:bg-stone-800 transition"
-             title="सार्वजनिक दुकान देखें">
+             title="Visit Public Marketplace">
             <i class="fa-solid fa-arrow-up-right-from-square text-[10px]"></i>
-            <span>ग्राहक स्टोर</span>
+            <span>
+              <span class="lang-en">Customer Store</span>
+              <span class="lang-hi hidden">ग्राहक स्टोर</span>
+            </span>
           </a>
 
           <!-- Logout -->
           <a href="/logout.php"
              class="px-3 py-1.5 text-xs font-bold text-red-400 hover:text-red-300 hover:bg-red-950/40 border border-red-900/50 rounded-xl transition flex items-center gap-1"
-             title="लॉगआउट">
+             title="Sign Out">
             <i class="fa-solid fa-arrow-right-from-bracket"></i>
-            <span class="hidden sm:inline">लॉगआउट</span>
+            <span class="hidden sm:inline">
+              <span class="lang-en">Logout</span>
+              <span class="lang-hi hidden">लॉगआउट</span>
+            </span>
           </a>
         </div>
       </div>
     </div>
 
-    <!-- Mobile Subnav Bar -->
-    <div class="md:hidden border-t border-stone-800 bg-stone-950 px-3 py-2 flex items-center justify-around text-[11px] font-bold">
-      <a href="/retailer/dashboard.php" class="flex flex-col items-center gap-0.5 <?= $current_page === 'dashboard.php' ? 'text-amber-400' : 'text-stone-400' ?>">
-        <i class="fa-solid fa-chart-pie"></i>
-        <span>डैशबोर्ड</span>
+    <!-- Mobile Sub-Navigation -->
+    <div class="md:hidden border-t border-stone-800 bg-stone-950/70 px-3 py-2 flex items-center justify-around text-[11px] font-bold">
+      <a href="/retailer/dashboard.php" class="<?= $current_page === 'dashboard.php' ? 'text-amber-400' : 'text-stone-400' ?>">
+        <i class="fa-solid fa-chart-pie block text-center text-sm mb-0.5"></i>
+        <span class="lang-en">Dashboard</span>
+        <span class="lang-hi hidden">डैशबोर्ड</span>
       </a>
-      <a href="/retailer/products.php" class="flex flex-col items-center gap-0.5 <?= $current_page === 'products.php' ? 'text-amber-400' : 'text-stone-400' ?>">
-        <i class="fa-solid fa-boxes-stacked"></i>
-        <span>थोक माल</span>
+      <a href="/retailer/products.php" class="<?= $current_page === 'products.php' ? 'text-amber-400' : 'text-stone-400' ?>">
+        <i class="fa-solid fa-boxes-stacked block text-center text-sm mb-0.5"></i>
+        <span class="lang-en">Wholesale</span>
+        <span class="lang-hi hidden">थोक कैटलॉग</span>
       </a>
-      <a href="/retailer/cart.php" class="flex flex-col items-center gap-0.5 <?= $current_page === 'cart.php' ? 'text-amber-400' : 'text-stone-400' ?>">
-        <span class="relative">
-          <i class="fa-solid fa-cart-flatbed"></i>
-          <?php if ($bulk_cart_count > 0): ?>
-            <span class="absolute -top-1 -right-2 w-3.5 h-3.5 bg-amber-500 text-stone-950 rounded-full text-[9px] flex items-center justify-center font-black">
-              <?= $bulk_cart_count ?>
-            </span>
-          <?php endif; ?>
-        </span>
-        <span>थोक कार्ट</span>
+      <a href="/retailer/orders.php" class="<?= $current_page === 'orders.php' ? 'text-amber-400' : 'text-stone-400' ?>">
+        <i class="fa-solid fa-truck-ramp-box block text-center text-sm mb-0.5"></i>
+        <span class="lang-en">Orders</span>
+        <span class="lang-hi hidden">ऑर्डर्स</span>
       </a>
-      <a href="/retailer/orders.php" class="flex flex-col items-center gap-0.5 <?= $current_page === 'orders.php' ? 'text-amber-400' : 'text-stone-400' ?>">
-        <i class="fa-solid fa-file-invoice"></i>
-        <span>ऑर्डर्स</span>
-      </a>
-      <a href="/retailer/profile.php" class="flex flex-col items-center gap-0.5 <?= $current_page === 'profile.php' ? 'text-amber-400' : 'text-stone-400' ?>">
-        <i class="fa-solid fa-id-card"></i>
-        <span>प्रोफाइल</span>
+      <a href="/retailer/profile.php" class="<?= $current_page === 'profile.php' ? 'text-amber-400' : 'text-stone-400' ?>">
+        <i class="fa-solid fa-id-card block text-center text-sm mb-0.5"></i>
+        <span class="lang-en">Profile</span>
+        <span class="lang-hi hidden">प्रोफाइल</span>
       </a>
     </div>
   </header>
 
-  <!-- Flash Message Banner -->
+  <!-- Flash Messages -->
   <?php if ($flash): ?>
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-4">
-      <div class="p-4 rounded-2xl flex items-center justify-between text-xs sm:text-sm font-semibold border <?= $flash['type'] === 'success' ? 'bg-emerald-50 text-emerald-800 border-emerald-200' : 'bg-red-50 text-red-800 border-red-200' ?>">
-        <div class="flex items-center gap-2">
-          <i class="fa-solid <?= $flash['type'] === 'success' ? 'fa-circle-check text-emerald-600' : 'fa-triangle-exclamation text-red-600' ?>"></i>
-          <span><?= htmlspecialchars($flash['message']) ?></span>
-        </div>
-        <button onclick="this.parentElement.remove()" class="text-stone-400 hover:text-stone-600">&times;</button>
+      <div class="p-4 rounded-2xl text-xs font-bold shadow-xs flex items-center gap-3 <?= $flash['type'] === 'success' ? 'bg-emerald-50 text-emerald-800 border border-emerald-200' : 'bg-red-50 text-red-800 border border-red-200' ?>">
+        <i class="fa-solid <?= $flash['type'] === 'success' ? 'fa-circle-check text-emerald-600' : 'fa-circle-exclamation text-red-600' ?> text-base"></i>
+        <span><?= htmlspecialchars($flash['message']) ?></span>
       </div>
     </div>
   <?php endif; ?>
 
-  <!-- Main Content Wrapper -->
-  <main class="flex-grow max-w-7xl mx-auto w-full px-3 sm:px-6 lg:px-8 py-6">
+  <main class="flex-grow max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8">

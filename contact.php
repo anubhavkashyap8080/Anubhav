@@ -181,7 +181,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                   <span class="lang-en">Head Office & Central Fulfillment Hub:</span>
                   <span class="lang-hi hidden">प्रधान कार्यालय (UPSIDA):</span>
                 </span>
-                <p class="font-bold text-gray-900">Kalyani agrofood pvt ltd</p>
+                <p class="font-bold text-gray-900"><?= htmlspecialchars(get_company_name()) ?></p>
                 <p class="text-gray-600 leading-relaxed mt-0.5">G145 Phase 2 Industrial Area, UPSIDA Sandila, Hardoi, Uttar Pradesh - 241204</p>
               </div>
             </div>
@@ -195,7 +195,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                   <span class="lang-en">Forge & Manufacturing Works:</span>
                   <span class="lang-hi hidden">कारखाना एवं निर्माण केंद्र:</span>
                 </span>
-                <p class="font-bold text-gray-900">Kalyani agrofood pvt ltd (Nevada Works)</p>
+                <p class="font-bold text-gray-900"><?= htmlspecialchars(get_company_name()) ?> (Nevada Works)</p>
                 <p class="text-gray-600 leading-relaxed mt-0.5">Madhoganj Baghauli Road, Nevada, Hardoi, UP - 241126</p>
               </div>
             </div>

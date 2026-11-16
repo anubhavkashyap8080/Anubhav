@@ -14,7 +14,7 @@
  *    - Zero YouTube player controls showing
  * 4. Featured Products & Handcrafted Bestsellers 8-Grid (Instant Add to Cart)
  * 5. Rural Craft Documentary Story Cards (Sandila Forges, Bullock Kohlu, Awadhi Looms)
- * 6. Heavy Forged Agricultural Tools by Kalyani agrofood pvt ltd
+ * 6. Heavy Forged Agricultural Tools by <?= htmlspecialchars(get_company_name()) ?>
  * 7. Haversine Nearest Forge Finder with Indian Post 24-48h Dispatch Badge
  * 8. 4 Direct-From-Maker Trust Pillars
  * 9. Verified Customer Reviews & Village Voice Testimonials
@@ -41,7 +41,7 @@ $yt_embed_url = get_youtube_embed_url($yt_setting, 1, true);
         <?php if (!empty($nearest_vendors[0])): ?>
           <span class="hidden md:inline text-stone-500 ml-2">|</span>
           <span class="hidden md:inline text-emerald-400 font-semibold ml-2">
-            🚀 Nearest Forge: <?= htmlspecialchars(str_ireplace(['S S Industries', 'SS Industries', 'S. S. Industries', 'S.S. Industries'], 'Kalyani agrofood pvt ltd', $nearest_vendors[0]['name'])) ?> (<?= $nearest_vendors[0]['distance_km'] ?> km away)
+            🚀 Nearest Forge: <?= htmlspecialchars(str_ireplace(['S S Industries', 'SS Industries', 'S. S. Industries', 'S.S. Industries'], get_company_name(), $nearest_vendors[0]['name'])) ?> (<?= $nearest_vendors[0]['distance_km'] ?> km away)
           </span>
         <?php endif; ?>
       </div>
@@ -119,7 +119,7 @@ $yt_embed_url = get_youtube_embed_url($yt_setting, 1, true);
         </h1>
 
         <p class="text-xs sm:text-sm text-stone-200 leading-relaxed max-w-xl">
-          Direct from the charcoal hearths of Kalyani agrofood pvt ltd in Sandila, bullock-driven wooden mustard expellers in Madhoganj, and handloom cotton weavers in Mallawan. 100% authentic, zero middlemen.
+          Direct from the charcoal hearths of <?= htmlspecialchars(get_company_name()) ?> in Sandila, bullock-driven wooden mustard expellers in Madhoganj, and handloom cotton weavers in Mallawan. 100% authentic, zero middlemen.
         </p>
 
         <div class="flex flex-wrap items-center gap-3 pt-1">
@@ -226,7 +226,7 @@ $yt_embed_url = get_youtube_embed_url($yt_setting, 1, true);
             </h3>
             
             <p class="text-[11px] text-gray-500 mb-2">
-              By <?= htmlspecialchars(str_ireplace(['S S Industries', 'SS Industries', 'S. S. Industries', 'S.S. Industries'], 'Kalyani agrofood pvt ltd', $p['vendor_name'] ?? 'Local Maker')) ?>
+              By <?= htmlspecialchars(str_ireplace(['S S Industries', 'SS Industries', 'S. S. Industries', 'S.S. Industries'], get_company_name(), $p['vendor_name'] ?? 'Local Maker')) ?>
             </p>
           </div>
 
@@ -333,13 +333,13 @@ $yt_embed_url = get_youtube_embed_url($yt_setting, 1, true);
   </div>
 </section>
 
-<!-- 5. Heavy Forged Agricultural Tools by Kalyani agrofood pvt ltd -->
+<!-- 5. Heavy Forged Agricultural Tools by <?= htmlspecialchars(get_company_name()) ?> -->
 <section class="py-12 bg-stone-50 border-b border-gray-200">
   <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
     <div class="flex flex-col sm:flex-row sm:items-end justify-between gap-4 mb-8">
       <div>
         <span class="text-xs font-black text-emerald-800 uppercase tracking-widest block mb-1">Sandila Industrial Hub</span>
-        <h2 class="text-2xl sm:text-3xl font-black text-gray-900">Hand-Forged Implements by Kalyani agrofood pvt ltd</h2>
+        <h2 class="text-2xl sm:text-3xl font-black text-gray-900">Hand-Forged Implements by <?= htmlspecialchars(get_company_name()) ?></h2>
         <p class="text-gray-500 text-xs sm:text-sm mt-1">High-carbon leaf-spring steel forged on charcoal hearths in Sandila, Hardoi</p>
       </div>
       <a href="/products.php?category=traditional-tools" class="inline-flex items-center gap-1.5 text-xs font-bold text-emerald-800 hover:text-emerald-950">
@@ -369,7 +369,7 @@ $yt_embed_url = get_youtube_embed_url($yt_setting, 1, true);
                 <?= htmlspecialchars($tool['name']) ?>
               </a>
             </h3>
-            <span class="text-[11px] text-emerald-700 font-bold block mb-2">Kalyani agrofood pvt ltd • Sandila</span>
+            <span class="text-[11px] text-emerald-700 font-bold block mb-2"><?= htmlspecialchars(get_company_name()) ?> • Sandila</span>
           </div>
 
           <div class="pt-2 border-t border-gray-100">
@@ -454,7 +454,7 @@ $yt_embed_url = get_youtube_embed_url($yt_setting, 1, true);
         <div>
           <div class="text-amber-500 text-sm mb-3">★★★★★</div>
           <p class="text-xs text-gray-700 leading-relaxed mb-4">
-            "The tempered sickle from Kalyani agrofood pvt ltd in Sandila is of extraordinary quality. The weight balance is perfect for paddy harvesting and the sharpness lasted the entire season without chipping."
+            "The tempered sickle from <?= htmlspecialchars(get_company_name()) ?> in Sandila is of extraordinary quality. The weight balance is perfect for paddy harvesting and the sharpness lasted the entire season without chipping."
           </p>
         </div>
         <div class="flex items-center gap-3 pt-3 border-t border-gray-100">

@@ -12,7 +12,7 @@
         <?php if (!empty($nearest_vendors[0])): ?>
           <span class="hidden md:inline text-stone-400 ml-2">|</span>
           <span class="hidden md:inline text-emerald-400 font-semibold ml-2">
-            🚀 Nearest Forge: <?= htmlspecialchars(str_ireplace(['S S Industries', 'SS Industries', 'S. S. Industries', 'S.S. Industries'], 'Kalyani agrofood pvt ltd', $nearest_vendors[0]['name'])) ?> (<?= $nearest_vendors[0]['distance_km'] ?> km away)
+            🚀 Nearest Forge: <?= htmlspecialchars(str_ireplace(['S S Industries', 'SS Industries', 'S. S. Industries', 'S.S. Industries'], get_company_name(), $nearest_vendors[0]['name'])) ?> (<?= $nearest_vendors[0]['distance_km'] ?> km away)
           </span>
         <?php endif; ?>
       </div>
@@ -58,7 +58,7 @@
             <?= htmlspecialchars($cat['name']) ?>
           </span>
           <span class="text-[9px] text-gray-400 group-hover:text-brand-orange font-medium line-clamp-1">
-            <?= !empty($cat['hindi_name']) ? htmlspecialchars($cat['hindi_name']) : 'Explore' ?>
+            <span class="lang-en">Explore</span><span class="lang-hi hidden"><?= htmlspecialchars($cat["hindi_name"] ?? "देखें") ?></span>
           </span>
         </a>
       <?php endforeach; ?>
@@ -511,7 +511,7 @@
               <?= htmlspecialchars($p['name']) ?>
             </h3>
             <?php if (!empty($p['hindi_name'])): ?>
-              <p class="text-[11px] text-gray-500 font-hindi truncate mt-0.5"><?= htmlspecialchars($p['hindi_name']) ?></p>
+              <p class="text-[11px] text-gray-500 font-hindi truncate mt-0.5 lang-hi hidden"><?= htmlspecialchars($p['hindi_name']) ?></p>
             <?php endif; ?>
           </div>
         </a>

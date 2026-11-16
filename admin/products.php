@@ -169,7 +169,7 @@ require_once __DIR__ . '/admin_header.php';
       <option value="">सभी श्रेणियां</option>
       <?php foreach ($categories as $c): ?>
         <option value="<?= htmlspecialchars($c['slug']) ?>" <?= $cat_filter === $c['slug'] ? 'selected' : '' ?>>
-          <?= htmlspecialchars($c['hindi_name'] ?? $c['name']) ?>
+          <?= htmlspecialchars($c['name']) ?>
         </option>
       <?php endforeach; ?>
     </select>

@@ -19,7 +19,7 @@
  */
 
 // Slide 1 Settings (Backend Customizable)
-$s1_badge     = get_setting('slider_slide1_badge', 'Village Forge Heritage • Kalyani agrofood pvt ltd');
+$s1_badge     = get_setting('slider_slide1_badge', 'Village Forge Heritage • <?= htmlspecialchars(get_company_name()) ?>');
 $s1_title     = get_setting('slider_slide1_title', 'Hand-Forged Tempered Steel Agricultural Tools');
 $s1_subtitle  = get_setting('slider_slide1_subtitle', 'Crafted from high-grade railway spring steel by generational masters of Hardoi. Razor-sharp sickles, heavy axes, and durable khurpis made for lifelong farming.');
 $s1_btn1_text = get_setting('slider_slide1_btn1_text', 'Shop Forged Tools');
@@ -62,7 +62,7 @@ $s3_img       = get_setting('slider_slide3_image', 'https://images.unsplash.com/
         <?php if (!empty($nearest_vendors[0])): ?>
           <span class="hidden md:inline text-stone-500 ml-2">|</span>
           <span class="hidden md:inline text-emerald-400 font-semibold ml-2">
-            🚀 Nearest Forge: <?= htmlspecialchars(str_ireplace(['S S Industries', 'SS Industries', 'S. S. Industries', 'S.S. Industries'], 'Kalyani agrofood pvt ltd', $nearest_vendors[0]['name'])) ?> (<?= $nearest_vendors[0]['distance_km'] ?> km away)
+            🚀 Nearest Forge: <?= htmlspecialchars(str_ireplace(['S S Industries', 'SS Industries', 'S. S. Industries', 'S.S. Industries'], get_company_name(), $nearest_vendors[0]['name'])) ?> (<?= $nearest_vendors[0]['distance_km'] ?> km away)
           </span>
         <?php endif; ?>
       </div>
@@ -283,7 +283,7 @@ $s3_img       = get_setting('slider_slide3_image', 'https://images.unsplash.com/
             </div>
 
             <span class="text-[11px] text-emerald-700 font-bold block mb-1 truncate">
-              By <?= htmlspecialchars(str_ireplace(['S S Industries', 'SS Industries', 'S. S. Industries', 'S.S. Industries'], 'Kalyani agrofood pvt ltd', $p['vendor_name'] ?? 'Local Forge')) ?>
+              By <?= htmlspecialchars(str_ireplace(['S S Industries', 'SS Industries', 'S. S. Industries', 'S.S. Industries'], get_company_name(), $p['vendor_name'] ?? 'Local Forge')) ?>
             </span>
             <h3 class="font-bold text-xs sm:text-sm text-gray-900 line-clamp-2 leading-snug group-hover:text-emerald-800 transition mb-2">
               <a href="/product.php?id=<?= $p['id'] ?>">
@@ -363,7 +363,7 @@ $s3_img       = get_setting('slider_slide3_image', 'https://images.unsplash.com/
             </h3>
             
             <p class="text-[11px] text-gray-500 mb-2">
-              By <?= htmlspecialchars(str_ireplace(['S S Industries', 'SS Industries', 'S. S. Industries', 'S.S. Industries'], 'Kalyani agrofood pvt ltd', $p['vendor_name'] ?? 'Local Maker')) ?>
+              By <?= htmlspecialchars(str_ireplace(['S S Industries', 'SS Industries', 'S. S. Industries', 'S.S. Industries'], get_company_name(), $p['vendor_name'] ?? 'Local Maker')) ?>
             </p>
           </div>
 
@@ -395,13 +395,13 @@ $s3_img       = get_setting('slider_slide3_image', 'https://images.unsplash.com/
   </div>
 </section>
 
-<!-- 5. Heavy-Duty Agricultural Implements by Kalyani agrofood pvt ltd -->
+<!-- 5. Heavy-Duty Agricultural Implements by <?= htmlspecialchars(get_company_name()) ?> -->
 <section class="py-12 bg-stone-50 border-b border-gray-200">
   <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
     <div class="flex flex-col sm:flex-row sm:items-end justify-between gap-4 mb-8">
       <div>
         <span class="text-xs font-black text-emerald-800 uppercase tracking-widest block mb-1">Sandila Industrial Hub</span>
-        <h2 class="text-2xl sm:text-3xl font-black text-gray-900">Forged Farming Tools by Kalyani agrofood pvt ltd</h2>
+        <h2 class="text-2xl sm:text-3xl font-black text-gray-900">Forged Farming Tools by <?= htmlspecialchars(get_company_name()) ?></h2>
         <p class="text-gray-500 text-xs sm:text-sm mt-1">High-carbon tempered railway leaf springs forged on charcoal anvils in Hardoi</p>
       </div>
       <a href="/products.php?category=traditional-tools" class="inline-flex items-center gap-1.5 text-xs font-bold text-emerald-800 hover:text-emerald-950">
@@ -431,7 +431,7 @@ $s3_img       = get_setting('slider_slide3_image', 'https://images.unsplash.com/
                 <?= htmlspecialchars($tool['name']) ?>
               </a>
             </h3>
-            <span class="text-[11px] text-emerald-700 font-bold block mb-2">Kalyani agrofood pvt ltd • Sandila</span>
+            <span class="text-[11px] text-emerald-700 font-bold block mb-2"><?= htmlspecialchars(get_company_name()) ?> • Sandila</span>
           </div>
 
           <div class="pt-2 border-t border-gray-100">
@@ -561,7 +561,7 @@ $s3_img       = get_setting('slider_slide3_image', 'https://images.unsplash.com/
         <div>
           <div class="text-amber-500 text-sm mb-3">★★★★★</div>
           <p class="text-xs text-gray-700 leading-relaxed mb-4">
-            "The tempered sickle from Kalyani agrofood pvt ltd in Sandila is of extraordinary quality. The weight balance is perfect for paddy harvesting and the sharpness lasted the entire season without chipping."
+            "The tempered sickle from <?= htmlspecialchars(get_company_name()) ?> in Sandila is of extraordinary quality. The weight balance is perfect for paddy harvesting and the sharpness lasted the entire season without chipping."
           </p>
         </div>
         <div class="flex items-center gap-3 pt-3 border-t border-gray-200">

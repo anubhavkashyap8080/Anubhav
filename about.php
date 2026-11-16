@@ -338,7 +338,7 @@ require_once __DIR__ . '/includes/header.php';
           <span class="lang-hi hidden">निर्माण एवं लॉजिस्टिक्स केंद्र</span>
         </span>
         <h3 class="text-xl sm:text-2xl font-black text-gray-900 font-display">
-          Kalyani agrofood pvt ltd — Production & Administrative Hub
+          <?= htmlspecialchars(get_company_name()) ?> — Production & Administrative Hub
         </h3>
         <p class="text-xs text-gray-500">
           <span class="lang-en">Our central industrial and dispatch infrastructure in Uttar Pradesh</span>

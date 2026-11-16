@@ -53,15 +53,15 @@ if ($view_order_id > 0) {
   <div>
     <h1 class="text-2xl font-black text-gray-900 flex items-center gap-2">
       <i class="fa-solid fa-truck-ramp-box text-amber-600"></i>
-      थोक ऑर्डर्स एवं GST इनवॉइस (B2B Orders)
+      <span class="lang-en">B2B Wholesale Orders & Tax Invoices</span><span class="lang-hi hidden">थोक ऑर्डर्स एवं इनवॉइस</span>
     </h1>
     <p class="text-xs text-gray-500 mt-1">
-      आर्डर ट्रैकिंग, फ्रेट डिलीवरी स्थिति एवं पक्का GST टैक्स इनवॉइस डाउनलोड करें
+      <span class="lang-en">Track wholesale shipments, cargo logistics status, and download formal GST tax invoices</span><span class="lang-hi hidden">आर्डर ट्रैकिंग, फ्रेट स्थिति एवं GST इनवॉइस डाउनलोड करें</span>
     </p>
   </div>
 
   <a href="/retailer/products.php" class="px-4 py-2 bg-stone-900 hover:bg-black text-amber-400 font-bold text-xs rounded-xl shadow transition flex items-center gap-2 self-start sm:self-auto">
-    <i class="fa-solid fa-boxes-stacked"></i> नया थोक ऑर्डर लगाएं
+    <i class="fa-solid fa-boxes-stacked"></i> <span class="lang-en">Create New Bulk Order</span><span class="lang-hi hidden">नया थोक ऑर्डर लगाएं</span>
   </a>
 </div>
 
@@ -73,16 +73,16 @@ if ($view_order_id > 0) {
         <i class="fa-solid fa-circle-check"></i>
       </div>
       <div>
-        <span class="text-xs font-bold uppercase tracking-wider text-emerald-100">ऑर्डर सफलतापूर्वक दर्ज हुआ</span>
+        <span class="text-xs font-bold uppercase tracking-wider text-emerald-100"><span class="lang-en">Order Placed Successfully</span><span class="lang-hi hidden">ऑर्डर सफलतापूर्वक दर्ज हुआ</span></span>
         <h2 class="text-xl font-black">आर्डर #<?= htmlspecialchars($selected_order['order_number']) ?></h2>
         <p class="text-xs text-emerald-100 mt-0.5">
-          कुल राशि: <?= format_price($selected_order['total_amount'] ?? $selected_order['total']) ?> • कारीगर वर्कशॉप को उत्पादन व पैकिंग निर्देश भेज दिए गए हैं।
+          <span class="lang-en">Total:</span><span class="lang-hi hidden">कुल:</span> <?= format_price($selected_order['total_amount'] ?? $selected_order['total']) ?> <span class="lang-en">• Production and cargo packing dispatched to rural artisan workshops.</span><span class="lang-hi hidden">• कारीगर वर्कशॉप को उत्पादन निर्देश भेज दिए गए हैं।</span>
         </p>
       </div>
     </div>
     <button onclick="document.getElementById('taxInvoiceModal').classList.remove('hidden')"
       class="px-5 py-2.5 bg-white text-emerald-800 font-black text-xs rounded-xl shadow hover:bg-emerald-50 transition shrink-0 flex items-center gap-2">
-      <i class="fa-solid fa-file-invoice"></i> GST टैक्स इनवॉइस देखें
+      <i class="fa-solid fa-file-invoice"></i> <span class="lang-en">View GST Tax Invoice</span><span class="lang-hi hidden">GST टैक्स इनवॉइस देखें</span>
     </button>
   </div>
 <?php endif; ?>
@@ -125,33 +125,33 @@ if ($view_order_id > 0) {
       <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 text-center text-xs">
         <div class="p-3 rounded-2xl <?= in_array($st, ['Confirmed', 'In Production', 'Dispatched', 'Delivered']) ? 'bg-amber-50 text-amber-900 border border-amber-200 font-bold' : 'bg-stone-50 text-stone-400' ?>">
           <i class="fa-solid fa-file-circle-check text-sm block mb-1"></i>
-          1. आर्डर स्वीकृत (Confirmed)
+          <span class="lang-en">1. Order Confirmed</span><span class="lang-hi hidden">1. आर्डर स्वीकृत</span>
         </div>
         <div class="p-3 rounded-2xl <?= in_array($st, ['In Production', 'Packing', 'Dispatched', 'Delivered']) ? 'bg-amber-50 text-amber-900 border border-amber-200 font-bold' : 'bg-stone-50 text-stone-400' ?>">
           <i class="fa-solid fa-boxes-packing text-sm block mb-1"></i>
-          2. क्लस्टर पैकिंग (Packing)
+          <span class="lang-en">2. Cluster Packing</span><span class="lang-hi hidden">2. क्लस्टर पैकिंग</span>
         </div>
         <div class="p-3 rounded-2xl <?= in_array($st, ['Dispatched', 'Delivered']) ? 'bg-amber-50 text-amber-900 border border-amber-200 font-bold' : 'bg-stone-50 text-stone-400' ?>">
           <i class="fa-solid fa-truck-fast text-sm block mb-1"></i>
-          3. ट्रांसपोर्ट डिस्पैच (Dispatched)
+          <span class="lang-en">3. Cargo Dispatched</span><span class="lang-hi hidden">3. ट्रांसपोर्ट डिस्पैच</span>
         </div>
         <div class="p-3 rounded-2xl <?= $st === 'Delivered' ? 'bg-emerald-50 text-emerald-900 border border-emerald-200 font-bold' : 'bg-stone-50 text-stone-400' ?>">
           <i class="fa-solid fa-circle-check text-sm block mb-1"></i>
-          4. दुकान पर डिलीवरी (Delivered)
+          <span class="lang-en">4. Doorstep Delivered</span><span class="lang-hi hidden">4. दुकान पर डिलीवरी</span>
         </div>
       </div>
 
       <div class="mt-4 flex flex-wrap items-center justify-between text-xs text-stone-500 bg-stone-50 p-3 rounded-2xl">
         <div>
-          <span>लॉजिस्टिक्स पार्टनर: </span>
+          <span><span class="lang-en">Logistics Carrier: </span><span class="lang-hi hidden">लॉजिस्टिक्स: </span></span>
           <strong class="text-stone-800"><?= htmlspecialchars($selected_order['tracking_carrier'] ?? 'Rural Cargo Freight') ?></strong>
         </div>
         <div>
-          <span>बिल्टी / ट्रैकिंग कंसाइनमेंट: </span>
-          <strong class="font-mono text-amber-700 font-bold"><?= htmlspecialchars($selected_order['tracking_consignment_no'] ?? 'लंबित') ?></strong>
+          <span><span class="lang-en">Bilty / Docket No: </span><span class="lang-hi hidden">बिल्टी सं.: </span></span>
+          <strong class="font-mono text-amber-700 font-bold"><?= htmlspecialchars($selected_order['tracking_consignment_no'] ?? 'Pending') ?></strong>
         </div>
         <div>
-          <span>भुगतान प्रकार: </span>
+          <span><span class="lang-en">Payment Mode: </span><span class="lang-hi hidden">भुगतान प्रकार: </span></span>
           <strong class="uppercase text-stone-800"><?= htmlspecialchars($selected_order['payment_method']) ?></strong>
         </div>
       </div>
@@ -162,19 +162,19 @@ if ($view_order_id > 0) {
       <div class="my-6 p-5 rounded-2xl bg-amber-50 border border-amber-200 text-xs">
         <h4 class="font-black text-amber-950 flex items-center gap-2 mb-2">
           <i class="fa-solid fa-building-columns text-amber-600"></i>
-          कंपनी आधिकारिक बैंक खाता (NEFT / RTGS / IMPS विवरण)
+          <span class="lang-en">Official Company Settlement Account (NEFT / RTGS / IMPS)</span><span class="lang-hi hidden">कंपनी आधिकारिक बैंक खाता</span>
         </h4>
         <div class="grid grid-cols-1 sm:grid-cols-4 gap-3 text-stone-700">
           <div>
-            <span class="text-stone-400 text-[10px] block">खाता धारक नाम:</span>
-            <strong class="text-gray-900">GanvGaliHat Rural Commerce Pvt Ltd</strong>
+            <span class="text-stone-400 text-[10px] block"><span class="lang-en">Beneficiary Name:</span><span class="lang-hi hidden">खाता धारक:</span></span>
+            <strong class="text-gray-900"><?= htmlspecialchars(get_company_name()) ?></strong>
           </div>
           <div>
-            <span class="text-stone-400 text-[10px] block">बैंक का नाम:</span>
+            <span class="text-stone-400 text-[10px] block"><span class="lang-en">Bank Name:</span><span class="lang-hi hidden">बैंक का नाम:</span></span>
             <strong class="text-gray-900">State Bank of India (SBI)</strong>
           </div>
           <div>
-            <span class="text-stone-400 text-[10px] block">चालू खाता संख्या (Current A/C):</span>
+            <span class="text-stone-400 text-[10px] block"><span class="lang-en">Current Account No:</span><span class="lang-hi hidden">खाता संख्या:</span></span>
             <strong class="font-mono text-gray-900">394820194820</strong>
           </div>
           <div>
@@ -369,7 +369,7 @@ if ($view_order_id > 0) {
             <p>3. This is a computer-generated tax invoice for B2B supply.</p>
           </div>
           <div class="text-right">
-            <p class="font-bold text-gray-800">For GanvGaliHat Rural Commerce Pvt Ltd</p>
+            <p class="font-bold text-gray-800">For <?= htmlspecialchars(get_company_name()) ?></p>
             <div class="h-10"></div>
             <p class="text-[10px] text-gray-400">Authorized Signatory</p>
           </div>
@@ -386,7 +386,7 @@ if ($view_order_id > 0) {
   <div class="px-6 py-4 border-b border-gray-100">
     <h2 class="text-sm font-black text-gray-900 uppercase tracking-wider flex items-center gap-2">
       <i class="fa-solid fa-list-check text-amber-600"></i>
-      सभी B2B थोक ऑर्डर्स (Order History)
+      <span class="lang-en">All B2B Wholesale Orders</span><span class="lang-hi hidden">सभी B2B ऑर्डर्स</span>
     </h2>
   </div>
 
@@ -395,9 +395,9 @@ if ($view_order_id > 0) {
       <div class="w-12 h-12 mx-auto rounded-full bg-amber-50 text-amber-600 flex items-center justify-center text-xl mb-3">
         <i class="fa-solid fa-boxes-packing"></i>
       </div>
-      <p class="text-xs font-bold text-gray-700">कोई थोक आर्डर नहीं मिला।</p>
+      <p class="text-xs font-bold text-gray-700"><span class="lang-en">No wholesale orders found yet.</span><span class="lang-hi hidden">कोई थोक आर्डर नहीं मिला।</span></p>
       <a href="/retailer/products.php" class="mt-4 inline-flex items-center gap-1.5 px-4 py-2 bg-amber-600 hover:bg-amber-700 text-white font-bold text-xs rounded-xl shadow transition">
-        थोक कैटलॉग ब्राउज़ करें &rarr;
+        <span class="lang-en">Browse Wholesale Catalog &rarr;</span><span class="lang-hi hidden">थोक कैटलॉग ब्राउज़ करें &rarr;</span>
       </a>
     </div>
   <?php else: ?>
@@ -405,14 +405,14 @@ if ($view_order_id > 0) {
       <table class="w-full text-left text-xs">
         <thead class="bg-stone-50 text-stone-600 font-bold border-b border-stone-200">
           <tr>
-            <th class="px-4 py-3.5">ऑर्डर सं.</th>
-            <th class="px-4 py-3.5">दिनांक</th>
-            <th class="px-4 py-3.5">फर्म / दुकान</th>
-            <th class="px-4 py-3.5">गंतव्य</th>
-            <th class="px-4 py-3.5">राशि (₹)</th>
-            <th class="px-4 py-3.5">भुगतान</th>
-            <th class="px-4 py-3.5">स्थिति</th>
-            <th class="px-4 py-3.5 text-right">कार्रवाई</th>
+            <th class="px-4 py-3.5">Order #</th>
+            <th class="px-4 py-3.5">Date</th>
+            <th class="px-4 py-3.5">Shop / Business</th>
+            <th class="px-4 py-3.5">Destination</th>
+            <th class="px-4 py-3.5">Amount (₹)</th>
+            <th class="px-4 py-3.5">Payment</th>
+            <th class="px-4 py-3.5">Status</th>
+            <th class="px-4 py-3.5 text-right">Action</th>
           </tr>
         </thead>
         <tbody class="divide-y divide-gray-100">
@@ -447,7 +447,7 @@ if ($view_order_id > 0) {
               <td class="px-4 py-3.5 text-right space-x-1 whitespace-nowrap">
                 <a href="/retailer/orders.php?order_id=<?= $ord['id'] ?>"
                   class="px-3 py-1.5 bg-stone-900 hover:bg-black text-amber-400 font-bold rounded-xl text-[11px] transition inline-flex items-center gap-1">
-                  विवरण & इनवॉइस
+                  <span class="lang-en">Details & Invoice</span><span class="lang-hi hidden">विवरण & इनवॉइस</span>
                 </a>
               </td>
             </tr>

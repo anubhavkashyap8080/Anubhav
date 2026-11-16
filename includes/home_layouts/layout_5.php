@@ -11,7 +11,7 @@
  *    - Right: Continuous Muted Autoplay Video Spotlight Card (Zero YouTube controls, Logo-gradient overlay)
  * 4. Featured Products & Handcrafted Bestsellers 8-Grid (Instant Add to Cart)
  * 5. Regional Forge & Artisan Hub Directory (Sandila, Mallawan, Madhoganj, Varanasi)
- * 6. Kalyani agrofood pvt ltd Heavy Agricultural Implements Showcase
+ * 6. <?= htmlspecialchars(get_company_name()) ?> Heavy Agricultural Implements Showcase
  * 7. Haversine Nearest Workshop Finder with Live km & Speed Post ETA
  * 8. Four Direct-From-Soil Trust Pillars
  * 9. Verified Customer Reviews & Village Voice Testimonials
@@ -38,7 +38,7 @@ $yt_embed_url = get_youtube_embed_url($yt_setting, 1, true);
         <?php if (!empty($nearest_vendors[0])): ?>
           <span class="hidden md:inline text-stone-500 ml-2">|</span>
           <span class="hidden md:inline text-emerald-400 font-semibold ml-2">
-            🚀 Nearest Forge: <?= htmlspecialchars(str_ireplace(['S S Industries', 'SS Industries', 'S. S. Industries', 'S.S. Industries'], 'Kalyani agrofood pvt ltd', $nearest_vendors[0]['name'])) ?> (<?= $nearest_vendors[0]['distance_km'] ?> km away)
+            🚀 Nearest Forge: <?= htmlspecialchars(str_ireplace(['S S Industries', 'SS Industries', 'S. S. Industries', 'S.S. Industries'], get_company_name(), $nearest_vendors[0]['name'])) ?> (<?= $nearest_vendors[0]['distance_km'] ?> km away)
           </span>
         <?php endif; ?>
       </div>
@@ -116,7 +116,7 @@ $yt_embed_url = get_youtube_embed_url($yt_setting, 1, true);
         </h1>
 
         <p class="text-stone-300 text-sm sm:text-base leading-relaxed max-w-xl">
-          Connect directly with blacksmiths from Kalyani agrofood pvt ltd in Sandila, handloom weavers in Mallawan, and wood-press oil farmers in Madhoganj. Every rupee paid directly sustains traditional Indian rural families.
+          Connect directly with blacksmiths from <?= htmlspecialchars(get_company_name()) ?> in Sandila, handloom weavers in Mallawan, and wood-press oil farmers in Madhoganj. Every rupee paid directly sustains traditional Indian rural families.
         </p>
 
         <div class="flex flex-wrap items-center gap-4 pt-2">
@@ -177,7 +177,7 @@ $yt_embed_url = get_youtube_embed_url($yt_setting, 1, true);
               </span>
             </div>
             <h3 class="text-sm font-extrabold text-white">
-              The Charcoal Forges of Kalyani agrofood pvt ltd
+              The Charcoal Forges of <?= htmlspecialchars(get_company_name()) ?>
             </h3>
             <p class="text-xs text-stone-400 mt-1 leading-relaxed">
               Watch how our village blacksmiths forge agricultural sickles and spade blades by hand using traditional charcoal anvils.
@@ -233,7 +233,7 @@ $yt_embed_url = get_youtube_embed_url($yt_setting, 1, true);
             </h3>
             
             <p class="text-[11px] text-gray-500 mb-2">
-              By <?= htmlspecialchars(str_ireplace(['S S Industries', 'SS Industries', 'S. S. Industries', 'S.S. Industries'], 'Kalyani agrofood pvt ltd', $p['vendor_name'] ?? 'Local Maker')) ?>
+              By <?= htmlspecialchars(str_ireplace(['S S Industries', 'SS Industries', 'S. S. Industries', 'S.S. Industries'], get_company_name(), $p['vendor_name'] ?? 'Local Maker')) ?>
             </p>
           </div>
 
@@ -288,7 +288,7 @@ $yt_embed_url = get_youtube_embed_url($yt_setting, 1, true);
         <span class="text-[10px] font-bold text-amber-700 uppercase tracking-wider block">Hardoi District</span>
         <h3 class="font-extrabold text-sm text-gray-900 mb-1">Sandila Industrial Hub</h3>
         <p class="text-xs text-gray-500 leading-relaxed mb-3">
-          Specializes in heavy blacksmithing, hand-forged khurpis, agricultural cutters & tempered blades by Kalyani agrofood pvt ltd.
+          Specializes in heavy blacksmithing, hand-forged khurpis, agricultural cutters & tempered blades by <?= htmlspecialchars(get_company_name()) ?>.
         </p>
         <div class="pt-3 border-t border-gray-200 flex items-center justify-between text-[11px] text-gray-600">
           <span class="font-bold text-emerald-800">12 Master Blacksmiths</span>
@@ -348,13 +348,13 @@ $yt_embed_url = get_youtube_embed_url($yt_setting, 1, true);
   </div>
 </section>
 
-<!-- 5. Heavy Farm Implements by Kalyani agrofood pvt ltd Showcase -->
+<!-- 5. Heavy Farm Implements by <?= htmlspecialchars(get_company_name()) ?> Showcase -->
 <section class="py-12 bg-stone-50 border-b border-gray-200">
   <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
     <div class="flex flex-col sm:flex-row sm:items-end justify-between gap-4 mb-8">
       <div>
         <span class="text-xs font-black text-emerald-800 uppercase tracking-widest block mb-1">Sandila Industrial Hub Spotlight</span>
-        <h2 class="text-2xl sm:text-3xl font-black text-gray-900">Hand-Forged Implements by Kalyani agrofood pvt ltd</h2>
+        <h2 class="text-2xl sm:text-3xl font-black text-gray-900">Hand-Forged Implements by <?= htmlspecialchars(get_company_name()) ?></h2>
         <p class="text-gray-500 text-xs sm:text-sm mt-1">High-carbon leaf-spring steel forged on charcoal hearths in Sandila, Hardoi</p>
       </div>
       <a href="/products.php?category=traditional-tools" class="inline-flex items-center gap-1.5 text-xs font-bold text-emerald-800 hover:text-emerald-950">
@@ -385,7 +385,7 @@ $yt_embed_url = get_youtube_embed_url($yt_setting, 1, true);
                 <?= htmlspecialchars($tool['name']) ?>
               </a>
             </h3>
-            <span class="text-[11px] text-emerald-700 font-bold block mb-2">Kalyani agrofood pvt ltd • Sandila</span>
+            <span class="text-[11px] text-emerald-700 font-bold block mb-2"><?= htmlspecialchars(get_company_name()) ?> • Sandila</span>
           </div>
 
           <div class="pt-2 border-t border-gray-100">
