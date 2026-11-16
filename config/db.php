@@ -699,17 +699,8 @@ function ensure_platform_schema($pdo) {
         $pdo->exec("UPDATE site_settings SET setting_value = 'Madhoganj, Baghauli road Newada, Pahutera, Hardoi, Uttar Pradesh' WHERE setting_key = 'factory_address' AND (setting_value = '0' OR setting_value = '' OR setting_value IS NULL)");
         $pdo->exec("UPDATE site_settings SET setting_value = 'GanvGaliHat — Desh ki mitti ka swad | Rural Tools & Farm Staples' WHERE setting_key IN ('homepage_title', 'seo_meta_title') AND (setting_value = '0' OR setting_value LIKE '0 %' OR setting_value LIKE '0-%' OR setting_value LIKE '0—%' OR setting_value LIKE '0_%')");
         
-        // Auto-heal legacy vendor records and product descriptions containing 'S S Industries'
-        $pdo->exec("UPDATE vendors SET name = REPLACE(REPLACE(REPLACE(REPLACE(name, 'S. S. Industries', 'Kalyani agrofood pvt ltd'), 'S.S. Industries', 'Kalyani agrofood pvt ltd'), 'S S Industries', 'Kalyani agrofood pvt ltd'), 'SS Industries', 'Kalyani agrofood pvt ltd'),
-                                       business_name = REPLACE(REPLACE(REPLACE(REPLACE(business_name, 'S. S. Industries', 'Kalyani agrofood pvt ltd'), 'S.S. Industries', 'Kalyani agrofood pvt ltd'), 'S S Industries', 'Kalyani agrofood pvt ltd'), 'SS Industries', 'Kalyani agrofood pvt ltd'),
-                                       story = REPLACE(REPLACE(story, 'S S Industries', 'Kalyani agrofood pvt ltd'), 'SS Industries', 'Kalyani agrofood pvt ltd'),
-                                       bank_beneficiary = REPLACE(REPLACE(bank_beneficiary, 'S S Industries', 'Kalyani agrofood pvt ltd'), 'SS Industries', 'Kalyani agrofood pvt ltd')
-                    WHERE name LIKE '%Industries%' OR business_name LIKE '%Industries%' OR story LIKE '%Industries%' OR bank_beneficiary LIKE '%Industries%'");
-        $pdo->exec("UPDATE users SET name = REPLACE(name, 'S S Industries', 'Kalyani agrofood pvt ltd') WHERE name LIKE '%S S Industries%'");
-        $pdo->exec("UPDATE products SET description = REPLACE(REPLACE(description, 'S S Industries', 'Kalyani agrofood pvt ltd'), 'SS Industries', 'Kalyani agrofood pvt ltd'),
-                                        specifications = REPLACE(REPLACE(specifications, 'S S Industries', 'Kalyani agrofood pvt ltd'), 'SS Industries', 'Kalyani agrofood pvt ltd')
-                    WHERE description LIKE '%Industries%' OR specifications LIKE '%Industries%'");
-        $pdo->exec("UPDATE site_settings SET setting_value = REPLACE(REPLACE(setting_value, 'S S Industries', 'Kalyani agrofood pvt ltd'), 'SS Industries', 'Kalyani agrofood pvt ltd') WHERE setting_value LIKE '%Industries%'");
+        // Auto-heal legacy default company vendor 1 if still set to SS Industries
+        $pdo->exec("UPDATE vendors SET name = 'Kalyani agrofood pvt ltd', business_name = 'Kalyani agrofood pvt ltd' WHERE id = 1 AND (name LIKE '%Industries%' OR business_name LIKE '%Industries%')");
     } catch (Throwable $e_heal0) {}
 
     // Default Settings
@@ -1231,6 +1222,12 @@ function run_enterprise_migrations($pdo) {
 
     // Seed Initial RBAC Roles & System Permissions if empty
     seed_rbac_and_templates($pdo);
+
+    // Seed S S Industries Vendor & Kalyani Masala Authentic Spices
+    if (file_exists(__DIR__ . '/../database/seed_ss_industries_spices.php')) {
+        require_once __DIR__ . '/../database/seed_ss_industries_spices.php';
+        seed_ss_industries_kalyani_spices($pdo);
+    }
 }
 
 /**
