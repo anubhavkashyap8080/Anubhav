@@ -121,7 +121,7 @@ function cm_clear_lockouts() {
  * ------------------------------------------------------------------ */
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if (!verify_csrf($_POST['csrf_token'] ?? '')) {
-        set_flash('error', 'सुरक्षा टोकन अमान्य है। पृष्ठ रीफ़्रेश करके पुनः प्रयास करें।');
+        set_flash('error', 'Security token expired. Please refresh the page and try again.');
         header('Location: ' . $self);
         exit;
     }
@@ -151,7 +151,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         record_security_event('cache_cleared', ['action' => $act, 'results' => $results]);
         set_flash($all_ok ? 'success' : 'error', implode('  ', $results));
     } else {
-        set_flash('error', 'अमान्य क्रिया।');
+        set_flash('error', 'Invalid action requested.');
     }
     header('Location: ' . $self);
     exit;
@@ -189,7 +189,7 @@ foreach ([
     catch (Throwable $e) { $db_counts[$label] = null; }
 }
 
-$page_title = 'कैश मैनेजर (Cache Manager)';
+$page_title = 'Cache Manager — Super Admin';
 require_once __DIR__ . '/admin_header.php';
 
 function cm_dot($on) { return '<span style="display:inline-block;width:9px;height:9px;border-radius:50%;background:' . ($on ? '#10b981' : '#a8a29e') . ';margin-right:6px"></span>'; }
@@ -212,14 +212,14 @@ function cm_dot($on) { return '<span style="display:inline-block;width:9px;heigh
   <div class="bg-gradient-to-r from-stone-900 via-indigo-950 to-stone-950 text-white rounded-3xl p-6 sm:p-8 shadow-xl border border-indigo-900/50">
     <div style="display:flex;flex-wrap:wrap;justify-content:space-between;gap:16px;align-items:center">
       <div>
-        <h1 class="text-2xl sm:text-3xl font-black tracking-tight text-white"><i class="fa-solid fa-broom"></i> कैश मैनेजर (Cache Manager)</h1>
+        <h1 class="text-2xl sm:text-3xl font-black tracking-tight text-white"><i class="fa-solid fa-broom"></i> Cache Manager</h1>
         <p class="text-indigo-200 text-xs sm:text-sm" style="max-width:640px;margin-top:6px">
-          साइट पर पुराना पेज/टोकन/JS दिखने (जैसे Add to Cart में CSRF error) की समस्या होने पर यहाँ से सभी cache एक क्लिक में साफ़ करें।
+          Flush server caches, LiteSpeed cache, and reset temporary locks with a single click.
         </p>
       </div>
-      <form method="POST" onsubmit="return confirm('OPcache, LiteSpeed, Cloudflare (अगर सेट है), ब्राउज़र-asset cache और अस्थायी डेटा सब साफ़ होगा। जारी रखें?')">
+      <form method="POST" onsubmit="return confirm('All OPcache, LiteSpeed, Cloudflare, and file caches will be cleared. Continue?');">
         <?= csrf_field() ?><input type="hidden" name="action" value="all">
-        <button class="cm-btn big" type="submit"><i class="fa-solid fa-bolt"></i> सब कुछ साफ़ करें (Clear All)</button>
+        <button class="cm-btn big" type="submit"><i class="fa-solid fa-bolt"></i> Clear All Caches</button>
       </form>
     </div>
   </div>
@@ -279,7 +279,7 @@ function cm_dot($on) { return '<span style="display:inline-block;width:9px;heigh
       <h3><?= cm_dot(true) ?>लॉगिन लॉकआउट रीसेट</h3>
       <div class="cm-meta">बार-बार गलत पासवर्ड से लगा अस्थायी ब्लॉक हटाता है।</div>
       <p>अगर कोई यूज़र/सेलर "सुरक्षा अवरोध: कुछ मिनट बाद प्रयास करें" देख रहा है तो इसे चलाएं। (IP ब्लॉक सूची प्रभावित नहीं होती)</p>
-      <form method="POST" onsubmit="return confirm('सभी असफल-लॉगिन रिकॉर्ड और लॉकआउट हट जाएंगे। जारी रखें?')"><?= csrf_field() ?><input type="hidden" name="action" value="lockouts"><button class="cm-btn warn" type="submit"><i class="fa-solid fa-unlock"></i> लॉकआउट हटाएं</button></form>
+      <form method="POST" onsubmit="return confirm('All failed login records and lockouts will be reset. Continue?');"><?= csrf_field() ?><input type="hidden" name="action" value="lockouts"><button class="cm-btn warn" type="submit"><i class="fa-solid fa-unlock"></i> Reset Lockouts</button></form>
     </div>
 
   </div>

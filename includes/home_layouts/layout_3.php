@@ -122,16 +122,33 @@ $yt_embed_url = get_youtube_embed_url($yt_setting, 1, true);
           Direct from the charcoal hearths of <?= htmlspecialchars(get_company_name()) ?> in Sandila, bullock-driven wooden mustard expellers in Madhoganj, and handloom cotton weavers in Mallawan. 100% authentic, zero middlemen.
         </p>
 
+        <?php
+        $h_btn1_show = get_setting('hero_btn1_show', '1') === '1';
+        $h_btn1_text = trim((string)get_setting('hero_btn1_text', 'Shop Village Products'));
+        $h_btn1_link = get_setting('hero_btn1_link', '/products.php');
+        $h_btn1_target = get_setting('hero_btn1_target', '_self') === '_blank' ? ' target="_blank" rel="noopener noreferrer"' : '';
+
+        $h_btn2_show = get_setting('hero_btn2_show', '1') === '1';
+        $h_btn2_text = trim((string)get_setting('hero_btn2_text', 'Meet Verified Artisans'));
+        $h_btn2_link = get_setting('hero_btn2_link', '/artisans.php');
+        $h_btn2_target = get_setting('hero_btn2_target', '_self') === '_blank' ? ' target="_blank" rel="noopener noreferrer"' : '';
+        ?>
+        <?php if (($h_btn1_show && $h_btn1_text !== '') || ($h_btn2_show && $h_btn2_text !== '')): ?>
         <div class="flex flex-wrap items-center gap-3 pt-1">
-          <a href="/products.php" class="px-5 py-3 bg-amber-500 hover:bg-amber-400 text-stone-950 font-black text-xs sm:text-sm rounded-xl shadow-lg transition flex items-center gap-2">
-            <span>Shop Village Products</span>
+          <?php if ($h_btn1_show && $h_btn1_text !== ''): ?>
+          <a href="<?= htmlspecialchars($h_btn1_link) ?>"<?= $h_btn1_target ?> class="px-5 py-3 bg-amber-500 hover:bg-amber-400 text-stone-950 font-black text-xs sm:text-sm rounded-xl shadow-lg transition flex items-center gap-2">
+            <span><?= htmlspecialchars($h_btn1_text) ?></span>
             <i data-lucide="arrow-right" class="w-4 h-4"></i>
           </a>
-          <a href="/artisans.php" class="px-5 py-3 bg-white/10 hover:bg-white/20 text-white font-bold text-xs sm:text-sm rounded-xl transition backdrop-blur-md border border-white/20 flex items-center gap-2">
+          <?php endif; ?>
+          <?php if ($h_btn2_show && $h_btn2_text !== ''): ?>
+          <a href="<?= htmlspecialchars($h_btn2_link) ?>"<?= $h_btn2_target ?> class="px-5 py-3 bg-white/10 hover:bg-white/20 text-white font-bold text-xs sm:text-sm rounded-xl transition backdrop-blur-md border border-white/20 flex items-center gap-2">
             <i data-lucide="users" class="w-4 h-4 text-emerald-400"></i>
-            <span>Meet Verified Artisans</span>
+            <span><?= htmlspecialchars($h_btn2_text) ?></span>
           </a>
+          <?php endif; ?>
         </div>
+        <?php endif; ?>
 
         <!-- Trust Stats Badges -->
         <div class="pt-4 border-t border-emerald-800/60 grid grid-cols-3 gap-3 max-w-md">

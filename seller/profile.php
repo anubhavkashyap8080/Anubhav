@@ -66,14 +66,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['update_store_profile'
         if (!empty($up_res['success'])) {
             $avatar_url = $up_res['path'];
         } else {
-            $error_msg = $up_res['error'] ?? 'फ़ोटो अपलोड करने में त्रुटि।';
+            $error_msg = $up_res['error'] ?? 'Error uploading photo. Please try again.';
         }
     } elseif (!empty($_POST['avatar_url_input'])) {
         $input_url = trim($_POST['avatar_url_input']);
         if (is_valid_product_image_url($input_url)) {
             $avatar_url = $input_url;
         } else {
-            $error_msg = 'अमान्य छवि URL। केवल आंतरिक /uploads/ पथ या मान्य सुरक्षित छवियां ही स्वीकार्य हैं।';
+            $error_msg = 'Invalid image URL. Only internal /uploads/ paths or secure images are accepted.';
         }
     }
 
@@ -102,9 +102,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['update_store_profile'
             $user = get_logged_in_user();
 
             log_audit_action('vendor_profile_update', 'vendor', 'vendor', $vendor_id, 'Workshop profile and banking details updated');
-            $success_msg = 'कार्यशाला विवरण, प्रोफ़ाइल फ़ोटो एवं बैंकिंग जानकारी सफलतापूर्वक अपडेट की गई।';
+            $success_msg = 'Workshop details, profile photo, and banking information updated successfully.';
         } catch (Exception $e) {
-            $error_msg = 'त्रुटि: ' . $e->getMessage();
+            error_log("Seller profile error: " . $e->getMessage());
+            $error_msg = 'Unable to update profile. Please try again.';
         }
     }
 }
@@ -116,11 +117,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['change_seller_passwor
     $confirm_pass = $_POST['confirm_password'] ?? '';
 
     if (!password_verify($current_pass, $user['password'])) {
-        $error_msg = 'वर्तमान पासवर्ड गलत है।';
+        $error_msg = 'Current password is incorrect.';
     } elseif ($new_pass !== $confirm_pass) {
-        $error_msg = 'नया पासवर्ड और पुष्टि पासवर्ड मेल नहीं खाते।';
+        $error_msg = 'New password and confirmation password do not match.';
     } elseif (strlen($new_pass) < 6) {
-        $error_msg = 'पासवर्ड कम से कम 6 अक्षरों का होना चाहिए।';
+        $error_msg = 'Password must be at least 6 characters long.';
     } else {
         try {
             $hashed = password_hash($new_pass, PASSWORD_BCRYPT);
@@ -133,15 +134,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['change_seller_passwor
                 session_regenerate_id(true);
             }
             log_audit_action('seller_password_change', 'auth', 'user', $user['id'], 'Password changed by vendor; other sessions invalidated');
-            $success_msg = 'विक्रेता खाता पासवर्ड सफलतापूर्वक बदल दिया गया है। सुरक्षा हेतु अन्य सभी सत्र समाप्त कर दिए गए हैं।';
+            $success_msg = 'Password changed successfully. For your security, other active sessions were terminated.';
             $user = get_logged_in_user(); // refresh
         } catch (Exception $e) {
-            $error_msg = 'त्रुटि: ' . $e->getMessage();
+            error_log("Seller profile error: " . $e->getMessage());
+            $error_msg = 'Unable to update profile. Please try again.';
         }
     }
 }
 
-$page_title = 'कार्यशाला प्रोफ़ाइल एवं सुरक्षा (Store Profile & Security)';
+$page_title = 'Store Profile & Security — Seller Hub';
 require_once __DIR__ . '/seller_header.php';
 ?>
 

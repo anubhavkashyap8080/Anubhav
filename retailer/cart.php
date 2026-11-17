@@ -26,7 +26,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     } elseif ($action === 'remove_item') {
         $pid = intval($_POST['product_id'] ?? 0);
         remove_from_bulk_cart($pid);
-        set_flash('success', 'उत्पाद थोक कार्ट से हटा दिया गया है।');
+        set_flash('success', 'Product removed from wholesale cart.');
     } elseif ($action === 'clear_cart') {
         clear_bulk_cart();
         set_flash('success', 'Wholesale cart has been cleared.');

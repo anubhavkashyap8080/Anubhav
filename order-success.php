@@ -57,7 +57,7 @@ if (!$is_authorized && !empty($token) && !empty($order['order_access_token'])) {
 
 if (!$is_authorized) {
     http_response_code(403);
-    set_flash('error', 'अनधिकृत पहुंच: इस आर्डर विवरण को देखने की अनुमति नहीं है। (Access Denied)');
+    set_flash('error', 'Access Denied: You are not authorized to view this order.');
     header('Location: /login.php');
     exit;
 }

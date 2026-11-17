@@ -5,6 +5,31 @@
  * E-Commerce Circular Visual Category Tray & 4-Box Deal Grid
  */
 
+require_once __DIR__ . '/includes/functions.php';
+
+// Determine Active Homepage Layout
+$valid_layouts = ['layout_1', 'layout_2', 'layout_3', 'layout_4', 'layout_5', 'layout_6'];
+$requested_layout = $_GET['layout'] ?? $_GET['theme'] ?? null;
+
+if ($requested_layout) {
+    if (in_array((string)$requested_layout, ['1', '2', '3', '4', '5', '6'])) {
+        $requested_layout = 'layout_' . $requested_layout;
+    }
+}
+
+if ($requested_layout && in_array($requested_layout, $valid_layouts)) {
+    $active_layout = $requested_layout;
+} else {
+    $active_layout = get_setting('homepage_layout', 'layout_1');
+    if (!in_array($active_layout, $valid_layouts)) {
+        $active_layout = 'layout_1';
+    }
+}
+
+if ($active_layout === 'layout_6' && get_setting('v6_header_transparent', '1') === '1') {
+    $ggh_header_variant = 'transparent';
+}
+
 require_once __DIR__ . '/includes/header.php';
 
 // 1. User Location & Artisan Haversine Distance Engine
@@ -38,12 +63,6 @@ $vendors_stmt = $pdo->query("SELECT * FROM vendors WHERE verified = 1");
 $all_vendors = $vendors_stmt->fetchAll();
 
 foreach ($all_vendors as &$v) {
-    if (isset($v['name'])) {
-        $v['name'] = str_ireplace(['S S Industries', 'SS Industries', 'S. S. Industries', 'S.S. Industries'], 'Kalyani agrofood pvt ltd', $v['name']);
-    }
-    if (isset($v['business_name'])) {
-        $v['business_name'] = str_ireplace(['S S Industries', 'SS Industries', 'S. S. Industries', 'S.S. Industries'], 'Kalyani agrofood pvt ltd', $v['business_name']);
-    }
     // Village / District coordinates
     $v_lat = 27.1264;
     $v_lng = 80.1444;
@@ -142,26 +161,7 @@ if ($hero_theme === 'crimson') {
     $hero_accent_text = 'text-amber-300';
 }
 
-// Determine Active Homepage Layout (5 Distinct Handcrafted Layouts)
-// Supports admin setting and real-time live preview via ?layout=layout_X or ?theme=X
-$valid_layouts = ['layout_1', 'layout_2', 'layout_3', 'layout_4', 'layout_5'];
-$requested_layout = $_GET['layout'] ?? $_GET['theme'] ?? null;
-
-if ($requested_layout) {
-    if (in_array($requested_layout, ['1', '2', '3', '4', '5'])) {
-        $requested_layout = 'layout_' . $requested_layout;
-    }
-}
-
-if ($requested_layout && in_array($requested_layout, $valid_layouts)) {
-    $active_layout = $requested_layout;
-} else {
-    $active_layout = get_setting('homepage_layout', 'layout_1');
-    if (!in_array($active_layout, $valid_layouts)) {
-        $active_layout = 'layout_1';
-    }
-}
-
+// Load Selected Layout File
 $layout_file = __DIR__ . '/includes/home_layouts/' . $active_layout . '.php';
 if (file_exists($layout_file)) {
     include $layout_file;

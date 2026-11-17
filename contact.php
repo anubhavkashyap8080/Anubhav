@@ -19,14 +19,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     // Rate limiting per IP and phone
     $client_ip = get_client_ip();
     if (!check_rate_limit('contact_ip', $client_ip, 5, 900) || !check_rate_limit('contact_phone', $sender_phone, 3, 900)) {
-        set_flash('error', 'Too many requests. Please try again after 15 minutes. / बहुत अधिक संदेश अनुरोध। कृपया 15 मिनट बाद पुनः प्रयास करें।');
+        set_flash('error', 'Too many requests. Please try again after 15 minutes.');
         header('Location: /contact.php');
         exit;
     }
 
     // Turnstile CAPTCHA verification
     if (!verify_turnstile_captcha()) {
-        set_flash('error', 'Security CAPTCHA verification failed. Please try again. / सुरक्षा सत्यापन विफल रहा।');
+        set_flash('error', 'Security verification failed. Please try again.');
         header('Location: /contact.php');
         exit;
     }

@@ -113,11 +113,11 @@ if (!function_exists('e')) {
 if (!function_exists('is_strong_password')) {
     function is_strong_password($password, &$error = '') {
         if (!is_string($password) || strlen($password) < 8) {
-            $error = 'पासवर्ड कम से कम 8 अक्षरों का होना अनिवार्य है। (Minimum 8 characters required)';
+            $error = 'Password must be at least 8 characters long.';
             return false;
         }
         if (!preg_match('/[A-Z]/', $password) || !preg_match('/[a-z]/', $password) || !preg_match('/[0-9]/', $password)) {
-            $error = 'पासवर्ड में कम से कम एक बड़ा अक्षर (A-Z), एक छोटा अक्षर (a-z) और एक अंक (0-9) होना आवश्यक है।';
+            $error = 'Password must include at least one uppercase letter (A-Z), one lowercase letter (a-z), and one number (0-9).';
             return false;
         }
         $common = [
@@ -131,7 +131,7 @@ if (!function_exists('is_strong_password')) {
         foreach ($common as $weak) {
             $weak_clean = preg_replace('/[^a-z0-9]/', '', $weak);
             if ($lower === $weak || strpos($lower, $weak) !== false || (!empty($weak_clean) && ($alphanumeric === $weak_clean || strpos($alphanumeric, $weak_clean) !== false))) {
-                $error = 'यह पासवर्ड बहुत सामान्य या कमजोर है। कृपया अधिक सुरक्षित और अद्वितीय पासवर्ड चुनें।';
+                $error = 'This password is too common or weak. Please choose a stronger and more unique password.';
                 return false;
             }
         }
@@ -223,7 +223,7 @@ function csrf_protect() {
                 exit;
             }
 
-            set_flash('error', 'सुरक्षा त्रुटि: अमान्य या समाप्त CSRF सुरक्षा टोकन। कृपया पुनः प्रयास करें।');
+            set_flash('error', 'Security Error: Invalid or expired CSRF token. Please refresh and try again.');
             
             // SECURITY: Never redirect blindly to external HTTP_REFERER. Redirect only to same-origin path!
             $safe_redirect = '/';
@@ -1840,13 +1840,6 @@ function get_cart() {
         $stmt->execute($product_ids);
         $products = $stmt->fetchAll() ?: [];
 
-        foreach ($products as &$prod) {
-            if (isset($prod['vendor_name'])) {
-                $prod['vendor_name'] = str_ireplace('S S Industries', 'Kalyani agrofood pvt ltd', $prod['vendor_name']);
-            }
-        }
-        unset($prod);
-
         foreach ($products as $prod) {
             $qty = (int)($_SESSION['cart'][$prod['id']]['qty'] ?? 1);
             $cart_data[] = [
@@ -2009,12 +2002,12 @@ function validate_and_apply_coupon($code) {
     global $pdo;
     $code = strtoupper(trim($code));
     if (empty($code)) {
-        return ['success' => false, 'error' => 'कृपया वैध कूपन कोड दर्ज करें।'];
+        return ['success' => false, 'error' => 'Please enter a valid coupon code.'];
     }
 
     $subtotal = get_cart_subtotal();
     if ($subtotal <= 0) {
-        return ['success' => false, 'error' => 'कूपन लागू करने के लिए आपकी कार्ट में कम से कम 1 उत्पाद होना चाहिए।'];
+        return ['success' => false, 'error' => 'Your cart must have at least 1 item to apply a coupon.'];
     }
 
     $stmt = $pdo->prepare("SELECT * FROM coupons WHERE code = ? AND status = 'active' LIMIT 1");
@@ -2022,25 +2015,25 @@ function validate_and_apply_coupon($code) {
     $coupon = $stmt->fetch();
 
     if (!$coupon) {
-        return ['success' => false, 'error' => "कूपन कोड '$code' अमान्य है या समाप्त हो चुका है।"];
+        return ['success' => false, 'error' => "Coupon code '$code' is invalid or expired."];
     }
 
     // Check Expiry Date
     if (!empty($coupon['expiry_date']) && strtotime($coupon['expiry_date']) < strtotime(date('Y-m-d'))) {
-        return ['success' => false, 'error' => "कूपन कोड '$code' की वैधता समाप्त हो चुकी है।"];
+        return ['success' => false, 'error' => "Coupon code '$code' has expired."];
     }
 
     // Check Minimum Order Amount
     if ($subtotal < floatval($coupon['min_order_amount'])) {
         return [
             'success' => false,
-            'error' => "यह कूपन न्यूनतम ₹" . number_format($coupon['min_order_amount'], 0) . " के आर्डर पर ही लागू होगा। (वर्तमान कार्ट: " . format_price($subtotal) . ")"
+            'error' => "This coupon is valid on a minimum order of ₹" . number_format($coupon['min_order_amount'], 0) . ". (Current cart: " . format_price($subtotal) . ")"
         ];
     }
 
     // Check Usage Limit
     if ($coupon['used_count'] >= $coupon['usage_limit']) {
-        return ['success' => false, 'error' => "इस कूपन की कुल उपयोग सीमा पूरी हो चुकी है।"];
+        return ['success' => false, 'error' => "This coupon has reached its maximum usage limit."];
     }
 
     $curr_user = is_logged_in() ? get_logged_in_user() : null;
@@ -2053,7 +2046,7 @@ function validate_and_apply_coupon($code) {
             $stmt_ord = $pdo->prepare("SELECT COUNT(*) FROM orders WHERE user_id = ? OR customer_email = ?");
             $stmt_ord->execute([$user_id, $user_email]);
             if ($stmt_ord->fetchColumn() > 0) {
-                return ['success' => false, 'error' => "यह कूपन केवल नए ग्राहकों के पहले आर्डर पर ही मान्य है।"];
+                return ['success' => false, 'error' => "This coupon is valid only on your first order."];
             }
         }
     }
@@ -2064,7 +2057,7 @@ function validate_and_apply_coupon($code) {
             $stmt_used = $pdo->prepare("SELECT id FROM coupon_usages WHERE coupon_id = ? AND (user_id = ? OR customer_email = ?)");
             $stmt_used->execute([$coupon['id'], $user_id, $user_email]);
             if ($stmt_used->fetch()) {
-                return ['success' => false, 'error' => "आप इस कूपन कोड ($code) का उपयोग पहले ही कर चुके हैं। यह प्रति ग्राहक केवल 1 बार मान्य है।"];
+                return ['success' => false, 'error' => "You have already used coupon code '$code'. It is valid once per customer."];
             }
         }
     }
@@ -2094,7 +2087,7 @@ function validate_and_apply_coupon($code) {
     return [
         'success'         => true,
         'discount'        => $discount,
-        'message'         => "बधाई! कूपन '$code' सफलतापूर्वक लागू हुआ। आपने " . format_price($discount) . " की बचत की!"
+        'message'         => "Success! Coupon '$code' applied. You saved " . format_price($discount) . "!"
     ];
 }
 

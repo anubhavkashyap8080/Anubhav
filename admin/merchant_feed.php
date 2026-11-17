@@ -3,7 +3,7 @@
  * GanvGaliHat - Google Merchant Center XML Feed Management & Shipping Audit
  */
 
-$page_title = "Google Merchant Center XML फ़ीड";
+$page_title = "Google Merchant Center XML Feed — Super Admin";
 require_once __DIR__ . '/admin_header.php';
 require_once __DIR__ . '/../config/shipping.php';
 

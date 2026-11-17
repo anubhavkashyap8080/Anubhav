@@ -8,7 +8,7 @@ require_once __DIR__ . '/../includes/auth_check.php';
 
 require_retailer();
 
-$page_title = 'थोक ऑर्डर्स एवं GST इनवॉइस (B2B Orders & Tax Invoices)';
+$page_title = 'B2B Orders & Invoices — Retailer Portal';
 require_once __DIR__ . '/retailer_header.php';
 
 $uid = $user['id'];

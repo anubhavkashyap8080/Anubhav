@@ -11,7 +11,7 @@ require_admin();
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_FILES['csv_file'])) {
     if (!verify_csrf($_POST['csrf_token'] ?? '')) {
-        set_flash('error', 'CSRF सत्यापन विफल रहा। (Invalid CSRF token)');
+        set_flash('error', 'Security token expired. Please refresh the page and try again.');
         header('Location: /admin/users.php');
         exit;
     }
@@ -19,28 +19,28 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_FILES['csv_file'])) {
     $file = $_FILES['csv_file'];
 
     if ($file['error'] !== UPLOAD_ERR_OK) {
-        set_flash('error', 'फ़ाइल अपलोड त्रुटि।');
+        set_flash('error', 'File upload error. Please try again.');
         header('Location: /admin/users.php');
         exit;
     }
 
     // Item 11: File size check (max 1 MB)
     if ($file['size'] > 1024 * 1024) {
-        set_flash('error', 'CSV फ़ाइल का आकार 1MB से अधिक नहीं होना चाहिए।');
+        set_flash('error', 'CSV file size must not exceed 1 MB.');
         header('Location: /admin/users.php');
         exit;
     }
 
     $ext = strtolower(pathinfo($file['name'], PATHINFO_EXTENSION));
     if ($ext !== 'csv') {
-        set_flash('error', 'कृपया केवल CSV (.csv) फ़ाइल चुनें।');
+        set_flash('error', 'Please select a valid CSV (.csv) file.');
         header('Location: /admin/users.php');
         exit;
     }
 
     $handle = fopen($file['tmp_name'], 'r');
     if (!$handle) {
-        set_flash('error', 'फ़ाइल खोली नहीं जा सकी।');
+        set_flash('error', 'Could not open uploaded file.');
         header('Location: /admin/users.php');
         exit;
     }
@@ -119,7 +119,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_FILES['csv_file'])) {
 
     fclose($handle);
     log_audit_action('admin_import_users', 'users', 'import', null, "Imported {$imported} users via CSV (skipped {$skipped}, processed {$row_count} rows)");
-    set_flash('success', "सफलतापूर्वक {$imported} उपयोगकर्ता CSV से जोड़े गए! सुरक्षा कारणों से प्रत्येक उपयोगकर्ता के लिए यादृच्छिक (Random) पासवर्ड उत्पन्न किया गया है और प्रथम लॉगिन पर पासवर्ड बदलना अनिवार्य (Force Password Change) किया गया है।");
+    set_flash('success', "Successfully imported {$imported} users from CSV. Random passwords generated and password change required on first sign-in.");
     header('Location: /admin/users.php');
     exit;
 }

@@ -11,7 +11,7 @@ require_admin();
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_FILES['csv_file'])) {
     if (!verify_csrf($_POST['csrf_token'] ?? '')) {
-        set_flash('error', 'CSRF सत्यापन विफल रहा। (Invalid CSRF token)');
+        set_flash('error', 'Security token expired. Please refresh the page and try again.');
         header('Location: /admin/products.php');
         exit;
     }
@@ -19,28 +19,28 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_FILES['csv_file'])) {
     $file = $_FILES['csv_file'];
 
     if ($file['error'] !== UPLOAD_ERR_OK) {
-        set_flash('error', 'फ़ाइल अपलोड करने में त्रुटि उत्पन्न हुई।');
+        set_flash('error', 'File upload error. Please try again.');
         header('Location: /admin/products.php');
         exit;
     }
 
     // Item 11: File size check (max 1 MB)
     if ($file['size'] > 1024 * 1024) {
-        set_flash('error', 'CSV फ़ाइल का आकार 1MB से अधिक नहीं होना चाहिए।');
+        set_flash('error', 'CSV file size must not exceed 1 MB.');
         header('Location: /admin/products.php');
         exit;
     }
 
     $ext = strtolower(pathinfo($file['name'], PATHINFO_EXTENSION));
     if ($ext !== 'csv') {
-        set_flash('error', 'कृपया केवल वैध CSV (.csv) फ़ाइल अपलोड करें।');
+        set_flash('error', 'Please upload a valid CSV (.csv) file.');
         header('Location: /admin/products.php');
         exit;
     }
 
     $handle = fopen($file['tmp_name'], 'r');
     if (!$handle) {
-        set_flash('error', 'फ़ाइल खोली नहीं जा सकी।');
+        set_flash('error', 'Could not open uploaded file.');
         header('Location: /admin/products.php');
         exit;
     }
@@ -126,7 +126,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_FILES['csv_file'])) {
 
     fclose($handle);
     log_audit_action('admin_import_products', 'products', 'import', null, "Imported {$imported_count} products via CSV (parsed {$row_count} rows)");
-    set_flash('success', "सफलतापूर्वक $imported_count उत्पाद CSV फ़ाइल से कैटलॉग में जोड़े गए!");
+    set_flash('success', "Successfully imported $imported_count products from CSV into catalog.");
     header('Location: /admin/products.php');
     exit;
 }

@@ -4,7 +4,7 @@
  * Real-time Security Monitoring, Login Rate Limiting, File Integrity & Disaster Recovery
  */
 
-$page_title = 'सुरक्षा केंद्र एवं बैकअप (Security Center)';
+$page_title = 'Security Center & Backups — Super Admin';
 require_once __DIR__ . '/admin_header.php';
 
 // Strict Super Admin Clearance

@@ -62,11 +62,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['save_customizer'])) {
             } catch (Throwable $t) {}
         }
 
-        set_flash('success', 'हेडर, फुटर, सोशल लिंक्स एवं ब्रांडिंग सेटिंग्स सफलतापूर्वक अपडेट की गईं!');
+        set_flash('success', 'Header, footer, social links, and branding settings updated successfully.');
         header('Location: /admin/site_customizer.php');
         exit;
     } catch (Exception $e) {
-        set_flash('error', 'त्रुटि: ' . $e->getMessage());
+        set_flash('error', 'Error saving site customization settings. Please try again.');
     }
 }
 
@@ -82,7 +82,7 @@ function get_cfg_val($key, $default = '') {
     return $cfg[$key] ?? $default;
 }
 
-$page_title = 'हेडर व फुटर कस्टमाइज़र (Site Customizer)';
+$page_title = 'Header & Footer Customizer — Super Admin';
 require_once __DIR__ . '/admin_header.php';
 ?>
 

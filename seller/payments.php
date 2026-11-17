@@ -64,9 +64,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['request_payout'])) {
     csrf_protect();
     $amount = floatval($_POST['payout_amount'] ?? 0);
     if ($amount < 500) {
-        set_flash('error', 'न्यूनतम सेटलमेंट निकासी राशि ₹500 है।');
+        set_flash('error', 'Minimum settlement withdrawal amount is ₹500.');
     } elseif ($amount > $available_balance) {
-        set_flash('error', 'अनुरोधित राशि (₹' . number_format($amount, 2) . ') आपके उपलब्ध शेष (₹' . number_format($available_balance, 2) . ') से अधिक है।');
+        set_flash('error', 'Requested amount (₹' . number_format($amount, 2) . ') exceeds your available balance (₹' . number_format($available_balance, 2) . ').');
     } else {
         $payout_ref = 'PAY-' . rand(1000, 9999);
         $utr = 'SBIN' . date('ymd') . rand(10000, 99999);
@@ -79,13 +79,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['request_payout'])) {
         ");
         $stmt->execute([$payout_ref, $vendor_id, $amount, $comm, $net, $utr]);
         log_audit_action('seller_payout_withdrawn', 'payouts', "Vendor #{$vendor_id} withdrawn ₹{$amount} (Net: ₹{$net}, UTR: {$utr})");
-        set_flash('success', '₹' . number_format($net, 2) . ' का बैंक सेटलमेंट सफलतापूर्वक प्रक्रियाबद्ध किया गया! बैंक UTR: ' . $utr);
+        set_flash('success', 'Bank settlement of ₹' . number_format($net, 2) . ' processed successfully. Bank UTR: ' . $utr);
         header('Location: /seller/payments.php');
         exit;
     }
 }
 
-$page_title = 'भुगतान एवं सेटलमेंट (Payments & UTR Settlements)';
+$page_title = 'Payments & Settlements — Seller Portal';
 require_once __DIR__ . '/seller_header.php';
 ?>
 

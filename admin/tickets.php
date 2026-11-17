@@ -28,11 +28,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['reply_ticket'])) {
 
             // Update ticket status
             $pdo->prepare("UPDATE tickets SET status = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?")->execute([$new_status, $ticket_id]);
-            set_flash('success', 'सपोर्ट टिकट पर उत्तर सफलतापूर्वक भेजा गया!');
+            set_flash('success', 'Reply sent to support ticket successfully.');
             header('Location: /admin/tickets.php?view=' . $ticket_id);
             exit;
         } catch (Exception $e) {
-            set_flash('error', 'त्रुटि: ' . $e->getMessage());
+            set_flash('error', 'Error sending ticket reply. Please try again.');
         }
     }
 }
@@ -44,7 +44,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
     if (in_array($st, ['Open', 'In Progress', 'Resolved', 'Closed'], true)) {
         $pdo->prepare("UPDATE tickets SET status = ? WHERE id = ?")->execute([$st, $tid]);
         log_audit_action('ticket_set_status', 'tickets', 'ticket', $tid, "Ticket status set to {$st}");
-        set_flash('success', 'टिकट स्थिति अपडेट की गई: ' . $st);
+        set_flash('success', 'Ticket status updated to ' . $st . '.');
     }
     header('Location: /admin/tickets.php');
     exit;
@@ -53,7 +53,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
 // Reject Insecure GET Mutating Requests
 if (isset($_GET['set_status'])) {
     http_response_code(405);
-    set_flash('error', 'अमान्य अनुरोध विधि (GET अस्वीकृत)। कृपया फ़ॉर्म या बटन का उपयोग करें।');
+    set_flash('error', 'Invalid request method. Only POST requests are allowed.');
     header('Location: /admin/tickets.php');
     exit;
 }
@@ -87,7 +87,7 @@ if ($view_ticket_id > 0) {
     }
 }
 
-$page_title = 'सपोर्ट टिकट्स एवं ग्राहक सहायता (Helpdesk Tickets)';
+$page_title = 'Support & Helpdesk Tickets — Super Admin';
 require_once __DIR__ . '/admin_header.php';
 ?>
 

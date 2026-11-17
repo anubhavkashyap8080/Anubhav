@@ -18,7 +18,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['update_admin_order'])
     $new_awb = clean_input($_POST['tracking_consignment_no']);
     $pdo->prepare("UPDATE orders SET order_status = ?, tracking_consignment_no = ? WHERE id = ?")->execute([$new_status, $new_awb, $oid]);
     log_audit_action('admin_order_update', 'orders', 'order', $oid, "Status updated to {$new_status}, AWB: {$new_awb}");
-    set_flash('success', 'आर्डर स्थिति एवं इंडिया पोस्ट कंसाइनमेंट नंबर अपडेट किया गया!');
+    set_flash('success', 'Order status and tracking consignment updated successfully.');
     header('Location: /admin/orders.php');
     exit;
 }
@@ -43,7 +43,7 @@ $stmt = $pdo->prepare($sql);
 $stmt->execute($params);
 $orders = $stmt->fetchAll();
 
-$page_title = 'केंद्रीय आर्डर एवं लॉजिस्टिक्स (Central Orders)';
+$page_title = 'Central Orders & Logistics — Super Admin';
 require_once __DIR__ . '/admin_header.php';
 ?>
 

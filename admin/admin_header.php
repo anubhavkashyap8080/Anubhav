@@ -170,6 +170,11 @@ $flash = get_flash();
           <i class="fa-solid fa-wand-magic-sparkles"></i> Hero Campaigns
         </a>
 
+        <a href="/admin/video_home.php"
+          class="px-3 py-2 rounded-lg transition whitespace-nowrap flex items-center gap-1.5 <?= $current_page === 'video_home.php' ? 'bg-indigo-600 text-white' : 'text-indigo-200 hover:text-white hover:bg-indigo-800' ?>">
+          <i class="fa-solid fa-film text-rose-400"></i> Video Story Home
+        </a>
+
         <a href="/admin/email_campaigns.php"
           class="px-3 py-2 rounded-lg transition whitespace-nowrap flex items-center gap-1.5 <?= $current_page === 'email_campaigns.php' ? 'bg-indigo-600 text-white' : 'text-indigo-200 hover:text-white hover:bg-indigo-800' ?>">
           <i class="fa-solid fa-paper-plane text-emerald-300"></i> Email Campaigns

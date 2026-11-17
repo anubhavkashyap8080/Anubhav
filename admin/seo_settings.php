@@ -48,11 +48,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['save_seo'])) {
         }
 
         log_audit_action('admin_update_seo', 'site_settings', 'Updated On-Page SEO settings and homepage title');
-        set_flash('success', 'होमपेज टाइटल, ऑन-पेज SEO एवं सर्च सेटिंग्स सफलतापूर्वक अपडेट की गईं!');
+        set_flash('success', 'SEO settings and meta tags updated successfully.');
         header('Location: /admin/seo_settings.php');
         exit;
     } catch (Exception $e) {
-        set_flash('error', 'त्रुटि: ' . $e->getMessage());
+        set_flash('error', 'Error saving SEO settings. Please try again.');
     }
 }
 
@@ -81,7 +81,7 @@ $cur_robots = get_seo_val('seo_robots_meta', 'index, follow');
 $cur_canonical = get_seo_val('seo_canonical_url', $default_site_canonical);
 $cur_og_image = get_seo_val('seo_og_image', 'https://images.unsplash.com/photo-1504148455328-c376907d081c?w=1200');
 
-$page_title = 'SEO & On-Page Settings (सर्च इंजन ऑप्टिमाइज़ेशन)';
+$page_title = 'SEO & On-Page Settings — Super Admin';
 require_once __DIR__ . '/admin_header.php';
 ?>
 

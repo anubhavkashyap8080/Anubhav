@@ -13,14 +13,14 @@ require_once __DIR__ . '/../includes/functions.php';
 
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     http_response_code(405);
-    set_flash('error', 'अमान्य अनुरोध विधि। (Method Not Allowed)');
+    set_flash('error', 'Method Not Allowed: Invalid request method.');
     header('Location: /checkout.php');
     exit;
 }
 
 if (!verify_csrf($_POST['csrf_token'] ?? '')) {
     log_audit_action('payment_csrf_failed', 'orders', 'CSRF verification failed on Razorpay verify endpoint');
-    set_flash('error', 'सुरक्षा टोकन अमान्य या समाप्त हो गया है। कृपया पुनः प्रयास करें।');
+    set_flash('error', 'Security token expired. Please refresh the page and try again.');
     header('Location: /checkout.php');
     exit;
 }
@@ -32,7 +32,7 @@ $razorpay_signature  = trim((string)($_POST['razorpay_signature'] ?? ''));
 
 if ($order_id <= 0 || empty($razorpay_payment_id)) {
     log_audit_action('payment_verification_missing_params', 'orders', "Order #{$order_id} missing transaction tokens");
-    set_flash('error', 'भुगतान सत्यापन विफल: लेन-देन पहचानकर्ता अनुपलब्ध है।');
+    set_flash('error', 'Payment verification failed: Missing transaction tokens.');
     header('Location: /checkout.php');
     exit;
 }
@@ -45,7 +45,7 @@ try {
 
     if (!$order) {
         log_audit_action('payment_order_not_found', 'orders', "Attempted verification on non-existent order #{$order_id}");
-        set_flash('error', 'ऑर्डर संदर्भ सिस्टम में नहीं मिला।');
+        set_flash('error', 'Order reference not found in system.');
         header('Location: /cart.php');
         exit;
     }
@@ -53,7 +53,7 @@ try {
     // 2. Reject already-paid orders to prevent replay attacks
     if ($order['payment_status'] === 'completed') {
         log_audit_action('payment_replay_blocked', 'orders', "Blocked duplicate payment attempt on already paid order #{$order_id}");
-        set_flash('info', 'यह ऑर्डर पहले ही सफलतापूर्वक भुगतान किया जा चुका है।');
+        set_flash('info', 'This order has already been paid successfully.');
         $token = $order['order_access_token'] ?? '';
         header('Location: /order-success.php?id=' . $order_id . ($token ? '&token=' . urlencode($token) : ''));
         exit;
@@ -64,7 +64,7 @@ try {
     $chk_dup->execute([$razorpay_payment_id, $order_id]);
     if ($chk_dup->fetch()) {
         log_audit_action('payment_replay_blocked', 'orders', "Razorpay payment ID {$razorpay_payment_id} was already used on another order");
-        set_flash('error', 'सुरक्षा चेतावनी: यह भुगतान पहचानकर्ता पहले ही किसी अन्य ऑर्डर में उपयोग किया जा चुका है।');
+        set_flash('error', 'Security warning: This payment identifier has already been used on another order.');
         header('Location: /checkout.php');
         exit;
     }
@@ -86,7 +86,7 @@ try {
             'orders',
             "Unauthorized payment verification attempt on order #{$order_id} from IP " . get_client_ip()
         );
-        set_flash('error', 'सुरक्षा उल्लंघन: आप इस ऑर्डर को सत्यापित करने के लिए अधिकृत नहीं हैं।');
+        set_flash('error', 'Security violation: You are not authorized to verify this order.');
         header('Location: /checkout.php');
         exit;
     }
@@ -96,7 +96,7 @@ try {
     $key_secret = defined('RAZORPAY_KEY_SECRET') ? RAZORPAY_KEY_SECRET : '';
     if (empty($key_id) || empty($key_secret)) {
         error_log("CRITICAL: Razorpay API keys are not configured.");
-        set_flash('error', 'गेटवे कॉन्फ़िगरेशन त्रुटि। कृपया समर्थन टीम से संपर्क करें।');
+        set_flash('error', 'Gateway configuration error. Please contact customer support.');
         header('Location: /checkout.php');
         exit;
     }
@@ -107,7 +107,7 @@ try {
 
     if (empty($razorpay_order_id) || empty($razorpay_signature)) {
         log_audit_action('payment_missing_signature', 'orders', 'order', $order_id, 'Missing gateway_order_id or signature token');
-        set_flash('error', 'भुगतान हस्ताक्षर अथवा गेटवे ऑर्डर आईडी अनुपलब्ध है। लेन-देन अस्वीकृत।');
+        set_flash('error', 'Missing gateway order ID or signature token. Transaction rejected.');
         header('Location: /checkout.php');
         exit;
     }
@@ -123,7 +123,7 @@ try {
             $order_id,
             'Razorpay cryptographic signature mismatch'
         );
-        set_flash('error', 'क्रिप्टोग्राफ़िक सुरक्षा सत्यापन विफल रहा। लेन-देन अस्वीकृत।');
+        set_flash('error', 'Cryptographic signature verification failed. Transaction rejected.');
         header('Location: /checkout.php');
         exit;
     }
@@ -146,7 +146,7 @@ try {
             $order_id,
             "Razorpay API payment fetch failed with HTTP {$http_code}"
         );
-        set_flash('error', 'Razorpay API द्वारा भुगतान सत्यापन विफल रहा (HTTP ' . intval($http_code) . ')। कृपया सहायता टीम से संपर्क करें।');
+        set_flash('error', 'Payment verification failed via Razorpay API (HTTP ' . intval($http_code) . '). Please contact support.');
         header('Location: /checkout.php');
         exit;
     }
@@ -154,7 +154,7 @@ try {
     $payment_data = json_decode($api_res, true);
     if (!is_array($payment_data)) {
         log_audit_action('payment_api_invalid_response', 'orders', 'order', $order_id, 'Invalid JSON returned from Razorpay API');
-        set_flash('error', 'अमान्य गेटवे प्रतिक्रिया प्राप्त हुई।');
+        set_flash('error', 'Invalid gateway response received.');
         header('Location: /checkout.php');
         exit;
     }
@@ -170,7 +170,7 @@ try {
             $order_id,
             'Paid amount is less than order total'
         );
-        set_flash('error', 'भुगतान राशि में विसंगति पाई गई। कृपया सहायता टीम से संपर्क करें।');
+        set_flash('error', 'Payment amount discrepancy detected. Please contact support.');
         header('Location: /checkout.php');
         exit;
     }
@@ -178,7 +178,7 @@ try {
     // Security Audit C3: Verify gateway order id matches
     if (!empty($order['gateway_order_id']) && !empty($payment_data['order_id']) && $payment_data['order_id'] !== $order['gateway_order_id']) {
         log_audit_action('payment_order_id_mismatch', 'orders', 'order', $order_id, "Gateway order ID mismatch: expected {$order['gateway_order_id']}, got {$payment_data['order_id']}");
-        set_flash('error', 'गेटवे ऑर्डर पहचानकर्ता में विसंगति पाई गई।');
+        set_flash('error', 'Gateway order ID discrepancy detected.');
         header('Location: /checkout.php');
         exit;
     }
@@ -186,7 +186,7 @@ try {
     // Security Audit C3: Verify currency is strictly INR
     if (strtoupper($payment_data['currency'] ?? '') !== 'INR') {
         log_audit_action('payment_currency_mismatch', 'orders', 'order', $order_id, "Currency mismatch: " . ($payment_data['currency'] ?? ''));
-        set_flash('error', 'अमान्य मुद्रा। केवल INR लेन-देन स्वीकार्य हैं।');
+        set_flash('error', 'Invalid currency. Only INR transactions are accepted.');
         header('Location: /checkout.php');
         exit;
     }
@@ -201,7 +201,7 @@ try {
             $order_id,
             "Razorpay payment status not captured (status: {$rzp_status})"
         );
-        set_flash('error', 'गेटवे पर भुगतान पूर्ण रूप से प्राप्त (captured) नहीं हुआ है (Status: ' . htmlspecialchars($rzp_status, ENT_QUOTES, 'UTF-8') . ')');
+        set_flash('error', 'Payment was not fully captured at gateway (Status: ' . htmlspecialchars($rzp_status, ENT_QUOTES, 'UTF-8') . ').');
         header('Location: /checkout.php');
         exit;
     }
@@ -226,7 +226,7 @@ try {
 
     if ($update->rowCount() === 0) {
         log_audit_action('payment_replay_blocked', 'orders', 'order', $order_id, 'Duplicate replay attempt prevented on completed order');
-        set_flash('info', 'यह ऑर्डर पहले ही अपडेट हो चुका है।');
+        set_flash('info', 'This order has already been updated.');
         header('Location: /order-success.php?id=' . $order_id . '&token=' . urlencode($access_token));
         exit;
     }
@@ -251,13 +251,13 @@ try {
     unset($_SESSION['pending_payment_rzp_order_id']);
 
     log_audit_action('payment_success_razorpay', 'orders', "Order #{$order_id} paid successfully via Razorpay (Txn: {$razorpay_payment_id})");
-    set_flash('success', 'Razorpay भुगतान सफलतापूर्वक प्राप्त हुआ! ऑर्डर संख्या #' . htmlspecialchars($order['order_number'], ENT_QUOTES, 'UTF-8'));
+    set_flash('success', 'Razorpay payment received successfully! Order #' . htmlspecialchars($order['order_number'], ENT_QUOTES, 'UTF-8'));
     header('Location: /order-success.php?id=' . $order_id . '&token=' . urlencode($access_token));
     exit;
 
 } catch (Exception $e) {
     error_log("Razorpay verification DB error: " . $e->getMessage());
-    set_flash('error', 'भुगतान सत्यापन के दौरान डेटाबेस त्रुटि हुई। कृपया सहायता टीम से संपर्क करें।');
+    set_flash('error', 'A database error occurred during payment verification. Please contact support.');
     header('Location: /checkout.php');
     exit;
 }

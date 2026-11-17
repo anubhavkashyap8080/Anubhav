@@ -367,7 +367,7 @@ if ($payment_method === 'razorpay') {
 
     if (empty($key_id) || empty($key_secret)) {
         log_audit_action('payment_rzp_unconfigured', 'orders', "Razorpay keys missing for order #{$order_id}");
-        set_flash('error', 'Razorpay गेटवे कॉन्फ़िगरेशन अनुपलब्ध है। कृपया कैश ऑन डिलीवरी (COD) चुनें।');
+        set_flash('error', 'Razorpay gateway configuration is unavailable. Please select Cash on Delivery (COD).');
         header('Location: /checkout.php');
         exit;
     }
@@ -412,7 +412,7 @@ if ($payment_method === 'razorpay') {
         } catch (Throwable $t) {}
 
         log_audit_action('payment_rzp_order_create_failed', 'orders', 'order', $order_id, "Razorpay API returned HTTP {$http_code}");
-        set_flash('error', 'Razorpay भुगतान गेटवे से संपर्क करने में असमर्थ। कृपया पुनः प्रयास करें या कैश ऑन डिलीवरी (COD) चुनें।');
+        set_flash('error', 'Unable to connect to Razorpay payment gateway. Please try again or select Cash on Delivery (COD).');
         header('Location: /checkout.php');
         exit;
     }
@@ -495,7 +495,7 @@ if ($payment_method === 'payu') {
 
     if (empty($merchant_key) || empty($salt)) {
         log_audit_action('payment_payu_unconfigured', 'orders', "PayU keys missing for order #{$order_id}");
-        set_flash('error', 'PayU गेटवे कॉन्फ़िगरेशन अनुपलब्ध है। कृपया कैश ऑन डिलीवरी (COD) चुनें।');
+        set_flash('error', 'PayU gateway configuration is unavailable. Please select Cash on Delivery (COD).');
         header('Location: /checkout.php');
         exit;
     }

@@ -15,7 +15,7 @@ require_once __DIR__ . '/../includes/auth_check.php';
 // 1. Strict POST Request Method Enforcement
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     http_response_code(405);
-    set_flash('error', 'केवल POST अनुरोध स्वीकार्य हैं। (Method Not Allowed)');
+    set_flash('error', 'Method Not Allowed: Only POST requests are accepted.');
     header('Location: /admin/users.php');
     exit;
 }
@@ -23,7 +23,7 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
 // 2. Strict CSRF Token Verification
 if (!verify_csrf($_POST['csrf_token'] ?? '')) {
     log_audit_action('impersonate_csrf_failed', 'users', 'CSRF token mismatch on impersonation gateway');
-    set_flash('error', 'CSRF सुरक्षा सत्यापन विफल रहा। (Invalid CSRF Token)');
+    set_flash('error', 'Security token expired. Please refresh the page and try again.');
     header('Location: /admin/users.php');
     exit;
 }
@@ -66,7 +66,7 @@ if ($action === 'exit') {
             "Super Admin #{$orig_admin['id']} ({$orig_admin['email']}) exited impersonation of user #{$current_impersonated_id}"
         );
 
-        set_flash('success', 'नमस्ते ' . htmlspecialchars($orig_admin['name'], ENT_QUOTES, 'UTF-8') . ', आप केंद्रीय सुपर एडमिन नियंत्रण में वापस लौट आए हैं।');
+        set_flash('success', 'Welcome back ' . htmlspecialchars($orig_admin['name'], ENT_QUOTES, 'UTF-8') . ', you have returned to Super Admin control.');
         header('Location: /admin/users.php');
         exit;
     } else {
@@ -86,7 +86,7 @@ if ($action === 'login_as') {
 
     $target_user_id = intval($_POST['target_user_id'] ?? 0);
     if ($target_user_id <= 0) {
-        set_flash('error', 'अमान्य खाता पहचानकर्ता।');
+        set_flash('error', 'Invalid account identifier.');
         header('Location: /admin/users.php');
         exit;
     }
@@ -96,7 +96,7 @@ if ($action === 'login_as') {
     $target_user = $stmt->fetch();
 
     if (!$target_user) {
-        set_flash('error', 'लक्षित उपयोगकर्ता खाता नहीं मिला।');
+        set_flash('error', 'Target user account not found.');
         header('Location: /admin/users.php');
         exit;
     }
@@ -108,13 +108,13 @@ if ($action === 'login_as') {
             'users',
             "Super Admin #{$_SESSION['user_id']} was blocked from impersonating another Super Admin #{$target_user_id}"
         );
-        set_flash('error', 'सुरक्षा प्रतिबंध: किसी अन्य सुपर एडमिन खाते का प्रतिरूपण (Impersonation) सख्त वर्जित है।');
+        set_flash('error', 'Security restriction: Impersonating another Super Admin is not permitted.');
         header('Location: /admin/users.php');
         exit;
     }
 
     if ($target_user['id'] === $_SESSION['user_id']) {
-        set_flash('error', 'आप पहले से ही स्वयं के सुपर एडमिन खाते में सक्रिय हैं।');
+        set_flash('error', 'You are already active in your own Super Admin account.');
         header('Location: /admin/users.php');
         exit;
     }
@@ -143,7 +143,7 @@ if ($action === 'login_as') {
         "Super Admin #{$current_admin_id} started impersonating {$target_user['role']} #{$target_user['id']} ({$target_user['email']})"
     );
 
-    set_flash('success', 'सुरक्षित प्रशासनिक स्विच: अब आप ' . htmlspecialchars($target_user['name'], ENT_QUOTES, 'UTF-8') . ' (' . htmlspecialchars($target_user['role'], ENT_QUOTES, 'UTF-8') . ') के रूप में कार्य कर रहे हैं।');
+    set_flash('success', 'Admin switch active: You are now browsing as ' . htmlspecialchars($target_user['name'], ENT_QUOTES, 'UTF-8') . ' (' . htmlspecialchars($target_user['role'], ENT_QUOTES, 'UTF-8') . ').');
 
     if ($target_user['role'] === 'vendor') {
         header('Location: /seller/dashboard.php');

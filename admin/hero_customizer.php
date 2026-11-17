@@ -30,7 +30,7 @@ if (isset($_GET['action']) && $_GET['action'] === 'rollback' && !empty($_GET['ve
                 $upd->execute([$k, (string)$v]);
             }
             log_audit_action('hero_campaign_rollback', 'campaigns', 'hero_campaign_versions', $vid, 'Rolled back to version #' . $ver['version_num']);
-            set_flash('success', 'हीरो सेक्शन को सफलतापूर्वक संस्करण (Version #' . $ver['version_num'] . ') पर रीस्टोर कर दिया गया!');
+            set_flash('success', 'Hero section restored to Version #' . $ver['version_num'] . ' successfully.');
             header('Location: /admin/hero_customizer.php');
             exit;
         }
@@ -52,12 +52,32 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['save_hero_settings'])
         'slider_slide3_badge', 'slider_slide3_title', 'slider_slide3_subtitle', 'slider_slide3_btn1_text', 'slider_slide3_btn1_link', 'slider_slide3_btn2_text', 'slider_slide3_btn2_link', 'slider_slide3_image',
         'hero_festive_preset', 'hero_theme_color', 'hero_badge_text',
         'hero_title_line1', 'hero_title_line2', 'hero_subtitle',
-        'hero_btn1_text', 'hero_btn1_link', 'hero_btn2_text', 'hero_btn2_link',
+        'hero_btn1_text', 'hero_btn1_link', 'hero_btn1_show', 'hero_btn1_target',
+        'hero_btn2_text', 'hero_btn2_link', 'hero_btn2_show', 'hero_btn2_target',
         'hero_stat1_num', 'hero_stat1_label', 'hero_stat2_num', 'hero_stat2_label',
         'hero_stat3_num', 'hero_stat3_label',
         'hero_tag1_title', 'hero_tag1_subtitle', 'hero_tag2_title', 'hero_tag2_subtitle',
         'hero_has_custom_code', 'hero_custom_css'
     ];
+
+    // TASK B: Hero button show/hide toggles & targets
+    $_POST['hero_btn1_show'] = isset($_POST['hero_btn1_show']) ? '1' : '0';
+    $_POST['hero_btn2_show'] = isset($_POST['hero_btn2_show']) ? '1' : '0';
+    $_POST['hero_btn1_target'] = !empty($_POST['hero_btn1_target']) ? '_blank' : '_self';
+    $_POST['hero_btn2_target'] = !empty($_POST['hero_btn2_target']) ? '_blank' : '_self';
+
+    // TASK B: Link validation for hero buttons
+    foreach (['hero_btn1_link', 'hero_btn2_link'] as $btn_key) {
+        $link = trim((string)($_POST[$btn_key] ?? ''));
+        if ($link !== '') {
+            $is_valid = (preg_match('/^(\/|https:\/\/)/i', $link) && !preg_match('/^(\/\/|\\\\|javascript:|data:)/i', $link));
+            if (!$is_valid) {
+                set_flash('error', 'Invalid button link URL. Only relative paths starting with "/" or full "https://" URLs are allowed.');
+                header('Location: /admin/hero_customizer.php');
+                exit;
+            }
+        }
+    }
 
     $image_url = clean_input($_POST['hero_image_url'] ?? '');
 
@@ -124,11 +144,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['save_hero_settings'])
 
         log_audit_action('hero_campaign_saved', 'campaigns', 'hero_campaigns', 1, 'Hero settings updated with preset: ' . ($_POST['hero_festive_preset'] ?? 'General'));
 
-        set_flash('success', 'हीरो सेक्शन व त्योहार अभियान सफलतापूर्वक लाइव व सुरक्षित कर दिया गया! (Version #' . $next_v . ')');
+        set_flash('success', 'Hero section settings updated successfully (Version #' . $next_v . ').');
         header('Location: /admin/hero_customizer.php');
         exit;
     } catch (Exception $e) {
-        set_flash('error', 'त्रुटि: ' . $e->getMessage());
+        set_flash('error', 'Error saving hero settings. Please try again.');
     }
 }
 
@@ -148,7 +168,7 @@ function get_h_val($key, $default = '') {
 $stmt_vers = $pdo->query("SELECT * FROM hero_campaign_versions WHERE campaign_id = 1 ORDER BY id DESC LIMIT 10");
 $version_history = $stmt_vers->fetchAll();
 
-$page_title = 'हीरो सेक्शन व त्योहार सेल कस्टमाइज़र — Super Admin';
+$page_title = 'Hero Section & Festival Customizer — Super Admin';
 require_once __DIR__ . '/admin_header.php';
 ?>
 
@@ -238,9 +258,9 @@ require_once __DIR__ . '/admin_header.php';
       <div>
         <h3 class="text-base font-extrabold text-gray-900 flex items-center gap-2">
           <i class="fa-solid fa-layer-group text-indigo-600"></i>
-          0. Homepage Layout & Multi-Design Selector (5 Unique Experiences)
+          0. Homepage Layout & Multi-Design Selector (6 Unique Experiences)
         </h3>
-        <p class="text-xs text-gray-500 mt-1">Select which handcrafted design to serve on the homepage. You can preview all 5 options before saving.</p>
+        <p class="text-xs text-gray-500 mt-1">Select which handcrafted design to serve on the homepage. You can preview all 6 options before saving.</p>
       </div>
       <div class="flex items-center gap-2">
         <a href="/" target="_blank" class="px-3.5 py-2 bg-emerald-50 text-emerald-800 hover:bg-emerald-100 font-bold text-xs rounded-xl transition flex items-center gap-1.5 border border-emerald-200">
@@ -351,6 +371,30 @@ require_once __DIR__ . '/admin_header.php';
           <a href="/?layout=layout_5" target="_blank" class="text-xs font-bold text-indigo-600 hover:underline flex items-center gap-1">
             <span>Preview</span> <i class="fa-solid fa-arrow-up-right-from-square text-[10px]"></i>
           </a>
+        </div>
+      </label>
+
+      <!-- Option 6: Video Story Home (Full-Screen Edge-to-Edge Video Sections) -->
+      <label class="relative flex flex-col justify-between p-4 rounded-2xl border-2 transition cursor-pointer <?= $current_layout === 'layout_6' ? 'border-indigo-600 bg-indigo-50/30 ring-2 ring-indigo-600/20' : 'border-gray-200 bg-white hover:border-gray-300' ?>">
+        <div>
+          <div class="flex items-center justify-between mb-2">
+            <span class="px-2 py-0.5 bg-rose-100 text-rose-800 font-bold text-[10px] rounded-md uppercase">Layout 6</span>
+            <input type="radio" name="homepage_layout" value="layout_6" <?= $current_layout === 'layout_6' ? 'checked' : '' ?> class="text-indigo-600 focus:ring-indigo-500">
+          </div>
+          <h4 class="font-extrabold text-sm text-gray-900 mb-1">Video Story Home</h4>
+          <p class="text-xs text-gray-500 leading-relaxed mb-3">
+            Cinematic full-screen edge-to-edge video backgrounds for every section. Autoplays muted on desktop & mobile, lazy loaded with transparent header and sleek glass-morphism overlay.
+          </p>
+        </div>
+        <div class="pt-3 border-t border-gray-100 flex items-center justify-between">
+          <span class="text-[11px] font-bold text-rose-600">Cinematic Full Video</span>
+          <div class="flex items-center gap-2">
+            <a href="/admin/video_home.php" class="text-xs font-bold text-emerald-700 hover:underline">Configure</a>
+            <span class="text-gray-300">•</span>
+            <a href="/?layout=layout_6" target="_blank" class="text-xs font-bold text-indigo-600 hover:underline flex items-center gap-1">
+              <span>Preview</span> <i class="fa-solid fa-arrow-up-right-from-square text-[10px]"></i>
+            </a>
+          </div>
         </div>
       </label>
 
@@ -667,38 +711,81 @@ require_once __DIR__ . '/admin_header.php';
 
   <!-- Section 3: Call to Action Buttons -->
   <div class="bg-white rounded-3xl border border-gray-200 shadow-sm p-6 sm:p-8 space-y-6">
-    <h3 class="text-base font-extrabold text-gray-900 pb-3 border-b border-gray-100 flex items-center gap-2">
-      <i class="fa-solid fa-computer-mouse text-orange-500"></i>
-      3. कॉल टू एक्शन बटन (CTA Buttons)
-    </h3>
+    <div class="flex flex-col sm:flex-row sm:items-center justify-between pb-3 border-b border-gray-100 gap-2">
+      <h3 class="text-base font-extrabold text-gray-900 flex items-center gap-2">
+        <i class="fa-solid fa-computer-mouse text-orange-500"></i>
+        3. Call to Action Buttons (CTA Buttons)
+      </h3>
+      <span class="text-xs text-gray-500 font-medium">Configure button text, links, and show/hide toggles</span>
+    </div>
 
-    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-      <div>
-        <label class="block text-xs font-bold text-gray-700 mb-1">बटन 1 टेक्स्ट (Primary Button)</label>
-        <input type="text" name="hero_btn1_text" id="hero_btn1_text"
-          value="<?= htmlspecialchars(get_h_val('hero_btn1_text', 'Explore Marketplace')) ?>"
-          class="w-full px-3.5 py-2.5 bg-stone-50 border border-gray-200 rounded-xl text-xs font-bold">
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      <!-- Button 1 Box -->
+      <div class="p-5 bg-stone-50 rounded-2xl border border-gray-200 space-y-4">
+        <div class="flex items-center justify-between pb-2 border-b border-gray-200">
+          <span class="font-bold text-xs text-gray-900 flex items-center gap-1.5">
+            <span class="w-2.5 h-2.5 rounded-full bg-brand-orange"></span> Button 1 (Primary CTA)
+          </span>
+          <label class="inline-flex items-center gap-2 cursor-pointer">
+            <input type="checkbox" name="hero_btn1_show" value="1" <?= get_h_val('hero_btn1_show', '1') === '1' ? 'checked' : '' ?> class="w-4 h-4 text-brand-orange rounded border-gray-300 focus:ring-brand-orange">
+            <span class="text-xs font-bold text-gray-700">Show this button</span>
+          </label>
+        </div>
+
+        <div class="space-y-3">
+          <div>
+            <label class="block text-xs font-bold text-gray-700 mb-1">Button 1 Text</label>
+            <input type="text" name="hero_btn1_text" id="hero_btn1_text"
+              value="<?= htmlspecialchars(get_h_val('hero_btn1_text', 'Explore Marketplace')) ?>"
+              class="w-full px-3.5 py-2.5 bg-white border border-gray-200 rounded-xl text-xs font-bold">
+          </div>
+          <div>
+            <label class="block text-xs font-bold text-gray-700 mb-1">Button 1 Link URL (Relative or https://)</label>
+            <input type="text" name="hero_btn1_link" id="hero_btn1_link"
+              value="<?= htmlspecialchars(get_h_val('hero_btn1_link', '/products.php')) ?>"
+              class="w-full px-3.5 py-2.5 bg-white border border-gray-200 rounded-xl text-xs font-mono">
+          </div>
+          <div class="pt-1">
+            <label class="inline-flex items-center gap-2 cursor-pointer">
+              <input type="checkbox" name="hero_btn1_target" value="_blank" <?= get_h_val('hero_btn1_target', '_self') === '_blank' ? 'checked' : '' ?> class="w-4 h-4 text-indigo-600 rounded border-gray-300 focus:ring-indigo-500">
+              <span class="text-xs text-gray-600">Open in new tab (<code class="text-[11px]">_blank</code>)</span>
+            </label>
+          </div>
+        </div>
       </div>
 
-      <div>
-        <label class="block text-xs font-bold text-gray-700 mb-1">बटन 1 लिंक (Primary Link)</label>
-        <input type="text" name="hero_btn1_link" id="hero_btn1_link"
-          value="<?= htmlspecialchars(get_h_val('hero_btn1_link', '/products.php')) ?>"
-          class="w-full px-3.5 py-2.5 bg-stone-50 border border-gray-200 rounded-xl text-xs font-mono">
-      </div>
+      <!-- Button 2 Box -->
+      <div class="p-5 bg-stone-50 rounded-2xl border border-gray-200 space-y-4">
+        <div class="flex items-center justify-between pb-2 border-b border-gray-200">
+          <span class="font-bold text-xs text-gray-900 flex items-center gap-1.5">
+            <span class="w-2.5 h-2.5 rounded-full bg-stone-500"></span> Button 2 (Secondary CTA)
+          </span>
+          <label class="inline-flex items-center gap-2 cursor-pointer">
+            <input type="checkbox" name="hero_btn2_show" value="1" <?= get_h_val('hero_btn2_show', '1') === '1' ? 'checked' : '' ?> class="w-4 h-4 text-brand-orange rounded border-gray-300 focus:ring-brand-orange">
+            <span class="text-xs font-bold text-gray-700">Show this button</span>
+          </label>
+        </div>
 
-      <div>
-        <label class="block text-xs font-bold text-gray-700 mb-1">बटन 2 टेक्स्ट (Secondary Button)</label>
-        <input type="text" name="hero_btn2_text" id="hero_btn2_text"
-          value="<?= htmlspecialchars(get_h_val('hero_btn2_text', 'Farming & Garden Tools')) ?>"
-          class="w-full px-3.5 py-2.5 bg-stone-50 border border-gray-200 rounded-xl text-xs font-bold">
-      </div>
-
-      <div>
-        <label class="block text-xs font-bold text-gray-700 mb-1">बटन 2 लिंक (Secondary Link)</label>
-        <input type="text" name="hero_btn2_link" id="hero_btn2_link"
-          value="<?= htmlspecialchars(get_h_val('hero_btn2_link', '/products.php?category=farming-traditional-tools')) ?>"
-          class="w-full px-3.5 py-2.5 bg-stone-50 border border-gray-200 rounded-xl text-xs font-mono">
+        <div class="space-y-3">
+          <div>
+            <label class="block text-xs font-bold text-gray-700 mb-1">Button 2 Text</label>
+            <input type="text" name="hero_btn2_text" id="hero_btn2_text"
+              value="<?= htmlspecialchars(get_h_val('hero_btn2_text', 'Farming & Garden Tools')) ?>"
+              class="w-full px-3.5 py-2.5 bg-white border border-gray-200 rounded-xl text-xs font-bold">
+          </div>
+          <div>
+            <label class="block text-xs font-bold text-gray-700 mb-1">Button 2 Link URL (Relative or https://)</label>
+            <input type="text" name="hero_btn2_link" id="hero_btn2_link"
+              value="<?= htmlspecialchars(get_h_val('hero_btn2_link', '/products.php?category=farming-traditional-tools')) ?>"
+              class="w-full px-3.5 py-2.5 bg-white border border-gray-200 rounded-xl text-xs font-mono">
+          </div>
+          <div class="pt-1">
+            <label class="inline-flex items-center gap-2 cursor-pointer">
+              <input type="checkbox" name="hero_btn2_target" value="_blank" <?= get_h_val('hero_btn2_target', '_self') === '_blank' ? 'checked' : '' ?> class="w-4 h-4 text-indigo-600 rounded border-gray-300 focus:ring-indigo-500">
+              <span class="text-xs text-gray-600">Open in new tab (<code class="text-[11px]">_blank</code>)</span>
+            </label>
+          </div>
+        </div>
       </div>
     </div>
   </div>
@@ -868,9 +955,9 @@ require_once __DIR__ . '/admin_header.php';
               <td class="py-2.5 px-4 text-gray-500 font-mono"><?= date('d M Y, h:i A', strtotime($vh['created_at'])) ?></td>
               <td class="py-2.5 px-4 text-right">
                 <a href="/admin/hero_customizer.php?action=rollback&version_id=<?= $vh['id'] ?>" 
-                  onclick="return confirm('क्या आप निश्चित रूप से संस्करण #<?= $vh['version_num'] ?> पर वापस लौटना चाहते हैं?');"
+                  onclick="return confirm('Are you sure you want to restore Version #<?= $vh['version_num'] ?>?');"
                   class="px-3 py-1 bg-stone-100 hover:bg-stone-200 text-stone-800 font-bold rounded-lg text-[11px] transition inline-flex items-center gap-1">
-                  <i class="fa-solid fa-rotate-left text-[10px]"></i> रीस्टोर करें
+                  <i class="fa-solid fa-rotate-left text-[10px]"></i> Restore
                 </a>
               </td>
             </tr>
@@ -1128,7 +1215,7 @@ function loadPreset(key) {
   document.getElementById('hero_tag1_title').value = p.tag1_title;
   document.getElementById('hero_tag1_subtitle').value = p.tag1_sub;
 
-  alert('प्रीसेट (' + key.toUpperCase() + ') लोड हो गया! कृपया नीचे "सहेजें" बटन पर क्लिक करें।');
+  alert('Preset (' + key.toUpperCase() + ') loaded! Please click "Save Changes" below to apply.');
 }
 
 function openPreviewModal() {

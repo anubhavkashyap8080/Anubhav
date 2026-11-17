@@ -22,13 +22,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['add_coupon'])) {
     $expiry_date = clean_input($_POST['expiry_date'] ?? '');
 
     if (empty($code) || empty($title) || $discount_value <= 0) {
-        set_flash('error', 'कृपया कूपन कोड, शीर्षक एवं वैध डिस्काउंट वैल्यू दर्ज करें।');
+        set_flash('error', 'Please enter a valid coupon code, title, and discount value.');
     } else {
         try {
             $stmt_chk = $pdo->prepare("SELECT id FROM coupons WHERE code = ?");
             $stmt_chk->execute([$code]);
             if ($stmt_chk->fetch()) {
-                set_flash('error', "कूपन कोड '$code' पहले से ही मौजूद है। कृपया दूसरा कोड चुनें।");
+                set_flash('error', "Coupon code '$code' already exists. Please choose a different code.");
             } else {
                 $stmt_ins = $pdo->prepare("
                     INSERT INTO coupons (code, title, description, discount_type, discount_value, min_order_amount, max_discount, coupon_type, usage_limit, expiry_date, status)
@@ -39,12 +39,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['add_coupon'])) {
                     $min_order_amount, $max_discount, $coupon_type, $usage_limit,
                     !empty($expiry_date) ? $expiry_date : null
                 ]);
-                set_flash('success', "नया कूपन कोड '$code' सफलतापूर्वक बना दिया गया है!");
+                set_flash('success', "Coupon code '$code' created successfully.");
                 header('Location: /admin/coupons.php');
                 exit;
             }
         } catch (Exception $e) {
-            set_flash('error', 'त्रुटि: ' . $e->getMessage());
+            set_flash('error', 'Error saving coupon. Please try again.');
         }
     }
 }
@@ -58,7 +58,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
     $new = ($cur === 'active') ? 'inactive' : 'active';
     $pdo->prepare("UPDATE coupons SET status = ? WHERE id = ?")->execute([$new, $id]);
     log_audit_action('coupon_toggle_status', 'coupons', 'coupon', $id, "Status changed to {$new}");
-    set_flash('success', 'कूपन स्थिति अपडेट की गई: ' . $new);
+    set_flash('success', 'Coupon status updated to ' . $new . '.');
     header('Location: /admin/coupons.php');
     exit;
 }
@@ -68,7 +68,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
     $id = intval($_POST['delete_id'] ?? 0);
     $pdo->prepare("DELETE FROM coupons WHERE id = ?")->execute([$id]);
     log_audit_action('coupon_delete', 'coupons', 'coupon', $id, 'Coupon deleted');
-    set_flash('success', 'कूपन सफलतापूर्वक हटा दिया गया।');
+    set_flash('success', 'Coupon deleted successfully.');
     header('Location: /admin/coupons.php');
     exit;
 }
@@ -76,7 +76,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
 // Reject Insecure GET Mutating Requests
 if (isset($_GET['delete_id']) || isset($_GET['toggle_status'])) {
     http_response_code(405);
-    set_flash('error', 'अमान्य अनुरोध विधि (GET अस्वीकृत)। कृपया फ़ॉर्म या बटन का उपयोग करें।');
+    set_flash('error', 'Invalid request method. Only POST requests are allowed.');
     header('Location: /admin/coupons.php');
     exit;
 }
@@ -94,7 +94,7 @@ $stmt_usages = $pdo->query("
 ");
 $usages = $stmt_usages->fetchAll();
 
-$page_title = 'कूपन एवं प्रोमो कोड प्रबंधन (Coupons & Promo Codes)';
+$page_title = 'Coupons & Promo Codes — Super Admin';
 require_once __DIR__ . '/admin_header.php';
 ?>
 
@@ -246,11 +246,11 @@ require_once __DIR__ . '/admin_header.php';
               </td>
 
               <td class="px-4 py-3.5 text-right whitespace-nowrap">
-                <form action="/admin/coupons.php" method="POST" class="inline" onsubmit="return confirm('क्या आप वाकई इस कूपन को हटाना चाहते हैं?');">
+                <form action="/admin/coupons.php" method="POST" class="inline" onsubmit="return confirm('Are you sure you want to delete this coupon?');">
                   <?= csrf_field() ?>
                   <input type="hidden" name="action" value="delete_coupon">
                   <input type="hidden" name="delete_id" value="<?= $c['id'] ?>">
-                  <button type="submit" class="p-1.5 text-gray-400 hover:text-red-600 rounded hover:bg-red-50 transition cursor-pointer" title="डिलीट करें">
+                  <button type="submit" class="p-1.5 text-gray-400 hover:text-red-600 rounded hover:bg-red-50 transition cursor-pointer" title="Delete">
                     <i class="fa-regular fa-trash-can"></i>
                   </button>
                 </form>

@@ -4,7 +4,7 @@
  * Immutable record of all administrative, financial, and security actions
  */
 
-$page_title = 'प्रशासनिक ऑडिट लॉग्स (Audit Trail)';
+$page_title = 'Audit Logs — Super Admin';
 require_once __DIR__ . '/admin_header.php';
 
 // Strict Super Admin Clearance

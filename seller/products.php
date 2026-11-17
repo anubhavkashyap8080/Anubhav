@@ -39,13 +39,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['add_product'])) {
     $description = clean_input($_POST['description'] ?? '');
 
     if (empty($name) || $price <= 0) {
-        set_flash('error', 'कृपया मान्य उत्पाद नाम और मूल्य दर्ज करें।');
+        set_flash('error', 'Please enter a valid product name and price.');
         header('Location: /seller/products.php');
         exit;
     }
 
     if (!empty($image_url) && !is_valid_product_image_url($image_url)) {
-        set_flash('error', 'अमान्य छवि URL। केवल स्थानीय अपलोड या अनुमत HTTPS CDN छवियां ही मान्य हैं।');
+        set_flash('error', 'Invalid image URL. Only local uploads or allowed HTTPS CDN images are valid.');
         header('Location: /seller/products.php');
         exit;
     }
@@ -93,12 +93,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['add_product'])) {
             $bulk_available, $bulk_moq, $bulk_price, $bulk_tier2_qty, $bulk_tier2_price, $bulk_packaging_desc, $bulk_lead_time_days
         ]);
         log_audit_action('seller_product_created', 'products', "Vendor #{$vendor_id} added product {$name} ({$code})");
-        set_flash('success', 'नया उत्पाद "' . htmlspecialchars($name, ENT_QUOTES, 'UTF-8') . '" सफलतापूर्वक कैटलॉग में जोड़ा गया!');
+        set_flash('success', 'New product "' . htmlspecialchars($name, ENT_QUOTES, 'UTF-8') . '" added to catalog successfully.');
         header('Location: /seller/products.php');
         exit;
     } catch (Exception $e) {
         error_log("Seller add product error: " . $e->getMessage());
-        set_flash('error', 'उत्पाद जोड़ने में त्रुटि हुई। कृपया पुनः प्रयास करें।');
+        set_flash('error', 'Error adding product. Please try again.');
     }
 }
 
@@ -119,7 +119,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['edit_product'])) {
 
     if ($pid > 0 && !empty($name) && $price > 0) {
         if (!empty($image_url) && !is_valid_product_image_url($image_url)) {
-            set_flash('error', 'अमान्य छवि URL। केवल स्थानीय अपलोड या अनुमत HTTPS CDN छवियां ही मान्य हैं।');
+            set_flash('error', 'Invalid image URL. Only local uploads or allowed HTTPS CDN images are valid.');
             header('Location: /seller/products.php');
             exit;
         }
@@ -156,14 +156,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['edit_product'])) {
             $stmt = $pdo->prepare($sql_up);
             $stmt->execute($params);
             log_audit_action('seller_product_updated', 'products', "Vendor #{$vendor_id} updated product #{$pid} ({$name})");
-            set_flash('success', 'उत्पाद "' . htmlspecialchars($name, ENT_QUOTES, 'UTF-8') . '" सफलतापूर्वक अपडेट किया गया!');
+            set_flash('success', 'Product "' . htmlspecialchars($name, ENT_QUOTES, 'UTF-8') . '" updated successfully.');
             header('Location: /seller/products.php');
             exit;
         } catch (Exception $e) {
-            set_flash('error', 'उत्पाद अपडेट करने में त्रुटि: ' . $e->getMessage());
+            set_flash('error', 'Error updating product. Please try again.');
         }
     } else {
-        set_flash('error', 'अमान्य उत्पाद विवरण या शून्य मूल्य।');
+        set_flash('error', 'Invalid product details or price.');
     }
 }
 
@@ -171,14 +171,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['edit_product'])) {
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['bulk_import_csv'])) {
     csrf_protect();
     if (!isset($_FILES['csv_file']) || $_FILES['csv_file']['error'] !== UPLOAD_ERR_OK) {
-        set_flash('error', 'कृपया एक मान्य CSV फ़ाइल अपलोड करें।');
+        set_flash('error', 'Please upload a valid CSV file.');
     } elseif ($_FILES['csv_file']['size'] > 1024 * 1024) {
-        set_flash('error', 'CSV फ़ाइल का आकार 1MB से कम होना चाहिए।');
+        set_flash('error', 'CSV file size must not exceed 1 MB.');
     } else {
         $file_path = $_FILES['csv_file']['tmp_name'];
         $ext = strtolower(pathinfo($_FILES['csv_file']['name'], PATHINFO_EXTENSION));
         if ($ext !== 'csv') {
-            set_flash('error', 'कृपया केवल CSV (.csv) फ़ाइल चुनें।');
+            set_flash('error', 'Please select a valid CSV (.csv) file.');
             header('Location: /seller/products.php');
             exit;
         }
@@ -250,7 +250,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['bulk_import_csv'])) {
             }
             fclose($handle);
             log_audit_action('seller_bulk_import', 'products', 'import', null, "Vendor #{$vendor_id} imported {$imported_count} products via CSV (parsed {$row_idx} rows)");
-            set_flash('success', "सफलतापूर्वक {$imported_count} उत्पाद बल्क में कैटलॉग में जोड़े गए!");
+            set_flash('success', "Successfully imported {$imported_count} bulk products into catalog.");
             header('Location: /seller/products.php');
             exit;
         }
@@ -264,7 +264,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
     $prod_id = intval($_POST['product_id'] ?? 0);
 
     if ($prod_id <= 0) {
-        set_flash('error', 'अमान्य उत्पाद अनुरोध।');
+        set_flash('error', 'Invalid product request.');
         header('Location: /seller/products.php');
         exit;
     }
@@ -277,7 +277,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
             $new_status = ($curr === 'In Stock') ? 'Out of Stock' : 'In Stock';
             $pdo->prepare("UPDATE products SET stock_status = ? WHERE id = ? AND vendor_id = ?")->execute([$new_status, $prod_id, $vendor_id]);
             log_audit_action('seller_stock_toggle', 'products', "Vendor #{$vendor_id} toggled product #{$prod_id} to {$new_status}");
-            set_flash('success', 'उत्पाद स्टॉक स्थिति अपडेट की गई।');
+            set_flash('success', 'Product stock status updated.');
         }
         header('Location: /seller/products.php');
         exit;
@@ -287,7 +287,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
         $stmt = $pdo->prepare("DELETE FROM products WHERE id = ? AND vendor_id = ?");
         $stmt->execute([$prod_id, $vendor_id]);
         log_audit_action('seller_product_deleted', 'products', "Vendor #{$vendor_id} deleted product #{$prod_id}");
-        set_flash('success', 'उत्पाद कैटलॉग से हटा दिया गया।');
+        set_flash('success', 'Product removed from catalog.');
         header('Location: /seller/products.php');
         exit;
     }
@@ -352,7 +352,7 @@ if (isset($_GET['export']) && $_GET['export'] === 'csv') {
     exit;
 }
 
-$page_title = 'उत्पाद सूची एवं कैटलॉग (Product Catalog)';
+$page_title = 'Product Catalog — Seller Portal';
 require_once __DIR__ . '/seller_header.php';
 ?>
 
@@ -536,11 +536,11 @@ require_once __DIR__ . '/seller_header.php';
                 <a href="/product.php?id=<?= $p['id'] ?>" target="_blank" class="p-1.5 text-stone-400 hover:text-stone-700 rounded hover:bg-stone-100 transition" title="लाइव उत्पाद देखें">
                   <i class="fa-solid fa-arrow-up-right-from-square"></i>
                 </a>
-                <form method="POST" action="/seller/products.php" class="inline" onsubmit="return confirm('क्या आप इस उत्पाद को हटाना चाहते हैं?')">
+                <form method="POST" action="/seller/products.php" class="inline" onsubmit="return confirm('Are you sure you want to delete this product? This cannot be undone.')">
                   <input type="hidden" name="csrf_token" value="<?= csrf_token() ?>">
                   <input type="hidden" name="action" value="delete_product">
                   <input type="hidden" name="product_id" value="<?= $p['id'] ?>">
-                  <button type="submit" class="p-1.5 text-stone-400 hover:text-red-600 rounded hover:bg-red-50 transition cursor-pointer" title="हटाएं">
+                  <button type="submit" class="p-1.5 text-stone-400 hover:text-red-600 rounded hover:bg-red-50 transition cursor-pointer" title="Delete">
                     <i class="fa-regular fa-trash-can"></i>
                   </button>
                 </form>

@@ -13,7 +13,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     csrf_protect();
 }
 
-$page_title = 'SEO रीडायरेक्ट्स एवं 404 एरर मॉनिटरिंग (Redirects & 404 Logs)';
+$page_title = 'SEO Redirects & 404 Logs — Super Admin';
 
 // Handle Add / Update Redirect
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['save_redirect'])) {
@@ -25,24 +25,24 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['save_redirect'])) {
     $status = ($_POST['status'] ?? 'active') === 'inactive' ? 'inactive' : 'active';
 
     if (empty($source_path) || empty($target_url)) {
-        set_flash('error', 'स्रोत पथ (Source Path) एवं लक्ष्य URL (Target URL) अनिवार्य हैं।');
+        set_flash('error', 'Source path and target URL are required.');
     } else {
         try {
             if ($id > 0) {
                 $stmt = $pdo->prepare("UPDATE seo_redirects SET source_path = ?, target_url = ?, status_code = ?, status = ? WHERE id = ?");
                 $stmt->execute([$source_path, $target_url, $status_code, $status, $id]);
                 log_audit_action('seo_redirect_updated', 'seo', "Updated redirect #{$id} from {$source_path} to {$target_url} ({$status_code})");
-                set_flash('success', 'रीडायरेक्ट सफलतापूर्वक अपडेट किया गया!');
+                set_flash('success', 'Redirect rule updated successfully.');
             } else {
                 $stmt = $pdo->prepare("INSERT INTO seo_redirects (source_path, target_url, status_code, status) VALUES (?, ?, ?, ?)");
                 $stmt->execute([$source_path, $target_url, $status_code, $status]);
                 log_audit_action('seo_redirect_created', 'seo', "Created redirect from {$source_path} to {$target_url} ({$status_code})");
-                set_flash('success', 'नया रीडायरेक्ट नियम सफलतापूर्वक जोड़ा गया!');
+                set_flash('success', 'New redirect rule added successfully.');
             }
             header('Location: /admin/seo_redirects.php');
             exit;
         } catch (Exception $e) {
-            set_flash('error', 'डेटाबेस त्रुटि: ' . $e->getMessage());
+            set_flash('error', 'Error saving redirect rule. Please try again.');
         }
     }
 }
@@ -54,11 +54,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
         $stmt = $pdo->prepare("DELETE FROM seo_redirects WHERE id = ?");
         $stmt->execute([$del_id]);
         log_audit_action('seo_redirect_deleted', 'seo', 'redirect', $del_id, "Deleted redirect #{$del_id}");
-        set_flash('success', 'रीडायरेक्ट नियम हटा दिया गया।');
+        set_flash('success', 'Redirect rule deleted successfully.');
         header('Location: /admin/seo_redirects.php');
         exit;
     } catch (Exception $e) {
-        set_flash('error', 'हटाने में त्रुटि: ' . $e->getMessage());
+        set_flash('error', 'Error deleting redirect rule. Please try again.');
     }
 }
 
@@ -69,18 +69,18 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
         $stmt = $pdo->prepare("UPDATE seo_404_logs SET resolved = 1 WHERE id = ?");
         $stmt->execute([$res_id]);
         log_audit_action('seo_404_resolved', 'seo', '404_log', $res_id, "Resolved 404 error #{$res_id}");
-        set_flash('success', '404 एरर को रिसॉल्व्ड मार्क किया गया।');
+        set_flash('success', '404 error marked as resolved.');
         header('Location: /admin/seo_redirects.php?tab=404');
         exit;
     } catch (Exception $e) {
-        set_flash('error', 'त्रुटि: ' . $e->getMessage());
+        set_flash('error', 'Error updating 404 error status.');
     }
 }
 
 // Reject Insecure GET Mutating Requests
 if (isset($_GET['delete_redirect']) || isset($_GET['resolve_404'])) {
     http_response_code(405);
-    set_flash('error', 'अमान्य अनुरोध विधि (GET अस्वीकृत)। कृपया फ़ॉर्म या बटन का उपयोग करें।');
+    set_flash('error', 'Invalid request method. Only POST requests are allowed.');
     header('Location: /admin/seo_redirects.php');
     exit;
 }
@@ -243,11 +243,11 @@ require_once __DIR__ . '/admin_header.php';
                       <button type="button" onclick="editRedirect(<?= htmlspecialchars(json_encode($r)) ?>)" class="p-1.5 text-gray-500 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg transition" title="एडिट करें">
                         <i class="fa-solid fa-pen text-xs"></i>
                       </button>
-                      <form action="/admin/seo_redirects.php" method="POST" class="inline" onsubmit="return confirm('क्या आप इस रीडायरेक्ट को हटाना चाहते हैं?');">
+                      <form action="/admin/seo_redirects.php" method="POST" class="inline" onsubmit="return confirm('Are you sure you want to delete this redirect rule?');">
                         <?= csrf_field() ?>
                         <input type="hidden" name="action" value="delete_redirect">
                         <input type="hidden" name="redirect_id" value="<?= $r['id'] ?>">
-                        <button type="submit" class="p-1.5 text-gray-500 hover:text-red-600 hover:bg-red-50 rounded-lg transition cursor-pointer" title="हटाएं">
+                        <button type="submit" class="p-1.5 text-gray-500 hover:text-red-600 hover:bg-red-50 rounded-lg transition cursor-pointer" title="Delete">
                           <i class="fa-solid fa-trash text-xs"></i>
                         </button>
                       </form>

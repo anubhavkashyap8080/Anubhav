@@ -23,7 +23,7 @@ session_destroy();
 session_start();
 $_SESSION['flash'] = [
     'type' => 'success',
-    'message' => 'आप सफलतापूर्वक लॉगआउट हो चुके हैं। (You have been safely logged out).'
+    'message' => 'You have been safely logged out.'
 ];
 
 header('Location: /login.php');

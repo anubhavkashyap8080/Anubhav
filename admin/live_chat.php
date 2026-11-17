@@ -10,7 +10,7 @@ $is_support_authorized = in_array($admin_user['role'], ['super_admin', 'admin', 
                          strpos(strtolower($admin_user['department'] ?? ''), 'support') !== false;
 
 if (!$is_support_authorized) {
-    set_flash('error', 'लाइव चैट कंसोल केवल सुपर एडमिन, एडमिन और सपोर्ट टीम के लिए अधिकृत है।');
+    set_flash('error', 'Live chat console is restricted to administrators and support staff.');
     header('Location: /admin/index.php');
     exit;
 }

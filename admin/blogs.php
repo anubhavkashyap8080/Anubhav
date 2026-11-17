@@ -30,7 +30,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['save_blog'])) {
     $status = clean_input($_POST['status'] ?? 'published');
 
     if (empty($title) || empty($content)) {
-        set_flash('error', 'कृपया ब्लॉग का शीर्षक एवं सामग्री अनिवार्य रूप से भरें।');
+        set_flash('error', 'Please enter both the blog title and content.');
     } else {
         try {
             if ($blog_id > 0) {
@@ -42,7 +42,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['save_blog'])) {
                 ");
                 $stmt->execute([$title, $hindi_title, $slug, $category, $author_name, $image, $excerpt, $content, $tags, $status, $blog_id]);
                 log_audit_action('blog_update', 'blogs', 'blog', $blog_id, "Updated blog: {$title}");
-                set_flash('success', 'ब्लॉग लेख सफलतापूर्वक अपडेट किया गया!');
+                set_flash('success', 'Blog post updated successfully.');
             } else {
                 $stmt = $pdo->prepare("
                     INSERT INTO blogs (title, hindi_title, slug, category, author_name, image, excerpt, content, tags, status)
@@ -51,12 +51,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['save_blog'])) {
                 $stmt->execute([$title, $hindi_title, $slug, $category, $author_name, $image, $excerpt, $content, $tags, $status]);
                 $new_id = $pdo->lastInsertId();
                 log_audit_action('blog_create', 'blogs', 'blog', $new_id, "Created blog: {$title}");
-                set_flash('success', 'नया ब्लॉग लेख सफलतापूर्वक प्रकाशित किया गया!');
+                set_flash('success', 'New blog post published successfully.');
             }
             header('Location: /admin/blogs.php');
             exit;
         } catch (Exception $e) {
-            set_flash('error', 'त्रुटि: ' . $e->getMessage());
+            set_flash('error', 'Error saving blog post. Please try again.');
         }
     }
 }
@@ -70,7 +70,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
     $new_st = ($st === 'published') ? 'draft' : 'published';
     $pdo->prepare("UPDATE blogs SET status = ? WHERE id = ?")->execute([$new_st, $bid]);
     log_audit_action('blog_toggle_status', 'blogs', 'blog', $bid, "Status changed to {$new_st}");
-    set_flash('success', 'ब्लॉग स्थिति बदली गई: ' . $new_st);
+    set_flash('success', 'Blog status updated to ' . $new_st . '.');
     header('Location: /admin/blogs.php');
     exit;
 }
@@ -80,7 +80,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
     $del_id = intval($_POST['delete_id'] ?? 0);
     $pdo->prepare("DELETE FROM blogs WHERE id = ?")->execute([$del_id]);
     log_audit_action('blog_delete', 'blogs', 'blog', $del_id, 'Blog post deleted');
-    set_flash('success', 'ब्लॉग लेख सफलतापूर्वक हटा दिया गया।');
+    set_flash('success', 'Blog post deleted successfully.');
     header('Location: /admin/blogs.php');
     exit;
 }
@@ -88,7 +88,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
 // Reject Insecure GET Mutating Requests
 if (isset($_GET['delete_id']) || isset($_GET['toggle_status'])) {
     http_response_code(405);
-    set_flash('error', 'अमान्य अनुरोध विधि (GET अस्वीकृत)। कृपया फ़ॉर्म या बटन का उपयोग करें।');
+    set_flash('error', 'Invalid request method. Only POST requests are allowed.');
     header('Location: /admin/blogs.php');
     exit;
 }
@@ -96,7 +96,7 @@ if (isset($_GET['delete_id']) || isset($_GET['toggle_status'])) {
 // Fetch all blogs
 $blogs = $pdo->query("SELECT * FROM blogs ORDER BY id DESC")->fetchAll();
 
-$page_title = 'ब्लॉग एवं संपादकीय प्रबंधन (Editorial CMS)';
+$page_title = 'Blog & Editorial CMS — Super Admin';
 require_once __DIR__ . '/admin_header.php';
 ?>
 
@@ -191,11 +191,11 @@ require_once __DIR__ . '/admin_header.php';
                 class="p-1.5 text-gray-400 hover:text-indigo-600 rounded hover:bg-indigo-50 transition" title="एडिट करें">
                 <i class="fa-regular fa-pen-to-square"></i>
               </button>
-              <form action="/admin/blogs.php" method="POST" class="inline" onsubmit="return confirm('क्या आप वाकई इस ब्लॉग लेख को हटाना चाहते हैं?');">
+              <form action="/admin/blogs.php" method="POST" class="inline" onsubmit="return confirm('Are you sure you want to delete this blog post? This cannot be undone.');">
                 <?= csrf_field() ?>
                 <input type="hidden" name="action" value="delete_blog">
                 <input type="hidden" name="delete_id" value="<?= $b['id'] ?>">
-                <button type="submit" class="p-1.5 text-gray-400 hover:text-red-600 rounded hover:bg-red-50 transition cursor-pointer" title="हटाएं">
+                <button type="submit" class="p-1.5 text-gray-400 hover:text-red-600 rounded hover:bg-red-50 transition cursor-pointer" title="Delete">
                   <i class="fa-regular fa-trash-can"></i>
                 </button>
               </form>

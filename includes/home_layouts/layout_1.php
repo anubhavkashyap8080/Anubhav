@@ -114,16 +114,31 @@
           <?= htmlspecialchars(get_setting('hero_subtitle', 'Discover high-durability hand-forged agricultural sickles, garden khurpis, pure unpolished Awadh pulses, Banarasi mustard oil pickles, eco golden jute bags, and handlooms direct from rural Bharat.')) ?>
         </p>
 
+        <?php
+        $h_btn1_show = get_setting('hero_btn1_show', '1') === '1';
+        $h_btn1_text = trim((string)get_setting('hero_btn1_text', 'Explore Marketplace'));
+        $h_btn1_link = get_setting('hero_btn1_link', '/products.php');
+        $h_btn1_target = get_setting('hero_btn1_target', '_self') === '_blank' ? ' target="_blank" rel="noopener noreferrer"' : '';
+
+        $h_btn2_show = get_setting('hero_btn2_show', '1') === '1';
+        $h_btn2_text = trim((string)get_setting('hero_btn2_text', 'Farming & Garden Tools'));
+        $h_btn2_link = get_setting('hero_btn2_link', '/products.php?category=farming-traditional-tools');
+        $h_btn2_target = get_setting('hero_btn2_target', '_self') === '_blank' ? ' target="_blank" rel="noopener noreferrer"' : '';
+        ?>
         <div class="flex flex-wrap items-center justify-center lg:justify-start gap-3 sm:gap-4 pt-1">
-          <a href="<?= htmlspecialchars(get_setting('hero_btn1_link', '/products.php')) ?>"
+          <?php if ($h_btn1_show && $h_btn1_text !== ''): ?>
+          <a href="<?= htmlspecialchars($h_btn1_link) ?>"<?= $h_btn1_target ?>
              class="px-5 sm:px-6 py-3 bg-brand-orange hover:bg-brand-orange-dark text-white font-bold text-xs sm:text-sm rounded-xl shadow-lg hover:shadow-orange-600/30 transition-all flex items-center gap-2 cursor-pointer active:scale-95">
-            <span><?= htmlspecialchars(get_setting('hero_btn1_text', 'Explore Marketplace')) ?></span>
+            <span><?= htmlspecialchars($h_btn1_text) ?></span>
             <i data-lucide="arrow-right" class="w-4 h-4"></i>
           </a>
-          <a href="<?= htmlspecialchars(get_setting('hero_btn2_link', '/products.php?category=farming-traditional-tools')) ?>"
+          <?php endif; ?>
+          <?php if ($h_btn2_show && $h_btn2_text !== ''): ?>
+          <a href="<?= htmlspecialchars($h_btn2_link) ?>"<?= $h_btn2_target ?>
              class="px-5 sm:px-6 py-3 bg-white/10 hover:bg-white/20 border border-white/20 text-white font-semibold text-xs sm:text-sm rounded-xl transition-all flex items-center gap-2">
-            <span><?= htmlspecialchars(get_setting('hero_btn2_text', 'Farming & Garden Tools')) ?></span>
+            <span><?= htmlspecialchars($h_btn2_text) ?></span>
           </a>
+          <?php endif; ?>
           <button type="button" onclick="detectGPSLocation()" class="px-5 py-3 bg-amber-400 hover:bg-amber-500 text-stone-950 font-bold text-xs sm:text-sm rounded-xl transition-all flex items-center gap-1.5 shadow-md cursor-pointer">
             <i data-lucide="crosshair" class="w-4 h-4 text-stone-900"></i>
             <span>Nearby Artisans Near Me</span>

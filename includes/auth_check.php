@@ -27,7 +27,7 @@ function check_admin_idle_timeout($timeout_seconds = 1800) {
             if (session_status() === PHP_SESSION_NONE && !headers_sent()) {
                 session_start();
             }
-            set_flash('error', 'आपकी प्रशासनिक सत्र समयावधि (30 मिनट निष्क्रियता) समाप्त हो गई है। कृपया पुनः लॉगिन करें।');
+            set_flash('error', 'Your session has expired due to 30 minutes of inactivity. Please sign in again.');
             header("Location: /login.php?tab=staff");
             exit;
         }
@@ -87,7 +87,7 @@ function require_permission($permission_slug, $redirect_to = '/admin/index.php')
     require_admin();
     if (!user_has_permission($permission_slug)) {
         record_security_event('permission_denied', ['permission' => $permission_slug, 'user_role' => $_SESSION['user_role'] ?? '']);
-        set_flash('error', 'अनाधिकृत पहुंच: आपके पास इस क्रिया को निष्पादित करने की अनुमति नहीं है (' . htmlspecialchars($permission_slug) . ')।');
+        set_flash('error', 'Access Denied: You do not have permission to perform this action (' . htmlspecialchars($permission_slug) . ').');
         header("Location: $redirect_to");
         exit;
     }

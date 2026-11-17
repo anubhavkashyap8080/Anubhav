@@ -119,16 +119,33 @@ $yt_embed_url = get_youtube_embed_url($yt_setting, 1, true);
           Connect directly with blacksmiths from <?= htmlspecialchars(get_company_name()) ?> in Sandila, handloom weavers in Mallawan, and wood-press oil farmers in Madhoganj. Every rupee paid directly sustains traditional Indian rural families.
         </p>
 
+        <?php
+        $h_btn1_show = get_setting('hero_btn1_show', '1') === '1';
+        $h_btn1_text = trim((string)get_setting('hero_btn1_text', 'Explore All Village Crafts'));
+        $h_btn1_link = get_setting('hero_btn1_link', '/products.php');
+        $h_btn1_target = get_setting('hero_btn1_target', '_self') === '_blank' ? ' target="_blank" rel="noopener noreferrer"' : '';
+
+        $h_btn2_show = get_setting('hero_btn2_show', '1') === '1';
+        $h_btn2_text = trim((string)get_setting('hero_btn2_text', 'Register as Artisan (5-Step)'));
+        $h_btn2_link = get_setting('hero_btn2_link', '/seller-register.php');
+        $h_btn2_target = get_setting('hero_btn2_target', '_self') === '_blank' ? ' target="_blank" rel="noopener noreferrer"' : '';
+        ?>
+        <?php if (($h_btn1_show && $h_btn1_text !== '') || ($h_btn2_show && $h_btn2_text !== '')): ?>
         <div class="flex flex-wrap items-center gap-4 pt-2">
-          <a href="/products.php" class="px-6 py-3.5 bg-amber-500 hover:bg-amber-400 text-stone-950 font-black text-xs sm:text-sm rounded-2xl transition shadow-lg flex items-center gap-2">
-            <span>Explore All Village Crafts</span>
+          <?php if ($h_btn1_show && $h_btn1_text !== ''): ?>
+          <a href="<?= htmlspecialchars($h_btn1_link) ?>"<?= $h_btn1_target ?> class="px-6 py-3.5 bg-amber-500 hover:bg-amber-400 text-stone-950 font-black text-xs sm:text-sm rounded-2xl transition shadow-lg flex items-center gap-2">
+            <span><?= htmlspecialchars($h_btn1_text) ?></span>
             <i data-lucide="arrow-right" class="w-4 h-4"></i>
           </a>
-          <a href="/seller-register.php" class="px-5 py-3.5 bg-stone-800 hover:bg-stone-700 text-white font-bold text-xs sm:text-sm rounded-2xl border border-stone-700 transition flex items-center gap-2">
+          <?php endif; ?>
+          <?php if ($h_btn2_show && $h_btn2_text !== ''): ?>
+          <a href="<?= htmlspecialchars($h_btn2_link) ?>"<?= $h_btn2_target ?> class="px-5 py-3.5 bg-stone-800 hover:bg-stone-700 text-white font-bold text-xs sm:text-sm rounded-2xl border border-stone-700 transition flex items-center gap-2">
             <i data-lucide="store" class="w-4 h-4 text-amber-400"></i>
-            <span>Register as Artisan (5-Step)</span>
+            <span><?= htmlspecialchars($h_btn2_text) ?></span>
           </a>
+          <?php endif; ?>
         </div>
+        <?php endif; ?>
 
         <!-- Trust Badges -->
         <div class="pt-6 border-t border-stone-800 grid grid-cols-3 gap-4">

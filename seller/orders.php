@@ -24,7 +24,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['update_order_status']
     // Item 12: Whitelist allowed order_status values
     $allowed_statuses = ['Confirmed', 'Processing', 'Dispatched', 'Delivered', 'Cancelled'];
     if (!in_array($new_status, $allowed_statuses, true)) {
-        set_flash('error', 'अमान्य आर्डर स्थिति चुनी गई है। (Invalid status selection)');
+        set_flash('error', 'Invalid order status selected.');
         header('Location: /seller/orders.php' . ($order_id ? '?view=' . $order_id : ''));
         exit;
     }
@@ -35,7 +35,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['update_order_status']
     $owned_items = $stmt_check->fetchAll();
     if (empty($owned_items)) {
         record_security_event('idor_attempt', "Vendor #{$vendor_id} attempted unauthorized update on order #{$order_id}");
-        set_flash('error', 'अनाधिकृत कार्रवाई: यह आर्डर आपके विक्रेता खाते से संबद्ध नहीं है।');
+        set_flash('error', 'Unauthorized action: This order is not associated with your seller account.');
         header('Location: /seller/orders.php');
         exit;
     }
@@ -69,11 +69,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['update_order_status']
         }
 
         log_audit_action('seller_order_status_update', 'orders', "Vendor #{$vendor_id} updated order #{$order_id} item_status to {$new_status}");
-        set_flash('success', 'आपके उत्पादों की स्थिति (' . htmlspecialchars($new_status) . ') सफलतापूर्वक अपडेट की गई!');
+        set_flash('success', 'Order status (' . htmlspecialchars($new_status) . ') updated successfully.');
         header('Location: /seller/orders.php?view=' . $order_id);
         exit;
     } catch (Exception $e) {
-        set_flash('error', 'त्रुटि: ' . $e->getMessage());
+        set_flash('error', 'Error updating order status. Please try again.');
     }
 }
 
@@ -143,13 +143,13 @@ if ($view_order_id) {
         $selected_items = $stmt_items->fetchAll();
     } else {
         record_security_event('idor_attempt', "Vendor #{$vendor_id} tried viewing order #{$view_order_id}");
-        set_flash('error', 'आर्डर नहीं मिला अथवा आपको इसे देखने की अनुमति नहीं है।');
+        set_flash('error', 'Order not found or you do not have permission to view it.');
         header('Location: /seller/orders.php');
         exit;
     }
 }
 
-$page_title = 'आर्डर व डिस्पैच प्रबंधन (Orders & India Post Dispatch)';
+$page_title = 'Orders & India Post Dispatch — Seller Portal';
 require_once __DIR__ . '/seller_header.php';
 ?>
 

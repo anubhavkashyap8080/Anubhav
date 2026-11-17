@@ -31,7 +31,7 @@ try {
  * ------------------------------------------------------------------ */
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if (!verify_csrf($_POST['csrf_token'] ?? '')) {
-        set_flash('error', 'सुरक्षा टोकन अमान्य है। पृष्ठ रीफ़्रेश करके पुनः प्रयास करें।');
+        set_flash('error', 'Security token expired. Please refresh the page and try again.');
         header('Location: ' . $self);
         exit;
     }
@@ -42,9 +42,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $hours = max(0, (int)($_POST['hours'] ?? 24));
         $reason = substr(trim((string)($_POST['reason'] ?? 'Blocked by super admin')), 0, 255);
         if (!filter_var($ip, FILTER_VALIDATE_IP)) {
-            set_flash('error', 'अमान्य IP पता।');
+            set_flash('error', 'Invalid IP address.');
         } elseif ($ip === $my_ip) {
-            set_flash('error', 'आप अपना खुद का IP ब्लॉक नहीं कर सकते।');
+            set_flash('error', 'You cannot block your current IP address.');
         } else {
             $until = $hours > 0 ? date('Y-m-d H:i:s', time() + $hours * 3600) : null;
             try {
@@ -53,9 +53,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $st->execute([$ip, $reason, $_SESSION['user_id'] ?? null, $until]);
                 log_audit_action('ip_blocked', 'security', 'ip', $ip, "Blocked $ip " . ($hours > 0 ? "for {$hours}h" : 'permanently') . ": $reason");
                 record_security_event('ip_blocked_manual', ['ip' => $ip, 'hours' => $hours, 'reason' => $reason]);
-                set_flash('success', "IP $ip सफलतापूर्वक ब्लॉक किया गया।");
+                set_flash('success', "IP $ip blocked successfully.");
             } catch (Throwable $e) {
-                set_flash('error', 'IP ब्लॉक करने में त्रुटि हुई।');
+                set_flash('error', 'Error blocking IP address.');
             }
         }
     } elseif ($act === 'unblock_ip') {
@@ -67,10 +67,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             if ($row) {
                 $pdo->prepare("DELETE FROM blocked_ips WHERE id = ?")->execute([$id]);
                 log_audit_action('ip_unblocked', 'security', 'ip', $row['ip_address'], 'IP unblocked');
-                set_flash('success', 'IP ' . $row['ip_address'] . ' अनब्लॉक किया गया।');
+                set_flash('success', 'IP ' . $row['ip_address'] . ' unblocked successfully.');
             }
         } catch (Throwable $e) {
-            set_flash('error', 'अनब्लॉक करने में त्रुटि हुई।');
+            set_flash('error', 'Error unblocking IP address.');
         }
     } elseif ($act === 'purge_logs') {
         $days = max(7, (int)($_POST['days'] ?? 90));
@@ -80,9 +80,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $st->execute([$cutoff]);
             $n = $st->rowCount();
             log_audit_action('security_logs_purged', 'security', 'security_logs', null, "Purged $n security log rows older than $days days");
-            set_flash('success', "$n पुराने सुरक्षा लॉग ($days दिन से पुराने) हटाए गए।");
+            set_flash('success', "$n security log records older than $days days purged successfully.");
         } catch (Throwable $e) {
-            set_flash('error', 'लॉग हटाने में त्रुटि हुई।');
+            set_flash('error', 'Error purging security logs.');
         }
     }
     header('Location: ' . $self);
@@ -216,7 +216,7 @@ function sl_sev_badge($sev) {
     return '<span class="sl-badge" style="background:' . $m[0] . ';color:' . $m[1] . '">' . $m[2] . '</span>';
 }
 
-$page_title = 'उन्नत सुरक्षा लॉग (Advanced Security Logs)';
+$page_title = 'Advanced Security Logs — Super Admin';
 require_once __DIR__ . '/admin_header.php';
 ?>
 
@@ -302,7 +302,7 @@ require_once __DIR__ . '/admin_header.php';
               <?php if (isset($blocked_ip_set[$t['ip_address']])): ?>
                 <span class="sl-badge" style="background:#e7e5e4;color:#44403c">BLOCKED</span>
               <?php elseif ($t['ip_address'] !== $my_ip): ?>
-                <form method="POST" onsubmit="return confirm('IP <?= htmlspecialchars($t['ip_address']) ?> को 24 घंटे के लिए ब्लॉक करें?')">
+                <form method="POST" onsubmit="return confirm('Block IP <?= htmlspecialchars($t['ip_address']) ?> for 24 hours?')">
                   <?= csrf_field() ?><input type="hidden" name="action" value="block_ip">
                   <input type="hidden" name="ip_address" value="<?= htmlspecialchars($t['ip_address']) ?>">
                   <input type="hidden" name="hours" value="24"><input type="hidden" name="reason" value="Blocked from top suspicious IPs">
@@ -336,7 +336,7 @@ require_once __DIR__ . '/admin_header.php';
               <?php if (isset($blocked_ip_set[$sp['ip_address']])): ?>
                 <span class="sl-badge" style="background:#e7e5e4;color:#44403c">BLOCKED</span>
               <?php elseif ($sp['ip_address'] !== $my_ip): ?>
-                <form method="POST" onsubmit="return confirm('इस IP को 24 घंटे के लिए ब्लॉक करें?')">
+                <form method="POST" onsubmit="return confirm('Block this IP address for 24 hours?')">
                   <?= csrf_field() ?><input type="hidden" name="action" value="block_ip">
                   <input type="hidden" name="ip_address" value="<?= htmlspecialchars($sp['ip_address']) ?>">
                   <input type="hidden" name="hours" value="24"><input type="hidden" name="reason" value="Brute-force login attempts">
@@ -430,7 +430,7 @@ require_once __DIR__ . '/admin_header.php';
 <b>User-Agent:</b> <?= htmlspecialchars($l['user_agent']) ?>
 <?php endif; ?></div>
                 <?php if ($l['ip_address'] !== $my_ip && !isset($blocked_ip_set[$l['ip_address']])): ?>
-                  <form method="POST" style="margin-top:6px" onsubmit="return confirm('IP ब्लॉक करें?')">
+                  <form method="POST" style="margin-top:6px" onsubmit="return confirm('Block this IP address?')">
                     <?= csrf_field() ?><input type="hidden" name="action" value="block_ip">
                     <input type="hidden" name="ip_address" value="<?= htmlspecialchars($l['ip_address']) ?>">
                     <input type="hidden" name="hours" value="24"><input type="hidden" name="reason" value="Blocked from log entry #<?= (int)$l['id'] ?>">
@@ -497,15 +497,15 @@ require_once __DIR__ . '/admin_header.php';
     </div>
 
     <div class="sl-card">
-      <div class="sl-h"><span><i class="fa-solid fa-trash-can"></i> लॉग रिटेंशन (पुराने लॉग हटाएं)</span></div>
-      <form method="POST" style="padding:18px" onsubmit="return confirm('चुनी हुई अवधि से पुराने सुरक्षा लॉग स्थायी रूप से हट जाएंगे। जारी रखें?')">
+      <div class="sl-h"><span><i class="fa-solid fa-trash-can"></i> Log Retention (Purge Old Logs)</span></div>
+      <form method="POST" style="padding:18px" onsubmit="return confirm('Security logs older than the selected period will be permanently deleted. Continue?')">
         <?= csrf_field() ?><input type="hidden" name="action" value="purge_logs">
-        <p style="font-size:12px;color:#57534e;margin-bottom:10px">डेटाबेस छोटा रखने के लिए पुराने सुरक्षा लॉग हटाएं। न्यूनतम 7 दिन। यह क्रिया ऑडिट ट्रेल में दर्ज होती है।</p>
+        <p style="font-size:12px;color:#57534e;margin-bottom:10px">Purge older security log records to optimize database size. Minimum 7 days.</p>
         <select class="sl-input" name="days">
-          <option value="30">30 दिन से पुराने</option><option value="60">60 दिन से पुराने</option>
-          <option value="90" selected>90 दिन से पुराने</option><option value="180">180 दिन से पुराने</option><option value="365">1 साल से पुराने</option>
+          <option value="30">Older than 30 days</option><option value="60">Older than 60 days</option>
+          <option value="90" selected>Older than 90 days</option><option value="180">Older than 180 days</option><option value="365">Older than 1 year</option>
         </select>
-        <button class="sl-btn sl-btn-danger" type="submit" style="margin-left:6px">पुराने लॉग हटाएं</button>
+        <button class="sl-btn sl-btn-danger" type="submit" style="margin-left:6px">Purge Logs</button>
       </form>
     </div>
   </div>

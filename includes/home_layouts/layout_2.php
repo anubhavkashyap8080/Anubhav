@@ -144,15 +144,27 @@ $s3_img       = get_setting('slider_slide3_image', 'https://images.unsplash.com/
           <p class="text-xs sm:text-base text-stone-200 leading-relaxed max-w-xl">
             <?= htmlspecialchars($s1_subtitle) ?>
           </p>
+          <?php
+          $h_btn1_show = get_setting('hero_btn1_show', '1') === '1';
+          $h_btn2_show = get_setting('hero_btn2_show', '1') === '1';
+          $h_btn1_target = get_setting('hero_btn1_target', '_self') === '_blank' ? ' target="_blank" rel="noopener noreferrer"' : '';
+          $h_btn2_target = get_setting('hero_btn2_target', '_self') === '_blank' ? ' target="_blank" rel="noopener noreferrer"' : '';
+          ?>
+          <?php if (($h_btn1_show && trim($s1_btn1_text) !== '') || ($h_btn2_show && trim($s1_btn2_text) !== '')): ?>
           <div class="flex flex-wrap items-center gap-3 pt-2">
-            <a href="<?= htmlspecialchars($s1_btn1_link) ?>" class="px-6 py-3.5 bg-amber-500 hover:bg-amber-400 text-stone-950 font-black text-xs sm:text-sm rounded-xl shadow-lg transition flex items-center gap-2">
+            <?php if ($h_btn1_show && trim($s1_btn1_text) !== ''): ?>
+            <a href="<?= htmlspecialchars($s1_btn1_link) ?>"<?= $h_btn1_target ?> class="px-6 py-3.5 bg-amber-500 hover:bg-amber-400 text-stone-950 font-black text-xs sm:text-sm rounded-xl shadow-lg transition flex items-center gap-2">
               <span><?= htmlspecialchars($s1_btn1_text) ?></span>
               <i data-lucide="arrow-right" class="w-4 h-4"></i>
             </a>
-            <a href="<?= htmlspecialchars($s1_btn1_link) ?>" class="px-5 py-3.5 bg-white/10 hover:bg-white/20 text-white font-bold text-xs sm:text-sm rounded-xl transition backdrop-blur-md border border-white/20">
+            <?php endif; ?>
+            <?php if ($h_btn2_show && trim($s1_btn2_text) !== ''): ?>
+            <a href="<?= htmlspecialchars($s1_btn2_link) ?>"<?= $h_btn2_target ?> class="px-5 py-3.5 bg-white/10 hover:bg-white/20 text-white font-bold text-xs sm:text-sm rounded-xl transition backdrop-blur-md border border-white/20">
               <?= htmlspecialchars($s1_btn2_text) ?>
             </a>
+            <?php endif; ?>
           </div>
+          <?php endif; ?>
         </div>
       </div>
     </div>
@@ -174,15 +186,21 @@ $s3_img       = get_setting('slider_slide3_image', 'https://images.unsplash.com/
           <p class="text-xs sm:text-base text-stone-200 leading-relaxed max-w-xl">
             <?= htmlspecialchars($s2_subtitle) ?>
           </p>
+          <?php if (($h_btn1_show && trim($s2_btn1_text) !== '') || ($h_btn2_show && trim($s2_btn2_text) !== '')): ?>
           <div class="flex flex-wrap items-center gap-3 pt-2">
-            <a href="<?= htmlspecialchars($s2_btn1_link) ?>" class="px-6 py-3.5 bg-emerald-600 hover:bg-emerald-500 text-white font-black text-xs sm:text-sm rounded-xl shadow-lg transition flex items-center gap-2">
+            <?php if ($h_btn1_show && trim($s2_btn1_text) !== ''): ?>
+            <a href="<?= htmlspecialchars($s2_btn1_link) ?>"<?= $h_btn1_target ?> class="px-6 py-3.5 bg-emerald-600 hover:bg-emerald-500 text-white font-black text-xs sm:text-sm rounded-xl shadow-lg transition flex items-center gap-2">
               <span><?= htmlspecialchars($s2_btn1_text) ?></span>
               <i data-lucide="arrow-right" class="w-4 h-4"></i>
             </a>
-            <a href="<?= htmlspecialchars($s2_btn2_link) ?>" class="px-5 py-3.5 bg-white/10 hover:bg-white/20 text-white font-bold text-xs sm:text-sm rounded-xl transition backdrop-blur-md border border-white/20">
+            <?php endif; ?>
+            <?php if ($h_btn2_show && trim($s2_btn2_text) !== ''): ?>
+            <a href="<?= htmlspecialchars($s2_btn2_link) ?>"<?= $h_btn2_target ?> class="px-5 py-3.5 bg-white/10 hover:bg-white/20 text-white font-bold text-xs sm:text-sm rounded-xl transition backdrop-blur-md border border-white/20">
               <?= htmlspecialchars($s2_btn2_text) ?>
             </a>
+            <?php endif; ?>
           </div>
+          <?php endif; ?>
         </div>
       </div>
     </div>
@@ -204,15 +222,21 @@ $s3_img       = get_setting('slider_slide3_image', 'https://images.unsplash.com/
           <p class="text-xs sm:text-base text-stone-200 leading-relaxed max-w-xl">
             <?= htmlspecialchars($s3_subtitle) ?>
           </p>
+          <?php if (($h_btn1_show && trim($s3_btn1_text) !== '') || ($h_btn2_show && trim($s3_btn2_text) !== '')): ?>
           <div class="flex flex-wrap items-center gap-3 pt-2">
-            <a href="<?= htmlspecialchars($s3_btn1_link) ?>" class="px-6 py-3.5 bg-amber-500 hover:bg-amber-400 text-stone-950 font-black text-xs sm:text-sm rounded-xl shadow-lg transition flex items-center gap-2">
+            <?php if ($h_btn1_show && trim($s3_btn1_text) !== ''): ?>
+            <a href="<?= htmlspecialchars($s3_btn1_link) ?>"<?= $h_btn1_target ?> class="px-6 py-3.5 bg-amber-500 hover:bg-amber-400 text-stone-950 font-black text-xs sm:text-sm rounded-xl shadow-lg transition flex items-center gap-2">
               <span><?= htmlspecialchars($s3_btn1_text) ?></span>
               <i data-lucide="arrow-right" class="w-4 h-4"></i>
             </a>
-            <a href="<?= htmlspecialchars($s3_btn2_link) ?>" class="px-5 py-3.5 bg-white/10 hover:bg-white/20 text-white font-bold text-xs sm:text-sm rounded-xl transition backdrop-blur-md border border-white/20">
+            <?php endif; ?>
+            <?php if ($h_btn2_show && trim($s3_btn2_text) !== ''): ?>
+            <a href="<?= htmlspecialchars($s3_btn2_link) ?>"<?= $h_btn2_target ?> class="px-5 py-3.5 bg-white/10 hover:bg-white/20 text-white font-bold text-xs sm:text-sm rounded-xl transition backdrop-blur-md border border-white/20">
               <?= htmlspecialchars($s3_btn2_text) ?>
             </a>
+            <?php endif; ?>
           </div>
+          <?php endif; ?>
         </div>
       </div>
     </div>

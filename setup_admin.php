@@ -86,9 +86,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
         $pass_err = '';
         if (empty($identifier) || empty($password)) {
-            $error = 'कृपया यूजरनेम/ईमेल और नया पासवर्ड भरें।';
+            $error = 'Please enter a username or email and new password.';
         } elseif ($password !== $confirm_password) {
-            $error = 'पासवर्ड और पुष्टि पासवर्ड मेल नहीं खाते।';
+            $error = 'Password and confirmation password do not match.';
         } elseif (!is_strong_password($password, $pass_err)) {
             $error = $pass_err;
         } else {
@@ -98,7 +98,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $target_user = $stmt->fetch();
 
                 if (!$target_user) {
-                    $error = 'सुपर एडमिन खाता नहीं मिला। कृपया सही यूजरनेम या ईमेल दर्ज करें।';
+                    $error = 'Super Admin account not found. Please enter a valid username or email.';
                 } else {
                     $hashed_password = password_hash($password, PASSWORD_BCRYPT, ['cost' => 12]);
                     $pdo->prepare("UPDATE users SET password = ?, failed_login_attempts = 0, lockout_until = NULL, password_changed_at = CURRENT_TIMESTAMP WHERE id = ?")->execute([$hashed_password, $target_user['id']]);
@@ -110,12 +110,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     }
                     @unlink(__FILE__);
 
-                    set_flash('success', "सुपर एडमिन (@{$target_user['username']}) का पासवर्ड सफलतापूर्वक अपडेट कर दिया गया है! अब लॉगिन करें।");
+                    set_flash('success', "Super Admin password for @{$target_user['username']} updated successfully. Please sign in.");
                     header('Location: /login.php?tab=staff');
                     exit;
                 }
             } catch (Exception $e) {
-                $error = 'डेटाबेस त्रुटि: ' . $e->getMessage();
+                error_log("Setup admin error: " . $e->getMessage());
+                $error = 'Database error occurred. Please try again.';
             }
         }
     } else {
@@ -128,13 +129,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
         $pass_err = '';
         if (empty($name) || empty($username) || empty($email) || empty($password)) {
-            $error = 'कृपया सभी आवश्यक फ़ील्ड भरें।';
+            $error = 'Please fill in all required fields.';
         } elseif (!preg_match('/^[a-z0-9_]{3,30}$/', $username)) {
-            $error = 'यूजरनेम केवल छोटे अक्षरों, संख्याओं और अंडरस्कोर (_) का हो सकता है (3 से 30 अक्षर)।';
+            $error = 'Username may only contain lowercase letters, numbers, and underscores (3-30 characters).';
         } elseif (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
-            $error = 'कृपया एक मान्य ईमेल पता दर्ज करें।';
+            $error = 'Please enter a valid email address.';
         } elseif ($password !== $confirm_password) {
-            $error = 'पासवर्ड और पुष्टि पासवर्ड मेल नहीं खाते।';
+            $error = 'Password and confirmation password do not match.';
         } elseif (!is_strong_password($password, $pass_err)) {
             $error = $pass_err;
         } else {
@@ -142,7 +143,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $stmt_chk = $pdo->prepare("SELECT id FROM users WHERE username = ? OR email = ?");
                 $stmt_chk->execute([$username, $email]);
                 if ($stmt_chk->fetch()) {
-                    $error = 'यह यूजरनेम या ईमेल पहले से किसी अन्य खाते में दर्ज है।';
+                    $error = 'This username or email is already registered to another account.';
                 } else {
                     $unique_code = 'GGH-SA-' . bin2hex(random_bytes(3));
                     $hashed_password = password_hash($password, PASSWORD_BCRYPT, ['cost' => 12]);
@@ -161,12 +162,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     }
                     @unlink(__FILE__);
 
-                    set_flash('success', "सुपर एडमिन खाता (@$username) सफलतापूर्वक बनाया गया! यह सेटअप स्क्रिप्ट स्वतः डिलीट कर दी गई है।");
+                    set_flash('success', "Super Admin account @$username created successfully. This setup script has been deleted.");
                     header('Location: /login.php?tab=staff');
                     exit;
                 }
             } catch (Exception $e) {
-                $error = 'डेटाबेस त्रुटि: ' . $e->getMessage();
+                error_log("Setup admin error: " . $e->getMessage());
+                $error = 'Database error occurred. Please try again.';
             }
         }
     }

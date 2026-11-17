@@ -314,7 +314,41 @@ $active_site_logo = ($use_gif_logo && !empty($logo_gif_url)) ? $logo_gif_url : $
   </div>
 
   <!-- 2. Primary Sticky Header (Unified Full Sticky Header across Desktop & Mobile) -->
-  <header class="sticky top-0 z-40 bg-white border-b border-gray-100 shadow-sm transition-all w-full max-w-full" style="position: -webkit-sticky; position: sticky; top: 0; z-index: 50;">
+  <?php $is_transparent_header = (!empty($ggh_header_variant) && $ggh_header_variant === 'transparent'); ?>
+  <?php if ($is_transparent_header): ?>
+  <style>
+  .ggh-header-transparent {
+    background: rgba(12, 10, 9, 0.45) !important;
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.15) !important;
+    transition: background 0.3s ease, border-color 0.3s ease, box-shadow 0.3s ease;
+  }
+  .ggh-header-transparent.ggh-header-solid {
+    background: rgba(255, 255, 255, 0.98) !important;
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    border-bottom: 1px solid #e5e7eb !important;
+    box-shadow: 0 4px 20px -2px rgba(0, 0, 0, 0.08) !important;
+  }
+  </style>
+  <script>
+  (function() {
+    function handleHeaderScroll() {
+      var h = document.getElementById('ggh-site-header');
+      if (!h) return;
+      if (window.scrollY > 80) {
+        h.classList.add('ggh-header-solid');
+      } else {
+        h.classList.remove('ggh-header-solid');
+      }
+    }
+    window.addEventListener('scroll', handleHeaderScroll, { passive: true });
+    document.addEventListener('DOMContentLoaded', handleHeaderScroll);
+  })();
+  </script>
+  <?php endif; ?>
+  <header id="ggh-site-header" class="sticky top-0 z-40 transition-all duration-300 w-full max-w-full <?= $is_transparent_header ? 'ggh-header-transparent' : 'bg-white border-b border-gray-100 shadow-sm' ?>" style="position: -webkit-sticky; position: sticky; top: 0; z-index: 50;">
     <div class="max-w-7xl mx-auto px-2.5 sm:px-6 lg:px-8 w-full min-w-0">
       <div class="flex items-center justify-between h-16 sm:h-20 lg:h-22 gap-1.5 sm:gap-3 lg:gap-4 w-full min-w-0">
         

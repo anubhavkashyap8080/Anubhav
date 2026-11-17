@@ -29,11 +29,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['save_social_settings'
             $stmt->execute([$k, trim((string)$val)]);
         }
 
-        set_flash('success', 'सोशल लॉगिन (Google & Facebook) सेटिंग्स सफलतापूर्वक सहेज ली गईं!');
+        set_flash('success', 'Social authentication settings saved successfully.');
         header('Location: /admin/social_auth.php');
         exit;
     } catch (Exception $e) {
-        set_flash('error', 'त्रुटि: ' . $e->getMessage());
+        set_flash('error', 'Error saving social authentication settings.');
     }
 }
 
@@ -52,7 +52,7 @@ function get_soc_val($key, $default = '') {
 // Current Host URL for display
 $current_host = defined('SITE_URL') ? rtrim(SITE_URL, '/') : 'https://ganvgalihat.com';
 
-$page_title = 'सोशल लॉगिन एकीकरण (Social Auth Integration) — Super Admin';
+$page_title = 'Social Auth Integration — Super Admin';
 require_once __DIR__ . '/admin_header.php';
 ?>
 

@@ -112,12 +112,20 @@
           Pure Rural Craft & Harvest Bento Hub
         </h1>
       </div>
+      <?php
+      $h_btn1_show = get_setting('hero_btn1_show', '1') === '1';
+      $h_btn1_text = trim((string)get_setting('hero_btn1_text', 'Explore All 100+ Items'));
+      $h_btn1_link = get_setting('hero_btn1_link', '/products.php');
+      $h_btn1_target = get_setting('hero_btn1_target', '_self') === '_blank' ? ' target="_blank" rel="noopener noreferrer"' : '';
+      ?>
+      <?php if ($h_btn1_show && $h_btn1_text !== ''): ?>
       <div>
-        <a href="/products.php" class="inline-flex items-center gap-2 px-4 py-2.5 bg-amber-500 hover:bg-amber-400 text-stone-950 font-black text-xs rounded-xl transition shadow-md">
-          <span>Explore All 100+ Items</span>
+        <a href="<?= htmlspecialchars($h_btn1_link) ?>"<?= $h_btn1_target ?> class="inline-flex items-center gap-2 px-4 py-2.5 bg-amber-500 hover:bg-amber-400 text-stone-950 font-black text-xs rounded-xl transition shadow-md">
+          <span><?= htmlspecialchars($h_btn1_text) ?></span>
           <i data-lucide="arrow-right" class="w-4 h-4"></i>
         </a>
       </div>
+      <?php endif; ?>
     </div>
 
     <!-- Bento Grid Container -->

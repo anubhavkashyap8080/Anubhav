@@ -16,7 +16,7 @@ require_once __DIR__ . '/../includes/functions.php';
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     http_response_code(405);
     log_audit_action('payu_get_rejected', 'orders', 'Rejected non-POST callback to PayU endpoint');
-    set_flash('error', 'अमान्य अनुरोध विधि। केवल POST अनुरोध स्वीकार्य हैं।');
+    set_flash('error', 'Invalid request method. Only POST requests are accepted.');
     header('Location: /checkout.php');
     exit;
 }
@@ -50,7 +50,7 @@ if (empty($payu_money_id)) {
 $expected_key = defined('PAYU_MERCHANT_KEY') ? PAYU_MERCHANT_KEY : (getenv('PAYU_MERCHANT_KEY') ?: '');
 if (!empty($expected_key) && !hash_equals($expected_key, $key)) {
     log_audit_action('payu_key_mismatch', 'orders', "PayU key mismatch: expected {$expected_key}, received {$key}");
-    set_flash('error', 'PayU सुरक्षा सत्यापन विफल (Merchant Key Mismatch)।');
+    set_flash('error', 'PayU security verification failed (Merchant Key Mismatch).');
     header('Location: /checkout.php');
     exit;
 }
@@ -58,7 +58,7 @@ if (!empty($expected_key) && !hash_equals($expected_key, $key)) {
 $salt = defined('PAYU_MERCHANT_SALT') ? PAYU_MERCHANT_SALT : '';
 if (empty($salt)) {
     error_log("CRITICAL: PAYU_MERCHANT_SALT is not configured.");
-    set_flash('error', 'PayU गेटवे कॉन्फ़िगरेशन त्रुटि।');
+    set_flash('error', 'PayU gateway configuration error.');
     header('Location: /checkout.php');
     exit;
 }
@@ -80,7 +80,7 @@ if (empty($posted_hash) || !hash_equals($calculated_hash, $posted_hash)) {
         null,
         "PayU SHA-512 cryptographic hash mismatch for txnid {$txnid}"
     );
-    set_flash('error', 'PayU सुरक्षा हैश सत्यापन विफल रहा। लेन-देन अस्वीकृत।');
+    set_flash('error', 'PayU security hash verification failed. Transaction rejected.');
     header('Location: /checkout.php');
     exit;
 }
@@ -101,7 +101,7 @@ try {
 
     if (!$order) {
         log_audit_action('payu_order_not_found', 'orders', "PayU callback order not found for txnid {$txnid}");
-        set_flash('error', 'ऑर्डर संदर्भ सिस्टम में नहीं मिला।');
+        set_flash('error', 'Order reference not found in system.');
         header('Location: /cart.php');
         exit;
     }
@@ -111,7 +111,7 @@ try {
     // 4. Reject replay attack on already completed order
     if ($order['payment_status'] === 'completed') {
         log_audit_action('payu_duplicate_ignored', 'orders', "PayU callback ignored for already paid order #{$order_id}");
-        set_flash('info', 'यह ऑर्डर पहले ही भुगतान हो चुका है।');
+        set_flash('info', 'This order has already been paid.');
         $token = $order['order_access_token'] ?? '';
         header('Location: /order-success.php?id=' . $order_id . ($token ? '&token=' . urlencode($token) : ''));
         exit;
@@ -127,7 +127,7 @@ try {
             'orders',
             "PayU amount mismatch on order #{$order_id}. Expected: {$order_amount_expected}, Received: {$paid_amount_float}"
         );
-        set_flash('error', 'भुगतान राशि में विसंगति पाई गई।');
+        set_flash('error', 'Payment amount discrepancy detected.');
         header('Location: /checkout.php');
         exit;
     }
@@ -153,7 +153,7 @@ try {
 
         if ($update->rowCount() === 0) {
             log_audit_action('payu_replay_blocked', 'orders', 'order', $order_id, 'Duplicate replay attempt prevented on completed order');
-            set_flash('info', 'यह ऑर्डर पहले ही अपडेट हो चुका है।');
+            set_flash('info', 'This order has already been updated.');
             header('Location: /order-success.php?id=' . $order_id . '&token=' . urlencode($access_token));
             exit;
         }
@@ -176,7 +176,7 @@ try {
         unset($_SESSION['pending_payment_order_id']);
 
         log_audit_action('payu_payment_success', 'orders', "Order #{$order_id} verified & completed via PayU (Txn: {$payu_money_id})");
-        set_flash('success', 'PayU भुगतान सफलतापूर्वक प्राप्त हुआ! ऑर्डर संख्या #' . htmlspecialchars($order['order_number'], ENT_QUOTES, 'UTF-8'));
+        set_flash('success', 'PayU payment received successfully! Order #' . htmlspecialchars($order['order_number'], ENT_QUOTES, 'UTF-8'));
         header('Location: /order-success.php?id=' . $order_id . '&token=' . urlencode($access_token));
         exit;
 
@@ -192,14 +192,14 @@ try {
         $update->execute([$order_id]);
 
         log_audit_action('payu_payment_failure', 'orders', "PayU reported status '{$status}' for order #{$order_id}");
-        set_flash('error', 'PayU लेन-देन पूर्ण नहीं हुआ अथवा रद्द कर दिया गया। (Status: ' . htmlspecialchars($status, ENT_QUOTES, 'UTF-8') . ')');
+        set_flash('error', 'PayU transaction was not completed or was cancelled. (Status: ' . htmlspecialchars($status, ENT_QUOTES, 'UTF-8') . ')');
         header('Location: /checkout.php');
         exit;
     }
 
 } catch (Exception $e) {
     error_log("PayU callback database error: " . $e->getMessage());
-    set_flash('error', 'भुगतान प्रसंस्करण के दौरान डेटाबेस त्रुटि हुई।');
+    set_flash('error', 'A database error occurred during payment processing.');
     header('Location: /cart.php');
     exit;
 }
