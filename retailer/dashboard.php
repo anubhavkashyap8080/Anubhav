@@ -8,41 +8,74 @@ require_once __DIR__ . '/retailer_header.php';
 
 $uid = $user['id'];
 
-// Aggregate retailer B2B order statistics
-$stmt_orders = $pdo->prepare("SELECT COUNT(*) FROM orders WHERE user_id = ? AND order_type = 'wholesale_b2b'");
-$stmt_orders->execute([$uid]);
-$total_orders = $stmt_orders->fetchColumn() ?: 0;
+// Aggregate retailer B2B order statistics with robust error handling
+$total_orders = 0;
+$total_spend = 0;
+$active_orders = 0;
+$total_bulk_products = 0;
+$recent_orders = [];
+$wholesale_deals = [];
 
-$stmt_spend = $pdo->prepare("SELECT COALESCE(SUM(total_amount), 0) FROM orders WHERE user_id = ? AND order_type = 'wholesale_b2b' AND status != 'Cancelled' AND order_status != 'Cancelled'");
-$stmt_spend->execute([$uid]);
-$total_spend = $stmt_spend->fetchColumn() ?: 0;
+try {
+    $stmt_orders = $pdo->prepare("SELECT COUNT(*) FROM orders WHERE user_id = ? AND order_type = 'wholesale_b2b'");
+    $stmt_orders->execute([$uid]);
+    $total_orders = (int)($stmt_orders->fetchColumn() ?: 0);
+} catch (Exception $e) {
+    error_log("Retailer Dashboard Orders Count Error: " . $e->getMessage());
+}
 
-$stmt_active = $pdo->prepare("SELECT COUNT(*) FROM orders WHERE user_id = ? AND order_type = 'wholesale_b2b' AND status NOT IN ('Delivered', 'Cancelled') AND order_status NOT IN ('Delivered', 'Cancelled')");
-$stmt_active->execute([$uid]);
-$active_orders = $stmt_active->fetchColumn() ?: 0;
+try {
+    $stmt_spend = $pdo->prepare("SELECT COALESCE(SUM(total_amount), 0) FROM orders WHERE user_id = ? AND order_type = 'wholesale_b2b' AND order_status != 'Cancelled'");
+    $stmt_spend->execute([$uid]);
+    $total_spend = (float)($stmt_spend->fetchColumn() ?: 0);
+} catch (Exception $e) {
+    error_log("Retailer Dashboard Spend Error: " . $e->getMessage());
+}
 
-$stmt_bulk_count = $pdo->query("SELECT COUNT(*) FROM products WHERE bulk_available = 1 AND stock_status = 'In Stock'");
-$total_bulk_products = $stmt_bulk_count->fetchColumn() ?: 0;
+try {
+    $stmt_active = $pdo->prepare("SELECT COUNT(*) FROM orders WHERE user_id = ? AND order_type = 'wholesale_b2b' AND order_status NOT IN ('Delivered', 'Cancelled')");
+    $stmt_active->execute([$uid]);
+    $active_orders = (int)($stmt_active->fetchColumn() ?: 0);
+} catch (Exception $e) {
+    error_log("Retailer Dashboard Active Orders Error: " . $e->getMessage());
+}
+
+try {
+    $stmt_bulk_count = $pdo->query("SELECT COUNT(*) FROM products WHERE bulk_available = 1 AND (status = 'active' OR status IS NULL) AND (stock > 0 OR stock IS NULL)");
+    $total_bulk_products = (int)($stmt_bulk_count->fetchColumn() ?: 0);
+} catch (Exception $e) {
+    error_log("Retailer Dashboard Bulk Count Error: " . $e->getMessage());
+}
 
 // Fetch Recent B2B Wholesale Orders
-$stmt_recent = $pdo->prepare("
-    SELECT * FROM orders 
-    WHERE user_id = ? AND order_type = 'wholesale_b2b' 
-    ORDER BY id DESC LIMIT 5
-");
-$stmt_recent->execute([$uid]);
-$recent_orders = $stmt_recent->fetchAll();
+try {
+    $stmt_recent = $pdo->prepare("
+        SELECT * FROM orders 
+        WHERE user_id = ? AND order_type = 'wholesale_b2b' 
+        ORDER BY id DESC LIMIT 5
+    ");
+    $stmt_recent->execute([$uid]);
+    $recent_orders = $stmt_recent->fetchAll();
+} catch (Exception $e) {
+    error_log("Retailer Dashboard Recent Orders Error: " . $e->getMessage());
+    $recent_orders = [];
+}
 
 // Fetch Featured Wholesale Deals (Products ready for bulk buying)
-$stmt_deals = $pdo->query("
-    SELECT p.*, v.business_name as artisan_vendor, v.district
-    FROM products p
-    LEFT JOIN vendors v ON p.vendor_id = v.id
-    WHERE p.bulk_available = 1 AND p.stock_status = 'In Stock'
-    ORDER BY p.is_featured DESC, p.id DESC
-    LIMIT 6
-");
-$wholesale_deals = $stmt_deals->fetchAll();
+try {
+    $stmt_deals = $pdo->query("
+        SELECT p.*, v.business_name as artisan_vendor, v.district
+        FROM products p
+        LEFT JOIN vendors v ON p.vendor_id = v.id
+        WHERE p.bulk_available = 1 AND (p.status = 'active' OR p.status IS NULL) AND (p.stock > 0 OR p.stock IS NULL)
+        ORDER BY p.is_featured DESC, p.id DESC
+        LIMIT 6
+    ");
+    $wholesale_deals = $stmt_deals->fetchAll();
+} catch (Exception $e) {
+    error_log("Retailer Dashboard Wholesale Deals Error: " . $e->getMessage());
+    $wholesale_deals = [];
+}
 ?>
 
 <!-- Welcome Banner -->
@@ -235,7 +268,7 @@ $wholesale_deals = $stmt_deals->fetchAll();
 
         <div>
           <span class="text-gray-400 block text-[10px]">पंजीकृत मोबाइल:</span>
-          <span class="font-bold text-gray-900">+91 <?= htmlspecialchars($user['phone']) ?></span>
+          <span class="font-bold text-gray-900">+91 <?= htmlspecialchars($user['phone'] ?? '9876543210') ?></span>
         </div>
       </div>
     </div>
@@ -286,17 +319,18 @@ $wholesale_deals = $stmt_deals->fetchAll();
     <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
       <?php foreach ($wholesale_deals as $p): ?>
         <?php
-          $retail_p = floatval($p['price']);
-          $orig_p = floatval($p['original_price'] ?: $retail_p * 1.3);
-          $bulk_p = floatval($p['bulk_price'] ?: ($retail_p * 0.7));
-          $moq = max(1, intval($p['bulk_moq'] ?: 10));
+          $retail_p = floatval($p['price'] ?? 0);
+          $orig_p = floatval($p['original_price'] ?? $p['mrp'] ?? ($retail_p * 1.3));
+          $bulk_p = floatval($p['bulk_price'] ?? ($retail_p * 0.7));
+          $moq = max(1, intval($p['bulk_moq'] ?? 10));
           $margin_pc = $retail_p - $bulk_p;
           $margin_pct = ($retail_p > 0) ? round(($margin_pc / $retail_p) * 100) : 30;
+          $p_img = !empty($p['image_url']) ? $p['image_url'] : (!empty($p['image']) ? $p['image'] : '/placeholder.png');
         ?>
         <div class="bg-white rounded-3xl border border-gray-200/90 shadow-xs hover:shadow-md transition p-4 flex flex-col justify-between">
           <div>
             <div class="relative h-44 rounded-2xl overflow-hidden bg-stone-100 mb-3 border border-stone-200">
-              <img src="<?= htmlspecialchars($p['image']) ?>" alt="<?= htmlspecialchars($p['name']) ?>" class="w-full h-full object-cover">
+              <img src="<?= htmlspecialchars($p_img) ?>" alt="<?= htmlspecialchars($p['name'] ?? 'Product') ?>" class="w-full h-full object-cover">
               <div class="absolute top-2 left-2 bg-stone-900/90 backdrop-blur-xs text-amber-400 px-2 py-0.5 rounded-lg text-[10px] font-black">
                 MOQ: <?= $moq ?> Pieces
               </div>

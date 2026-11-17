@@ -5,6 +5,7 @@
  */
 
 require_once __DIR__ . '/../includes/functions.php';
+require_once __DIR__ . '/../includes/auth_check.php';
 require_once __DIR__ . '/../includes/video_helpers.php';
 
 require_admin();
@@ -169,8 +170,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
 }
 
-// Fetch current configurations
-$global_header_trans = get_setting('v6_header_transparent', '1') === '1';
+// Fetch current configurations (Default to crisp white header)
+$global_header_trans = get_setting('v6_header_transparent', '0') === '1';
 $global_dot_nav      = get_setting('v6_dot_nav', '1') === '1';
 $global_scroll_snap  = get_setting('v6_scroll_snap', '1') === '1';
 $global_data_saver   = get_setting('v6_save_data_pause', '1') === '1';
@@ -261,12 +262,12 @@ require_once __DIR__ . '/admin_header.php';
   <!-- 6 Sections Accordion / Cards -->
   <?php
   $sec_names = [
-      1 => ['Hero Banner', 'fa-award', 'H1 Title, CTA buttons, and Village Forge Heritage'],
-      2 => ['Artisanal Categories', 'fa-shapes', 'Database categories image tiles on video backdrop'],
-      3 => ['Bestsellers Rail', 'fa-fire', 'Horizontal scrollable product rail with quick buy'],
-      4 => ['Curated Spotlight', 'fa-sparkles', 'Asymmetric spotlight product card & featured grid'],
-      5 => ['Village Artisans Story', 'fa-hammer', 'Overlapping portrait cards of master blacksmiths & weavers'],
-      6 => ['Trust & Final CTA', 'fa-shield-heart', 'Delivery promise, reviews, WhatsApp support & shop CTA'],
+      1 => ['Hero Banner (Edge-to-Edge YouTube Video Background)', 'fa-award', 'Full-width & full-height YouTube background video, H1 Title, CTA buttons, and sound toggle'],
+      2 => ['Artisanal Categories (Clean Catalog Grid)', 'fa-shapes', 'Category tiles on clean background directly beneath the Hero'],
+      3 => ['Trending Bestsellers (Clean Product Grid)', 'fa-fire', 'High-contrast product cards with instant Add to Cart and featured sorting'],
+      4 => ['Curated Spotlight (Artisan Showcase)', 'fa-sparkles', 'Master craftsman spotlight card and featured product grid'],
+      5 => ['Village Artisans Story (Artisan Profiles)', 'fa-hammer', 'Master blacksmiths, weavers, and potter profiles on clean layout'],
+      6 => ['Trust & Final CTA (Sourcing Guarantee)', 'fa-shield-heart', '100% genuine promise, fair livelihood, WhatsApp & shop CTA'],
   ];
   ?>
 

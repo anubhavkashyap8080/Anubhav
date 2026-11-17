@@ -26,9 +26,8 @@ if ($requested_layout && in_array($requested_layout, $valid_layouts)) {
     }
 }
 
-if ($active_layout === 'layout_6' && get_setting('v6_header_transparent', '1') === '1') {
-    $ggh_header_variant = 'transparent';
-}
+// Layout 6 uses the consistent, high-contrast crisp white header
+$ggh_header_variant = 'solid';
 
 require_once __DIR__ . '/includes/header.php';
 
@@ -106,7 +105,7 @@ if (!empty($nearest_vendor_ids)) {
         LEFT JOIN categories c ON p.category_id = c.id
         LEFT JOIN vendors v ON p.vendor_id = v.id
         WHERE p.vendor_id IN ($in_clause) AND p.stock > 0
-        ORDER BY p.is_best_seller DESC, p.id DESC
+        ORDER BY p.is_featured DESC, p.id DESC
         LIMIT 8
     ");
     $nearby_products = $stmt->fetchAll();
@@ -123,20 +122,20 @@ if (!empty($nearest_vendor_ids)) {
     unset($np);
 }
 
-// 2. Fetch 4-Box Department Products (Showcase Grid)
-$box1_tools = $pdo->query("SELECT * FROM products WHERE category_id = 1 AND stock > 0 ORDER BY is_best_seller DESC, id ASC LIMIT 4")->fetchAll();
-$box2_pulses = $pdo->query("SELECT * FROM products WHERE category_id = 2 AND stock > 0 ORDER BY is_best_seller DESC, id ASC LIMIT 4")->fetchAll();
-$box3_pickles = $pdo->query("SELECT * FROM products WHERE category_id = 3 AND stock > 0 ORDER BY is_best_seller DESC, id ASC LIMIT 4")->fetchAll();
-$box4_crafts = $pdo->query("SELECT * FROM products WHERE category_id IN (5, 6, 7) AND stock > 0 ORDER BY is_best_seller DESC, id ASC LIMIT 4")->fetchAll();
+// 2. Fetch 4-Box Department Products (Showcase Grid - Featured products first, then latest)
+$box1_tools = $pdo->query("SELECT * FROM products WHERE category_id = 1 AND stock > 0 ORDER BY is_featured DESC, is_best_seller DESC, id DESC LIMIT 4")->fetchAll();
+$box2_pulses = $pdo->query("SELECT * FROM products WHERE category_id = 2 AND stock > 0 ORDER BY is_featured DESC, is_best_seller DESC, id DESC LIMIT 4")->fetchAll();
+$box3_pickles = $pdo->query("SELECT * FROM products WHERE category_id = 3 AND stock > 0 ORDER BY is_featured DESC, is_best_seller DESC, id DESC LIMIT 4")->fetchAll();
+$box4_crafts = $pdo->query("SELECT * FROM products WHERE category_id IN (5, 6, 7) AND stock > 0 ORDER BY is_featured DESC, is_best_seller DESC, id DESC LIMIT 4")->fetchAll();
 
-// 3. Fetch General Bestsellers & Featured Catalog
+// 3. Fetch General Bestsellers & Featured Catalog (Featured products prioritized at the top)
 $stmt = $pdo->query("
     SELECT p.*, c.name as category_name, c.slug as category_slug, v.name as vendor_name, v.location as vendor_location 
     FROM products p 
     LEFT JOIN categories c ON p.category_id = c.id 
     LEFT JOIN vendors v ON p.vendor_id = v.id 
     WHERE p.stock > 0 
-    ORDER BY p.is_best_seller DESC, p.id DESC 
+    ORDER BY p.is_featured DESC, p.is_best_seller DESC, p.id DESC 
     LIMIT 12
 ");
 $featured_products = $stmt->fetchAll();

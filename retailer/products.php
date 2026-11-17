@@ -51,7 +51,7 @@ $sql = "
     FROM products p
     LEFT JOIN categories c ON p.category_id = c.id
     LEFT JOIN vendors v ON p.vendor_id = v.id
-    WHERE p.stock_status = 'In Stock'
+    WHERE (p.status = 'active' OR p.status IS NULL) AND (p.stock > 0 OR p.stock IS NULL)
 ";
 $params = [];
 

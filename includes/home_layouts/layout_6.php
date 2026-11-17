@@ -1,17 +1,14 @@
 <?php
 /**
  * Layout 6: "Video Story Home"
- * Cinematic Full-Screen Edge-to-Edge Background Videos (YouTube nocookie + MP4)
- * Muted, looping, zero visible controls, lazy IntersectionObserver lifecycle,
- * transparent header variant, glass-morphism cards, and mobile data-saver fallback.
+ * - Section 1 (HERO ONLY): Full-width, full-height edge-to-edge background YouTube video (muted, autoplay, loop, controls=0).
+ * - Sections 2-6 (BELOW HERO): Clean, modern high-contrast e-commerce sections on clean white/light backgrounds.
  */
 
 require_once __DIR__ . '/../video_helpers.php';
 
-// Check global options
-$v6_dot_nav     = get_setting('v6_dot_nav', '1') === '1';
-$v6_scroll_snap = get_setting('v6_scroll_snap', '1') === '1';
-$v6_data_saver  = get_setting('v6_save_data_pause', '1') === '1';
+// Global options
+$v6_data_saver = get_setting('v6_save_data_pause', '1') === '1';
 
 // Load configurations for all 6 sections
 $sections = [];
@@ -19,36 +16,37 @@ for ($i = 1; $i <= 6; $i++) {
     $sections[$i] = ggh_v6_get_section_config($i);
 }
 
-// Fetch products for Sections 3 & 4
+// Fetch products for Sections 3 & 4 (Featured products first per user requirement)
 try {
     // S3: Bestsellers / Popular
     $s3_limit = $sections[3]['prod_limit'] ?? 8;
     $s3_stmt = $pdo->prepare("
-        SELECT p.*, v.business_name as vendor_business_name, v.village as vendor_village
+        SELECT p.*, v.business_name as vendor_business_name, v.village as vendor_village, v.district as vendor_district
         FROM products p 
         LEFT JOIN vendors v ON p.vendor_id = v.id 
-        WHERE p.status = 'active'
-        ORDER BY p.is_bestseller DESC, p.views_count DESC, p.id DESC 
+        WHERE (p.status = 'active' OR p.status IS NULL) AND (p.stock > 0 OR p.stock IS NULL)
+        ORDER BY p.is_featured DESC, p.is_best_seller DESC, p.id DESC 
         LIMIT ?
     ");
     $s3_stmt->bindValue(1, $s3_limit, PDO::PARAM_INT);
     $s3_stmt->execute();
     $s3_products = $s3_stmt->fetchAll();
 
-    // S4: Featured / Spotlight
+    // S4: Curated Spotlight / Featured
     $s4_limit = $sections[4]['prod_limit'] ?? 5;
     $s4_stmt = $pdo->prepare("
-        SELECT p.*, v.business_name as vendor_business_name, v.village as vendor_village
+        SELECT p.*, v.business_name as vendor_business_name, v.village as vendor_village, v.district as vendor_district
         FROM products p 
         LEFT JOIN vendors v ON p.vendor_id = v.id 
-        WHERE p.status = 'active'
-        ORDER BY p.is_featured DESC, p.rating DESC, p.id DESC 
+        WHERE (p.status = 'active' OR p.status IS NULL) AND (p.stock > 0 OR p.stock IS NULL)
+        ORDER BY p.is_featured DESC, p.id DESC 
         LIMIT ?
     ");
     $s4_stmt->bindValue(1, $s4_limit, PDO::PARAM_INT);
     $s4_stmt->execute();
     $s4_products = $s4_stmt->fetchAll();
 } catch (Exception $e) {
+    error_log("Layout 6 Product Query Error: " . $e->getMessage());
     $s3_products = [];
     $s4_products = [];
 }
@@ -63,28 +61,20 @@ $active_artisans = array_slice($all_vendors ?? [], 0, $s5_limit);
 ?>
 
 <style>
-/* Layout 6: Video Story Home Base Styles */
-html {
-  <?= $v6_scroll_snap ? 'scroll-snap-type: y proximity;' : '' ?>
-  scroll-behavior: smooth;
-}
-
-.vh-sec {
+/* Section 1: Hero-Only Background Video Styles */
+.vh-hero-section {
   position: relative;
   width: 100%;
-  min-height: 100vh;
-  min-height: 100svh;
-  min-height: 100dvh;
+  min-height: calc(100vh - 72px);
+  min-height: 88vh;
   display: flex;
   align-items: center;
   justify-content: center;
   overflow: hidden;
-  <?= $v6_scroll_snap ? 'scroll-snap-align: start;' : '' ?>
   background-color: #0c0a09;
 }
 
-/* Background Media & Video Layer */
-.vh-media {
+.vh-hero-media {
   position: absolute;
   inset: 0;
   width: 100%;
@@ -94,18 +84,18 @@ html {
   z-index: 1;
 }
 
-.vh-poster {
+.vh-hero-poster {
   position: absolute;
   inset: 0;
   width: 100%;
   height: 100%;
   object-fit: cover;
   object-position: center;
-  transition: opacity 0.7s cubic-bezier(0.4, 0, 0.2, 1);
+  transition: opacity 0.8s ease;
   z-index: 2;
 }
 
-.vh-player-wrap {
+.vh-hero-player-wrap {
   position: absolute;
   inset: 0;
   width: 100%;
@@ -113,16 +103,16 @@ html {
   overflow: hidden;
   z-index: 1;
   opacity: 0;
-  transition: opacity 0.8s ease-in-out;
+  transition: opacity 0.9s ease-in-out;
 }
 
-.vh-player-wrap.vh-loaded {
+.vh-hero-player-wrap.vh-loaded {
   opacity: 1;
 }
 
-/* Cover scaling: forces 16:9 video to fill 100% of viewport without letterboxing */
-.vh-player-wrap iframe,
-.vh-player-wrap video {
+/* Cover scaling: forces 16:9 YouTube video to cover 100% of hero without letterbox */
+.vh-hero-player-wrap iframe,
+.vh-hero-player-wrap video {
   position: absolute;
   top: 50%;
   left: 50%;
@@ -134,164 +124,72 @@ html {
   object-fit: cover;
 }
 
-/* Dark Gradient Overlay for optimal text contrast (WCAG AAA) */
-.vh-overlay {
+.vh-hero-overlay {
   position: absolute;
   inset: 0;
   z-index: 3;
   pointer-events: none;
 }
 
-/* Content Container on Top of Video */
-.vh-content {
+.vh-hero-content {
   position: relative;
   z-index: 4;
   width: 100%;
   max-width: 80rem;
   margin-left: auto;
   margin-right: auto;
-  padding: 6rem 1rem 4rem 1rem;
+  padding: 5rem 1.5rem 4rem 1.5rem;
 }
 
 @media (min-width: 640px) {
-  .vh-content {
-    padding: 7rem 1.5rem 5rem 1.5rem;
+  .vh-hero-content {
+    padding: 6rem 2rem 5rem 2rem;
   }
-}
-
-/* Glass-morphism Cards with Solid Color Fallbacks */
-.vh-glass {
-  background: rgba(18, 18, 18, 0.78);
-  backdrop-filter: blur(14px);
-  -webkit-backdrop-filter: blur(14px);
-  border: 1px solid rgba(255, 255, 255, 0.15);
-  box-shadow: 0 10px 30px -5px rgba(0, 0, 0, 0.5);
-}
-
-.vh-glass-card {
-  background: rgba(28, 25, 23, 0.72);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
-  border: 1px solid rgba(255, 255, 255, 0.12);
-  transition: transform 0.25s ease, border-color 0.25s ease, box-shadow 0.25s ease;
-}
-
-.vh-glass-card:hover {
-  transform: translateY(-4px);
-  border-color: rgba(245, 158, 11, 0.4);
-  box-shadow: 0 16px 32px -8px rgba(0, 0, 0, 0.6);
-}
-
-/* Floating Right Dot Navigation */
-.vh-dots-nav {
-  position: fixed;
-  right: 1.25rem;
-  top: 50%;
-  transform: translateY(-50%);
-  z-index: 45;
-  display: flex;
-  flex-direction: column;
-  gap: 0.75rem;
-}
-
-.vh-dot {
-  width: 11px;
-  height: 11px;
-  border-radius: 9999px;
-  background: rgba(255, 255, 255, 0.35);
-  border: 1px solid rgba(255, 255, 255, 0.6);
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-  cursor: pointer;
-}
-
-.vh-dot:hover {
-  background: rgba(245, 158, 11, 0.8);
-  transform: scale(1.3);
-}
-
-.vh-dot.active {
-  background: #f59e0b;
-  box-shadow: 0 0 12px #f59e0b;
-  transform: scale(1.4);
-  border-color: #ffffff;
-}
-
-@media (max-width: 768px) {
-  .vh-dots-nav {
-    display: none;
-  }
-}
-
-/* Smooth Horizontal Snap Scroll for Rails */
-.vh-snap-rail {
-  display: flex;
-  overflow-x: auto;
-  scroll-snap-type: x mandatory;
-  -webkit-overflow-scrolling: touch;
-  scrollbar-width: thin;
-  scrollbar-color: rgba(245, 158, 11, 0.4) transparent;
-  padding-bottom: 1rem;
-}
-
-.vh-snap-item {
-  scroll-snap-align: start;
-  flex-shrink: 0;
 }
 </style>
 
-<!-- Floating Right-Side Dot Navigation -->
-<?php if ($v6_dot_nav): ?>
-<nav class="vh-dots-nav" aria-label="Section Navigation">
-  <?php for ($i = 1; $i <= 6; $i++): 
-    if ($sections[$i]['enabled'] !== '1') continue;
-  ?>
-  <a href="#v6-sec-<?= $i ?>" class="vh-dot" data-sec="<?= $i ?>" aria-label="Jump to Section <?= $i ?>" title="Section <?= $i ?>"></a>
-  <?php endfor; ?>
-</nav>
-<?php endif; ?>
-
 <!-- ========================================================================= -->
-<!-- SECTION 1: HERO STORY BANNER (Video 1)                                    -->
+<!-- SECTION 1: HERO SECTION (FULL-WIDTH & FULL-HEIGHT YOUTUBE BACKGROUND)     -->
 <!-- ========================================================================= -->
 <?php if ($sections[1]['enabled'] === '1'): 
   $s1 = $sections[1];
   $s1_yt = $s1['yt_id'];
 ?>
-<section id="v6-sec-1" class="vh-sec" 
+<section id="v6-sec-1" class="vh-hero-section" 
   data-source="<?= htmlspecialchars($s1['source']) ?>" 
   data-yt="<?= htmlspecialchars($s1_yt) ?>" 
   data-mp4="<?= $s1['source'] === 'mp4' ? htmlspecialchars($s1['video']) : '' ?>"
   data-start="<?= $s1['start'] ?>" 
   data-end="<?= $s1['end'] ?>">
 
-  <!-- Video Background & High-Priority Poster -->
-  <div class="vh-media" aria-hidden="true">
-    <img class="vh-poster" src="<?= htmlspecialchars($s1['poster']) ?>" alt="Village Craft Heritage" fetchpriority="high" width="1920" height="1080">
-    <div class="vh-player-wrap"></div>
+  <!-- Full-Width Edge-to-Edge Video Media Layer -->
+  <div class="vh-hero-media" aria-hidden="true">
+    <img class="vh-hero-poster" src="<?= htmlspecialchars($s1['poster']) ?>" alt="Village Craft Heritage" fetchpriority="high" width="1920" height="1080">
+    <div class="vh-hero-player-wrap"></div>
   </div>
 
-  <!-- Ambient Dark Gradient Overlay -->
-  <div class="vh-overlay" style="background: linear-gradient(180deg, rgba(12,10,9,<?= $s1['overlay']/100 * 0.9 ?>) 0%, rgba(12,10,9,<?= $s1['overlay']/100 ?>) 50%, rgba(12,10,9,<?= min(0.95, $s1['overlay']/100 * 1.2) ?>) 100%);"></div>
+  <!-- Ambient Dark Gradient Overlay for Maximum Text Contrast -->
+  <div class="vh-hero-overlay" style="background: linear-gradient(180deg, rgba(12,10,9,<?= $s1['overlay']/100 * 0.85 ?>) 0%, rgba(12,10,9,<?= $s1['overlay']/100 ?>) 50%, rgba(12,10,9,<?= min(0.95, $s1['overlay']/100 * 1.25) ?>) 100%);"></div>
 
   <!-- Hero Content -->
-  <div class="vh-content text-<?= $s1['align'] ?> text-white">
+  <div class="vh-hero-content text-<?= $s1['align'] ?> text-white">
     <div class="max-w-3xl <?= $s1['align'] === 'center' ? 'mx-auto' : '' ?> space-y-5">
       
       <!-- Eyebrow Pill -->
       <?php if (!empty($s1['eyebrow'])): ?>
-      <div class="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-amber-500/20 border border-amber-400/40 text-amber-300 text-xs font-bold tracking-wide shadow-xs backdrop-blur-md">
-        <i data-lucide="sparkles" class="w-3.5 h-3.5 text-amber-400"></i>
+      <div class="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-amber-500/25 border border-amber-400/50 text-amber-300 text-xs font-bold tracking-wide shadow-md backdrop-blur-md">
+        <i class="fa-solid fa-sparkles text-amber-400"></i>
         <span><?= htmlspecialchars($s1['eyebrow']) ?></span>
       </div>
       <?php endif; ?>
 
       <!-- Real H1 Heading -->
-      <h1 class="text-3xl sm:text-5xl lg:text-6xl font-black font-display text-white leading-tight tracking-tight drop-shadow-md">
+      <h1 class="text-3xl sm:text-5xl lg:text-6xl font-black font-display text-white leading-tight tracking-tight drop-shadow-lg">
         <?= htmlspecialchars($s1['title']) ?>
       </h1>
 
       <!-- Subtitle Description -->
-      <p class="text-sm sm:text-lg text-stone-200 leading-relaxed font-medium drop-shadow-sm max-w-2xl <?= $s1['align'] === 'center' ? 'mx-auto' : '' ?>">
+      <p class="text-sm sm:text-lg text-stone-200 leading-relaxed font-medium drop-shadow-md max-w-2xl <?= $s1['align'] === 'center' ? 'mx-auto' : '' ?>">
         <?= htmlspecialchars($s1['subtitle']) ?>
       </p>
 
@@ -308,26 +206,26 @@ html {
         <a href="<?= htmlspecialchars($s1['btn1_link']) ?>"<?= $s1_b1_target ?>
            class="px-7 py-3.5 bg-amber-500 hover:bg-amber-400 text-stone-950 font-black text-xs sm:text-sm rounded-2xl shadow-xl transition-all duration-200 active:scale-95 flex items-center gap-2 cursor-pointer">
           <span><?= htmlspecialchars($s1['btn1_text']) ?></span>
-          <i data-lucide="arrow-right" class="w-4 h-4"></i>
+          <i class="fa-solid fa-arrow-right text-xs"></i>
         </a>
         <?php endif; ?>
 
         <?php if ($s1_b2_show): ?>
         <a href="<?= htmlspecialchars($s1['btn2_link']) ?>"<?= $s1_b2_target ?>
-           class="px-6 py-3.5 bg-white/10 hover:bg-white/20 text-white font-bold text-xs sm:text-sm rounded-2xl border border-white/25 transition-all backdrop-blur-md flex items-center gap-2">
+           class="px-6 py-3.5 bg-white/15 hover:bg-white/25 text-white font-bold text-xs sm:text-sm rounded-2xl border border-white/30 transition-all backdrop-blur-md flex items-center gap-2">
           <span><?= htmlspecialchars($s1['btn2_text']) ?></span>
         </a>
         <?php endif; ?>
 
-        <button type="button" onclick="detectGPSLocation()" class="px-5 py-3.5 bg-stone-900/80 hover:bg-stone-900 text-amber-300 font-bold text-xs sm:text-sm rounded-2xl border border-amber-400/30 transition-all flex items-center gap-2 cursor-pointer">
-          <i data-lucide="crosshair" class="w-4 h-4 text-amber-400"></i>
+        <button type="button" onclick="detectGPSLocation()" class="px-5 py-3.5 bg-stone-900/85 hover:bg-stone-900 text-amber-300 font-bold text-xs sm:text-sm rounded-2xl border border-amber-400/40 transition-all flex items-center gap-2 cursor-pointer shadow-md">
+          <i class="fa-solid fa-crosshairs text-amber-400"></i>
           <span>Artisans Near Me</span>
         </button>
       </div>
       <?php endif; ?>
 
       <!-- Trust Badges Strip -->
-      <div class="grid grid-cols-3 gap-3 pt-6 border-t border-white/15 max-w-md <?= $s1['align'] === 'center' ? 'mx-auto' : '' ?>">
+      <div class="grid grid-cols-3 gap-3 pt-6 border-t border-white/20 max-w-md <?= $s1['align'] === 'center' ? 'mx-auto' : '' ?>">
         <div>
           <span class="block text-xl sm:text-2xl font-black text-amber-400 font-display"><?= htmlspecialchars(get_setting('hero_stat1_num', '100%')) ?></span>
           <span class="text-[11px] text-stone-300 font-medium"><?= htmlspecialchars(get_setting('hero_stat1_label', 'Hand-Forged Craft')) ?></span>
@@ -338,152 +236,150 @@ html {
         </div>
         <div>
           <span class="block text-xl sm:text-2xl font-black text-amber-400 font-display"><?= htmlspecialchars(get_setting('hero_stat3_num', '₹0')) ?></span>
-          <span class="text-[11px] text-stone-300 font-medium"><?= htmlspecialchars(get_setting('hero_stat3_label', 'Direct Artisan Fee')) ?></span>
+          <span class="text-[11px] text-stone-300 font-medium"><?= htmlspecialchars(get_setting('hero_stat3_label', 'Middleman Commission')) ?></span>
         </div>
       </div>
 
     </div>
+
+    <!-- Audio Mute / Unmute Toggle Button -->
+    <button type="button" id="v6-audio-toggle" onclick="toggleHeroAudio()" class="absolute bottom-6 right-6 z-10 px-3.5 py-1.5 rounded-full bg-black/60 hover:bg-black/80 text-white text-xs font-bold border border-white/30 backdrop-blur-md transition flex items-center gap-2 cursor-pointer shadow-lg">
+      <i class="fa-solid fa-volume-xmark text-amber-400"></i>
+      <span>Sound</span>
+    </button>
 
     <!-- Scroll Down Hint Indicator -->
     <div class="absolute bottom-6 left-1/2 transform -translate-x-1/2 flex flex-col items-center gap-1.5 opacity-80 hover:opacity-100 transition cursor-pointer" onclick="document.getElementById('v6-sec-2')?.scrollIntoView({behavior:'smooth'})">
-      <span class="text-[10px] font-bold uppercase tracking-wider text-stone-300">Explore Story</span>
-      <i data-lucide="chevron-down" class="w-4 h-4 text-amber-400 animate-bounce"></i>
+      <span class="text-[10px] font-bold uppercase tracking-wider text-stone-300">Explore Catalog</span>
+      <i class="fa-solid fa-chevron-down text-amber-400 animate-bounce text-xs"></i>
     </div>
   </div>
 </section>
 <?php endif; ?>
 
 <!-- ========================================================================= -->
-<!-- SECTION 2: ARTISANAL CATEGORIES (Video 2)                                 -->
+<!-- SECTION 2: ARTISANAL CATEGORIES (CLEAN E-COMMERCE SECTION)                -->
 <!-- ========================================================================= -->
 <?php if ($sections[2]['enabled'] === '1'): 
   $s2 = $sections[2];
-  $s2_yt = $s2['yt_id'];
 ?>
-<section id="v6-sec-2" class="vh-sec" 
-  data-source="<?= htmlspecialchars($s2['source']) ?>" 
-  data-yt="<?= htmlspecialchars($s2_yt) ?>" 
-  data-mp4="<?= $s2['source'] === 'mp4' ? htmlspecialchars($s2['video']) : '' ?>"
-  data-start="<?= $s2['start'] ?>" 
-  data-end="<?= $s2['end'] ?>">
+<section id="v6-sec-2" class="py-12 sm:py-16 bg-stone-50 border-b border-stone-200/80">
+  <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+    
+    <!-- Section Header -->
+    <div class="flex flex-col sm:flex-row sm:items-end justify-between mb-8 gap-3">
+      <div>
+        <?php if (!empty($s2['eyebrow'])): ?>
+        <span class="text-xs font-black text-emerald-700 uppercase tracking-widest block mb-1"><?= htmlspecialchars($s2['eyebrow']) ?></span>
+        <?php endif; ?>
+        <h2 class="text-2xl sm:text-3xl font-black text-gray-900 font-display"><?= htmlspecialchars($s2['title']) ?></h2>
+        <p class="text-xs sm:text-sm text-gray-600 mt-1"><?= htmlspecialchars($s2['subtitle']) ?></p>
+      </div>
 
-  <div class="vh-media" aria-hidden="true">
-    <img class="vh-poster" src="<?= htmlspecialchars($s2['poster']) ?>" alt="Categories Background" loading="lazy" width="1920" height="1080">
-    <div class="vh-player-wrap"></div>
-  </div>
-
-  <div class="vh-overlay" style="background: linear-gradient(180deg, rgba(12,10,9,0.7) 0%, rgba(12,10,9,<?= $s2['overlay']/100 ?>) 50%, rgba(12,10,9,0.85) 100%);"></div>
-
-  <div class="vh-content text-white">
-    <!-- Header -->
-    <div class="text-<?= $s2['align'] ?> max-w-2xl <?= $s2['align'] === 'center' ? 'mx-auto' : '' ?> mb-8 space-y-2">
-      <?php if (!empty($s2['eyebrow'])): ?>
-      <span class="text-xs font-bold text-amber-400 uppercase tracking-widest block"><?= htmlspecialchars($s2['eyebrow']) ?></span>
+      <?php if ($s2['btn1_show'] === '1' && trim($s2['btn1_text']) !== ''): ?>
+      <a href="<?= htmlspecialchars($s2['btn1_link']) ?>" class="text-xs font-bold text-brand-green hover:underline flex items-center gap-1.5 shrink-0">
+        <span><?= htmlspecialchars($s2['btn1_text']) ?></span>
+        <i class="fa-solid fa-arrow-right text-[10px]"></i>
+      </a>
       <?php endif; ?>
-      <h2 class="text-2xl sm:text-4xl font-black font-display text-white"><?= htmlspecialchars($s2['title']) ?></h2>
-      <p class="text-xs sm:text-sm text-stone-300"><?= htmlspecialchars($s2['subtitle']) ?></p>
     </div>
 
     <!-- Category Tiles Grid -->
-    <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3 sm:gap-4">
+    <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3 sm:gap-5">
       <?php foreach ($active_categories as $cat): ?>
       <a href="/products.php?category=<?= urlencode($cat['slug']) ?>" 
-         class="vh-glass-card rounded-2xl p-4 flex flex-col items-center text-center group cursor-pointer block">
-        <div class="w-16 h-16 sm:w-20 sm:h-20 rounded-2xl bg-amber-500/10 border border-amber-400/20 p-2 flex items-center justify-center mb-3 group-hover:scale-105 transition-transform overflow-hidden">
+         class="bg-white rounded-2xl p-4 border border-stone-200/90 shadow-xs hover:shadow-md hover:border-amber-400 transition-all flex flex-col items-center text-center group cursor-pointer">
+        <div class="w-16 h-16 sm:w-20 sm:h-20 rounded-2xl bg-amber-50 border border-amber-200/60 p-2 flex items-center justify-center mb-3 group-hover:scale-105 transition-transform overflow-hidden">
           <?php if (!empty($cat['image_url'])): ?>
             <img src="<?= htmlspecialchars($cat['image_url']) ?>" alt="<?= htmlspecialchars($cat['name']) ?>" class="w-full h-full object-cover rounded-xl" loading="lazy" width="80" height="80">
           <?php else: ?>
-            <i data-lucide="package" class="w-8 h-8 text-amber-400"></i>
+            <i class="fa-solid fa-boxes-stacked text-2xl text-amber-600"></i>
           <?php endif; ?>
         </div>
-        <h3 class="font-extrabold text-xs sm:text-sm text-white group-hover:text-amber-400 transition-colors line-clamp-1">
-          <?= htmlspecialchars($cat['name']) ?>
+        <h3 class="font-bold text-xs sm:text-sm text-gray-900 group-hover:text-amber-600 transition-colors line-clamp-1">
+          <span class="lang-en"><?= htmlspecialchars($cat['name']) ?></span>
+          <?php if (!empty($cat['hindi_name'])): ?>
+            <span class="lang-hi hidden"><?= htmlspecialchars($cat['hindi_name']) ?></span>
+          <?php endif; ?>
         </h3>
-        <span class="text-[10px] text-stone-400 mt-0.5">Explore Guild</span>
+        <span class="text-[10px] text-gray-500 mt-0.5">Explore Products &rarr;</span>
       </a>
       <?php endforeach; ?>
     </div>
-
-    <?php if ($s2['btn1_show'] === '1' && trim($s2['btn1_text']) !== ''): ?>
-    <div class="text-center mt-8">
-      <a href="<?= htmlspecialchars($s2['btn1_link']) ?>" class="inline-flex items-center gap-2 px-6 py-3 bg-white/10 hover:bg-white/20 text-white font-bold text-xs rounded-xl border border-white/20 transition">
-        <span><?= htmlspecialchars($s2['btn1_text']) ?></span>
-        <i data-lucide="arrow-right" class="w-4 h-4"></i>
-      </a>
-    </div>
-    <?php endif; ?>
   </div>
 </section>
 <?php endif; ?>
 
 <!-- ========================================================================= -->
-<!-- SECTION 3: BESTSELLERS RAIL (Video 3)                                     -->
+<!-- SECTION 3: BESTSELLERS RAIL (CLEAN PRODUCT GRID)                          -->
 <!-- ========================================================================= -->
 <?php if ($sections[3]['enabled'] === '1'): 
   $s3 = $sections[3];
-  $s3_yt = $s3['yt_id'];
 ?>
-<section id="v6-sec-3" class="vh-sec" 
-  data-source="<?= htmlspecialchars($s3['source']) ?>" 
-  data-yt="<?= htmlspecialchars($s3_yt) ?>" 
-  data-mp4="<?= $s3['source'] === 'mp4' ? htmlspecialchars($s3['video']) : '' ?>"
-  data-start="<?= $s3['start'] ?>" 
-  data-end="<?= $s3['end'] ?>">
-
-  <div class="vh-media" aria-hidden="true">
-    <img class="vh-poster" src="<?= htmlspecialchars($s3['poster']) ?>" alt="Bestsellers Background" loading="lazy" width="1920" height="1080">
-    <div class="vh-player-wrap"></div>
-  </div>
-
-  <div class="vh-overlay" style="background: linear-gradient(180deg, rgba(12,10,9,0.7) 0%, rgba(12,10,9,<?= $s3['overlay']/100 ?>) 50%, rgba(12,10,9,0.85) 100%);"></div>
-
-  <div class="vh-content text-white">
-    <div class="flex flex-col sm:flex-row sm:items-end justify-between mb-6 gap-3">
+<section id="v6-sec-3" class="py-12 sm:py-16 bg-white border-b border-stone-200/80">
+  <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+    
+    <!-- Section Header -->
+    <div class="flex flex-col sm:flex-row sm:items-end justify-between mb-8 gap-3">
       <div>
         <?php if (!empty($s3['eyebrow'])): ?>
-        <span class="text-xs font-bold text-amber-400 uppercase tracking-widest block"><?= htmlspecialchars($s3['eyebrow']) ?></span>
+        <span class="text-xs font-black text-amber-600 uppercase tracking-widest block mb-1"><?= htmlspecialchars($s3['eyebrow']) ?></span>
         <?php endif; ?>
-        <h2 class="text-2xl sm:text-4xl font-black font-display text-white"><?= htmlspecialchars($s3['title']) ?></h2>
-        <p class="text-xs sm:text-sm text-stone-300 mt-1"><?= htmlspecialchars($s3['subtitle']) ?></p>
+        <h2 class="text-2xl sm:text-3xl font-black text-gray-900 font-display"><?= htmlspecialchars($s3['title']) ?></h2>
+        <p class="text-xs sm:text-sm text-gray-600 mt-1"><?= htmlspecialchars($s3['subtitle']) ?></p>
       </div>
 
       <?php if ($s3['btn1_show'] === '1' && trim($s3['btn1_text']) !== ''): ?>
-      <a href="<?= htmlspecialchars($s3['btn1_link']) ?>" class="text-xs font-bold text-amber-400 hover:text-amber-300 flex items-center gap-1.5 shrink-0">
+      <a href="<?= htmlspecialchars($s3['btn1_link']) ?>" class="text-xs font-bold text-amber-600 hover:text-amber-700 flex items-center gap-1.5 shrink-0">
         <span><?= htmlspecialchars($s3['btn1_text']) ?></span>
-        <i data-lucide="arrow-right" class="w-3.5 h-3.5"></i>
+        <i class="fa-solid fa-arrow-right text-[10px]"></i>
       </a>
       <?php endif; ?>
     </div>
 
-    <!-- Horizontal Snap Scroll Rail -->
-    <div class="vh-snap-rail gap-4">
+    <!-- Product Grid (High-Contrast Clean E-Commerce Cards) -->
+    <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4 sm:gap-6">
       <?php foreach ($s3_products as $p): ?>
-      <div class="vh-snap-item w-60 sm:w-68 vh-glass-card rounded-2xl p-3.5 flex flex-col justify-between">
+      <div class="bg-white rounded-2xl border border-stone-200 shadow-xs hover:shadow-lg transition-all p-3 sm:p-4 flex flex-col justify-between group">
         <div>
           <!-- Product Image -->
-          <div class="relative w-full aspect-square rounded-xl overflow-hidden bg-stone-900 mb-3">
-            <img src="<?= htmlspecialchars($p['image_url'] ?? '/placeholder.png') ?>" alt="<?= htmlspecialchars($p['name']) ?>" class="w-full h-full object-cover transition-transform group-hover:scale-105" loading="lazy" width="260" height="260">
-            <span class="absolute top-2 left-2 px-2 py-0.5 bg-amber-500 text-stone-950 font-black text-[9px] rounded-md uppercase tracking-wider">Bestseller</span>
-            <button type="button" onclick="toggleWishlist(<?= $p['id'] ?>, this)" class="absolute top-2 right-2 w-7 h-7 rounded-full bg-stone-950/60 text-white hover:text-rose-400 flex items-center justify-center transition">
-              <i data-lucide="heart" class="w-3.5 h-3.5"></i>
+          <div class="relative w-full aspect-square rounded-xl overflow-hidden bg-stone-100 mb-3">
+            <img src="<?= htmlspecialchars($p['image_url'] ?? '/placeholder.png') ?>" alt="<?= htmlspecialchars($p['name']) ?>" class="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105" loading="lazy" width="280" height="280">
+            
+            <?php if (!empty($p['is_featured'])): ?>
+              <span class="absolute top-2 left-2 px-2 py-0.5 bg-amber-500 text-stone-950 font-black text-[9px] rounded-md uppercase tracking-wider shadow-sm">
+                ⭐ Featured
+              </span>
+            <?php elseif (!empty($p['is_best_seller'])): ?>
+              <span class="absolute top-2 left-2 px-2 py-0.5 bg-rose-500 text-white font-black text-[9px] rounded-md uppercase tracking-wider shadow-sm">
+                Bestseller
+              </span>
+            <?php endif; ?>
+
+            <button type="button" onclick="toggleWishlist(<?= $p['id'] ?>, this)" class="absolute top-2 right-2 w-7 h-7 rounded-full bg-white/90 text-gray-600 hover:text-rose-500 shadow-sm flex items-center justify-center transition">
+              <i class="fa-regular fa-heart text-xs"></i>
             </button>
           </div>
 
-          <span class="text-[10px] text-amber-400 font-bold block mb-0.5 line-clamp-1"><?= htmlspecialchars($p['vendor_business_name'] ?? 'Rural Artisan') ?></span>
-          <h3 class="font-bold text-xs sm:text-sm text-white line-clamp-2 leading-tight">
-            <a href="/product.php?id=<?= $p['id'] ?>" class="hover:text-amber-300 transition-colors"><?= htmlspecialchars($p['name']) ?></a>
+          <!-- Artisan & Title -->
+          <span class="text-[10px] text-amber-700 font-bold block mb-0.5 line-clamp-1">
+            <i class="fa-solid fa-store text-[9px]"></i> <?= htmlspecialchars($p['vendor_business_name'] ?? 'Rural Artisan') ?>
+          </span>
+          <h3 class="font-bold text-xs sm:text-sm text-gray-900 group-hover:text-brand-green line-clamp-2 leading-tight transition-colors">
+            <a href="/product.php?id=<?= $p['id'] ?>"><?= htmlspecialchars($p['name']) ?></a>
           </h3>
         </div>
 
-        <div class="pt-3 border-t border-white/10 mt-3 flex items-center justify-between">
+        <!-- Pricing & Add to Cart -->
+        <div class="pt-3 border-t border-gray-100 mt-3 flex items-center justify-between gap-2">
           <div>
-            <span class="text-sm font-black text-white"><?= format_price($p['price']) ?></span>
+            <span class="text-sm sm:text-base font-black text-gray-900"><?= format_price($p['price']) ?></span>
             <?php if (!empty($p['mrp']) && $p['mrp'] > $p['price']): ?>
-              <span class="text-[10px] text-stone-400 line-through ml-1"><?= format_price($p['mrp']) ?></span>
+              <span class="text-[10px] text-gray-400 line-through ml-1"><?= format_price($p['mrp']) ?></span>
             <?php endif; ?>
           </div>
-          <button type="button" onclick="addToCart(<?= $p['id'] ?>, 1, this)" class="px-3 py-1.5 bg-amber-500 hover:bg-amber-400 text-stone-950 font-black text-xs rounded-lg transition active:scale-95 flex items-center gap-1 cursor-pointer">
-            <i data-lucide="shopping-bag" class="w-3 h-3"></i>
+          <button type="button" onclick="addToCart(<?= $p['id'] ?>, 1, this)" class="px-3 py-1.5 bg-brand-green hover:bg-emerald-800 text-white font-bold text-xs rounded-lg transition active:scale-95 flex items-center gap-1 cursor-pointer shadow-xs">
+            <i class="fa-solid fa-cart-plus text-xs"></i>
             <span>Add</span>
           </button>
         </div>
@@ -495,79 +391,65 @@ html {
 <?php endif; ?>
 
 <!-- ========================================================================= -->
-<!-- SECTION 4: CURATED SPOTLIGHT (Asymmetric Grid, Video 4)                   -->
+<!-- SECTION 4: CURATED SPOTLIGHT (CLEAN SPOTLIGHT SHOWCASE)                    -->
 <!-- ========================================================================= -->
 <?php if ($sections[4]['enabled'] === '1'): 
   $s4 = $sections[4];
-  $s4_yt = $s4['yt_id'];
   $spotlight_item = $s4_products[0] ?? null;
   $grid_items = array_slice($s4_products, 1, 4);
 ?>
-<section id="v6-sec-4" class="vh-sec" 
-  data-source="<?= htmlspecialchars($s4['source']) ?>" 
-  data-yt="<?= htmlspecialchars($s4_yt) ?>" 
-  data-mp4="<?= $s4['source'] === 'mp4' ? htmlspecialchars($s4['video']) : '' ?>"
-  data-start="<?= $s4['start'] ?>" 
-  data-end="<?= $s4['end'] ?>">
-
-  <div class="vh-media" aria-hidden="true">
-    <img class="vh-poster" src="<?= htmlspecialchars($s4['poster']) ?>" alt="Spotlight Background" loading="lazy" width="1920" height="1080">
-    <div class="vh-player-wrap"></div>
-  </div>
-
-  <div class="vh-overlay" style="background: linear-gradient(180deg, rgba(12,10,9,0.7) 0%, rgba(12,10,9,<?= $s4['overlay']/100 ?>) 50%, rgba(12,10,9,0.9) 100%);"></div>
-
-  <div class="vh-content text-white">
-    <div class="mb-6 space-y-1">
+<section id="v6-sec-4" class="py-12 sm:py-16 bg-stone-50 border-b border-stone-200/80">
+  <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+    
+    <div class="mb-8 space-y-1">
       <?php if (!empty($s4['eyebrow'])): ?>
-      <span class="text-xs font-bold text-amber-400 uppercase tracking-widest block"><?= htmlspecialchars($s4['eyebrow']) ?></span>
+      <span class="text-xs font-black text-amber-600 uppercase tracking-widest block"><?= htmlspecialchars($s4['eyebrow']) ?></span>
       <?php endif; ?>
-      <h2 class="text-2xl sm:text-4xl font-black font-display text-white"><?= htmlspecialchars($s4['title']) ?></h2>
-      <p class="text-xs sm:text-sm text-stone-300"><?= htmlspecialchars($s4['subtitle']) ?></p>
+      <h2 class="text-2xl sm:text-3xl font-black text-gray-900 font-display"><?= htmlspecialchars($s4['title']) ?></h2>
+      <p class="text-xs sm:text-sm text-gray-600"><?= htmlspecialchars($s4['subtitle']) ?></p>
     </div>
 
-    <!-- Asymmetric Spotlight Grid -->
-    <div class="grid grid-cols-1 lg:grid-cols-12 gap-5 items-stretch">
-      <!-- Left Spotlight Hero Card (5 cols) -->
+    <!-- Asymmetric Spotlight Layout -->
+    <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 items-stretch">
+      
+      <!-- Big Hero Spotlight Card (5 cols) -->
       <?php if ($spotlight_item): ?>
-      <div class="lg:col-span-5 vh-glass rounded-3xl p-6 sm:p-7 flex flex-col justify-between border-amber-400/30">
+      <div class="lg:col-span-5 bg-white rounded-3xl p-6 sm:p-8 border border-amber-300 shadow-md flex flex-col justify-between">
         <div>
-          <div class="flex items-center justify-between mb-3">
-            <span class="px-2.5 py-1 rounded-full bg-amber-500 text-stone-950 font-black text-[10px] uppercase tracking-wider">
-              Artisan Master Spotlight
+          <div class="flex items-center justify-between mb-4">
+            <span class="px-3 py-1 rounded-full bg-amber-500 text-stone-950 font-black text-[11px] uppercase tracking-wider">
+              ⭐ Artisan Master Spotlight
             </span>
-            <span class="text-xs text-amber-300 font-bold flex items-center gap-1">
-              <i data-lucide="star" class="w-3.5 h-3.5 fill-amber-400 text-amber-400"></i>
+            <span class="text-xs text-amber-600 font-bold flex items-center gap-1">
+              <i class="fa-solid fa-star text-amber-500"></i>
               <?= number_format($spotlight_item['rating'] ?? 5.0, 1) ?> Rating
             </span>
           </div>
 
-          <div class="w-full aspect-video rounded-2xl overflow-hidden bg-stone-900 mb-4">
+          <div class="w-full aspect-video rounded-2xl overflow-hidden bg-stone-100 mb-4 shadow-xs">
             <img src="<?= htmlspecialchars($spotlight_item['image_url'] ?? '/placeholder.png') ?>" alt="<?= htmlspecialchars($spotlight_item['name']) ?>" class="w-full h-full object-cover" loading="lazy" width="480" height="270">
           </div>
 
-          <span class="text-xs text-amber-400 font-semibold block mb-1">
-            Village Workshop: <?= htmlspecialchars($spotlight_item['vendor_business_name'] ?? 'Hardoi Forge') ?>
+          <span class="text-xs text-amber-700 font-semibold block mb-1">
+            📍 Village Workshop: <?= htmlspecialchars($spotlight_item['vendor_business_name'] ?? 'Hardoi Cluster') ?>
           </span>
-          <h3 class="text-lg sm:text-xl font-black text-white leading-snug">
+          <h3 class="text-lg sm:text-xl font-black text-gray-900 leading-snug">
             <?= htmlspecialchars($spotlight_item['name']) ?>
           </h3>
-          <p class="text-xs text-stone-300 mt-2 line-clamp-3 leading-relaxed">
-            <?= htmlspecialchars($spotlight_item['description'] ?? 'Generational master craft forged with railway leaf-spring carbon steel. Built for unmatched field durability.') ?>
+          <p class="text-xs text-gray-600 mt-2 line-clamp-3 leading-relaxed">
+            <?= htmlspecialchars($spotlight_item['description'] ?? 'Generational master craft forged with high-grade leaf-spring carbon steel. Built for unmatched durability.') ?>
           </p>
         </div>
 
-        <div class="pt-5 border-t border-white/10 mt-5 flex items-center justify-between">
+        <div class="pt-5 border-t border-gray-100 mt-5 flex items-center justify-between">
           <div>
-            <span class="text-2xl font-black text-white"><?= format_price($spotlight_item['price']) ?></span>
-            <span class="text-xs text-stone-400 block">Free Express Shipping</span>
+            <span class="text-2xl font-black text-gray-900"><?= format_price($spotlight_item['price']) ?></span>
+            <span class="text-xs text-emerald-700 font-bold block">✓ Express Village Dispatch</span>
           </div>
-          <div class="flex items-center gap-2">
-            <button type="button" onclick="addToCart(<?= $spotlight_item['id'] ?>, 1, this)" class="px-5 py-2.5 bg-amber-500 hover:bg-amber-400 text-stone-950 font-black text-xs rounded-xl shadow-lg transition active:scale-95 flex items-center gap-1.5 cursor-pointer">
-              <i data-lucide="shopping-bag" class="w-4 h-4"></i>
-              <span>Add to Cart</span>
-            </button>
-          </div>
+          <button type="button" onclick="addToCart(<?= $spotlight_item['id'] ?>, 1, this)" class="px-5 py-2.5 bg-amber-500 hover:bg-amber-400 text-stone-950 font-black text-xs rounded-xl shadow-md transition active:scale-95 flex items-center gap-1.5 cursor-pointer">
+            <i class="fa-solid fa-cart-plus"></i>
+            <span>Add to Cart</span>
+          </button>
         </div>
       </div>
       <?php endif; ?>
@@ -575,24 +457,24 @@ html {
       <!-- Right 4 Smaller Grid Cards (7 cols) -->
       <div class="lg:col-span-7 grid grid-cols-1 sm:grid-cols-2 gap-4">
         <?php foreach ($grid_items as $item): ?>
-        <div class="vh-glass-card rounded-2xl p-4 flex flex-col justify-between">
+        <div class="bg-white rounded-2xl p-4 border border-stone-200 shadow-xs flex flex-col justify-between hover:border-amber-300 transition-colors">
           <div class="flex items-start gap-3">
-            <div class="w-20 h-20 rounded-xl overflow-hidden bg-stone-900 shrink-0">
+            <div class="w-20 h-20 rounded-xl overflow-hidden bg-stone-100 shrink-0">
               <img src="<?= htmlspecialchars($item['image_url'] ?? '/placeholder.png') ?>" alt="<?= htmlspecialchars($item['name']) ?>" class="w-full h-full object-cover" loading="lazy" width="80" height="80">
             </div>
             <div>
-              <span class="text-[10px] text-amber-400 font-bold block"><?= htmlspecialchars($item['vendor_business_name'] ?? 'Artisan Guild') ?></span>
-              <h4 class="font-bold text-xs sm:text-sm text-white line-clamp-2 leading-tight mt-0.5">
-                <a href="/product.php?id=<?= $item['id'] ?>" class="hover:text-amber-300"><?= htmlspecialchars($item['name']) ?></a>
+              <span class="text-[10px] text-amber-700 font-bold block"><?= htmlspecialchars($item['vendor_business_name'] ?? 'Artisan Guild') ?></span>
+              <h4 class="font-bold text-xs sm:text-sm text-gray-900 line-clamp-2 leading-tight mt-0.5">
+                <a href="/product.php?id=<?= $item['id'] ?>" class="hover:text-brand-green"><?= htmlspecialchars($item['name']) ?></a>
               </h4>
-              <div class="text-xs font-black text-white mt-1"><?= format_price($item['price']) ?></div>
+              <div class="text-xs font-black text-gray-900 mt-1"><?= format_price($item['price']) ?></div>
             </div>
           </div>
-          <div class="pt-2.5 border-t border-white/10 mt-3 flex items-center justify-between">
-            <a href="/product.php?id=<?= $item['id'] ?>" class="text-[11px] text-stone-300 hover:text-white flex items-center gap-1">
-              <span>Details</span> <i data-lucide="chevron-right" class="w-3 h-3"></i>
+          <div class="pt-2.5 border-t border-gray-100 mt-3 flex items-center justify-between">
+            <a href="/product.php?id=<?= $item['id'] ?>" class="text-[11px] text-gray-500 hover:text-gray-900 flex items-center gap-1">
+              <span>Details</span> <i class="fa-solid fa-chevron-right text-[9px]"></i>
             </a>
-            <button type="button" onclick="addToCart(<?= $item['id'] ?>, 1, this)" class="px-3 py-1 bg-amber-500/20 hover:bg-amber-500 text-amber-300 hover:text-stone-950 font-bold text-xs rounded-lg transition active:scale-95 cursor-pointer">
+            <button type="button" onclick="addToCart(<?= $item['id'] ?>, 1, this)" class="px-3 py-1 bg-amber-50 hover:bg-amber-100 text-amber-800 border border-amber-200 font-bold text-xs rounded-lg transition active:scale-95 cursor-pointer">
               + Cart
             </button>
           </div>
@@ -605,57 +487,44 @@ html {
 <?php endif; ?>
 
 <!-- ========================================================================= -->
-<!-- SECTION 5: ARTISANS & VILLAGE STORY (Video 5)                             -->
+<!-- SECTION 5: MEET OUR MASTER ARTISANS (CLEAN ARTISAN PROFILES)              -->
 <!-- ========================================================================= -->
 <?php if ($sections[5]['enabled'] === '1'): 
   $s5 = $sections[5];
-  $s5_yt = $s5['yt_id'];
 ?>
-<section id="v6-sec-5" class="vh-sec" 
-  data-source="<?= htmlspecialchars($s5['source']) ?>" 
-  data-yt="<?= htmlspecialchars($s5_yt) ?>" 
-  data-mp4="<?= $s5['source'] === 'mp4' ? htmlspecialchars($s5['video']) : '' ?>"
-  data-start="<?= $s5['start'] ?>" 
-  data-end="<?= $s5['end'] ?>">
-
-  <div class="vh-media" aria-hidden="true">
-    <img class="vh-poster" src="<?= htmlspecialchars($s5['poster']) ?>" alt="Artisans Background" loading="lazy" width="1920" height="1080">
-    <div class="vh-player-wrap"></div>
-  </div>
-
-  <div class="vh-overlay" style="background: linear-gradient(180deg, rgba(12,10,9,0.7) 0%, rgba(12,10,9,<?= $s5['overlay']/100 ?>) 50%, rgba(12,10,9,0.9) 100%);"></div>
-
-  <div class="vh-content text-white">
-    <div class="text-<?= $s5['align'] ?> max-w-2xl <?= $s5['align'] === 'center' ? 'mx-auto' : '' ?> mb-8 space-y-2">
+<section id="v6-sec-5" class="py-12 sm:py-16 bg-white border-b border-stone-200/80">
+  <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+    
+    <div class="text-<?= $s5['align'] ?> max-w-2xl <?= $s5['align'] === 'center' ? 'mx-auto' : '' ?> mb-10 space-y-2">
       <?php if (!empty($s5['eyebrow'])): ?>
-      <span class="text-xs font-bold text-amber-400 uppercase tracking-widest block"><?= htmlspecialchars($s5['eyebrow']) ?></span>
+      <span class="text-xs font-black text-amber-600 uppercase tracking-widest block"><?= htmlspecialchars($s5['eyebrow']) ?></span>
       <?php endif; ?>
-      <h2 class="text-2xl sm:text-4xl font-black font-display text-white"><?= htmlspecialchars($s5['title']) ?></h2>
-      <p class="text-xs sm:text-sm text-stone-300"><?= htmlspecialchars($s5['subtitle']) ?></p>
+      <h2 class="text-2xl sm:text-3xl font-black text-gray-900 font-display"><?= htmlspecialchars($s5['title']) ?></h2>
+      <p class="text-xs sm:text-sm text-gray-600"><?= htmlspecialchars($s5['subtitle']) ?></p>
     </div>
 
-    <!-- Overlapping Artisan Portrait Cards -->
-    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+    <!-- Artisan Cards Grid -->
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
       <?php foreach ($active_artisans as $artisan): ?>
-      <div class="vh-glass-card rounded-2xl p-5 flex flex-col justify-between">
+      <div class="bg-stone-50 rounded-2xl p-6 border border-stone-200/90 shadow-xs flex flex-col justify-between text-center hover:shadow-md transition-shadow">
         <div>
-          <div class="w-20 h-20 rounded-full overflow-hidden bg-amber-500/20 border-2 border-amber-400/40 mx-auto mb-3 shadow-lg">
+          <div class="w-20 h-20 rounded-full overflow-hidden bg-amber-100 border-2 border-amber-400 mx-auto mb-3 shadow-sm">
             <img src="<?= htmlspecialchars($artisan['avatar'] ?? 'https://images.unsplash.com/photo-1544717305-2782549b5136?auto=format&fit=crop&w=200&q=80') ?>" alt="<?= htmlspecialchars($artisan['business_name'] ?? $artisan['name']) ?>" class="w-full h-full object-cover" loading="lazy" width="80" height="80">
           </div>
-          <div class="text-center">
-            <h3 class="font-bold text-sm text-white"><?= htmlspecialchars($artisan['business_name'] ?? $artisan['name']) ?></h3>
-            <span class="inline-block px-2 py-0.5 rounded-md bg-stone-900 text-amber-300 text-[10px] font-bold mt-1">
+          <div>
+            <h3 class="font-extrabold text-sm text-gray-900"><?= htmlspecialchars($artisan['business_name'] ?? $artisan['name']) ?></h3>
+            <span class="inline-block px-2.5 py-0.5 rounded-full bg-amber-100 text-amber-900 text-[10px] font-bold mt-1">
               📍 <?= htmlspecialchars($artisan['village'] ?? 'Sandila') ?>, <?= htmlspecialchars($artisan['district'] ?? 'Hardoi') ?>
             </span>
-            <p class="text-[11px] text-stone-300 mt-2 line-clamp-3 leading-relaxed">
-              <?= htmlspecialchars($artisan['story'] ?? 'Generational blacksmith crafting hand-forged sickles, khurpis, and spades from tempered leaf-spring steel.') ?>
+            <p class="text-[11px] text-gray-600 mt-2 line-clamp-3 leading-relaxed">
+              <?= htmlspecialchars($artisan['story'] ?? 'Generational master blacksmith crafting hand-forged agricultural tools from tempered leaf-spring steel.') ?>
             </p>
           </div>
         </div>
 
-        <div class="pt-3 border-t border-white/10 mt-4 text-center">
-          <a href="/artisans.php" class="text-xs font-bold text-amber-400 hover:text-amber-300 flex items-center justify-center gap-1">
-            <span>View Workshop</span> <i data-lucide="arrow-right" class="w-3 h-3"></i>
+        <div class="pt-4 border-t border-stone-200 mt-4">
+          <a href="/artisans.php" class="text-xs font-bold text-brand-green hover:underline flex items-center justify-center gap-1">
+            <span>View Workshop</span> <i class="fa-solid fa-arrow-right text-[10px]"></i>
           </a>
         </div>
       </div>
@@ -664,9 +533,9 @@ html {
 
     <?php if ($s5['btn1_show'] === '1' && trim($s5['btn1_text']) !== ''): ?>
     <div class="text-center mt-8">
-      <a href="<?= htmlspecialchars($s5['btn1_link']) ?>" class="inline-flex items-center gap-2 px-7 py-3 bg-amber-500 hover:bg-amber-400 text-stone-950 font-black text-xs rounded-xl shadow-lg transition">
+      <a href="<?= htmlspecialchars($s5['btn1_link']) ?>" class="inline-flex items-center gap-2 px-7 py-3 bg-brand-green hover:bg-emerald-800 text-white font-bold text-xs rounded-xl shadow-md transition">
         <span><?= htmlspecialchars($s5['btn1_text']) ?></span>
-        <i data-lucide="arrow-right" class="w-4 h-4"></i>
+        <i class="fa-solid fa-arrow-right text-xs"></i>
       </a>
     </div>
     <?php endif; ?>
@@ -675,56 +544,43 @@ html {
 <?php endif; ?>
 
 <!-- ========================================================================= -->
-<!-- SECTION 6: TRUST & FINAL CTA (Video 6)                                    -->
+<!-- SECTION 6: TRUST & FINAL CTA (CLEAN IMPACT GUARANTEE)                     -->
 <!-- ========================================================================= -->
 <?php if ($sections[6]['enabled'] === '1'): 
   $s6 = $sections[6];
-  $s6_yt = $s6['yt_id'];
 ?>
-<section id="v6-sec-6" class="vh-sec" 
-  data-source="<?= htmlspecialchars($s6['source']) ?>" 
-  data-yt="<?= htmlspecialchars($s6_yt) ?>" 
-  data-mp4="<?= $s6['source'] === 'mp4' ? htmlspecialchars($s6['video']) : '' ?>"
-  data-start="<?= $s6['start'] ?>" 
-  data-end="<?= $s6['end'] ?>">
-
-  <div class="vh-media" aria-hidden="true">
-    <img class="vh-poster" src="<?= htmlspecialchars($s6['poster']) ?>" alt="Trust Background" loading="lazy" width="1920" height="1080">
-    <div class="vh-player-wrap"></div>
-  </div>
-
-  <div class="vh-overlay" style="background: linear-gradient(180deg, rgba(12,10,9,0.75) 0%, rgba(12,10,9,<?= $s6['overlay']/100 ?>) 50%, rgba(12,10,9,0.95) 100%);"></div>
-
-  <div class="vh-content text-white">
+<section id="v6-sec-6" class="py-12 sm:py-16 bg-stone-50">
+  <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+    
     <!-- 4 Trust Badges -->
     <div class="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 mb-10">
-      <div class="vh-glass-card rounded-2xl p-4 text-center">
-        <i data-lucide="shield-check" class="w-6 h-6 text-emerald-400 mx-auto mb-2"></i>
-        <h4 class="font-bold text-xs text-white">100% Village Authentic</h4>
-        <p class="text-[10px] text-stone-400 mt-0.5">Forged and harvested in rural Bharat</p>
+      <div class="bg-white rounded-2xl p-5 text-center border border-stone-200 shadow-xs">
+        <i class="fa-solid fa-shield-halved text-2xl text-emerald-600 mx-auto mb-2 block"></i>
+        <h4 class="font-bold text-xs text-gray-900">100% Village Authentic</h4>
+        <p class="text-[10px] text-gray-500 mt-0.5">Directly forged and harvested in rural Bharat</p>
       </div>
 
-      <div class="vh-glass-card rounded-2xl p-4 text-center">
-        <i data-lucide="truck" class="w-6 h-6 text-amber-400 mx-auto mb-2"></i>
-        <h4 class="font-bold text-xs text-white">India Post Express</h4>
-        <p class="text-[10px] text-stone-400 mt-0.5">Delivered to 19,000+ PIN codes</p>
+      <div class="bg-white rounded-2xl p-5 text-center border border-stone-200 shadow-xs">
+        <i class="fa-solid fa-truck-fast text-2xl text-amber-600 mx-auto mb-2 block"></i>
+        <h4 class="font-bold text-xs text-gray-900">India Post Express</h4>
+        <p class="text-[10px] text-gray-500 mt-0.5">Delivered to 19,000+ PIN codes across India</p>
       </div>
 
-      <div class="vh-glass-card rounded-2xl p-4 text-center">
-        <i data-lucide="coins" class="w-6 h-6 text-yellow-400 mx-auto mb-2"></i>
-        <h4 class="font-bold text-xs text-white">Direct Fair Livelihood</h4>
-        <p class="text-[10px] text-stone-400 mt-0.5">0% middlemen commission</p>
+      <div class="bg-white rounded-2xl p-5 text-center border border-stone-200 shadow-xs">
+        <i class="fa-solid fa-hand-holding-dollar text-2xl text-yellow-600 mx-auto mb-2 block"></i>
+        <h4 class="font-bold text-xs text-gray-900">Direct Fair Livelihood</h4>
+        <p class="text-[10px] text-gray-500 mt-0.5">0% middlemen cut directly to maker's account</p>
       </div>
 
-      <div class="vh-glass-card rounded-2xl p-4 text-center">
-        <i data-lucide="rotate-ccw" class="w-6 h-6 text-rose-400 mx-auto mb-2"></i>
-        <h4 class="font-bold text-xs text-white">Easy Replacement</h4>
-        <p class="text-[10px] text-stone-400 mt-0.5">Dedicated customer support</p>
+      <div class="bg-white rounded-2xl p-5 text-center border border-stone-200 shadow-xs">
+        <i class="fa-solid fa-rotate-left text-2xl text-rose-600 mx-auto mb-2 block"></i>
+        <h4 class="font-bold text-xs text-gray-900">7-Day Easy Replacement</h4>
+        <p class="text-[10px] text-gray-500 mt-0.5">100% genuine village craft satisfaction</p>
       </div>
     </div>
 
-    <!-- Final Big Call-to-Action Card -->
-    <div class="vh-glass rounded-3xl p-8 sm:p-12 text-center max-w-3xl mx-auto space-y-4 border-amber-500/30">
+    <!-- Final Call-to-Action Card -->
+    <div class="bg-gradient-to-r from-stone-900 via-stone-850 to-emerald-950 text-white rounded-3xl p-8 sm:p-12 text-center max-w-4xl mx-auto space-y-4 border border-stone-800 shadow-xl">
       <?php if (!empty($s6['eyebrow'])): ?>
       <span class="inline-block px-3 py-1 rounded-full bg-amber-500/20 text-amber-300 font-bold text-xs">
         <?= htmlspecialchars($s6['eyebrow']) ?>
@@ -735,7 +591,7 @@ html {
         <?= htmlspecialchars($s6['title']) ?>
       </h2>
 
-      <p class="text-xs sm:text-base text-stone-200 max-w-xl mx-auto leading-relaxed">
+      <p class="text-xs sm:text-base text-stone-300 max-w-xl mx-auto leading-relaxed">
         <?= htmlspecialchars($s6['subtitle']) ?>
       </p>
 
@@ -749,15 +605,15 @@ html {
       <div class="flex flex-wrap items-center justify-center gap-3.5 pt-3">
         <?php if ($s6_b1_show): ?>
         <a href="<?= htmlspecialchars($s6['btn1_link']) ?>"<?= $s6_b1_target ?>
-           class="px-8 py-3.5 bg-amber-500 hover:bg-amber-400 text-stone-950 font-black text-xs sm:text-sm rounded-xl shadow-xl transition active:scale-95 flex items-center gap-2 cursor-pointer">
-          <i data-lucide="shopping-bag" class="w-4 h-4"></i>
+           class="px-8 py-3.5 bg-amber-500 hover:bg-amber-400 text-stone-950 font-black text-xs sm:text-sm rounded-xl shadow-lg transition active:scale-95 flex items-center gap-2 cursor-pointer">
+          <i class="fa-solid fa-bag-shopping text-sm"></i>
           <span><?= htmlspecialchars($s6['btn1_text']) ?></span>
         </a>
         <?php endif; ?>
 
         <?php if ($s6_b2_show): ?>
         <a href="<?= htmlspecialchars($s6['btn2_link']) ?>"<?= $s6_b2_target ?>
-           class="px-7 py-3.5 bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs sm:text-sm rounded-xl transition flex items-center gap-2">
+           class="px-7 py-3.5 bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs sm:text-sm rounded-xl transition flex items-center gap-2 shadow-lg">
           <i class="fa-brands fa-whatsapp text-sm"></i>
           <span><?= htmlspecialchars($s6['btn2_text']) ?></span>
         </a>
@@ -770,70 +626,52 @@ html {
 <?php endif; ?>
 
 <!-- ========================================================================= -->
-<!-- JAVASCRIPT: YouTube IFrame API Lazy Observer Engine                       -->
-<!-- Loaded ONCE, max 1-2 active players, poster-first fade-in, loop glitch fix -->
+<!-- JAVASCRIPT: YouTube IFrame API for Hero Section ONLY                      -->
 <!-- ========================================================================= -->
 <script>
 (function() {
   'use strict';
 
-  // 1. Data-saver and accessibility checks
-  const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-  const conn = navigator.connection || navigator.mozConnection || navigator.webkitConnection;
-  const isDataSaver = conn && (conn.saveData === true || conn.effectiveType === 'slow-2g' || conn.effectiveType === '2g');
+  var heroSec = document.getElementById('v6-sec-1');
+  if (!heroSec) return;
+
+  var prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  var conn = navigator.connection || navigator.mozConnection || navigator.webkitConnection;
+  var isDataSaver = conn && (conn.saveData === true || conn.effectiveType === 'slow-2g' || conn.effectiveType === '2g');
 
   if (prefersReducedMotion || (<?= $v6_data_saver ? 'true' : 'false' ?> && isDataSaver)) {
-    // Only poster images shown; zero YouTube requests made
+    // Only poster image displayed; zero YouTube requests made
     return;
   }
 
-  const sections = Array.from(document.querySelectorAll('.vh-sec'));
-  if (!sections.length) return;
+  var heroPlayer = null;
+  var ytApiReady = false;
 
-  const players = new Map(); // sectionEl -> { player, state, wrapEl }
-  let ytApiReady = false;
-
-  // Global YouTube API ready callback
-  window.onYouTubeIframeAPIReady = function() {
-    ytApiReady = true;
-    initLazyObserver();
+  window.toggleHeroAudio = function() {
+    var btn = document.getElementById('v6-audio-toggle');
+    if (!heroPlayer || typeof heroPlayer.isMuted !== 'function') return;
+    try {
+      if (heroPlayer.isMuted()) {
+        heroPlayer.unMute();
+        heroPlayer.setVolume(85);
+        if (btn) btn.innerHTML = '<i class="fa-solid fa-volume-high text-amber-400"></i> <span>Mute Audio</span>';
+      } else {
+        heroPlayer.mute();
+        if (btn) btn.innerHTML = '<i class="fa-solid fa-volume-xmark text-amber-400"></i> <span>Sound</span>';
+      }
+    } catch(e) {}
   };
 
-  // Inject YouTube IFrame API script once after initial paint
-  function loadYouTubeScript() {
-    if (window.YT && window.YT.Player) {
-      ytApiReady = true;
-      initLazyObserver();
-      return;
-    }
-    const tag = document.createElement('script');
-    tag.src = 'https://www.youtube.com/iframe_api';
-    tag.async = true;
-    tag.onerror = function() {
-      // Offline or blocked fallback: gracefully keep posters
-    };
-    document.head.appendChild(tag);
-  }
-
-  if (document.readyState === 'complete') {
-    loadYouTubeScript();
-  } else {
-    window.addEventListener('load', loadYouTubeScript);
-  }
-
-  // Create YouTube player for a specific section
-  function createPlayerForSection(secEl) {
-    if (players.has(secEl)) return players.get(secEl);
-
-    const source = secEl.getAttribute('data-source') || 'youtube';
-    const wrap = secEl.querySelector('.vh-player-wrap');
-    if (!wrap) return null;
+  function initHeroPlayer() {
+    if (!heroSec) return;
+    var source = heroSec.getAttribute('data-source') || 'youtube';
+    var wrap = heroSec.querySelector('.vh-hero-player-wrap');
+    if (!wrap) return;
 
     if (source === 'mp4') {
-      const mp4Url = secEl.getAttribute('data-mp4');
-      if (!mp4Url) return null;
-
-      const vid = document.createElement('video');
+      var mp4Url = heroSec.getAttribute('data-mp4');
+      if (!mp4Url) return;
+      var vid = document.createElement('video');
       vid.src = mp4Url;
       vid.muted = true;
       vid.loop = true;
@@ -845,22 +683,20 @@ html {
         wrap.classList.add('vh-loaded');
       };
       wrap.appendChild(vid);
-      const entry = { type: 'mp4', element: vid, wrap: wrap };
-      players.set(secEl, entry);
-      return entry;
+      return;
     }
 
     // YouTube Source
-    const ytId = secEl.getAttribute('data-yt');
-    if (!ytId || !ytApiReady || !window.YT || !window.YT.Player) return null;
+    var ytId = heroSec.getAttribute('data-yt');
+    if (!ytId || !window.YT || !window.YT.Player) return;
 
-    const startSec = parseInt(secEl.getAttribute('data-start') || '0', 10);
-    const endSec = parseInt(secEl.getAttribute('data-end') || '0', 10);
+    var startSec = parseInt(heroSec.getAttribute('data-start') || '0', 10);
+    var endSec = parseInt(heroSec.getAttribute('data-end') || '0', 10);
 
-    const mountDiv = document.createElement('div');
+    var mountDiv = document.createElement('div');
     wrap.appendChild(mountDiv);
 
-    const playerVars = {
+    var playerVars = {
       autoplay: 1,
       mute: 1,
       controls: 0,
@@ -879,7 +715,7 @@ html {
     if (startSec > 0) playerVars.start = startSec;
     if (endSec > 0) playerVars.end = endSec;
 
-    const player = new YT.Player(mountDiv, {
+    heroPlayer = new YT.Player(mountDiv, {
       host: 'https://www.youtube-nocookie.com',
       videoId: ytId,
       playerVars: playerVars,
@@ -894,7 +730,7 @@ html {
           } catch(e){}
         },
         onStateChange: function(event) {
-          // 1 = PLAYING: Fade in iframe & hide poster flash
+          // 1 = PLAYING: Fade in iframe & smoothly transition from poster
           if (event.data === YT.PlayerState.PLAYING) {
             wrap.classList.add('vh-loaded');
           }
@@ -908,129 +744,41 @@ html {
         }
       }
     });
-
-    const entry = { type: 'youtube', player: player, wrap: wrap };
-    players.set(secEl, entry);
-    return entry;
   }
 
-  // Destroy player to free memory (ensuring max 1-2 players exist in DOM)
-  function destroyPlayerForSection(secEl) {
-    if (!players.has(secEl)) return;
-    const entry = players.get(secEl);
-    if (entry.type === 'youtube' && entry.player && typeof entry.player.destroy === 'function') {
-      try { entry.player.destroy(); } catch(e){}
-    } else if (entry.type === 'mp4' && entry.element) {
-      entry.element.pause();
-      entry.element.remove();
-    }
-    if (entry.wrap) {
-      entry.wrap.classList.remove('vh-loaded');
-      entry.wrap.innerHTML = '';
-    }
-    players.delete(secEl);
-  }
+  window.onYouTubeIframeAPIReady = function() {
+    ytApiReady = true;
+    initHeroPlayer();
+  };
 
-  function initLazyObserver() {
-    if (!('IntersectionObserver' in window)) {
-      // Fallback: create players for all
-      sections.forEach(createPlayerForSection);
+  function loadYouTubeScript() {
+    if (window.YT && window.YT.Player) {
+      ytApiReady = true;
+      initHeroPlayer();
       return;
     }
-
-    const observer = new IntersectionObserver(function(entries) {
-      entries.forEach(function(entry) {
-        const secEl = entry.target;
-        const playerEntry = players.get(secEl);
-
-        if (entry.isIntersecting) {
-          // Section in viewport -> Play
-          if (!playerEntry) {
-            createPlayerForSection(secEl);
-          } else {
-            if (playerEntry.type === 'youtube' && playerEntry.player && typeof playerEntry.player.playVideo === 'function') {
-              try { playerEntry.player.playVideo(); } catch(e){}
-            } else if (playerEntry.type === 'mp4' && playerEntry.element) {
-              playerEntry.element.play();
-            }
-          }
-
-          // Preload next section
-          const idx = sections.indexOf(secEl);
-          if (idx !== -1 && idx + 1 < sections.length) {
-            const nextSec = sections[idx + 1];
-            if (!players.has(nextSec)) {
-              createPlayerForSection(nextSec);
-            }
-          }
-        } else {
-          // Off-screen -> Pause
-          if (playerEntry) {
-            if (playerEntry.type === 'youtube' && playerEntry.player && typeof playerEntry.player.pauseVideo === 'function') {
-              try { playerEntry.player.pauseVideo(); } catch(e){}
-            } else if (playerEntry.type === 'mp4' && playerEntry.element) {
-              playerEntry.element.pause();
-            }
-          }
-
-          // If more than 2 players alive, destroy far-away sections
-          if (players.size > 2) {
-            const currentIdx = sections.findIndex(s => {
-              const r = s.getBoundingClientRect();
-              return r.top < window.innerHeight && r.bottom > 0;
-            });
-            sections.forEach(function(s, i) {
-              if (Math.abs(i - currentIdx) > 1) {
-                destroyPlayerForSection(s);
-              }
-            });
-          }
-        }
-      });
-    }, { rootMargin: '200px 0px' });
-
-    sections.forEach(s => observer.observe(s));
+    var tag = document.createElement('script');
+    tag.src = 'https://www.youtube.com/iframe_api';
+    tag.async = true;
+    document.head.appendChild(tag);
   }
 
-  // Dot Navigation Highlight on Scroll
-  const dots = Array.from(document.querySelectorAll('.vh-dot'));
-  if (dots.length) {
-    const dotObserver = new IntersectionObserver(function(entries) {
-      entries.forEach(function(entry) {
-        if (entry.isIntersecting) {
-          const id = entry.target.id;
-          const num = id.replace('v6-sec-', '');
-          dots.forEach(d => {
-            if (d.getAttribute('data-sec') === num) {
-              d.classList.add('active');
-            } else {
-              d.classList.remove('active');
-            }
-          });
-        }
-      });
-    }, { threshold: 0.5 });
-
-    sections.forEach(s => dotObserver.observe(s));
+  if (document.readyState === 'complete') {
+    loadYouTubeScript();
+  } else {
+    window.addEventListener('load', loadYouTubeScript);
   }
 
-  // Document visibility change: pause everything when tab is hidden
+  // Pause video when tab is hidden to conserve resources
   document.addEventListener('visibilitychange', function() {
-    const isHidden = document.hidden;
-    players.forEach(function(entry) {
-      if (entry.type === 'youtube' && entry.player) {
-        try {
-          if (isHidden) {
-            if (typeof entry.player.pauseVideo === 'function') entry.player.pauseVideo();
-          } else {
-            if (typeof entry.player.playVideo === 'function') entry.player.playVideo();
-          }
-        } catch(e){}
-      } else if (entry.type === 'mp4' && entry.element) {
-        if (isHidden) entry.element.pause();
-        else entry.element.play();
+    if (!heroPlayer) return;
+    try {
+      if (document.hidden) {
+        if (typeof heroPlayer.pauseVideo === 'function') heroPlayer.pauseVideo();
+      } else {
+        if (typeof heroPlayer.playVideo === 'function') heroPlayer.playVideo();
       }
-    });
+    } catch(e){}
   });
 
 })();
