@@ -85,8 +85,17 @@ if ($action === 'customer_poll') {
 
 // 2. Customer: Send Message (With Double-Submit & Duplicate Spam Debounce)
 if ($action === 'customer_send') {
+    // Security Audit M3: Per-session/IP rate limiting
+    $client_ip = get_client_ip();
+    if (!check_rate_limit('chat_msg_ip', $client_ip, 25, 60)) {
+        echo json_encode(['success' => false, 'error' => 'Too many messages sent. Please wait a moment.']);
+        exit;
+    }
+
     $session = get_or_create_customer_session();
-    $message = clean_input($_POST['message'] ?? '');
+    $raw_message = clean_input($_POST['message'] ?? '');
+    // Security Audit M3: Maximum message length 500 characters
+    $message = mb_strlen($raw_message) > 500 ? mb_substr($raw_message, 0, 500) : $raw_message;
     $guest_name = clean_input($_POST['guest_name'] ?? '');
     $guest_phone = clean_input($_POST['guest_phone'] ?? '');
 

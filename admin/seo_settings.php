@@ -8,6 +8,11 @@ require_once __DIR__ . '/../includes/functions.php';
 require_once __DIR__ . '/../includes/auth_check.php';
 require_admin();
 
+// Security Audit H2: Enforce CSRF protection for all POST actions
+if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    csrf_protect();
+}
+
 // Handle Save SEO Settings
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['save_seo'])) {
     $seo_keys = [

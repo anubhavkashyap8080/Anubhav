@@ -3,6 +3,11 @@ require_once __DIR__ . '/../includes/functions.php';
 require_once __DIR__ . '/../includes/auth_check.php';
 require_admin();
 
+// Security Audit H2: Enforce CSRF protection for all POST actions
+if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    csrf_protect();
+}
+
 $cat_filter = clean_input($_GET['category'] ?? '');
 $vendor_filter = intval($_GET['vendor'] ?? 0);
 $q = clean_input($_GET['q'] ?? '');

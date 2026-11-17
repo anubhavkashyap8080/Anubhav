@@ -92,62 +92,80 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && (!isset($_POST['action']) || $_POST
             if (empty($entered_otp) || strlen($entered_otp) !== 6) {
                 $error = 'Please enter a valid 6-digit verification code.';
             } else {
-                $now = date('Y-m-d H:i:s');
-                $is_otp_match = false;
-
-                // Match against email OTP
-                if (!empty($user['email_verification_otp']) && hash_equals((string)$user['email_verification_otp'], $entered_otp)) {
-                    $is_otp_match = true;
-                }
-                // Match against phone OTP
-                if (!$is_otp_match && !empty($user['phone_verification_otp']) && hash_equals((string)$user['phone_verification_otp'], $entered_otp)) {
-                    $is_otp_match = true;
-                }
-
-                // Check expiry if exists
-                if ($is_otp_match && !empty($user['email_verification_expires']) && strtotime($user['email_verification_expires']) < time()) {
-                    $error = 'This verification code has expired. Please click "Resend Code" to receive a new one.';
-                } elseif ($is_otp_match) {
-                    // Activate Account
-                    try {
-                        $upd = $pdo->prepare("
-                            UPDATE users 
-                            SET status = 'active', 
-                                email_verified_at = CURRENT_TIMESTAMP, 
-                                phone_verified_at = CURRENT_TIMESTAMP,
-                                email_verification_otp = NULL, 
-                                phone_verification_otp = NULL,
-                                email_verification_token = NULL,
-                                email_verification_expires = NULL,
-                                phone_verification_expires = NULL
-                            WHERE id = ?
-                        ");
-                        $upd->execute([$user['id']]);
-
-                        // Send Official Welcome Email
-                        send_welcome_email($user['id'], $user['email'], $user['name']);
-
-                        // Session Login & Regeneration
-                        if (session_status() === PHP_SESSION_ACTIVE) {
-                            session_regenerate_id(true);
-                        }
-                        $_SESSION['user_id'] = $user['id'];
-                        $_SESSION['user_name'] = $user['name'];
-                        $_SESSION['user_role'] = $user['role'] ?? 'customer';
-                        $_SESSION['user_email'] = $user['email'];
-
-                        unset($_SESSION['pending_verification_user_id'], $_SESSION['pending_verification_email'], $_SESSION['pending_verification_name']);
-
-                        log_audit_action('user_signup_verified', 'auth', 'user', $user['id'], 'Account verified via OTP code');
-                        set_flash('success', 'Account verified successfully! Welcome to GanvGaliHat.');
-                        $target = (($current_user['role'] ?? '') === 'retailer') ? '/retailer/dashboard.php' : ((($current_user['role'] ?? '') === 'vendor') ? '/seller/dashboard.php' : '/account.php');
-        header('Location: ' . $target);
-                        exit;
-                    } catch (Exception $e) {
-                        $error = 'Verification error: ' . $e->getMessage();
-                    }
+                // Security Audit H9: Attempt throttling per user account (Max 5 attempts)
+                $attempt_key = 'signup_otp_fails_' . $user['id'];
+                $_SESSION[$attempt_key] = (int)($_SESSION[$attempt_key] ?? 0) + 1;
+                if ($_SESSION[$attempt_key] > 5) {
+                    $error = 'Too many incorrect attempts. For security reasons, please click "Resend Code" to receive a fresh verification code.';
                 } else {
-                    $error = 'Invalid 6-digit verification code. Please check your email inbox (and spam folder) or request a new code.';
+                    $now = date('Y-m-d H:i:s');
+                    $entered_hash = hash('sha256', $entered_otp);
+                    $is_otp_match = false;
+                    $matched_phone_otp = false;
+
+                    // Match against email OTP (hashed or legacy plaintext)
+                    if (!empty($user['email_verification_otp']) && (hash_equals((string)$user['email_verification_otp'], $entered_hash) || hash_equals((string)$user['email_verification_otp'], $entered_otp))) {
+                        $is_otp_match = true;
+                    }
+                    // Match against phone OTP
+                    if (!$is_otp_match && !empty($user['phone_verification_otp']) && (hash_equals((string)$user['phone_verification_otp'], $entered_hash) || hash_equals((string)$user['phone_verification_otp'], $entered_otp))) {
+                        $is_otp_match = true;
+                        $matched_phone_otp = true;
+                    }
+
+                    // Check expiry if exists
+                    if ($is_otp_match && !empty($user['email_verification_expires']) && strtotime($user['email_verification_expires']) < time()) {
+                        $error = 'This verification code has expired. Please click "Resend Code" to receive a new one.';
+                    } elseif ($is_otp_match) {
+                        $_SESSION[$attempt_key] = 0;
+                        // Activate Account
+                        try {
+                            // Security Audit H9: Only set phone_verified_at if phone was actually verified
+                            $phone_ver_sql = $matched_phone_otp ? 'CURRENT_TIMESTAMP' : 'phone_verified_at';
+                            $upd = $pdo->prepare("
+                                UPDATE users 
+                                SET status = 'active', 
+                                    email_verified_at = CURRENT_TIMESTAMP, 
+                                    phone_verified_at = {$phone_ver_sql},
+                                    email_verification_otp = NULL, 
+                                    phone_verification_otp = NULL,
+                                    email_verification_token = NULL,
+                                    email_verification_expires = NULL,
+                                    phone_verification_expires = NULL
+                                WHERE id = ?
+                            ");
+                            $upd->execute([$user['id']]);
+
+                            // Send Official Welcome Email
+                            send_welcome_email($user['id'], $user['email'], $user['name']);
+
+                            // Session Login & Regeneration
+                            if (session_status() === PHP_SESSION_ACTIVE) {
+                                session_regenerate_id(true);
+                            }
+                            $_SESSION['user_id'] = $user['id'];
+                            $_SESSION['user_name'] = $user['name'];
+                            $_SESSION['user_role'] = $user['role'] ?? 'customer';
+                            $_SESSION['user_email'] = $user['email'];
+                            $_SESSION['login_time'] = time();
+                            $_SESSION['last_activity'] = time();
+                            $_SESSION['auth_pwd_ts'] = (string)($user['password_changed_at'] ?? '');
+
+                            unset($_SESSION['pending_verification_user_id'], $_SESSION['pending_verification_email'], $_SESSION['pending_verification_name']);
+
+                            log_audit_action('user_signup_verified', 'auth', 'user', $user['id'], 'Account verified via OTP code');
+                            set_flash('success', 'Account verified successfully! Welcome to GanvGaliHat.');
+                            $target = (($user['role'] ?? '') === 'retailer') ? '/retailer/dashboard.php' : ((($user['role'] ?? '') === 'vendor') ? '/seller/dashboard.php' : '/account.php');
+                            header('Location: ' . $target);
+                            exit;
+                        } catch (Exception $e) {
+                            error_log("Signup verification error: " . $e->getMessage());
+                            $error = 'A technical error occurred during verification. Please try again.';
+                        }
+                    } else {
+                        $remaining = max(0, 5 - $_SESSION[$attempt_key]);
+                        $error = "Invalid 6-digit verification code. Attempts remaining: {$remaining}. Please check your email inbox (and spam folder) or request a new code.";
+                    }
                 }
             }
         }

@@ -9,6 +9,9 @@ if (ob_get_level() === 0) {
     ob_start();
 }
 
+// Global Timezone Enforcement (Asia/Kolkata - IST UTC+05:30)
+date_default_timezone_set('Asia/Kolkata');
+
 // Item 13: Secure Session Cookie Parameters before session_start
 if (session_status() === PHP_SESSION_NONE && !headers_sent()) {
     $is_https = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off')
@@ -41,7 +44,8 @@ function load_platform_config() {
 
     $locations = [
         getenv('GGH_CONFIG_PATH'),
-        dirname(__DIR__, 2) . '/gaungalihat_config.php', // Outside web root on cPanel (/home/user/gaungalihat_config.php)
+        dirname(__DIR__, 2) . '/ganvgalihat_config.php', // Primary outside web root on cPanel (/home/user/ganvgalihat_config.php)
+        dirname(__DIR__, 2) . '/gaungalihat_config.php', // Legacy spelling outside web root
         dirname(__DIR__) . '/config/config.local.php',    // Git-ignored local config file
     ];
 
@@ -208,6 +212,20 @@ if ($pdo) {
  */
 function ensure_platform_schema($pdo) {
     if (!$pdo) return;
+
+    static $already_run = false;
+    if ($already_run) return;
+
+    $cache_dir = __DIR__ . '/../data';
+    if (!is_dir($cache_dir)) {
+        @mkdir($cache_dir, 0755, true);
+    }
+    $schema_cache_file = $cache_dir . '/cache_schema_v2.lock';
+    if (file_exists($schema_cache_file) && (time() - filemtime($schema_cache_file)) < 86400) {
+        $already_run = true;
+        return;
+    }
+
     $driver = $pdo->getAttribute(PDO::ATTR_DRIVER_NAME);
     $is_sqlite = ($driver === 'sqlite');
 
@@ -1334,5 +1352,10 @@ function init_sqlite_schema($pdo) {
                 }
             }
         }
+    }
+
+    $already_run = true;
+    if (isset($schema_cache_file)) {
+        @file_put_contents($schema_cache_file, (string)time());
     }
 }

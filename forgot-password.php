@@ -12,9 +12,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $csrf = $_POST['csrf_token'] ?? '';
     if (!csrf_check($csrf)) {
         $error = 'Security session expired. Please refresh the page and try again.';
+    } elseif (!verify_turnstile_captcha()) {
+        // Security Audit C5: Enforce Turnstile CAPTCHA
+        $error = 'Security check (CAPTCHA) verification failed. Please complete the verification.';
     } else {
         $email = clean_input($_POST['email'] ?? '');
-        $ip = $_SERVER['REMOTE_ADDR'] ?? '127.0.0.1';
+        $ip = get_client_ip();
 
         if (empty($email) || !filter_var($email, FILTER_VALIDATE_EMAIL)) {
             $error = 'Please enter a valid email address.';
@@ -124,6 +127,11 @@ require_once __DIR__ . '/includes/header.php';
             <input type="email" name="email" required autofocus placeholder="you@example.com"
               class="w-full pl-10 pr-3.5 py-2.5 bg-stone-50 border border-gray-200 rounded-xl text-sm focus:bg-white focus:border-brand-green focus:outline-none transition">
           </div>
+        </div>
+
+        <!-- Security Audit C5: Turnstile CAPTCHA Widget -->
+        <div class="pt-1">
+          <?= render_turnstile_widget() ?>
         </div>
 
         <button type="submit"

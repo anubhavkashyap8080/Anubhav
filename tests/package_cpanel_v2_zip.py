@@ -22,10 +22,10 @@ exclude_files = {
     '.gitignore', 'package.json', 'package-lock.json', 'tsconfig.json',
     'vite.config.ts', 'wrangler.toml', 'postcss.config.js', 'tailwind.config.js',
     'README.md', 'gaungalihat_cpanel_production.zip', 'ganvgalihat_cpanel_v2_production.zip',
-    'config.local.php'
+    'config.local.php', 'setup_admin.php'
 }
 
-exclude_exts = {'.zip', '.log', '.tmp', '.sqlite'}
+exclude_exts = {'.zip', '.log', '.tmp', '.sqlite', '.sh', '.py'}
 
 file_count = 0
 total_size = 0

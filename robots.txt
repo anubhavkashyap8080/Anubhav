@@ -2,12 +2,23 @@
 # User-Agent Directives for Web Crawlers and Search Engines
 
 User-agent: *
+Disallow: /admin/
+Disallow: /seller/
+Disallow: /retailer/
+Disallow: /ajax/
+Disallow: /payments/
+Disallow: /auth/
 Disallow: /cart.php
 Disallow: /checkout.php
 Disallow: /account.php
 Disallow: /login.php
 Disallow: /register.php
 Disallow: /logout.php
+Disallow: /reset-password.php
+Disallow: /forgot-password.php
+Disallow: /verify-signup.php
+Disallow: /verify-email.php
+Disallow: /verify-phone.php
 
 Allow: /
 Allow: /products.php

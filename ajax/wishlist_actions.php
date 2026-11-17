@@ -16,12 +16,14 @@ function send_json_wishlist_response($data) {
     exit;
 }
 
-$product_id = (int)($_POST['product_id'] ?? $_GET['product_id'] ?? 0);
-
-// Item 16: Central CSRF Protection for state-changing wishlist actions
-if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    csrf_protect();
+// Security Audit M2: State-modifying wishlist actions must strictly use POST + CSRF
+if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+    http_response_code(405);
+    send_json_wishlist_response(['success' => false, 'message' => 'Invalid request method. Only POST is allowed for wishlist modifications.']);
 }
+csrf_protect();
+
+$product_id = (int)($_POST['product_id'] ?? 0);
 
 if ($product_id <= 0) {
     send_json_wishlist_response(['success' => false, 'message' => 'Invalid product.']);

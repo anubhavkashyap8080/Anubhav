@@ -31,18 +31,16 @@ if (!$google_enabled) {
 $auto_register = (get_site_setting('social_auto_register', '1') == '1');
 
 /**
- * Verify Google ID Token using dual verification:
- * 1. Google's official TokenInfo endpoint (Primary)
- * 2. Cryptographic JWT payload validation fallback (Secondary, handles server network/curl limits)
+ * Verify Google ID Token using strict cryptographic verification:
+ * Queries Google's official TokenInfo endpoint and validates aud, iss, exp, and email_verified.
+ * Unverified fallback decoding (Method B) removed per Security Audit C1.
  */
 function verify_google_id_token($id_token, $expected_client_id) {
     if (empty($id_token) || !is_string($id_token)) {
         return false;
     }
 
-    $payload = null;
-
-    // Method A: Query Google's official tokeninfo endpoint
+    // Cryptographic Token Verification via Google's Official TokenInfo Endpoint
     $ch = curl_init('https://oauth2.googleapis.com/tokeninfo?id_token=' . urlencode($id_token));
     curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
     curl_setopt($ch, CURLOPT_TIMEOUT, 8);
@@ -52,27 +50,14 @@ function verify_google_id_token($id_token, $expected_client_id) {
     $http_code = curl_getinfo($ch, CURLINFO_HTTP_CODE);
     curl_close($ch);
 
-    if ($http_code === 200 && !empty($response)) {
-        $json = json_decode($response, true);
-        if (is_array($json) && !empty($json['email'])) {
-            $payload = $json;
-        }
+    if ($http_code !== 200 || empty($response)) {
+        error_log("Google ID Token verification rejected: HTTP " . intval($http_code));
+        return false;
     }
 
-    // Method B: If cURL failed (e.g. timeout / network block on host), parse signed JWT payload directly
-    if (!$payload) {
-        $parts = explode('.', $id_token);
-        if (count($parts) === 3) {
-            $b64 = str_replace(['-', '_'], ['+', '/'], $parts[1]);
-            $decoded = json_decode(base64_decode($b64), true);
-            if (is_array($decoded) && !empty($decoded['email'])) {
-                $payload = $decoded;
-            }
-        }
-    }
-
-    if (!$payload) {
-        error_log("Google ID Token could not be parsed or verified.");
+    $payload = json_decode($response, true);
+    if (!is_array($payload) || empty($payload['email'])) {
+        error_log("Google Token payload invalid or missing email");
         return false;
     }
 
@@ -91,7 +76,7 @@ function verify_google_id_token($id_token, $expected_client_id) {
         return false;
     }
 
-    // 3. Verify Audience matches configured Client ID (if configured)
+    // 3. Strict Audience Check: Must match configured Client ID
     $expected = trim((string)$expected_client_id);
     if (!empty($expected)) {
         $aud = $payload['aud'] ?? '';
@@ -107,11 +92,8 @@ function verify_google_id_token($id_token, $expected_client_id) {
         }
 
         if (!$aud_matches) {
-            // Check if audience contains googleusercontent string
-            if (strpos(json_encode($aud), 'googleusercontent.com') === false && strpos(json_encode($azp), 'googleusercontent.com') === false) {
-                error_log("Google Token Audience mismatch: expected '{$expected}', got aud: " . json_encode($aud) . ", azp: " . json_encode($azp));
-                return false;
-            }
+            error_log("Google Token Audience mismatch: expected '{$expected}', got aud: " . json_encode($aud) . ", azp: " . json_encode($azp));
+            return false;
         }
     }
 
@@ -129,6 +111,20 @@ function verify_google_id_token($id_token, $expected_client_id) {
     }
 
     return $payload;
+}
+
+// Security Audit C1: Verify Google CSRF Token (g_csrf_token) in POST requests
+if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    if (!empty($_COOKIE['g_csrf_token']) || !empty($_POST['g_csrf_token'])) {
+        $cookie_csrf = (string)($_COOKIE['g_csrf_token'] ?? '');
+        $post_csrf   = (string)($_POST['g_csrf_token'] ?? '');
+        if (empty($cookie_csrf) || empty($post_csrf) || !hash_equals($cookie_csrf, $post_csrf)) {
+            log_audit_action('auth_google_csrf_failed', 'auth', 'Google CSRF token mismatch between cookie and body');
+            set_flash('error', 'Google authentication session validation failed. Please try again.');
+            header('Location: /login.php');
+            exit;
+        }
+    }
 }
 
 $verified_payload = null;
@@ -191,6 +187,14 @@ try {
     if ($user) {
         if ($user['status'] !== 'active') {
             set_flash('error', 'Your account is suspended or inactive. Please contact administrator.');
+            header('Location: /login.php');
+            exit;
+        }
+
+        // Security Audit C1: Google OAuth is strictly restricted to 'customer' accounts
+        if ($user['role'] !== 'customer') {
+            log_audit_action('auth_google_role_rejected', 'users', "Rejected Google login attempt for privileged role '{$user['role']}' (User #{$user['id']})");
+            set_flash('error', 'Google Sign-In is restricted to customer accounts only. Staff, Administration, and Vendor accounts must sign in using their registered password and two-factor authentication.');
             header('Location: /login.php');
             exit;
         }
@@ -276,7 +280,7 @@ try {
     }
 } catch (Exception $e) {
     error_log("Google Auth Database Error: " . $e->getMessage());
-    set_flash('error', 'A technical error occurred during the login process: ' . $e->getMessage());
+    set_flash('error', 'A temporary error occurred during Google sign-in. Please try again or log in with your credentials.');
     header('Location: /login.php');
     exit;
 }

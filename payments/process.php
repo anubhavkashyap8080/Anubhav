@@ -31,6 +31,39 @@ $shipping_state = clean_input($_POST['state'] ?? 'Uttar Pradesh');
 $shipping_pincode = clean_input($_POST['pincode'] ?? '241126');
 $payment_method = clean_input($_POST['payment_method'] ?? 'cod');
 
+// Security Audit M19: Validate Customer Email format if provided
+if (!empty($customer_email) && !filter_var($customer_email, FILTER_VALIDATE_EMAIL)) {
+    set_flash('error', 'Please enter a valid email address.');
+    header('Location: /checkout.php');
+    exit;
+}
+
+// Security Audit M19: Validate Indian State / UT against recognized list
+$valid_indian_states = [
+    'Andhra Pradesh', 'Arunachal Pradesh', 'Assam', 'Bihar', 'Chhattisgarh', 'Goa', 'Gujarat', 
+    'Haryana', 'Himachal Pradesh', 'Jharkhand', 'Karnataka', 'Kerala', 'Madhya Pradesh', 
+    'Maharashtra', 'Manipur', 'Meghalaya', 'Mizoram', 'Nagaland', 'Odisha', 'Punjab', 
+    'Rajasthan', 'Sikkim', 'Tamil Nadu', 'Telangana', 'Tripura', 'Uttar Pradesh', 
+    'Uttarakhand', 'West Bengal', 'Andaman and Nicobar Islands', 'Chandigarh', 
+    'Dadra and Nagar Haveli and Daman and Diu', 'Delhi', 'Jammu and Kashmir', 'Ladakh', 
+    'Lakshadweep', 'Puducherry'
+];
+if (!empty($shipping_state)) {
+    $matched_st = false;
+    foreach ($valid_indian_states as $st) {
+        if (strcasecmp($st, $shipping_state) === 0) {
+            $shipping_state = $st;
+            $matched_st = true;
+            break;
+        }
+    }
+    if (!$matched_st) {
+        set_flash('error', 'Please select a valid Indian State or Union Territory.');
+        header('Location: /checkout.php');
+        exit;
+    }
+}
+
 // Item 24: Whitelist Payment Method
 $allowed_payment_methods = ['cod', 'razorpay', 'payu'];
 if (!in_array($payment_method, $allowed_payment_methods, true)) {
@@ -110,8 +143,10 @@ if (!$is_phone_verified) {
     exit;
 }
 
-$order_number = 'ORD-' . date('Ymd') . '-' . random_int(10000, 99999);
-$consignment_no = 'EU' . random_int(100000000, 999999999) . 'IN';
+// Security Audit M19: Collision-safe cryptographically random order number
+$order_number = 'ORD-' . date('Ymd') . '-' . strtoupper(bin2hex(random_bytes(4)));
+// Security Audit H10: Do not fabricate tracking numbers at order creation; set to NULL until physically dispatched
+$consignment_no = null;
 $order_access_token = bin2hex(random_bytes(24));
 $user_id = $_SESSION['user_id'] ?? null;
 
@@ -156,10 +191,12 @@ try {
         $subtotal += $line_total;
         $total_weight += (max(0.01, floatval($db_product['weight_kg'])) * $qty);
 
-        // Decrement product stock atomically
-        $new_stock = $avail_stock - $qty;
-        $new_stock_status = ($new_stock <= 0) ? 'Out of Stock' : 'In Stock';
-        $pdo->prepare("UPDATE products SET stock = ?, stock_status = ? WHERE id = ?")->execute([$new_stock, $new_stock_status, $p_id]);
+        // Security Audit H6: For COD, decrement stock immediately. For online gateways, stock is decremented upon payment capture.
+        if ($payment_method === 'cod') {
+            $new_stock = $avail_stock - $qty;
+            $new_stock_status = ($new_stock <= 0) ? 'Out of Stock' : 'In Stock';
+            $pdo->prepare("UPDATE products SET stock = ?, stock_status = ? WHERE id = ?")->execute([$new_stock, $new_stock_status, $p_id]);
+        }
 
         $order_items_to_insert[] = [
             'product_id'   => $db_product['id'],
@@ -247,6 +284,14 @@ try {
     }
 
     $final_total = max(0, round($subtotal + $shipping_fee - $coupon_discount, 2));
+
+    // Security Audit H6: Cap maximum Cash on Delivery (COD) order value to ₹10,000
+    if ($payment_method === 'cod' && $final_total > 10000) {
+        if ($pdo->inTransaction()) $pdo->rollBack();
+        set_flash('error', 'Cash on Delivery (COD) is available for orders up to ₹10,000 only. For higher order amounts, please select Razorpay or PayU online payment.');
+        header('Location: /checkout.php');
+        exit;
+    }
 
     $stmt = $pdo->prepare("
         INSERT INTO orders (

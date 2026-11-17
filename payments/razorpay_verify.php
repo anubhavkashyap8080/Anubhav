@@ -59,6 +59,16 @@ try {
         exit;
     }
 
+    // Security Audit C3: Ensure razorpay_payment_id is unique across all orders (prevents cross-order replay)
+    $chk_dup = $pdo->prepare("SELECT id FROM orders WHERE payment_txn_id = ? AND id != ? LIMIT 1");
+    $chk_dup->execute([$razorpay_payment_id, $order_id]);
+    if ($chk_dup->fetch()) {
+        log_audit_action('payment_replay_blocked', 'orders', "Razorpay payment ID {$razorpay_payment_id} was already used on another order");
+        set_flash('error', 'सुरक्षा चेतावनी: यह भुगतान पहचानकर्ता पहले ही किसी अन्य ऑर्डर में उपयोग किया जा चुका है।');
+        header('Location: /checkout.php');
+        exit;
+    }
+
     // 3. Confirm the order belongs to the current session or logged in user
     $current_user = get_logged_in_user();
     $session_order_id = (int)($_SESSION['pending_payment_order_id'] ?? 0);
@@ -165,16 +175,33 @@ try {
         exit;
     }
 
+    // Security Audit C3: Verify gateway order id matches
+    if (!empty($order['gateway_order_id']) && !empty($payment_data['order_id']) && $payment_data['order_id'] !== $order['gateway_order_id']) {
+        log_audit_action('payment_order_id_mismatch', 'orders', 'order', $order_id, "Gateway order ID mismatch: expected {$order['gateway_order_id']}, got {$payment_data['order_id']}");
+        set_flash('error', 'गेटवे ऑर्डर पहचानकर्ता में विसंगति पाई गई।');
+        header('Location: /checkout.php');
+        exit;
+    }
+
+    // Security Audit C3: Verify currency is strictly INR
+    if (strtoupper($payment_data['currency'] ?? '') !== 'INR') {
+        log_audit_action('payment_currency_mismatch', 'orders', 'order', $order_id, "Currency mismatch: " . ($payment_data['currency'] ?? ''));
+        set_flash('error', 'अमान्य मुद्रा। केवल INR लेन-देन स्वीकार्य हैं।');
+        header('Location: /checkout.php');
+        exit;
+    }
+
     $rzp_status = strtolower($payment_data['status'] ?? '');
-    if (!in_array($rzp_status, ['captured', 'authorized'], true)) {
+    // Security Audit C3: Accept only fully captured payments
+    if ($rzp_status !== 'captured') {
         log_audit_action(
             'payment_invalid_status',
             'orders',
             'order',
             $order_id,
-            "Razorpay payment status not captured/authorized (status: {$rzp_status})"
+            "Razorpay payment status not captured (status: {$rzp_status})"
         );
-        set_flash('error', 'गेटवे पर भुगतान पूर्ण नहीं हुआ है (Status: ' . htmlspecialchars($rzp_status, ENT_QUOTES, 'UTF-8') . ')');
+        set_flash('error', 'गेटवे पर भुगतान पूर्ण रूप से प्राप्त (captured) नहीं हुआ है (Status: ' . htmlspecialchars($rzp_status, ENT_QUOTES, 'UTF-8') . ')');
         header('Location: /checkout.php');
         exit;
     }
@@ -202,6 +229,20 @@ try {
         set_flash('info', 'यह ऑर्डर पहले ही अपडेट हो चुका है।');
         header('Location: /order-success.php?id=' . $order_id . '&token=' . urlencode($access_token));
         exit;
+    }
+
+    // Security Audit H6: Decrement product stock upon confirmed payment capture
+    try {
+        $stmt_items = $pdo->prepare("SELECT product_id, quantity FROM order_items WHERE order_id = ?");
+        $stmt_items->execute([$order_id]);
+        while ($oi = $stmt_items->fetch()) {
+            $p_qty = max(1, (int)$oi['quantity']);
+            $p_id = (int)$oi['product_id'];
+            $pdo->prepare("UPDATE products SET stock = GREATEST(0, stock - ?) WHERE id = ?")->execute([$p_qty, $p_id]);
+            $pdo->prepare("UPDATE products SET stock_status = 'Out of Stock' WHERE id = ? AND stock <= 0")->execute([$p_id]);
+        }
+    } catch (Throwable $e_stk) {
+        error_log("Error decrementing stock on payment capture: " . $e_stk->getMessage());
     }
 
     // Clear cart and pending session keys

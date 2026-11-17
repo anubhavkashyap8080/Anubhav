@@ -58,7 +58,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $is_token_valid) {
             try {
                 $pdo->beginTransaction();
 
-                $new_hash = password_hash($new_pass, PASSWORD_BCRYPT);
+                $new_hash = password_hash($new_pass, PASSWORD_BCRYPT, ['cost' => 12]);
 
                 // Update user password, clear forced change flag, and invalidate other sessions
                 $upd_user = $pdo->prepare("UPDATE users SET password = ?, force_password_change = 0, password_changed_at = CURRENT_TIMESTAMP WHERE id = ?");
@@ -76,7 +76,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $is_token_valid) {
                 exit;
             } catch (Throwable $e) {
                 if ($pdo->inTransaction()) $pdo->rollBack();
-                $error = 'Error updating password: ' . $e->getMessage();
+                error_log('Reset password error: ' . $e->getMessage());
+                $error = 'An error occurred while updating your password. Please try again.';
             }
         }
     }

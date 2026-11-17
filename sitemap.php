@@ -23,7 +23,6 @@ if (!empty($db_canonical)) {
 
 $type = trim($_GET['type'] ?? '');
 header('Content-Type: application/xml; charset=utf-8');
-header('X-Robots-Tag: noindex, follow');
 
 $today_iso = date('c');
 

@@ -3,6 +3,11 @@ require_once __DIR__ . '/../includes/functions.php';
 require_once __DIR__ . '/../includes/auth_check.php';
 require_admin();
 
+// Security Audit H2: Enforce CSRF protection for all POST actions
+if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    csrf_protect();
+}
+
 $admin_user = get_logged_in_user();
 $is_super = is_super_admin();
 

@@ -79,10 +79,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $error = 'Please enter a complete workshop address with valid 6-digit PIN code in Step 2.';
         } elseif (!empty($bank_account) && !empty($bank_account_confirm) && $bank_account !== $bank_account_confirm) {
             $error = 'Bank account number and confirmation account number do not match in Step 4.';
+        } elseif (!empty($pan_number) && !preg_match('/^[A-Z]{5}[0-9]{4}[A-Z]{1}$/', $pan_number)) {
+            $error = 'Please enter a valid 10-character PAN number (e.g. ABCDE1234F).';
+        } elseif (!empty($aadhaar_number) && !preg_match('/^[2-9]{1}[0-9]{11}$/', preg_replace('/\D/', '', $aadhaar_number))) {
+            $error = 'Please enter a valid 12-digit Indian Aadhaar number in Step 4.';
         } elseif (!$agree_terms || !$agree_authenticity || !$agree_privacy) {
             $error = 'You must accept the Vendor Terms, Authenticity Guarantee, and Privacy Policy in Step 5.';
         } else {
-            // Handle Document Upload if provided
+            // Security Audit H3: Handle Document Upload with strict MIME validation via finfo
             if (isset($_FILES['kyc_doc_file']) && $_FILES['kyc_doc_file']['error'] === UPLOAD_ERR_OK) {
                 $target_dir = __DIR__ . '/uploads/kyc/';
                 if (!is_dir($target_dir)) {
@@ -93,15 +97,24 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $ext = strtolower(pathinfo($orig_name, PATHINFO_EXTENSION));
                 $allowed_exts = ['jpg', 'jpeg', 'png', 'pdf', 'webp'];
                 
-                if (in_array($ext, $allowed_exts, true) && $_FILES['kyc_doc_file']['size'] <= 5 * 1024 * 1024) {
+                $finfo = finfo_open(FILEINFO_MIME_TYPE);
+                $mime_type = finfo_file($finfo, $_FILES['kyc_doc_file']['tmp_name']);
+                finfo_close($finfo);
+
+                $allowed_mimes = ['image/jpeg', 'image/png', 'application/pdf', 'image/webp'];
+
+                if (in_array($ext, $allowed_exts, true) && in_array($mime_type, $allowed_mimes, true) && $_FILES['kyc_doc_file']['size'] <= 5 * 1024 * 1024) {
                     $new_filename = 'kyc_' . bin2hex(random_bytes(12)) . '.' . $ext;
                     $dest_path = $target_dir . $new_filename;
                     if (move_uploaded_file($_FILES['kyc_doc_file']['tmp_name'], $dest_path)) {
                         $doc_path = '/uploads/kyc/' . $new_filename;
                     }
+                } else {
+                    $error = 'Invalid KYC document file type. Only PDF, JPG, PNG, and WebP files up to 5MB are accepted.';
                 }
             }
 
+            if (empty($error)) {
             try {
                 $pdo->beginTransaction();
 
@@ -115,15 +128,21 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     $base_username = strtolower(preg_replace('/[^a-zA-Z0-9]/', '', explode('@', $email)[0]));
                     $username = $base_username . random_int(10, 99);
                     $unique_code = 'GGH-ART-' . random_int(10000, 99999);
-                    $hashed_password = password_hash($password, PASSWORD_BCRYPT);
+                    $hashed_password = password_hash($password, PASSWORD_BCRYPT, ['cost' => 12]);
 
-                    // Insert User record
+                    // Security Audit C6 & H4: Store only masked Aadhaar and encrypt sensitive fields
+                    $clean_a = preg_replace('/\D/', '', $aadhaar_number);
+                    $masked_aadhaar = !empty($clean_a) ? ('XXXX-XXXX-' . substr($clean_a, -4)) : '';
+                    $enc_bank_account = !empty($bank_account) ? encrypt_sensitive_field($bank_account) : '';
+                    $enc_pan_number = !empty($pan_number) ? encrypt_sensitive_field($pan_number) : '';
+
+                    // Insert User record with 'pending' status until verified
                     $insert_user = $pdo->prepare("
                         INSERT INTO users (
                             unique_code, name, username, email, phone, password, role, 
                             department, address, city, pincode, status, phone_verified_at, created_at
                         ) VALUES (
-                            ?, ?, ?, ?, ?, ?, 'vendor', ?, ?, ?, ?, 'active', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP
+                            ?, ?, ?, ?, ?, ?, 'vendor', ?, ?, ?, ?, 'pending', NULL, CURRENT_TIMESTAMP
                         )
                     ");
                     $insert_user->execute([
@@ -136,7 +155,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     $base_slug = strtolower(preg_replace('/[^a-zA-Z0-9]+/', '-', $shop_name));
                     $slug = trim($base_slug, '-') . '-' . random_int(10, 99);
 
-                    // Insert Vendor record
+                    // Security Audit C6: Insert Vendor with verified = 0 and kyc_status = 'Pending'
                     $insert_vendor = $pdo->prepare("
                         INSERT INTO vendors (
                             user_id, name, business_name, slug, type, address, village, district, state,
@@ -144,13 +163,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                             bank_account, bank_ifsc, upi_id, pan_number, aadhaar_number, gstin,
                             document_file, terms_accepted_at, verified, kyc_status, commission_rate, created_at
                         ) VALUES (
-                            ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP, 1, 'Verified', 4.00, CURRENT_TIMESTAMP
+                            ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP, 0, 'Pending', 4.00, CURRENT_TIMESTAMP
                         )
                     ");
                     $insert_vendor->execute([
                         $user_id, $owner_name, $shop_name, $slug, $vendor_type, $address, $village,
                         $district, $state, $pincode, $phone, $phone, $email, $story, $bank_beneficiary,
-                        $bank_name, $bank_account, $bank_ifsc, $upi_id, $pan_number, $aadhaar_number,
+                        $bank_name, $enc_bank_account, $bank_ifsc, $upi_id, $enc_pan_number, $masked_aadhaar,
                         $gstin, $doc_path
                     ]);
 
@@ -161,26 +180,17 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                         send_email_verification_link($user_id, $email, $owner_name, $phone);
                     } catch (Throwable $e_mail) {}
 
-                    // Session rotation
-                    if (session_status() === PHP_SESSION_ACTIVE) {
-                        session_regenerate_id(true);
-                    }
-
-                    $_SESSION['user_id'] = $user_id;
-                    $_SESSION['user_name'] = $owner_name;
-                    $_SESSION['user_role'] = 'vendor';
-                    $_SESSION['user_email'] = $email;
-                    $_SESSION['phone_verified_' . $user_id] = true;
-                    $_SESSION['verified_checkout_phone'] = $phone;
-
-                    log_audit_action('vendor_registered', 'vendors', "New artisan vendor #{$user_id} ({$shop_name}) onboarded through multi-step wizard");
-                    set_flash('success', "Welcome to GanvGaliHat Artisan Network! Your workshop ({$shop_name}) has been created successfully.");
-                    header('Location: /seller/dashboard.php');
+                    log_audit_action('vendor_registered', 'vendors', "New artisan vendor #{$user_id} ({$shop_name}) onboarded with Pending KYC");
+                    set_flash('success', "Welcome to GanvGaliHat Artisan Network! Your workshop ({$shop_name}) application has been received and is pending verification. Please verify your email to continue.");
+                    header('Location: /verify-signup.php?email=' . urlencode($email));
                     exit;
                 }
             } catch (Exception $e) {
                 if ($pdo->inTransaction()) $pdo->rollBack();
-                $error = 'Registration processing error: ' . $e->getMessage();
+                error_log("Seller registration error: " . $e->getMessage());
+                // Security Audit H7: Generic user-facing error message
+                $error = 'An error occurred during artisan registration. Please check your details and try again.';
+            }
             }
         }
     }

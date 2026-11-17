@@ -26,12 +26,23 @@ echo "# GanvGaliHat Robots.txt\n";
 echo "# User-Agent Directives for Web Crawlers and Search Engines\n\n";
 
 echo "User-agent: *\n";
+echo "Disallow: /admin/\n";
+echo "Disallow: /seller/\n";
+echo "Disallow: /retailer/\n";
+echo "Disallow: /ajax/\n";
+echo "Disallow: /payments/\n";
+echo "Disallow: /auth/\n";
 echo "Disallow: /cart.php\n";
 echo "Disallow: /checkout.php\n";
 echo "Disallow: /account.php\n";
 echo "Disallow: /login.php\n";
 echo "Disallow: /register.php\n";
-echo "Disallow: /logout.php\n\n";
+echo "Disallow: /logout.php\n";
+echo "Disallow: /reset-password.php\n";
+echo "Disallow: /forgot-password.php\n";
+echo "Disallow: /verify-signup.php\n";
+echo "Disallow: /verify-email.php\n";
+echo "Disallow: /verify-phone.php\n\n";
 
 echo "Allow: /\n";
 echo "Allow: /products.php\n";

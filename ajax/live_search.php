@@ -7,12 +7,23 @@
 header('Content-Type: application/json');
 require_once __DIR__ . '/../includes/functions.php';
 
+// Rate limiting (M4)
+if (!check_rate_limit('live_search_ip', get_client_ip(), 45, 60)) {
+    http_response_code(429);
+    echo json_encode(['error' => 'Too many search requests. Please slow down.']);
+    exit;
+}
+
 $query = trim($_GET['q'] ?? '');
 $category_id = (int)($_GET['category_id'] ?? 0);
 
 if (mb_strlen($query) < 2) {
     echo json_encode(['results' => [], 'total' => 0]);
     exit;
+}
+
+if (mb_strlen($query) > 50) {
+    $query = mb_substr($query, 0, 50);
 }
 
 try {
@@ -22,7 +33,8 @@ try {
         FROM products p
         LEFT JOIN categories c ON p.category_id = c.id
         LEFT JOIN vendors v ON p.vendor_id = v.id
-        WHERE (p.name LIKE ? OR p.hindi_name LIKE ? OR p.code LIKE ? OR p.description LIKE ? OR v.name LIKE ? OR v.business_name LIKE ? OR v.village LIKE ? OR v.district LIKE ?)
+        WHERE p.stock_status != 'archived'
+          AND (p.name LIKE ? OR p.hindi_name LIKE ? OR p.code LIKE ? OR p.description LIKE ? OR v.name LIKE ? OR v.business_name LIKE ? OR v.village LIKE ? OR v.district LIKE ?)
     ";
     $params = [$search_param, $search_param, $search_param, $search_param, $search_param, $search_param, $search_param, $search_param];
 
@@ -62,5 +74,6 @@ try {
     ]);
 } catch (Exception $e) {
     http_response_code(500);
-    echo json_encode(['error' => 'Database query failed: ' . $e->getMessage()]);
+    error_log('Live search error: ' . $e->getMessage());
+    echo json_encode(['error' => 'An error occurred while executing the search request.']);
 }

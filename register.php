@@ -48,7 +48,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         
         $is_retailer = !empty($_POST['is_retailer']) || (isset($_POST['role']) && $_POST['role'] === 'retailer');
         $business_name = clean_input($_POST['business_name'] ?? '');
-        $business_type = clean_input($_POST['business_type'] ?? 'Kirana & Grocery Store');
+        $business_type = clean_input($_POST['business_type'] ?? $_POST['business_category'] ?? 'Kirana & Grocery Store');
         $gstin = strtoupper(clean_input($_POST['gstin'] ?? ''));
         $godown_address = clean_input($_POST['godown_address'] ?? '');
 
@@ -73,12 +73,29 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             } else {
                 try {
                     // Check existing user
-                    $stmt = $pdo->prepare("SELECT id, status FROM users WHERE email = ? OR phone = ?");
+                    $stmt = $pdo->prepare("SELECT id, status, created_at, phone_verified_at, email_verified_at FROM users WHERE email = ? OR phone = ?");
                     $stmt->execute([$email, $phone]);
                     $existing = $stmt->fetch();
+                    
+                    $can_register = true;
                     if ($existing) {
-                        $error = 'An account with this email address or mobile number already exists. Please sign in instead.';
-                    } else {
+                        // Allow purging unverified pending registrations older than 24 hours (M7)
+                        $is_stale_pending = ($existing['status'] === 'pending'
+                            && empty($existing['email_verified_at'])
+                            && empty($existing['phone_verified_at'])
+                            && !empty($existing['created_at'])
+                            && (time() - strtotime($existing['created_at']) > 86400));
+
+                        if ($is_stale_pending) {
+                            $del = $pdo->prepare("DELETE FROM users WHERE id = ? AND status = 'pending' AND email_verified_at IS NULL AND phone_verified_at IS NULL");
+                            $del->execute([$existing['id']]);
+                        } else {
+                            $can_register = false;
+                            $error = 'An account with this email address or mobile number already exists. Please sign in instead.';
+                        }
+                    }
+
+                    if ($can_register) {
                         $base_username = strtolower(preg_replace('/[^a-zA-Z0-9]/', '', explode('@', $email)[0]));
                         $username = $base_username . random_int(10, 99);
                         $hashed_password = password_hash($password, PASSWORD_BCRYPT);
@@ -124,7 +141,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                         exit;
                     }
                 } catch (Exception $e) {
-                    $error = 'Registration system error: ' . $e->getMessage();
+                    error_log('Registration error: ' . $e->getMessage());
+                    $error = 'A system error occurred during registration. Please try again later.';
                 }
             }
         }
@@ -185,7 +203,7 @@ require_once __DIR__ . '/includes/header.php';
               </div>
               <div>
                 <label class="block text-[11px] font-bold text-amber-950 mb-1">Trade Category</label>
-                <select name="business_category" class="w-full px-3 py-2 bg-white border border-amber-300 rounded-xl text-xs focus:outline-none focus:ring-2 focus:ring-amber-500">
+                <select name="business_type" id="business_type" class="w-full px-3 py-2 bg-white border border-amber-300 rounded-xl text-xs focus:outline-none focus:ring-2 focus:ring-amber-500">
                   <option value="Kirana & Grocery Store" <?= $business_type === 'Kirana & Grocery Store' ? 'selected' : '' ?>>Kirana & Grocery Store</option>
                   <option value="Handloom & Garments Retail" <?= $business_type === 'Handloom & Garments Retail' ? 'selected' : '' ?>>Handloom & Garments Retail</option>
                   <option value="Organic & Health Food Outlet" <?= $business_type === 'Organic & Health Food Outlet' ? 'selected' : '' ?>>Organic & Health Food Outlet</option>

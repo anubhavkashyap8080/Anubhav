@@ -10,24 +10,27 @@
  * 4. Self-deletes this file immediately upon successful creation.
  */
 
+// Security Audit C2: Strictly restrict setup_admin.php to CLI execution only
+if (php_sapi_name() !== 'cli') {
+    http_response_code(403);
+    header('Content-Type: text/plain; charset=utf-8');
+    die("Access Denied: setup_admin.php can only be executed via the command-line interface (CLI).");
+}
+
 require_once __DIR__ . '/includes/functions.php';
 
 if (!$pdo) {
-    die("<h3>डेटाबेस कनेक्शन त्रुटि (Database Connection Failed)</h3><p>कृपया सुनिश्चित करें कि config/config.local.php या ganvgalihat_config.php में डेटाबेस विवरण सही हैं।</p>");
+    die("Database Connection Failed. Please ensure database credentials are configured in config/config.local.php or ganvgalihat_config.php.\n");
 }
 
-// Item 4: Require SETUP_SECRET via ?key= with hash_equals
+// Require SETUP_SECRET via environment or security config (no hardcoded fallback)
 $cfg_sec = function_exists('get_platform_config') ? get_platform_config('security') : [];
-$expected_secret = (string)(getenv('SETUP_SECRET') ?: ($cfg_sec['setup_secret'] ?? 'GanvGaliHatSetup2026Key'));
-$provided_key = (string)($_GET['key'] ?? $_POST['setup_key'] ?? '');
+$expected_secret = (string)(getenv('SETUP_SECRET') ?: ($cfg_sec['setup_secret'] ?? ''));
+$provided_key = (string)($_SERVER['argv'][1] ?? $_GET['key'] ?? $_POST['setup_key'] ?? '');
 
-if (empty($provided_key) || !hash_equals($expected_secret, $provided_key)) {
+if (empty($expected_secret) || empty($provided_key) || !hash_equals($expected_secret, $provided_key)) {
     http_response_code(403);
-    die("<!DOCTYPE html><html lang='hi'><head><meta charset='UTF-8'><title>Access Denied — GanvGaliHat Setup</title></head>
-    <body style='font-family:sans-serif;padding:40px;text-align:center;'>
-    <h2 style='color:#dc2626;'>अमान्य या अनुपस्थित सेटअप कुंजी (Unauthorized Access)</h2>
-    <p>इस पृष्ठ को खोलने के लिए ?key= पैरामीटर आवश्यक है। (उदा: setup_admin.php?key=" . htmlspecialchars($expected_secret) . ")</p>
-    </body></html>");
+    die("Access Denied: Invalid or missing setup key.\n");
 }
 
 // Item 4: 30-minute time window enforcement from first access with valid secret key

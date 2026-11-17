@@ -83,7 +83,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['add_product'])) {
                 stock, stock_status, rating, review_count, image, unit, description,
                 seo_title, seo_description, seo_keywords,
                 bulk_available, bulk_moq, bulk_price, bulk_tier2_qty, bulk_tier2_price, bulk_packaging_desc, bulk_lead_time_days
-            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'In Stock', 5.0, 1, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'In Stock', 0.0, 0, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         ");
         $stmt->execute([
             $code, $vendor_id, $category_id, $name, $hindi_name, $slug, $price, $original_price,
@@ -97,7 +97,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['add_product'])) {
         header('Location: /seller/products.php');
         exit;
     } catch (Exception $e) {
-        set_flash('error', 'उत्पाद जोड़ने में त्रुटि: ' . $e->getMessage());
+        error_log("Seller add product error: " . $e->getMessage());
+        set_flash('error', 'उत्पाद जोड़ने में त्रुटि हुई। कृपया पुनः प्रयास करें।');
     }
 }
 
@@ -238,7 +239,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['bulk_import_csv'])) {
                         INSERT INTO products (
                             code, vendor_id, category_id, name, hindi_name, slug, price, original_price,
                             discount, weight_kg, stock, stock_status, rating, review_count, image, unit, description
-                        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'In Stock', 5.0, 1, ?, ?, ?)
+                        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'In Stock', 0.0, 0, ?, ?, ?)
                     ");
                     $stmt_ins->execute([
                         $p_code, $vendor_id, $p_cat_id, $p_name, $p_hindi, $p_slug, $p_price, $p_orig_price,

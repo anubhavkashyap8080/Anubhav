@@ -28,7 +28,7 @@ if (!function_exists('str_contains')) {
     }
 }
 
-// Client IP Resolver with Cloudflare CIDR Validation
+// Client IP Resolver with Cloudflare CIDR Validation (IPv4 & IPv6 Support)
 if (!function_exists('is_cloudflare_ip')) {
     function is_cloudflare_ip($ip) {
         if (empty($ip) || !filter_var($ip, FILTER_VALIDATE_IP)) {
@@ -49,6 +49,30 @@ if (!function_exists('is_cloudflare_ip')) {
                 $mask = -1 << (32 - (int)$bits);
                 if (($ip_long & $mask) === ($subnet_long & $mask)) {
                     return true;
+                }
+            }
+        }
+        // Official Cloudflare Published IPv6 CIDRs
+        $cf_ipv6_ranges = [
+            '2400:cb00::/32', '2606:4700::/32', '2803:f800::/32',
+            '2405:b500::/32', '2405:8100::/32', '2a06:98c0::/29', '2c0f:f248::/32'
+        ];
+        if (filter_var($ip, FILTER_VALIDATE_IP, FILTER_FLAG_IPV6)) {
+            $ip_bin = inet_pton($ip);
+            if ($ip_bin !== false) {
+                foreach ($cf_ipv6_ranges as $range) {
+                    list($subnet, $bits) = explode('/', $range);
+                    $subnet_bin = inet_pton($subnet);
+                    if ($subnet_bin === false) continue;
+                    $bytes = (int)($bits / 8);
+                    $extra_bits = (int)($bits % 8);
+                    if (strncmp($ip_bin, $subnet_bin, $bytes) === 0) {
+                        if ($extra_bits === 0) return true;
+                        $mask = (0xFF << (8 - $extra_bits)) & 0xFF;
+                        if ((ord($ip_bin[$bytes]) & $mask) === (ord($subnet_bin[$bytes]) & $mask)) {
+                            return true;
+                        }
+                    }
                 }
             }
         }
@@ -88,8 +112,12 @@ if (!function_exists('e')) {
 // Strong Password Policy Validator (Min 10 characters, rejects common passwords)
 if (!function_exists('is_strong_password')) {
     function is_strong_password($password, &$error = '') {
-        if (!is_string($password) || strlen($password) < 10) {
-            $error = 'पासवर्ड कम से कम 10 अक्षरों का होना अनिवार्य है। (Minimum 10 characters required)';
+        if (!is_string($password) || strlen($password) < 8) {
+            $error = 'पासवर्ड कम से कम 8 अक्षरों का होना अनिवार्य है। (Minimum 8 characters required)';
+            return false;
+        }
+        if (!preg_match('/[A-Z]/', $password) || !preg_match('/[a-z]/', $password) || !preg_match('/[0-9]/', $password)) {
+            $error = 'पासवर्ड में कम से कम एक बड़ा अक्षर (A-Z), एक छोटा अक्षर (a-z) और एक अंक (0-9) होना आवश्यक है।';
             return false;
         }
         $common = [
@@ -524,13 +552,16 @@ function check_rate_limit($action, $identifier, $max_hits = 10, $window_seconds 
     }
 }
 
-// Item 24: Cloudflare Turnstile CAPTCHA Verification
+// Item 24: Cloudflare Turnstile CAPTCHA Verification (Fail-Closed per Security Audit C5)
 function verify_turnstile_captcha($token = null) {
     if ($token === null) {
         $token = $_POST['cf-turnstile-response'] ?? $_POST['turnstile_token'] ?? '';
     }
 
-    $secret = getenv('TURNSTILE_SECRET_KEY');
+    $secret = getenv('TURNSTILE_SECRET_KEY') ?: ($_ENV['TURNSTILE_SECRET_KEY'] ?? '');
+    if (empty($secret) && defined('TURNSTILE_SECRET_KEY')) {
+        $secret = TURNSTILE_SECRET_KEY;
+    }
     if (empty($secret) && function_exists('get_site_setting')) {
         $secret = get_site_setting('turnstile_secret_key', '');
     }
@@ -540,14 +571,15 @@ function verify_turnstile_captcha($token = null) {
         return true;
     }
 
-    // Strict requirement once Turnstile secret is configured
-    if (empty($token)) {
+    // Strict requirement once Turnstile secret is configured (Fail closed)
+    if (empty($token) || !is_string($token)) {
         return false;
     }
 
-    // Pass standard Cloudflare dummy test keys
-    if ($token === '1x00000000000000000000AA' || $token === 'dummy-turnstile-test-pass') {
-        return true;
+    // Cloudflare test tokens are ONLY allowed when test secrets are in use
+    $is_test_secret = ($secret === '1x0000000000000000000000000000000AA' || $secret === '2x0000000000000000000000000000000AA');
+    if (!$is_test_secret && ($token === 'dummy-turnstile-test-pass' || $token === '1x00000000000000000000AA' || $token === 'DUMMY_OK')) {
+        return false;
     }
 
     try {
@@ -572,9 +604,12 @@ function verify_turnstile_captcha($token = null) {
             $data = json_decode($result, true);
             return !empty($data['success']);
         }
-    } catch (Exception $e) {}
+    } catch (Exception $e) {
+        error_log("Turnstile CAPTCHA verification error: " . $e->getMessage());
+    }
 
-    return true;
+    // Security Audit C5: Fail closed on verification failure
+    return false;
 }
 
 // Render Turnstile CAPTCHA Widget or Safe Placeholder
@@ -591,49 +626,71 @@ function render_turnstile_widget() {
     return '<script src="https://challenges.cloudflare.com/turnstile/v0/api.js" async defer></script><div class="cf-turnstile my-3" data-sitekey="' . htmlspecialchars($site_key, ENT_QUOTES, 'UTF-8') . '"></div>';
 }
 
+// Open Redirect Mitigation (Audit M1)
+if (!function_exists('is_safe_internal_redirect')) {
+    function is_safe_internal_redirect($url) {
+        if (empty($url) || !is_string($url)) return false;
+        // Must start with exactly one '/', no '//', no '/\', and contain no colon or backslash
+        if (preg_match('~^/(?!/|\\\\)[a-zA-Z0-9_\-./?=&%#]*$~', $url) && strpos($url, ':') === false && strpos($url, '\\') === false) {
+            return true;
+        }
+        return false;
+    }
+}
+
 // Login Rate Limiter & Progressive Exponential Throttling (Item 15)
 function get_login_throttle_status($identifier, $ip) {
     global $pdo;
     try {
         $window = date('Y-m-d H:i:s', time() - 3600); // 1 hour window
-        $stmt = $pdo->prepare("
-            SELECT attempted_at FROM login_attempts 
-            WHERE (identifier = ? OR ip_address = ?) AND success = 0 AND attempted_at >= ?
-            ORDER BY attempted_at DESC
-        ");
-        $stmt->execute([$identifier, $ip, $window]);
-        $attempts = $stmt->fetchAll(PDO::FETCH_COLUMN);
-        $count = count($attempts);
-
-        if ($count === 0) {
-            return ['allowed' => true, 'retry_after' => 0, 'attempts' => 0];
-        }
-
-        $most_recent = strtotime($attempts[0]);
         $now = time();
 
-        // Progressive exponential lockout duration
-        $delay = 0;
-        if ($count >= 10) {
-            $delay = 3600; // 60 minutes
-        } elseif ($count >= 7) {
-            $delay = 900;  // 15 minutes
-        } elseif ($count >= 5) {
-            $delay = 300;  // 5 minutes
-        } elseif ($count >= 3) {
-            $delay = 60;   // 1 minute
+        // 1. Account-level throttling check (Audit H1)
+        $stmt_user = $pdo->prepare("
+            SELECT attempted_at FROM login_attempts 
+            WHERE identifier = ? AND success = 0 AND attempted_at >= ?
+            ORDER BY attempted_at DESC
+        ");
+        $stmt_user->execute([$identifier, $window]);
+        $user_attempts = $stmt_user->fetchAll(PDO::FETCH_COLUMN);
+        $user_count = count($user_attempts);
+
+        $user_delay = 0;
+        if ($user_count >= 10) $user_delay = 3600;
+        elseif ($user_count >= 7) $user_delay = 900;
+        elseif ($user_count >= 5) $user_delay = 300;
+        elseif ($user_count >= 3) $user_delay = 60;
+
+        if ($user_count > 0 && $user_delay > 0) {
+            $elapsed = $now - strtotime($user_attempts[0]);
+            if ($elapsed < $user_delay) {
+                return ['allowed' => false, 'retry_after' => ($user_delay - $elapsed), 'attempts' => $user_count];
+            }
         }
 
-        $elapsed = $now - $most_recent;
-        if ($elapsed < $delay) {
-            return [
-                'allowed' => false,
-                'retry_after' => ($delay - $elapsed),
-                'attempts' => $count
-            ];
+        // 2. IP-level throttling check (Audit H1)
+        $stmt_ip = $pdo->prepare("
+            SELECT attempted_at FROM login_attempts 
+            WHERE ip_address = ? AND success = 0 AND attempted_at >= ?
+            ORDER BY attempted_at DESC
+        ");
+        $stmt_ip->execute([$ip, $window]);
+        $ip_attempts = $stmt_ip->fetchAll(PDO::FETCH_COLUMN);
+        $ip_count = count($ip_attempts);
+
+        $ip_delay = 0;
+        if ($ip_count >= 25) $ip_delay = 3600;
+        elseif ($ip_count >= 15) $ip_delay = 900;
+        elseif ($ip_count >= 10) $ip_delay = 300;
+
+        if ($ip_count > 0 && $ip_delay > 0) {
+            $elapsed_ip = $now - strtotime($ip_attempts[0]);
+            if ($elapsed_ip < $ip_delay) {
+                return ['allowed' => false, 'retry_after' => ($ip_delay - $elapsed_ip), 'attempts' => $ip_count];
+            }
         }
 
-        return ['allowed' => true, 'retry_after' => 0, 'attempts' => $count];
+        return ['allowed' => true, 'retry_after' => 0, 'attempts' => max($user_count, $ip_count)];
     } catch (Throwable $e) {
         return ['allowed' => true, 'retry_after' => 0, 'attempts' => 0];
     }
@@ -687,6 +744,12 @@ function verify_totp_code($secret, $code) {
         $val = unpack('N', $hash_part)[1] & 0x7FFFFFFF;
         $calc_code = str_pad((string)($val % 1000000), 6, '0', STR_PAD_LEFT);
         if (hash_equals($calc_code, str_pad(trim((string)$code), 6, '0', STR_PAD_LEFT))) {
+            // Security Audit H5: Prevent replay of same TOTP code in same 30s window
+            $sess_key = 'last_totp_slice_' . substr(md5($clean_secret), 0, 10);
+            if (!empty($_SESSION[$sess_key]) && (int)$_SESSION[$sess_key] === $slice) {
+                return false;
+            }
+            $_SESSION[$sess_key] = $slice;
             return true;
         }
     }
@@ -701,6 +764,9 @@ function send_email_verification_link($user_id, $email, $name, $phone = '') {
         $token_hash = hash('sha256', $raw_token);
         $otp_code = sprintf('%06d', random_int(100000, 999999));
         $phone_otp = sprintf('%06d', random_int(100000, 999999));
+        // Security Audit H9: Store hashed OTPs
+        $otp_hash = hash('sha256', $otp_code);
+        $phone_otp_hash = hash('sha256', $phone_otp);
         $expires = date('Y-m-d H:i:s', time() + 86400); // 24 hours validity
 
         $stmt = $pdo->prepare("
@@ -712,7 +778,7 @@ function send_email_verification_link($user_id, $email, $name, $phone = '') {
                 phone_verification_expires = ?
             WHERE id = ?
         ");
-        $stmt->execute([$token_hash, $otp_code, $expires, $phone_otp, $expires, $user_id]);
+        $stmt->execute([$token_hash, $otp_hash, $expires, $phone_otp_hash, $expires, $user_id]);
 
         $site_url = defined('SITE_URL') ? SITE_URL : 'https://ganvgalihat.com';
         $site_host = parse_url($site_url, PHP_URL_HOST) ?: 'ganvgalihat.com';
@@ -806,6 +872,11 @@ function send_platform_email($to_email, $subject, $html_body, $from_name = 'Ganv
 
 // Item 32: Owner Security Alert Dispatcher
 function send_owner_security_alert($subject, $details) {
+    // Security Audit M9: Throttle owner security alerts (Max 5 alerts per 15 minutes to prevent alert flooding)
+    if (function_exists('check_rate_limit') && !check_rate_limit('owner_sec_alert', 'global', 5, 900)) {
+        return;
+    }
+
     $sec_cfg = function_exists('get_platform_config') ? get_platform_config('security') : [];
     $owner_email = $sec_cfg['owner_alert_email'] ?? getenv('OWNER_ALERT_EMAIL');
     if (empty($owner_email)) {
@@ -920,8 +991,8 @@ function sanitize_custom_html($html) {
         'thead', 'tr', 'u', 'ul'
     ];
 
-    // Allowed attributes per tag
-    $global_attrs = ['class', 'id', 'title', 'lang', 'dir'];
+    // Allowed attributes per tag (Security Audit M8: Strip 'id' and 'class' to prevent style/DOM injection)
+    $global_attrs = ['title', 'lang', 'dir'];
     $tag_attrs = [
         'a'     => array_merge($global_attrs, ['href', 'target', 'rel']),
         'img'   => array_merge($global_attrs, ['src', 'alt', 'width', 'height', 'loading']),
@@ -944,22 +1015,25 @@ function sanitize_custom_html($html) {
 
             // Blocked tags -> remove entire subtree
             if (in_array($tag_name, $blocked_tags, true)) {
-                $node->parentNode->removeChild($node);
+                if ($node->parentNode) {
+                    $node->parentNode->removeChild($node);
+                }
                 return;
             }
 
             // Not in allowed list -> unwrap children safely
             if (!in_array($tag_name, $allowed_tags, true)) {
                 $parent = $node->parentNode;
-                while ($node->hasChildNodes()) {
-                    $child = $node->firstChild;
-                    $node->removeChild($child);
-                    $clean_node($child);
-                    if ($child->parentNode === null) {
-                        $parent->insertBefore($child, $node);
+                if ($parent) {
+                    $children = iterator_to_array($node->childNodes);
+                    foreach ($children as $child) {
+                        $clean_node($child);
+                        if ($child->parentNode === $node) {
+                            $parent->insertBefore($child, $node);
+                        }
                     }
+                    $parent->removeChild($node);
                 }
-                $parent->removeChild($node);
                 return;
             }
 
@@ -976,14 +1050,14 @@ function sanitize_custom_html($html) {
                         continue;
                     }
 
-                    // Strict URL protocol validation for href and src
+                    // Strict URL protocol validation for href and src (Audit M8: block protocol-relative //)
                     if (in_array($attr_name, ['href', 'src'], true)) {
                         $val = $attr->value;
                         $decoded = html_entity_decode($val, ENT_QUOTES | ENT_HTML5, 'UTF-8');
                         $decoded = preg_replace('/[\x00-\x1f\x7f\s]+/u', '', $decoded);
                         $lower_decoded = strtolower($decoded);
 
-                        if (preg_match('/^(javascript|vbscript|data):/i', $lower_decoded)) {
+                        if (preg_match('/^(javascript|vbscript|data):/i', $lower_decoded) || strpos($lower_decoded, '//') === 0) {
                             $attrs_to_remove[] = $attr->name;
                             continue;
                         }
@@ -1550,7 +1624,8 @@ function get_vendor_for_current_user() {
 function authenticate_user($identifier, $password, $expected_role_group = null, $two_factor_code = null) {
     global $pdo;
     $identifier = trim((string)$identifier);
-    $ip = $_SERVER['REMOTE_ADDR'] ?? '127.0.0.1';
+    // Security Audit H1: Use get_client_ip() for reliable IP resolution
+    $ip = get_client_ip();
 
     // 1. Exponential Throttling Gate (Item 15)
     $throttle = get_login_throttle_status($identifier, $ip);
@@ -1570,13 +1645,14 @@ function authenticate_user($identifier, $password, $expected_role_group = null, 
         $clean_phone = substr($clean_phone, -10);
     }
 
+    // Security Audit M6: Mitigate account enumeration by requiring exact phone match (no fuzzy LIKE '%...')
     if ($has_valid_phone) {
         $stmt = $pdo->prepare("
             SELECT * FROM users 
-            WHERE (LOWER(username) = LOWER(?) OR LOWER(email) = LOWER(?) OR phone = ? OR phone LIKE ?)
+            WHERE (LOWER(username) = LOWER(?) OR LOWER(email) = LOWER(?) OR phone = ? OR phone = ?)
             LIMIT 1
         ");
-        $stmt->execute([$identifier, $identifier, $identifier, "%$clean_phone"]);
+        $stmt->execute([$identifier, $identifier, $identifier, $clean_phone]);
     } else {
         $stmt = $pdo->prepare("
             SELECT * FROM users 

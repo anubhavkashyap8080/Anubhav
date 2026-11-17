@@ -20,8 +20,12 @@ $action = $_POST['action'] ?? $_GET['action'] ?? '';
 $product_id = (int)($_POST['product_id'] ?? $_GET['product_id'] ?? 0);
 $qty = (int)($_POST['quantity'] ?? 1);
 
-// Item 16: Central CSRF Protection for state-changing cart actions
-if ($_SERVER['REQUEST_METHOD'] === 'POST' && in_array($action, ['add', 'update', 'remove', 'clear'], true)) {
+// Security Audit M2: State-modifying cart actions must strictly use POST + CSRF
+if (in_array($action, ['add', 'update', 'remove', 'clear'], true)) {
+    if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+        http_response_code(405);
+        send_json_cart_response(['success' => false, 'message' => 'Invalid request method. Only POST is allowed for cart modifications.']);
+    }
     csrf_protect();
 }
 

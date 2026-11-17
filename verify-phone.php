@@ -41,25 +41,27 @@ if ($action === 'send_otp') {
 
     // Generate 6-digit OTP
     $otp_code = sprintf('%06d', random_int(100000, 999999));
+    $otp_hash = hash('sha256', $otp_code);
     $expires_ts = time() + 900; // 15 minutes
     $expires_dt = date('Y-m-d H:i:s', $expires_ts);
 
+    // Security Audit C4: Do NOT update user's phone in DB until OTP is verified
     if ($user_id && $pdo) {
         try {
             $stmt = $pdo->prepare("
                 UPDATE users 
-                SET phone = ?, 
-                    phone_verification_otp = ?, 
+                SET phone_verification_otp = ?, 
                     phone_verification_expires = ?
                 WHERE id = ?
             ");
-            $stmt->execute([$phone, $otp_code, $expires_dt, $user_id]);
+            $stmt->execute([$otp_hash, $expires_dt, $user_id]);
         } catch (Throwable $e) {}
     }
 
-    $_SESSION['pending_phone_otp'] = $otp_code;
+    $_SESSION['pending_phone_otp_hash'] = $otp_hash;
     $_SESSION['pending_phone_number'] = $phone;
     $_SESSION['pending_phone_expires'] = $expires_ts;
+    $_SESSION['phone_otp_verify_attempts'] = 0;
 
     // Send email notification if user has registered email
     if ($user && !empty($user['email'])) {
@@ -70,11 +72,11 @@ if ($action === 'send_otp') {
 
     log_audit_action('phone_otp_dispatched', 'auth', "Phone OTP dispatched for +91 {$phone}");
 
+    // Security Audit C4: Never leak OTP in JSON response
     echo json_encode([
         'success' => true,
-        'message' => "Verification code dispatched! For quick testing, your OTP is: {$otp_code}",
-        'phone' => $phone,
-        'otp' => $otp_code
+        'message' => "Verification code has been dispatched to your mobile number.",
+        'phone'   => substr($phone, 0, 2) . '******' . substr($phone, -2)
     ]);
     exit;
 
@@ -91,6 +93,20 @@ if ($action === 'send_otp') {
         exit;
     }
 
+    // Security Audit C4: Guess Throttling (Max 5 attempts before invalidation)
+    $_SESSION['phone_otp_verify_attempts'] = (int)($_SESSION['phone_otp_verify_attempts'] ?? 0) + 1;
+    if ($_SESSION['phone_otp_verify_attempts'] > 5) {
+        if ($user_id && $pdo) {
+            try {
+                $pdo->prepare("UPDATE users SET phone_verification_otp = NULL, phone_verification_expires = NULL WHERE id = ?")->execute([$user_id]);
+            } catch (Throwable $t) {}
+        }
+        unset($_SESSION['pending_phone_otp_hash'], $_SESSION['pending_phone_number'], $_SESSION['pending_phone_expires']);
+        echo json_encode(['success' => false, 'error' => 'Too many incorrect attempts. For security reasons, this verification code has been cancelled. Please request a new code.']);
+        exit;
+    }
+
+    $entered_hash = hash('sha256', $entered_otp);
     $is_matched = false;
 
     // Check DB OTP if logged in
@@ -100,19 +116,18 @@ if ($action === 'send_otp') {
         $u_row = $stmt->fetch();
         if ($u_row && !empty($u_row['phone_verification_otp'])) {
             $exp_time = !empty($u_row['phone_verification_expires']) ? strtotime($u_row['phone_verification_expires']) : 0;
-            if ($exp_time > time() && hash_equals((string)$u_row['phone_verification_otp'], $entered_otp)) {
-                $is_matched = true;
-                if (!empty($u_row['phone'])) {
-                    $phone = $u_row['phone'];
+            if ($exp_time > time()) {
+                if (hash_equals((string)$u_row['phone_verification_otp'], $entered_hash) || hash_equals((string)$u_row['phone_verification_otp'], $entered_otp)) {
+                    $is_matched = true;
                 }
             }
         }
     }
 
     // Check session OTP fallback
-    if (!$is_matched && !empty($_SESSION['pending_phone_otp'])) {
+    if (!$is_matched && !empty($_SESSION['pending_phone_otp_hash'])) {
         $sess_exp = (int)($_SESSION['pending_phone_expires'] ?? 0);
-        if ($sess_exp > time() && hash_equals((string)$_SESSION['pending_phone_otp'], $entered_otp)) {
+        if ($sess_exp > time() && hash_equals((string)$_SESSION['pending_phone_otp_hash'], $entered_hash)) {
             $is_matched = true;
             if (!empty($_SESSION['pending_phone_number'])) {
                 $phone = $_SESSION['pending_phone_number'];
@@ -121,11 +136,13 @@ if ($action === 'send_otp') {
     }
 
     if (!$is_matched) {
-        echo json_encode(['success' => false, 'error' => 'Invalid or expired verification code. Please check and try again.']);
+        $remaining = max(0, 5 - $_SESSION['phone_otp_verify_attempts']);
+        echo json_encode(['success' => false, 'error' => "Invalid or expired verification code. Attempts remaining: {$remaining}."]);
         exit;
     }
 
-    // OTP Verified! Mark in database & session
+    // OTP Verified! Now safely update phone in database & session
+    $_SESSION['phone_otp_verify_attempts'] = 0;
     if ($user_id && $pdo) {
         try {
             $stmt = $pdo->prepare("

@@ -16,7 +16,7 @@ AddDefaultCharset UTF-8
 Options -Indexes
 
 # Item 28: Prevent Access to Hidden Files, Git, Databases, Configs, Logs, and Source Files
-<FilesMatch "(^\.|\.(sqlite|sql|db|bak|config|env|log|md|json|ts|tsx|lock|ini|sample)$)">
+<FilesMatch "(^\.|\.(sqlite|sql|db|bak|config|env|log|md|json|ts|tsx|lock|ini|sample|sh|py)$)">
     <IfModule mod_authz_core.c>
         Require all denied
     </IfModule>

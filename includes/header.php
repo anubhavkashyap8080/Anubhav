@@ -20,6 +20,15 @@ $wishlist_count = get_wishlist_count();
 $cart_subtotal = get_cart_subtotal();
 $current_page = basename($_SERVER['PHP_SELF']);
 
+// Force password change enforcement (M10)
+if (!empty($_SESSION['force_password_change']) && $current_user) {
+    $allowed_pages = ['account.php', 'profile.php', 'logout.php', 'reset-password.php'];
+    if (!in_array($current_page, $allowed_pages, true)) {
+        header('Location: /account.php?tab=security');
+        exit;
+    }
+}
+
 // Load active categories for nav
 $header_categories = [];
 try {
@@ -774,7 +783,7 @@ $active_site_logo = ($use_gif_logo && !empty($logo_gif_url)) ? $logo_gif_url : $
       <div class="p-3.5 rounded-2xl text-xs font-semibold flex items-center justify-between <?= $flash['type'] === 'error' ? 'bg-red-50 border border-red-200 text-red-800' : 'bg-emerald-50 border border-emerald-200 text-emerald-900' ?>">
         <div class="flex items-center gap-2">
           <i data-lucide="<?= $flash['type'] === 'error' ? 'alert-circle' : 'check-circle' ?>" class="w-4 h-4 shrink-0"></i>
-          <span><?= htmlspecialchars($flash['message']) ?></span>
+          <span><?= htmlspecialchars($flash['message'], ENT_QUOTES, 'UTF-8', false) ?></span>
         </div>
       </div>
     </div>

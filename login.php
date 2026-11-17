@@ -6,6 +6,19 @@
 require_once __DIR__ . '/includes/functions.php';
 
 $redirect = clean_input($_GET['redirect'] ?? '');
+
+// Security Audit M1: Open redirect validator
+if (!function_exists('is_safe_internal_redirect')) {
+    function is_safe_internal_redirect($url) {
+        if (empty($url) || !is_string($url)) return false;
+        // Must start with exactly one '/', no '//', no '/\', and contain no colon or backslash
+        if (preg_match('~^/(?!/|\\\\)[a-zA-Z0-9_\-./?=&%#]*$~', $url) && strpos($url, ':') === false && strpos($url, '\\') === false) {
+            return true;
+        }
+        return false;
+    }
+}
+
 $active_tab = clean_input($_GET['tab'] ?? 'shopper'); // shopper (customer & retailer), seller
 if ($active_tab === 'retailer') {
     $active_tab = 'shopper';
@@ -18,8 +31,8 @@ if (!in_array($active_tab, ['shopper', 'seller'])) {
 if (is_logged_in()) {
     $logged_user = get_logged_in_user();
     if ($logged_user) {
-        if (!empty($redirect) && strpos($redirect, 'http') === false) {
-            header('Location: /' . ltrim($redirect, '/'));
+        if (!empty($redirect) && is_safe_internal_redirect($redirect)) {
+            header('Location: ' . $redirect);
             exit;
         }
         if (in_array($logged_user['role'], ['super_admin', 'admin'])) {
@@ -65,6 +78,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $csrf = $_POST['csrf_token'] ?? '';
     if (!csrf_check($csrf)) {
         $error = 'Security session expired. Please refresh the page and try again.';
+    } elseif (!verify_turnstile_captcha()) {
+        // Security Audit C5: Enforce Turnstile CAPTCHA on login
+        $error = 'Security check (CAPTCHA) verification failed. Please complete the verification.';
     } else {
         $identifier = clean_input($_POST['identifier'] ?? '');
         $password = $_POST['password'] ?? '';
@@ -81,8 +97,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $user = $result['user'];
             set_flash('success', 'Welcome back, ' . htmlspecialchars($user['name']) . '!');
 
-            if (!empty($redirect) && strpos($redirect, 'http') === false) {
-                header('Location: /' . ltrim($redirect, '/'));
+            if (!empty($redirect) && is_safe_internal_redirect($redirect)) {
+                header('Location: ' . $redirect);
                 exit;
             }
 
@@ -250,6 +266,11 @@ require_once __DIR__ . '/includes/header.php';
               <input type="checkbox" name="remember" class="rounded text-brand-green focus:ring-brand-green">
               <span>Remember me</span>
             </label>
+          </div>
+
+          <!-- Security Audit C5: Turnstile CAPTCHA Widget -->
+          <div class="pt-1">
+            <?= render_turnstile_widget() ?>
           </div>
 
           <!-- Submit Button -->

@@ -8,6 +8,19 @@
 require_once __DIR__ . '/../includes/functions.php';
 require_once __DIR__ . '/../config/shipping.php';
 
+// Feed caching (M5)
+$cache_file = __DIR__ . '/../cache/google_merchant.xml';
+$cache_ttl = 3600; // 1 hour
+
+if (php_sapi_name() !== 'cli' && empty($_GET['refresh'])) {
+    if (file_exists($cache_file) && (time() - filemtime($cache_file) < $cache_ttl)) {
+        header('Content-Type: application/xml; charset=utf-8');
+        header('X-Cache: HIT');
+        readfile($cache_file);
+        exit;
+    }
+}
+
 // Canonical base URL
 $default_base = defined('SITE_URL') ? rtrim(SITE_URL, '/') : 'https://ganvgalihat.com';
 $site_url = rtrim(get_setting('seo_canonical_url', $default_base), '/');
@@ -118,6 +131,10 @@ $xml .= '  </channel>' . "\n";
 $xml .= '</rss>' . "\n";
 
 // Save static file copy for high-speed serving
-file_put_contents(__DIR__ . '/google_merchant.xml', $xml);
+if (!is_dir(dirname($cache_file))) {
+    @mkdir(dirname($cache_file), 0755, true);
+}
+@file_put_contents($cache_file, $xml, LOCK_EX);
+@file_put_contents(__DIR__ . '/google_merchant.xml', $xml, LOCK_EX);
 
 echo $xml;

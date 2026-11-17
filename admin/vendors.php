@@ -3,6 +3,11 @@ require_once __DIR__ . '/../includes/functions.php';
 require_once __DIR__ . '/../includes/auth_check.php';
 require_admin();
 
+// Security Audit H2: Enforce CSRF protection for all POST actions
+if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    csrf_protect();
+}
+
 // Handle Super Admin Edit Vendor Details
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['action'] === 'edit_vendor') {
     $csrf = $_POST['csrf_token'] ?? '';
@@ -31,6 +36,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
 
     if ($vid > 0 && !empty($business_name)) {
         try {
+            $enc_pan = !empty($pan_number) ? encrypt_sensitive_field($pan_number) : '';
             $stmt_up = $pdo->prepare("
                 UPDATE vendors SET 
                     business_name = ?, 
@@ -52,7 +58,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
             ");
             $stmt_up->execute([
                 $business_name, $name, $type, $phone, $email, $village, $district, $state,
-                $pincode, $address, $commission_rate, $kyc_status, $verified, $gstin, $pan_number, $vid
+                $pincode, $address, $commission_rate, $kyc_status, $verified, $gstin, $enc_pan, $vid
             ]);
 
             // Sync with linked user record
@@ -108,6 +114,13 @@ $stmt_vendors = $pdo->query("
     ORDER BY v.id ASC
 ");
 $vendors = $stmt_vendors->fetchAll();
+
+foreach ($vendors as &$vend) {
+    if (!empty($vend['pan_number'])) {
+        $vend['pan_number'] = decrypt_sensitive_field($vend['pan_number']);
+    }
+}
+unset($vend);
 
 $page_title = 'Artisans & Vendors Administration';
 require_once __DIR__ . '/admin_header.php';
@@ -198,6 +211,13 @@ require_once __DIR__ . '/admin_header.php';
             </td>
 
             <td class="px-4 py-3.5 text-right whitespace-nowrap">
+              <?php if (!empty($v['document_file'])): ?>
+                <a href="/admin/view_kyc.php?vendor_id=<?= $v['id'] ?>" target="_blank"
+                   class="px-2.5 py-1 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 font-bold text-[11px] rounded-lg border border-indigo-200 transition inline-flex items-center gap-1 mr-1" title="View KYC Document">
+                   <i class="fa-solid fa-file-shield text-[10px]"></i> KYC Doc
+                </a>
+              <?php endif; ?>
+
               <!-- Edit Vendor Modal Trigger -->
               <button type="button"
                 onclick='openEditVendorModal(<?= json_encode($v, JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_HEX_AMP) ?>)'

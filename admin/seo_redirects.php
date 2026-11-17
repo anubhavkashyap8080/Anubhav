@@ -8,6 +8,11 @@ require_once __DIR__ . '/../includes/functions.php';
 require_once __DIR__ . '/../includes/auth_check.php';
 require_admin();
 
+// Security Audit H2: Enforce CSRF protection for all POST actions
+if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    csrf_protect();
+}
+
 $page_title = 'SEO रीडायरेक्ट्स एवं 404 एरर मॉनिटरिंग (Redirects & 404 Logs)';
 
 // Handle Add / Update Redirect

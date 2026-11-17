@@ -48,20 +48,27 @@ try {
         exit;
     }
 
-    // Mark user active and email/phone verified
+    // Security Audit H8: Prevent un-suspending suspended accounts via email link
+    if ($user['status'] === 'suspended') {
+        set_flash('error', 'This account has been suspended. Please contact platform administration.');
+        header('Location: /login.php');
+        exit;
+    }
+
+    // Only transition pending accounts to active
+    $new_status = ($user['status'] === 'pending') ? 'active' : $user['status'];
+
+    // Security Audit H8: Mark email verified without falsely verifying phone
     $upd = $pdo->prepare("
         UPDATE users 
-        SET status = 'active',
+        SET status = ?,
             email_verified_at = ?,
-            phone_verified_at = COALESCE(phone_verified_at, ?),
             email_verification_token = NULL,
             email_verification_otp = NULL,
-            phone_verification_otp = NULL,
-            email_verification_expires = NULL,
-            phone_verification_expires = NULL
+            email_verification_expires = NULL
         WHERE id = ?
     ");
-    $upd->execute([$now, $now, $user['id']]);
+    $upd->execute([$new_status, $now, $user['id']]);
 
     // Send Welcome Email
     send_welcome_email($user['id'], $user['email'], $user['name']);
@@ -74,6 +81,9 @@ try {
     $_SESSION['user_name'] = $user['name'];
     $_SESSION['user_role'] = $user['role'] ?? 'customer';
     $_SESSION['user_email'] = $user['email'];
+    $_SESSION['login_time'] = time();
+    $_SESSION['last_activity'] = time();
+    $_SESSION['auth_pwd_ts'] = (string)($user['password_changed_at'] ?? '');
 
     unset($_SESSION['pending_verification_user_id'], $_SESSION['pending_verification_email'], $_SESSION['pending_verification_name']);
 

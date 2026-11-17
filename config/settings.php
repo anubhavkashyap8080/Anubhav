@@ -99,12 +99,14 @@ define('APP_CURRENCY', '₹');
 // Payment Gateway Constants (Config/Env takes priority over site_settings DB table, Item 10)
 $cfg_payments = function_exists('get_platform_config') ? get_platform_config('payments') : [];
 
-define('RAZORPAY_ENABLED', (bool)(getenv('RAZORPAY_ENABLED') !== false ? getenv('RAZORPAY_ENABLED') : ($cfg_payments['razorpay']['enabled'] ?? get_setting('razorpay_enabled', 0))));
+$rp_env = getenv('RAZORPAY_ENABLED');
+define('RAZORPAY_ENABLED', $rp_env !== false ? filter_var($rp_env, FILTER_VALIDATE_BOOLEAN) : (bool)($cfg_payments['razorpay']['enabled'] ?? get_setting('razorpay_enabled', 0)));
 define('RAZORPAY_KEY_ID', (string)(getenv('RAZORPAY_KEY_ID') ?: ($cfg_payments['razorpay']['key_id'] ?? get_setting('razorpay_key_id', ''))));
 $raw_rp_secret = getenv('RAZORPAY_KEY_SECRET') ?: ($cfg_payments['razorpay']['key_secret'] ?? '');
 define('RAZORPAY_KEY_SECRET', (string)(!empty($raw_rp_secret) ? $raw_rp_secret : get_setting('razorpay_key_secret', '')));
 
-define('PAYU_ENABLED', (bool)(getenv('PAYU_ENABLED') !== false ? getenv('PAYU_ENABLED') : ($cfg_payments['payu']['enabled'] ?? get_setting('payu_enabled', 0))));
+$payu_env = getenv('PAYU_ENABLED');
+define('PAYU_ENABLED', $payu_env !== false ? filter_var($payu_env, FILTER_VALIDATE_BOOLEAN) : (bool)($cfg_payments['payu']['enabled'] ?? get_setting('payu_enabled', 0)));
 define('PAYU_MERCHANT_KEY', (string)(getenv('PAYU_MERCHANT_KEY') ?: ($cfg_payments['payu']['merchant_key'] ?? get_setting('payu_merchant_key', ''))));
 $raw_payu_salt = getenv('PAYU_MERCHANT_SALT') ?: ($cfg_payments['payu']['merchant_salt'] ?? '');
 define('PAYU_MERCHANT_SALT', (string)(!empty($raw_payu_salt) ? $raw_payu_salt : get_setting('payu_merchant_salt', '')));
@@ -125,9 +127,10 @@ $resolved_google_secret = getenv('GOOGLE_CLIENT_SECRET') ?: (!empty($cfg_google[
 define('GOOGLE_CLIENT_SECRET', (string)$resolved_google_secret);
 
 $db_google_enabled = get_setting('google_auth_enabled', 1);
-$resolved_google_enabled = (getenv('GOOGLE_AUTH_ENABLED') !== false)
-    ? (bool)getenv('GOOGLE_AUTH_ENABLED')
-    : (!empty($resolved_google_client_id) && ((isset($cfg_google['enabled']) && $cfg_google['enabled']) || $db_google_enabled == 1));
+$google_env = getenv('GOOGLE_AUTH_ENABLED');
+$resolved_google_enabled = ($google_env !== false)
+    ? filter_var($google_env, FILTER_VALIDATE_BOOLEAN)
+    : (!empty($resolved_google_client_id) && ((isset($cfg_google['enabled']) && filter_var($cfg_google['enabled'], FILTER_VALIDATE_BOOLEAN)) || $db_google_enabled == 1));
 define('GOOGLE_AUTH_ENABLED', (bool)$resolved_google_enabled);
 
 $cfg_facebook_top = function_exists('get_platform_config') ? (get_platform_config('facebook') ?: []) : [];
@@ -142,9 +145,10 @@ $resolved_facebook_secret = getenv('FACEBOOK_APP_SECRET') ?: (!empty($cfg_facebo
 define('FACEBOOK_APP_SECRET', (string)$resolved_facebook_secret);
 
 $db_facebook_enabled = get_setting('facebook_auth_enabled', 0);
-$resolved_facebook_enabled = (getenv('FACEBOOK_AUTH_ENABLED') !== false)
-    ? (bool)getenv('FACEBOOK_AUTH_ENABLED')
-    : (!empty($resolved_facebook_id) && ((isset($cfg_facebook['enabled']) && $cfg_facebook['enabled']) || $db_facebook_enabled == 1));
+$fb_env = getenv('FACEBOOK_AUTH_ENABLED');
+$resolved_facebook_enabled = ($fb_env !== false)
+    ? filter_var($fb_env, FILTER_VALIDATE_BOOLEAN)
+    : (!empty($resolved_facebook_id) && ((isset($cfg_facebook['enabled']) && filter_var($cfg_facebook['enabled'], FILTER_VALIDATE_BOOLEAN)) || $db_facebook_enabled == 1));
 define('FACEBOOK_AUTH_ENABLED', (bool)$resolved_facebook_enabled);
 
 define('COD_ENABLED', (bool)get_setting('cod_enabled', 1));

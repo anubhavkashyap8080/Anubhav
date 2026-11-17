@@ -46,7 +46,15 @@ if (empty($payu_money_id)) {
     $payu_money_id = 'PAYU-' . bin2hex(random_bytes(8));
 }
 
-// 2. Cryptographic Reverse Hash Verification
+// 2. Cryptographic Reverse Hash Verification & Merchant Key Validation
+$expected_key = defined('PAYU_MERCHANT_KEY') ? PAYU_MERCHANT_KEY : (getenv('PAYU_MERCHANT_KEY') ?: '');
+if (!empty($expected_key) && !hash_equals($expected_key, $key)) {
+    log_audit_action('payu_key_mismatch', 'orders', "PayU key mismatch: expected {$expected_key}, received {$key}");
+    set_flash('error', 'PayU सुरक्षा सत्यापन विफल (Merchant Key Mismatch)।');
+    header('Location: /checkout.php');
+    exit;
+}
+
 $salt = defined('PAYU_MERCHANT_SALT') ? PAYU_MERCHANT_SALT : '';
 if (empty($salt)) {
     error_log("CRITICAL: PAYU_MERCHANT_SALT is not configured.");
@@ -148,6 +156,20 @@ try {
             set_flash('info', 'यह ऑर्डर पहले ही अपडेट हो चुका है।');
             header('Location: /order-success.php?id=' . $order_id . '&token=' . urlencode($access_token));
             exit;
+        }
+
+        // Security Audit H6: Decrement product stock upon confirmed PayU capture
+        try {
+            $stmt_items = $pdo->prepare("SELECT product_id, quantity FROM order_items WHERE order_id = ?");
+            $stmt_items->execute([$order_id]);
+            while ($oi = $stmt_items->fetch()) {
+                $p_qty = max(1, (int)$oi['quantity']);
+                $p_id = (int)$oi['product_id'];
+                $pdo->prepare("UPDATE products SET stock = GREATEST(0, stock - ?) WHERE id = ?")->execute([$p_qty, $p_id]);
+                $pdo->prepare("UPDATE products SET stock_status = 'Out of Stock' WHERE id = ? AND stock <= 0")->execute([$p_id]);
+            }
+        } catch (Throwable $e_stk) {
+            error_log("Error decrementing stock on PayU payment capture: " . $e_stk->getMessage());
         }
 
         clear_cart();
