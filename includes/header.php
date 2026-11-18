@@ -313,42 +313,19 @@ $active_site_logo = ($use_gif_logo && !empty($logo_gif_url)) ? $logo_gif_url : $
     </div>
   </div>
 
-  <!-- 2. Primary Sticky Header (Unified Full Sticky Header across Desktop & Mobile) -->
-  <?php $is_transparent_header = (!empty($ggh_header_variant) && $ggh_header_variant === 'transparent'); ?>
-  <?php if ($is_transparent_header): ?>
+  <!-- 2. Primary Sticky Header (Unified Clean Solid Sticky Header across Desktop & Mobile) -->
   <style>
-  .ggh-header-transparent {
-    background: rgba(12, 10, 9, 0.45) !important;
-    backdrop-filter: blur(10px);
-    -webkit-backdrop-filter: blur(10px);
-    border-bottom: 1px solid rgba(255, 255, 255, 0.15) !important;
-    transition: background 0.3s ease, border-color 0.3s ease, box-shadow 0.3s ease;
-  }
-  .ggh-header-transparent.ggh-header-solid {
-    background: rgba(255, 255, 255, 0.98) !important;
-    backdrop-filter: blur(16px);
-    -webkit-backdrop-filter: blur(16px);
+  #ggh-site-header {
+    background: #ffffff !important;
     border-bottom: 1px solid #e5e7eb !important;
-    box-shadow: 0 4px 20px -2px rgba(0, 0, 0, 0.08) !important;
+    box-shadow: 0 4px 18px rgba(0, 0, 0, 0.04) !important;
+  }
+  #ggh-site-header nav {
+    background: #ffffff !important;
+    border-top: 1px solid #f3f4f6 !important;
   }
   </style>
-  <script>
-  (function() {
-    function handleHeaderScroll() {
-      var h = document.getElementById('ggh-site-header');
-      if (!h) return;
-      if (window.scrollY > 80) {
-        h.classList.add('ggh-header-solid');
-      } else {
-        h.classList.remove('ggh-header-solid');
-      }
-    }
-    window.addEventListener('scroll', handleHeaderScroll, { passive: true });
-    document.addEventListener('DOMContentLoaded', handleHeaderScroll);
-  })();
-  </script>
-  <?php endif; ?>
-  <header id="ggh-site-header" class="sticky top-0 z-40 transition-all duration-300 w-full max-w-full <?= $is_transparent_header ? 'ggh-header-transparent' : 'bg-white border-b border-gray-100 shadow-sm' ?>" style="position: -webkit-sticky; position: sticky; top: 0; z-index: 50;">
+  <header id="ggh-site-header" class="sticky top-0 z-50 transition-all duration-300 w-full max-w-full bg-white border-b border-gray-100 shadow-sm" style="position: -webkit-sticky; position: sticky; top: 0; z-index: 50;">
     <div class="max-w-7xl mx-auto px-2.5 sm:px-6 lg:px-8 w-full min-w-0">
       <div class="flex items-center justify-between h-16 sm:h-20 lg:h-22 gap-1.5 sm:gap-3 lg:gap-4 w-full min-w-0">
         
@@ -655,7 +632,10 @@ $active_site_logo = ($use_gif_logo && !empty($logo_gif_url)) ? $logo_gif_url : $
             class="flex items-center gap-1.5 px-3 py-1.5 rounded-full transition-all shrink-0 <?= empty($_GET['category']) && $current_page === 'products.php' ? 'bg-brand-green text-white font-semibold shadow-xs' : 'hover:bg-amber-50 hover:text-brand-green text-gray-800' ?>"
           >
             <i data-lucide="layout-grid" class="w-3.5 h-3.5"></i>
-            <span>All Products</span>
+            <span>
+              <span class="lang-en">All Products</span>
+              <span class="lang-hi hidden">सभी उत्पाद</span>
+            </span>
           </a>
 
           <?php foreach ($header_categories as $cat): 
@@ -665,7 +645,10 @@ $active_site_logo = ($use_gif_logo && !empty($logo_gif_url)) ? $logo_gif_url : $
               href="/products.php?category=<?= htmlspecialchars($cat['slug']) ?>"
               class="flex items-center gap-1.5 px-3 py-1.5 rounded-full transition-all shrink-0 <?= $isActive ? 'bg-brand-green text-white font-semibold shadow-xs' : 'hover:bg-amber-50 hover:text-brand-green text-gray-800' ?>"
             >
-              <span><?= htmlspecialchars($cat['name']) ?></span>
+              <span>
+                <span class="lang-en"><?= htmlspecialchars($cat['name']) ?></span>
+                <span class="lang-hi hidden"><?= htmlspecialchars($cat['hindi_name'] ?? $cat['name']) ?></span>
+              </span>
               <?php if (strpos($cat['slug'], 'pulses') !== false || strpos($cat['slug'], 'pickle') !== false): ?>
                 <span class="ml-0.5 px-1.5 py-0.2 bg-emerald-100 text-emerald-800 text-[10px] font-bold rounded-full">New</span>
               <?php endif; ?>
@@ -677,7 +660,10 @@ $active_site_logo = ($use_gif_logo && !empty($logo_gif_url)) ? $logo_gif_url : $
             class="flex items-center gap-1.5 px-3 py-1.5 rounded-full transition-all shrink-0 hover:bg-emerald-100/70 text-brand-green font-semibold border border-emerald-300/60"
           >
             <i data-lucide="map-pin" class="w-3.5 h-3.5 text-brand-orange"></i>
-            <span>Nearby Artisans (Map)</span>
+            <span>
+              <span class="lang-en">Nearby Artisans (Map)</span>
+              <span class="lang-hi hidden">नज़दीकी कारीगर (नक्शा)</span>
+            </span>
           </a>
         </div>
       </div>

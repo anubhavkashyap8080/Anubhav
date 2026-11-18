@@ -90,10 +90,10 @@ require_once __DIR__ . '/admin_header.php';
   <div>
     <h1 class="text-2xl font-black text-gray-900 flex items-center gap-2">
       <i class="fa-solid fa-magnifying-glass-chart text-indigo-600"></i>
-      SEO & On-Page Governance (सर्च इंजन ऑप्टिमाइज़ेशन)
+      SEO & On-Page Governance (Search Engine Optimization)
     </h1>
     <p class="text-xs text-gray-500 mt-1">
-      होमपेज का ब्राउज़र व सर्च टाइटल, मेटा विवरण, रोबोट्स इंडेक्सिंग, Google Search Console एवं सर्च स्निपेट प्रिव्यू
+      Homepage browser & search title, meta description, robots indexing, Google Search Console & search snippet preview
     </p>
   </div>
 
@@ -105,7 +105,7 @@ require_once __DIR__ . '/admin_header.php';
       <i class="fa-solid fa-robot text-blue-600"></i> Robots.txt
     </a>
     <a href="/" target="_blank" class="px-3.5 py-2 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 font-bold text-xs rounded-xl border border-indigo-200 transition flex items-center gap-1.5 shadow-xs">
-      <i class="fa-solid fa-arrow-up-right-from-square"></i> लाइव होमपेज देखें
+      <i class="fa-solid fa-arrow-up-right-from-square"></i> View Live Homepage
     </a>
   </div>
 </div>
@@ -123,9 +123,9 @@ require_once __DIR__ . '/admin_header.php';
         </div>
         <div>
           <h3 class="text-sm font-bold text-white tracking-wide">
-            Google Search SERP Preview (गूगल सर्च रिजल्ट लाइव प्रिव्यू)
+            Google Search SERP Live Preview
           </h3>
-          <p class="text-[11px] text-indigo-200">गूगल पर आपके होमपेज का टाइटल व स्निपेट किस प्रकार दिखेगा</p>
+          <p class="text-[11px] text-indigo-200">How your homepage title and snippet will appear in Google search results</p>
         </div>
       </div>
       <div class="flex items-center gap-1 bg-stone-800/80 p-1 rounded-xl border border-stone-700 text-xs">
@@ -163,10 +163,10 @@ require_once __DIR__ . '/admin_header.php';
     <div class="border-b border-gray-100 pb-3">
       <h3 class="text-base font-bold text-gray-900 flex items-center gap-2">
         <i class="fa-solid fa-heading text-indigo-600"></i>
-        1. मुख्य होमपेज टाइटल एवं ऑन-पेज SEO (Homepage Title & On-Page Meta)
+        1. Homepage Title & On-Page Meta Tags
       </h3>
       <p class="text-xs text-gray-500 mt-0.5">
-        होमपेज का मुख्य टाइटल टैग (&lt;title&gt;) एवं सर्च इंजन मेटा टैग्स संपादित करें
+        Configure primary homepage title tag (&lt;title&gt;) and search engine meta tags
       </p>
     </div>
 
@@ -175,7 +175,7 @@ require_once __DIR__ . '/admin_header.php';
       <div>
         <div class="flex items-center justify-between mb-1">
           <label class="block text-xs font-bold text-gray-800">
-            होमपेज शीर्षक (Homepage Title Tag - &lt;title&gt;) <span class="text-red-500">*</span>
+            Homepage Title Tag (&lt;title&gt;) <span class="text-red-500">*</span>
           </label>
           <span id="homeTitleCounter" class="text-[11px] font-mono px-2 py-0.5 rounded-full bg-stone-100 text-stone-600 font-semibold">
             0 / 60 chars
@@ -186,7 +186,7 @@ require_once __DIR__ . '/admin_header.php';
           oninput="updateSerpPreview()"
           class="w-full px-4 py-2.5 bg-stone-50 border border-gray-300 rounded-xl text-xs font-medium focus:bg-white focus:outline-none focus:border-indigo-600 transition shadow-2xs">
         <p class="text-[11px] text-gray-400 mt-1">
-          यह शीर्षक होमपेज के ब्राउज़र टैब, सोशल मीडिया शेयरिंग और गूगल सर्च में सबसे प्रमुख लिंक के रूप में दिखेगा (50-60 अक्षर अनुशंसित)।
+          This title appears in the browser tab, social sharing, and as the main clickable link in Google search (50-60 chars recommended).
         </p>
       </div>
 
@@ -197,7 +197,7 @@ require_once __DIR__ . '/admin_header.php';
       <div>
         <div class="flex items-center justify-between mb-1">
           <label class="block text-xs font-bold text-gray-800">
-            मेटा विवरण (Meta Description - &lt;meta name="description"&gt;) <span class="text-red-500">*</span>
+            Meta Description (&lt;meta name="description"&gt;) <span class="text-red-500">*</span>
           </label>
           <span id="metaDescCounter" class="text-[11px] font-mono px-2 py-0.5 rounded-full bg-stone-100 text-stone-600 font-semibold">
             0 / 160 chars
@@ -207,40 +207,40 @@ require_once __DIR__ . '/admin_header.php';
           oninput="updateSerpPreview()"
           class="w-full px-4 py-2.5 bg-stone-50 border border-gray-300 rounded-xl text-xs focus:bg-white focus:outline-none focus:border-indigo-600 transition shadow-2xs"><?= htmlspecialchars($cur_meta_desc) ?></textarea>
         <p class="text-[11px] text-gray-400 mt-1">
-          सर्च इंजन रिजल्ट्स में टाइटल के नीचे दिखने वाला सारांश (140 से 160 अक्षर अनुशंसित)।
+          Snippet summary displayed beneath the title in search engine results (140 to 160 chars recommended).
         </p>
       </div>
 
       <!-- Keywords & Robots Directives -->
       <div class="grid grid-cols-1 sm:grid-cols-2 gap-5">
         <div>
-          <label class="block text-xs font-bold text-gray-800 mb-1">मेटा कीवर्ड्स (Meta Keywords - Comma Separated)</label>
+          <label class="block text-xs font-bold text-gray-800 mb-1">Meta Keywords (Comma Separated)</label>
           <input type="text" name="seo_meta_keywords" id="input_meta_kw"
             value="<?= htmlspecialchars($cur_meta_kw) ?>"
             class="w-full px-4 py-2.5 bg-stone-50 border border-gray-300 rounded-xl text-xs focus:bg-white focus:outline-none focus:border-indigo-600 transition shadow-2xs">
-          <p class="text-[11px] text-gray-400 mt-1">अल्पविराम (comma) से अलग किए गए मुख्य खोज शब्द।</p>
+          <p class="text-[11px] text-gray-400 mt-1">Comma-separated target keywords.</p>
         </div>
 
         <div>
-          <label class="block text-xs font-bold text-gray-800 mb-1">सर्च इंजन इंडेक्सिंग निर्देश (Robots Directive)</label>
+          <label class="block text-xs font-bold text-gray-800 mb-1">Search Engine Indexing Directive (Robots Meta)</label>
           <select name="seo_robots_meta" class="w-full px-4 py-2.5 bg-stone-50 border border-gray-300 rounded-xl text-xs font-bold focus:bg-white focus:outline-none focus:border-indigo-600 transition shadow-2xs">
-            <option value="index, follow" <?= $cur_robots === 'index, follow' ? 'selected' : '' ?>>index, follow (अनुशंसित - सभी सर्च इंजन इंडेक्स करें)</option>
-            <option value="noindex, follow" <?= $cur_robots === 'noindex, follow' ? 'selected' : '' ?>>noindex, follow (सर्च में न दिखाएं, लिंक्स फॉलो करें)</option>
-            <option value="index, nofollow" <?= $cur_robots === 'index, nofollow' ? 'selected' : '' ?>>index, nofollow (इंडेक्स करें, लिंक्स फॉलो न करें)</option>
-            <option value="noindex, nofollow" <?= $cur_robots === 'noindex, nofollow' ? 'selected' : '' ?>>noindex, nofollow (पूरी तरह ब्लॉक रखें - Dev/Staging)</option>
+            <option value="index, follow" <?= $cur_robots === 'index, follow' ? 'selected' : '' ?>>index, follow (Recommended - Allow indexing & link following)</option>
+            <option value="noindex, follow" <?= $cur_robots === 'noindex, follow' ? 'selected' : '' ?>>noindex, follow (Hide from search, follow internal links)</option>
+            <option value="index, nofollow" <?= $cur_robots === 'index, nofollow' ? 'selected' : '' ?>>index, nofollow (Index page, do not follow links)</option>
+            <option value="noindex, nofollow" <?= $cur_robots === 'noindex, nofollow' ? 'selected' : '' ?>>noindex, nofollow (Completely block indexing - Dev/Staging)</option>
           </select>
-          <p class="text-[11px] text-gray-400 mt-1">Googlebot व अन्य क्रॉलर्स के लिए रोबोट्स मेटा टैग।</p>
+          <p class="text-[11px] text-gray-400 mt-1">Robots meta tag for Googlebot and other web crawlers.</p>
         </div>
       </div>
 
       <!-- Canonical URL -->
       <div>
-        <label class="block text-xs font-bold text-gray-800 mb-1">कैनोनिकल बेस यूआरएल (Canonical Base URL)</label>
+        <label class="block text-xs font-bold text-gray-800 mb-1">Canonical Base URL</label>
         <input type="url" name="seo_canonical_url" id="input_canonical_url"
           oninput="updateSerpPreview()"
           value="<?= htmlspecialchars($cur_canonical) ?>"
           class="w-full px-4 py-2.5 bg-stone-50 border border-gray-300 rounded-xl text-xs font-mono focus:bg-white focus:outline-none focus:border-indigo-600 transition shadow-2xs">
-        <p class="text-[11px] text-gray-400 mt-1">डुप्लीकेट कंटेंट से बचने के लिए प्राथमिक डोमेन (उदा. <?= htmlspecialchars($default_site_canonical) ?>)।</p>
+        <p class="text-[11px] text-gray-400 mt-1">Primary canonical domain to prevent duplicate content penalties (e.g. <?= htmlspecialchars($default_site_canonical) ?>).</p>
       </div>
 
     </div>
@@ -251,29 +251,29 @@ require_once __DIR__ . '/admin_header.php';
     <div class="border-b border-gray-100 pb-3">
       <h3 class="text-base font-bold text-gray-900 flex items-center gap-2">
         <i class="fa-solid fa-share-nodes text-blue-600"></i>
-        2. सोशल मीडिया शेयरिंग कार्ड्स (OpenGraph & Twitter Cards)
+        2. Social Media Sharing Cards (OpenGraph & Twitter Cards)
       </h3>
       <p class="text-xs text-gray-500 mt-0.5">
-        WhatsApp, Facebook, LinkedIn एवं Twitter/X पर लिंक शेयर करते समय दिखने वाली इमेज व विवरण
+        Image and preview details displayed when sharing links on WhatsApp, Facebook, LinkedIn, and Twitter/X
       </p>
     </div>
 
     <div class="grid grid-cols-1 sm:grid-cols-2 gap-5">
       <div>
-        <label class="block text-xs font-bold text-gray-800 mb-1">सोशल शेयर इमेज यूआरएल (OG Image 1200x630)</label>
+        <label class="block text-xs font-bold text-gray-800 mb-1">Social Share Image URL (OG Image 1200x630)</label>
         <input type="url" name="seo_og_image" id="input_og_image"
           value="<?= htmlspecialchars($cur_og_image) ?>"
           placeholder="https://..."
           class="w-full px-4 py-2.5 bg-stone-50 border border-gray-300 rounded-xl text-xs focus:bg-white focus:outline-none focus:border-indigo-600 transition shadow-2xs">
-        <p class="text-[11px] text-gray-400 mt-1">हाई-रिज़ॉल्यूशन बैनर इमेज का सीधा यूआरएल।</p>
+        <p class="text-[11px] text-gray-400 mt-1">Direct absolute URL to a high-resolution 1200x630 banner image.</p>
       </div>
 
       <div>
-        <label class="block text-xs font-bold text-gray-800 mb-1">Twitter / X हैंडल (@handle)</label>
+        <label class="block text-xs font-bold text-gray-800 mb-1">Twitter / X Handle (@handle)</label>
         <input type="text" name="seo_twitter_handle" placeholder="@ganvgalihat"
           value="<?= htmlspecialchars(get_seo_val('seo_twitter_handle', '@ganvgalihat')) ?>"
           class="w-full px-4 py-2.5 bg-stone-50 border border-gray-300 rounded-xl text-xs focus:bg-white focus:outline-none focus:border-indigo-600 transition shadow-2xs">
-        <p class="text-[11px] text-gray-400 mt-1">आधिकारिक ट्विटर / X अकाउंट यूजरनेम।</p>
+        <p class="text-[11px] text-gray-400 mt-1">Official Twitter / X account handle.</p>
       </div>
     </div>
   </div>
@@ -283,10 +283,10 @@ require_once __DIR__ . '/admin_header.php';
     <div class="border-b border-gray-100 pb-3">
       <h3 class="text-base font-bold text-gray-900 flex items-center gap-2">
         <i class="fa-brands fa-google text-red-500"></i>
-        3. सर्च कंसोल एवं वेब एनालिटिक्स (Google Tools Integration)
+        3. Search Console & Web Analytics (Google Tools Integration)
       </h3>
       <p class="text-xs text-gray-500 mt-0.5">
-        गूगल सर्च कंसोल सत्यापन मेटा टैग एवं Google Analytics 4 (GA4) ट्रैकिंग आईडी
+        Google Search Console verification meta tag and Google Analytics 4 (GA4) Measurement ID
       </p>
     </div>
 
@@ -301,7 +301,7 @@ require_once __DIR__ . '/admin_header.php';
             value="<?= htmlspecialchars(get_seo_val('seo_google_analytics', 'G-GGH9087TEST')) ?>"
             class="w-full pl-9 pr-4 py-2.5 bg-stone-50 border border-gray-300 rounded-xl text-xs font-mono focus:bg-white focus:outline-none focus:border-indigo-600 transition shadow-2xs">
         </div>
-        <p class="text-[11px] text-gray-400 mt-1">Google Analytics प्रॉपर्टी मेजरमेंट आईडी।</p>
+        <p class="text-[11px] text-gray-400 mt-1">Google Analytics 4 Property Measurement ID (G-XXXXXXXXXX).</p>
       </div>
 
       <div>
@@ -310,11 +310,11 @@ require_once __DIR__ . '/admin_header.php';
           <span class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-gray-400">
             <i class="fa-solid fa-shield-halved text-xs"></i>
           </span>
-          <input type="text" name="seo_google_console" placeholder="google-site-verification=xxxx या केवल कोड"
+          <input type="text" name="seo_google_console" placeholder="google-site-verification=xxxx or token code only"
             value="<?= htmlspecialchars(get_seo_val('seo_google_console', 'google-site-verification=ggh_rural_artisan_2026_verified')) ?>"
             class="w-full pl-9 pr-4 py-2.5 bg-stone-50 border border-gray-300 rounded-xl text-xs font-mono focus:bg-white focus:outline-none focus:border-indigo-600 transition shadow-2xs">
         </div>
-        <p class="text-[11px] text-gray-400 mt-1">GSC स्वामित्व सत्यापन HTML टैग अथवा सत्यापन टोकन।</p>
+        <p class="text-[11px] text-gray-400 mt-1">Google Search Console ownership verification token or meta tag.</p>
       </div>
     </div>
   </div>
@@ -322,12 +322,12 @@ require_once __DIR__ . '/admin_header.php';
   <!-- Submit Bar -->
   <div class="flex items-center justify-between p-4 bg-white rounded-2xl border border-gray-200 shadow-sm">
     <div class="text-xs text-gray-500 font-medium">
-      <i class="fa-solid fa-circle-check text-emerald-600 mr-1"></i> सेटिंग्स सहेजते ही होमपेज एवं सभी पेजों पर तुरंत सक्रिय हो जाएंगी।
+      <i class="fa-solid fa-circle-check text-emerald-600 mr-1"></i> Settings will immediately take effect across the homepage and all store pages upon saving.
     </div>
     <button type="submit"
       class="px-6 py-3 bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs rounded-xl shadow-lg transition flex items-center gap-2 cursor-pointer active:scale-95">
       <i class="fa-solid fa-floppy-disk"></i>
-      SEO सेटिंग्स सहेजें (Save All SEO Settings)
+      Save All SEO Settings
     </button>
   </div>
 </form>

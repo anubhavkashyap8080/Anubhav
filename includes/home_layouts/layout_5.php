@@ -133,13 +133,13 @@ $yt_embed_url = get_youtube_embed_url($yt_setting, 1, true);
         <?php if (($h_btn1_show && $h_btn1_text !== '') || ($h_btn2_show && $h_btn2_text !== '')): ?>
         <div class="flex flex-wrap items-center gap-4 pt-2">
           <?php if ($h_btn1_show && $h_btn1_text !== ''): ?>
-          <a href="<?= htmlspecialchars($h_btn1_link) ?>"<?= $h_btn1_target ?> class="px-6 py-3.5 bg-amber-500 hover:bg-amber-400 text-stone-950 font-black text-xs sm:text-sm rounded-2xl transition shadow-lg flex items-center gap-2">
+          <a href="<?= htmlspecialchars($h_btn1_link) ?>"<?= $h_btn1_target ?> class="px-8 sm:px-10 py-4 bg-amber-500 hover:bg-amber-400 text-stone-950 font-black text-xs sm:text-sm rounded-full transition shadow-lg inline-flex items-center justify-center gap-2.5 whitespace-nowrap min-h-[50px] box-border">
             <span><?= htmlspecialchars($h_btn1_text) ?></span>
             <i data-lucide="arrow-right" class="w-4 h-4"></i>
           </a>
           <?php endif; ?>
           <?php if ($h_btn2_show && $h_btn2_text !== ''): ?>
-          <a href="<?= htmlspecialchars($h_btn2_link) ?>"<?= $h_btn2_target ?> class="px-5 py-3.5 bg-stone-800 hover:bg-stone-700 text-white font-bold text-xs sm:text-sm rounded-2xl border border-stone-700 transition flex items-center gap-2">
+          <a href="<?= htmlspecialchars($h_btn2_link) ?>"<?= $h_btn2_target ?> class="px-8 sm:px-10 py-4 bg-stone-800 hover:bg-stone-700 text-white font-bold text-xs sm:text-sm rounded-full border border-stone-700 transition inline-flex items-center justify-center gap-2.5 whitespace-nowrap min-h-[50px] box-border">
             <i data-lucide="store" class="w-4 h-4 text-amber-400"></i>
             <span><?= htmlspecialchars($h_btn2_text) ?></span>
           </a>

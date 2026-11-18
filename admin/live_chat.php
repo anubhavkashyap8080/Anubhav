@@ -171,7 +171,7 @@ function loadAdminSessions() {
 
         const unreadBadge = document.getElementById('unreadTotalBadge');
         if (data.total_unread > 0) {
-          unreadBadge.innerText = data.total_unread + ' नए';
+          unreadBadge.innerText = data.total_unread + ' New';
           unreadBadge.classList.remove('hidden');
         } else {
           unreadBadge.classList.add('hidden');
@@ -183,7 +183,7 @@ function loadAdminSessions() {
 function renderSessions(list) {
   const container = document.getElementById('sessionsListContainer');
   if (!list || list.length === 0) {
-    container.innerHTML = '<div class="p-8 text-center text-xs text-gray-400">कोई सत्र नहीं मिला।</div>';
+    container.innerHTML = '<div class="p-8 text-center text-xs text-gray-400">No active chat sessions found.</div>';
     return;
   }
 
@@ -204,10 +204,10 @@ function renderSessions(list) {
             <span class="font-bold text-xs ${hasUnread ? 'text-stone-900 font-black' : 'text-gray-800'} truncate">${escapeHtml(s.user_name)}</span>
             <span class="text-[10px] text-gray-400 shrink-0">${formatTime(s.updated_at)}</span>
           </div>
-          <p class="text-[11px] ${hasUnread ? 'text-stone-900 font-bold' : 'text-gray-500'} truncate">${escapeHtml(s.last_message || 'कोई संदेश नहीं')}</p>
+          <p class="text-[11px] ${hasUnread ? 'text-stone-900 font-bold' : 'text-gray-500'} truncate">${escapeHtml(s.last_message || 'No messages yet')}</p>
           <div class="flex items-center gap-1.5 mt-1">
             <span class="text-[9px] px-1.5 py-0.2 rounded font-semibold ${s.status === 'resolved' ? 'bg-gray-200 text-gray-700' : 'bg-emerald-100 text-emerald-800'}">${s.status}</span>
-            ${hasUnread ? `<span class="text-[9px] px-1.5 py-0.2 rounded-full bg-red-500 text-white font-bold">${s.unread_admin} नया</span>` : ''}
+            ${hasUnread ? `<span class="text-[9px] px-1.5 py-0.2 rounded-full bg-red-500 text-white font-bold">${s.unread_admin} new</span>` : ''}
           </div>
         </div>
       </div>
@@ -237,7 +237,7 @@ function selectChatSession(id) {
 
   document.getElementById('adminReplyInput').disabled = false;
   document.getElementById('adminSendBtn').disabled = false;
-  document.getElementById('adminReplyInput').placeholder = 'यहाँ ग्राहक को उत्तर लिखें...';
+  document.getElementById('adminReplyInput').placeholder = 'Type response to customer here...';
   document.getElementById('cannedResponseBar').classList.remove('hidden');
   document.getElementById('activeHeaderActions').classList.remove('hidden');
 

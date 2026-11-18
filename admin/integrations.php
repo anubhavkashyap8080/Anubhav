@@ -362,7 +362,7 @@ require_once __DIR__ . '/admin_header.php';
                 <i class="fa-solid fa-envelope-open-text"></i>
               </div>
               <div>
-                <h3 class="text-xs font-extrabold text-gray-900">India Post (Speed Post / पार्सल)</h3>
+                <h3 class="text-xs font-extrabold text-gray-900">India Post (Speed Post / Parcel)</h3>
                 <p class="text-[10px] text-gray-500 font-semibold">100% Pan-India Reach (1.55 Lakh Post Offices & Every Village)</p>
               </div>
             </div>

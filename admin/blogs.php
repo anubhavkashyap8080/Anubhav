@@ -105,20 +105,20 @@ require_once __DIR__ . '/admin_header.php';
   <div>
     <h1 class="text-2xl font-black text-gray-900 flex items-center gap-2">
       <i class="fa-solid fa-newspaper text-indigo-600"></i>
-      ब्लॉग एवं संपादकीय प्रबंधन (Village Heritage Stories)
+      Blog & Editorial Management (Village Heritage Stories)
     </h1>
     <p class="text-xs text-gray-500 mt-1">
-      ग्रामीण कारीगरी, जैविक खेती, स्वयं सहायता समूह एवं कृषि उपकरण की कहानियों का CMS
+      CMS for village artisan stories, organic farming, self-help groups, and rural craftsmanship
     </p>
   </div>
 
   <div class="flex items-center gap-2">
     <a href="/blogs.php" target="_blank" class="px-3.5 py-2 bg-stone-100 hover:bg-stone-200 text-stone-700 font-bold text-xs rounded-xl border border-stone-300 transition flex items-center gap-1.5 shadow-xs">
-      <i class="fa-solid fa-arrow-up-right-from-square"></i> सार्वजनिक ब्लॉग देखें
+      <i class="fa-solid fa-arrow-up-right-from-square"></i> View Public Blogs
     </a>
     <button onclick="openBlogModal()"
       class="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs rounded-xl shadow transition flex items-center gap-2">
-      <i class="fa-solid fa-pen-nib"></i> नया ब्लॉग लिखें (Write Blog)
+      <i class="fa-solid fa-pen-nib"></i> Write New Blog Post
     </button>
   </div>
 </div>
@@ -129,13 +129,13 @@ require_once __DIR__ . '/admin_header.php';
     <table class="w-full text-left text-xs">
       <thead class="bg-stone-50 border-b border-gray-200 text-gray-500 font-bold uppercase text-[10px]">
         <tr>
-          <th class="px-4 py-3.5">चित्र</th>
-          <th class="px-4 py-3.5">शीर्षक व श्रेणी</th>
-          <th class="px-4 py-3.5">लेखक (Author)</th>
-          <th class="px-4 py-3.5">व्यूज</th>
-          <th class="px-4 py-3.5">स्थिति (Status)</th>
-          <th class="px-4 py-3.5">प्रकाशन तिथि</th>
-          <th class="px-4 py-3.5 text-right">कार्य (Actions)</th>
+          <th class="px-4 py-3.5">Image</th>
+          <th class="px-4 py-3.5">Title & Category</th>
+          <th class="px-4 py-3.5">Author</th>
+          <th class="px-4 py-3.5">Views</th>
+          <th class="px-4 py-3.5">Status</th>
+          <th class="px-4 py-3.5">Publish Date</th>
+          <th class="px-4 py-3.5 text-right">Actions</th>
         </tr>
       </thead>
       <tbody class="divide-y divide-gray-100">
@@ -171,7 +171,7 @@ require_once __DIR__ . '/admin_header.php';
                 <input type="hidden" name="blog_id" value="<?= $b['id'] ?>">
                 <button type="submit"
                   class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-bold cursor-pointer <?= $b['status'] === 'published' ? 'bg-emerald-100 text-emerald-800 hover:bg-emerald-200' : 'bg-stone-200 text-stone-700 hover:bg-stone-300' ?>"
-                  title="क्लिक करके स्थिति बदलें">
+                  title="Click to toggle status">
                   <span class="w-1.5 h-1.5 rounded-full <?= $b['status'] === 'published' ? 'bg-emerald-600' : 'bg-stone-500' ?>"></span>
                   <?= ucfirst($b['status']) ?>
                 </button>
@@ -184,11 +184,11 @@ require_once __DIR__ . '/admin_header.php';
 
             <td class="px-4 py-3.5 text-right whitespace-nowrap space-x-1">
               <a href="/blog-detail.php?slug=<?= urlencode($b['slug']) ?>" target="_blank"
-                class="p-1.5 text-gray-400 hover:text-indigo-600 rounded hover:bg-indigo-50 transition" title="देखें">
+                class="p-1.5 text-gray-400 hover:text-indigo-600 rounded hover:bg-indigo-50 transition" title="View">
                 <i class="fa-solid fa-arrow-up-right-from-square"></i>
               </a>
               <button onclick='editBlog(<?= json_encode($b) ?>)'
-                class="p-1.5 text-gray-400 hover:text-indigo-600 rounded hover:bg-indigo-50 transition" title="एडिट करें">
+                class="p-1.5 text-gray-400 hover:text-indigo-600 rounded hover:bg-indigo-50 transition" title="Edit">
                 <i class="fa-regular fa-pen-to-square"></i>
               </button>
               <form action="/admin/blogs.php" method="POST" class="inline" onsubmit="return confirm('Are you sure you want to delete this blog post? This cannot be undone.');">
@@ -213,7 +213,7 @@ require_once __DIR__ . '/admin_header.php';
     <div class="flex items-center justify-between pb-4 mb-4 border-b border-gray-100">
       <h3 class="text-base font-bold text-gray-900 flex items-center gap-2" id="blogModalTitle">
         <i class="fa-solid fa-pen-nib text-indigo-600"></i>
-        नया ब्लॉग लेख लिखें (Create Article)
+        Write New Blog Article
       </h3>
       <button onclick="document.getElementById('blogModal').classList.add('hidden')" class="text-gray-400 hover:text-gray-600 text-lg">
         <i class="fa-solid fa-xmark"></i>
@@ -226,84 +226,84 @@ require_once __DIR__ . '/admin_header.php';
       <input type="hidden" name="blog_id" id="blog_id" value="0">
 
       <div>
-        <label class="block text-xs font-bold text-gray-700 mb-1">ब्लॉग का शीर्षक (Title in English / Hinglish) <span class="text-red-500">*</span></label>
+        <label class="block text-xs font-bold text-gray-700 mb-1">Blog Title (English) <span class="text-red-500">*</span></label>
         <input type="text" name="title" id="blog_title" required
           class="w-full px-3.5 py-2.5 bg-stone-50 border border-gray-200 rounded-xl text-xs focus:bg-white focus:outline-none focus:border-indigo-600 transition">
       </div>
 
       <div>
-        <label class="block text-xs font-bold text-gray-700 mb-1">हिंदी शीर्षक (Hindi Title)</label>
+        <label class="block text-xs font-bold text-gray-700 mb-1">Hindi Title (Localization)</label>
         <input type="text" name="hindi_title" id="blog_hindi_title"
           class="w-full px-3.5 py-2.5 bg-stone-50 border border-gray-200 rounded-xl text-xs focus:bg-white focus:outline-none focus:border-indigo-600 transition">
       </div>
 
       <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
         <div>
-          <label class="block text-xs font-bold text-gray-700 mb-1">यूआरएल स्लग (URL Slug)</label>
+          <label class="block text-xs font-bold text-gray-700 mb-1">URL Slug</label>
           <input type="text" name="slug" id="blog_slug" placeholder="auto-generated-if-empty"
             class="w-full px-3.5 py-2.5 bg-stone-50 border border-gray-200 rounded-xl text-xs font-mono focus:bg-white focus:outline-none focus:border-indigo-600 transition">
         </div>
 
         <div>
-          <label class="block text-xs font-bold text-gray-700 mb-1">श्रेणी (Category) <span class="text-red-500">*</span></label>
+          <label class="block text-xs font-bold text-gray-700 mb-1">Category <span class="text-red-500">*</span></label>
           <select name="category" id="blog_category" class="w-full px-3.5 py-2.5 bg-stone-50 border border-gray-200 rounded-xl text-xs focus:bg-white focus:outline-none focus:border-indigo-600 transition">
-            <option value="Rural Craftsmanship">Rural Craftsmanship (ग्रामीण कारीगरी)</option>
-            <option value="Organic Farming">Organic Farming (प्राकृतिक खेती व दालें)</option>
-            <option value="Village Women SHGs">Village Women SHGs (महिला स्वयं सहायता समूह)</option>
-            <option value="Artisan Stories">Artisan Stories (कारीगरों की प्रेरक यात्रा)</option>
-            <option value="Tool Maintenance">Tool Maintenance (हथियारों व औजारों की देखभाल)</option>
+            <option value="Rural Craftsmanship">Rural Craftsmanship</option>
+            <option value="Organic Farming">Organic Farming</option>
+            <option value="Village Women SHGs">Village Women SHGs</option>
+            <option value="Artisan Stories">Artisan Stories</option>
+            <option value="Tool Maintenance">Tool Maintenance</option>
           </select>
         </div>
       </div>
 
       <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
         <div>
-          <label class="block text-xs font-bold text-gray-700 mb-1">लेखक का नाम (Author Name)</label>
+          <label class="block text-xs font-bold text-gray-700 mb-1">Author Name</label>
           <input type="text" name="author_name" id="blog_author_name" value="Anubhav Kashyap"
             class="w-full px-3.5 py-2.5 bg-stone-50 border border-gray-200 rounded-xl text-xs focus:bg-white focus:outline-none focus:border-indigo-600 transition">
         </div>
 
         <div>
-          <label class="block text-xs font-bold text-gray-700 mb-1">प्रकाशन स्थिति (Status)</label>
+          <label class="block text-xs font-bold text-gray-700 mb-1">Publish Status</label>
           <select name="status" id="blog_status" class="w-full px-3.5 py-2.5 bg-stone-50 border border-gray-200 rounded-xl text-xs focus:bg-white focus:outline-none focus:border-indigo-600 transition">
-            <option value="published">Published (प्रकाशित)</option>
-            <option value="draft">Draft (ड्राफ्ट)</option>
+            <option value="published">Published</option>
+            <option value="draft">Draft</option>
           </select>
         </div>
       </div>
 
       <div>
-        <label class="block text-xs font-bold text-gray-700 mb-1">कवर इमेज यूआरएल (Featured Image URL)</label>
+        <label class="block text-xs font-bold text-gray-700 mb-1">Cover Image URL (Featured Image)</label>
         <input type="url" name="image" id="blog_image" placeholder="https://images.unsplash.com/..."
           class="w-full px-3.5 py-2.5 bg-stone-50 border border-gray-200 rounded-xl text-xs focus:bg-white focus:outline-none focus:border-indigo-600 transition">
       </div>
 
       <div>
-        <label class="block text-xs font-bold text-gray-700 mb-1">संक्षिप्त सारांश (Excerpt - 1 to 2 sentences)</label>
+        <label class="block text-xs font-bold text-gray-700 mb-1">Short Excerpt (1-2 sentences)</label>
         <textarea name="excerpt" id="blog_excerpt" rows="2"
           class="w-full px-3.5 py-2.5 bg-stone-50 border border-gray-200 rounded-xl text-xs focus:bg-white focus:outline-none focus:border-indigo-600 transition"></textarea>
       </div>
 
       <div>
-        <label class="block text-xs font-bold text-gray-700 mb-1">ब्लॉग की पूर्ण सामग्री (Article Content) <span class="text-red-500">*</span></label>
+        <label class="block text-xs font-bold text-gray-700 mb-1">Full Article Content <span class="text-red-500">*</span></label>
         <textarea name="content" id="blog_content" rows="6" required
           class="w-full px-3.5 py-2.5 bg-stone-50 border border-gray-200 rounded-xl text-xs focus:bg-white focus:outline-none focus:border-indigo-600 transition"></textarea>
       </div>
 
       <div>
-        <label class="block text-xs font-bold text-gray-700 mb-1">टैग्स (Tags, comma-separated)</label>
-        <input type="text" name="tags" id="blog_tags" placeholder="उदा. Sickle, Blacksmith, Hardoi, Organic"
+        <label class="block text-xs font-bold text-gray-700 mb-1">Tags (Comma-separated)</label>
+        <input type="text" name="tags" id="blog_tags" placeholder="e.g. Sickle, Blacksmith, Hardoi, Organic"
           class="w-full px-3.5 py-2.5 bg-stone-50 border border-gray-200 rounded-xl text-xs focus:bg-white focus:outline-none focus:border-indigo-600 transition">
       </div>
 
       <div class="flex items-center justify-end gap-3 pt-3 border-t border-gray-100">
         <button type="button" onclick="document.getElementById('blogModal').classList.add('hidden')"
           class="px-4 py-2 bg-stone-100 text-stone-700 font-bold rounded-xl text-xs">
-          रद्द करें
+          Cancel
         </button>
         <button type="submit"
           class="px-5 py-2 bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-xl text-xs transition">
-          ब्लॉग सहेजें (Save Article)
+          Save Article
         </button>
       </div>
     </form>
@@ -322,7 +322,7 @@ function openBlogModal() {
   document.getElementById('blog_content').value = '';
   document.getElementById('blog_tags').value = '';
   document.getElementById('blog_status').value = 'published';
-  document.getElementById('blogModalTitle').innerHTML = '<i class="fa-solid fa-pen-nib text-indigo-600"></i> नया ब्लॉग लेख लिखें (Create Article)';
+  document.getElementById('blogModalTitle').innerHTML = '<i class="fa-solid fa-pen-nib text-indigo-600"></i> Write New Blog Article';
   document.getElementById('blogModal').classList.remove('hidden');
 }
 
@@ -338,7 +338,7 @@ function editBlog(b) {
   document.getElementById('blog_content').value = b.content || '';
   document.getElementById('blog_tags').value = b.tags || '';
   document.getElementById('blog_status').value = b.status || 'published';
-  document.getElementById('blogModalTitle').innerHTML = '<i class="fa-regular fa-pen-to-square text-indigo-600"></i> ब्लॉग लेख संपादित करें (Edit Article)';
+  document.getElementById('blogModalTitle').innerHTML = '<i class="fa-regular fa-pen-to-square text-indigo-600"></i> Edit Blog Article';
   document.getElementById('blogModal').classList.remove('hidden');
 }
 </script>

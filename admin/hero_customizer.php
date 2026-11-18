@@ -179,23 +179,23 @@ require_once __DIR__ . '/admin_header.php';
     <div class="flex items-center gap-2">
       <h1 class="text-2xl sm:text-3xl font-black text-gray-900 flex items-center gap-2">
         <i class="fa-solid fa-wand-magic-sparkles text-amber-500"></i>
-        त्योहार एवं सेल हीरो कैंपेन बिल्डर (Campaign Builder)
+        Festival & Seasonal Hero Campaign Builder
       </h1>
       <span class="px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider bg-amber-100 text-amber-800 border border-amber-300">
         11 Indian Festival Presets
       </span>
     </div>
     <p class="text-xs sm:text-sm text-gray-500 mt-1">
-      दीपावली, होली, नवरात्रि, मकर संक्रांति, ईद, 15 अगस्त, 26 जनवरी, फसल कटाई एवं मानसून किसान सेल हेतु पूर्ण रूप से अनुकूलन योग्य
+      Full campaign customization for Diwali, Holi, Navratri, Makar Sankranti, Eid, Independence Day, Republic Day, Harvest, and Monsoon seasonal campaigns.
     </p>
   </div>
 
   <div class="flex items-center gap-2.5">
     <button type="button" onclick="openPreviewModal()" class="px-4 py-2.5 bg-stone-900 hover:bg-black text-white font-bold text-xs rounded-xl shadow transition flex items-center gap-1.5 cursor-pointer">
-      <i class="fa-solid fa-eye text-amber-400"></i> सैंडबॉक्स प्रीव्यू देखें
+      <i class="fa-solid fa-eye text-amber-400"></i> View Sandbox Preview
     </button>
     <a href="/" target="_blank" class="px-4 py-2.5 bg-indigo-50 hover:bg-indigo-100 text-indigo-900 font-bold text-xs rounded-xl transition flex items-center gap-1.5 border border-indigo-200">
-      <i class="fa-solid fa-arrow-up-right-from-square text-[10px]"></i> लाइव स्टोर
+      <i class="fa-solid fa-arrow-up-right-from-square text-[10px]"></i> Live Store
     </a>
   </div>
 </div>
@@ -205,45 +205,45 @@ require_once __DIR__ . '/admin_header.php';
   <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-4 mb-3">
     <div>
       <h3 class="font-extrabold text-sm sm:text-base flex items-center gap-2">
-        <i class="fa-solid fa-bolt text-yellow-200"></i> 1-क्लिक भारतीय त्योहार व शॉपिंग उत्सव Preset (Instant Festival Presets):
+        <i class="fa-solid fa-bolt text-yellow-200"></i> 1-Click Indian Festival & Shopping Event Presets:
       </h3>
-      <p class="text-xs text-amber-100 mt-0.5">किसी भी त्योहार पर क्लिक करते ही रंग, घोषणा पट्टी, शीर्षक, और आंकड़े स्वतः लोड हो जाएंगे।</p>
+      <p class="text-xs text-amber-100 mt-0.5">Click any festival preset to instantly load thematic colors, badges, headlines, and metrics.</p>
     </div>
   </div>
 
   <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-2 pt-1">
     <button type="button" onclick="loadPreset('diwali')" class="p-2.5 bg-white text-orange-950 font-bold text-xs rounded-2xl hover:bg-amber-50 transition shadow-2xs text-center">
-      🪔 दीपावली महासेल
+      🪔 Diwali Mega Sale
     </button>
     <button type="button" onclick="loadPreset('holi')" class="p-2.5 bg-white text-orange-950 font-bold text-xs rounded-2xl hover:bg-amber-50 transition shadow-2xs text-center">
-      🎨 होली रंगोत्सव
+      🎨 Holi Festival
     </button>
     <button type="button" onclick="loadPreset('navratri')" class="p-2.5 bg-white text-orange-950 font-bold text-xs rounded-2xl hover:bg-amber-50 transition shadow-2xs text-center">
-      🔱 नवरात्रि व पूजा
+      🔱 Navratri & Puja
     </button>
     <button type="button" onclick="loadPreset('harvest')" class="p-2.5 bg-white text-orange-950 font-bold text-xs rounded-2xl hover:bg-amber-50 transition shadow-2xs text-center">
-      🌾 मकर संक्रांति मेला
+      🌾 Makar Sankranti
     </button>
     <button type="button" onclick="loadPreset('raksha')" class="p-2.5 bg-white text-orange-950 font-bold text-xs rounded-2xl hover:bg-amber-50 transition shadow-2xs text-center">
-      🎀 रक्षाबंधन विशेष
+      🎀 Raksha Bandhan
     </button>
     <button type="button" onclick="loadPreset('eid')" class="p-2.5 bg-white text-orange-950 font-bold text-xs rounded-2xl hover:bg-amber-50 transition shadow-2xs text-center">
-      🌙 ईद मुबारक सेल
+      🌙 Eid Mubarak Sale
     </button>
     <button type="button" onclick="loadPreset('independence')" class="p-2.5 bg-white text-orange-950 font-bold text-xs rounded-2xl hover:bg-amber-50 transition shadow-2xs text-center">
-      🇮🇳 स्वतंत्रता दिवस (15 Aug)
+      🇮🇳 Independence Day (15 Aug)
     </button>
     <button type="button" onclick="loadPreset('republic')" class="p-2.5 bg-white text-orange-950 font-bold text-xs rounded-2xl hover:bg-amber-50 transition shadow-2xs text-center">
-      🇮🇳 गणतंत्र दिवस (26 Jan)
+      🇮🇳 Republic Day (26 Jan)
     </button>
     <button type="button" onclick="loadPreset('kisan_mela')" class="p-2.5 bg-white text-orange-950 font-bold text-xs rounded-2xl hover:bg-amber-50 transition shadow-2xs text-center">
-      ⚒️ देसी किसान मेला
+      ⚒️ Desi Kisan Fair
     </button>
     <button type="button" onclick="loadPreset('monsoon')" class="p-2.5 bg-white text-orange-950 font-bold text-xs rounded-2xl hover:bg-amber-50 transition shadow-2xs text-center">
-      🌧️ मानसून किसान सेल
+      🌧️ Monsoon Special
     </button>
     <button type="button" onclick="loadPreset('general')" class="p-2.5 bg-orange-950/80 text-amber-200 border border-amber-400/40 font-bold text-xs rounded-2xl hover:bg-orange-950 transition col-span-2 sm:col-span-1 text-center">
-      🏛️ सामान्य देसी हाट
+      🏛️ Default Desi Haat
     </button>
   </div>
 </div>
@@ -657,22 +657,22 @@ require_once __DIR__ . '/admin_header.php';
   <div class="bg-white rounded-3xl border border-gray-200 shadow-sm p-6 sm:p-8 space-y-6">
     <h3 class="text-base font-extrabold text-gray-900 pb-3 border-b border-gray-100 flex items-center gap-2">
       <i class="fa-solid fa-palette text-indigo-600"></i>
-      1. थीम रंग एवं हेडर घोषणा पट्टी (Theme Color & Announcement Badge)
+      1. Theme Color & Announcement Badge
     </h3>
 
     <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
       <div>
-        <label class="block text-xs font-bold text-gray-700 mb-2">पृष्ठभूमि रंग थीम (Theme Color)</label>
+        <label class="block text-xs font-bold text-gray-700 mb-2">Background Theme Color</label>
         <select name="hero_theme_color" id="hero_theme_color" class="w-full px-3.5 py-2.5 bg-stone-50 border border-gray-200 rounded-xl text-xs font-bold">
-          <option value="emerald" <?= get_h_val('hero_theme_color', 'emerald') === 'emerald' ? 'selected' : '' ?>>🌲 एमराल्ड ग्रीन (देसी खेती व प्रकृति)</option>
-          <option value="crimson" <?= get_h_val('hero_theme_color') === 'crimson' ? 'selected' : '' ?>>🪔 फेस्टिव क्रिमसन (दीपावली व करवा चौथ)</option>
-          <option value="amber" <?= get_h_val('hero_theme_color') === 'amber' ? 'selected' : '' ?>>🌾 सुनहरा अम्बर (होली व फसल कटाई)</option>
-          <option value="indigo" <?= get_h_val('hero_theme_color') === 'indigo' ? 'selected' : '' ?>>🌌 रॉयल इंडिगो (कारीगर एक्सक्लूसिव)</option>
+          <option value="emerald" <?= get_h_val('hero_theme_color', 'emerald') === 'emerald' ? 'selected' : '' ?>>🌲 Emerald Green (Organic Agriculture & Nature)</option>
+          <option value="crimson" <?= get_h_val('hero_theme_color') === 'crimson' ? 'selected' : '' ?>>🪔 Festive Crimson (Diwali & Festive Special)</option>
+          <option value="amber" <?= get_h_val('hero_theme_color') === 'amber' ? 'selected' : '' ?>>🌾 Golden Amber (Holi & Harvest Season)</option>
+          <option value="indigo" <?= get_h_val('hero_theme_color') === 'indigo' ? 'selected' : '' ?>>🌌 Royal Indigo (Artisan Exclusive)</option>
         </select>
       </div>
 
       <div class="sm:col-span-3">
-        <label class="block text-xs font-bold text-gray-700 mb-2">उत्सव/सेल घोषणा बैज (Festive Top Badge Text)</label>
+        <label class="block text-xs font-bold text-gray-700 mb-2">Festive Announcement Badge Text</label>
         <input type="text" name="hero_badge_text" id="hero_badge_text" required
           value="<?= htmlspecialchars(get_h_val('hero_badge_text', '🌾 Kalyani agrofood pvt ltd • Hunar desh ka, ganv se ghar tak')) ?>"
           class="w-full px-3.5 py-2.5 bg-stone-50 border border-gray-200 rounded-xl text-xs">
@@ -684,26 +684,26 @@ require_once __DIR__ . '/admin_header.php';
   <div class="bg-white rounded-3xl border border-gray-200 shadow-sm p-6 sm:p-8 space-y-6">
     <h3 class="text-base font-extrabold text-gray-900 pb-3 border-b border-gray-100 flex items-center gap-2">
       <i class="fa-solid fa-heading text-brand-green"></i>
-      2. मुख्य शीर्षक एवं प्रचार विवरण (Headlines & Promotion Text)
+      2. Primary Headlines & Promotion Text
     </h3>
 
     <div class="grid grid-cols-1 sm:grid-cols-2 gap-5">
       <div>
-        <label class="block text-xs font-bold text-gray-700 mb-1">मुख्य शीर्षक लाइन 1 (Title Line 1)</label>
+        <label class="block text-xs font-bold text-gray-700 mb-1">Headline Line 1</label>
         <input type="text" name="hero_title_line1" id="hero_title_line1" required
           value="<?= htmlspecialchars(get_h_val('hero_title_line1', 'Gaon ke hunar,')) ?>"
           class="w-full px-3.5 py-2.5 bg-stone-50 border border-gray-200 rounded-xl text-sm font-bold">
       </div>
 
       <div>
-        <label class="block text-xs font-bold text-gray-700 mb-1">मुख्य शीर्षक लाइन 2 (हाईलाइटेड - Title Line 2)</label>
+        <label class="block text-xs font-bold text-gray-700 mb-1">Headline Line 2 (Highlighted Gradient)</label>
         <input type="text" name="hero_title_line2" id="hero_title_line2" required
           value="<?= htmlspecialchars(get_h_val('hero_title_line2', 'ab har ghar tak')) ?>"
           class="w-full px-3.5 py-2.5 bg-stone-50 border border-gray-200 rounded-xl text-sm font-bold text-amber-600">
       </div>
 
       <div class="sm:col-span-2">
-        <label class="block text-xs font-bold text-gray-700 mb-1">प्रचार विवरण / उप-शीर्षक (Subheadline Description)</label>
+        <label class="block text-xs font-bold text-gray-700 mb-1">Subheadline Description</label>
         <textarea name="hero_subtitle" id="hero_subtitle" rows="3" required
           class="w-full px-3.5 py-2.5 bg-stone-50 border border-gray-200 rounded-xl text-xs leading-relaxed"><?= htmlspecialchars(get_h_val('hero_subtitle', 'Discover high-durability hand-forged agricultural sickles, garden khurpis, pure unpolished Awadh pulses, Banarasi mustard oil pickles, eco golden jute bags, and handlooms direct from rural Bharat.')) ?></textarea>
       </div>
@@ -795,34 +795,34 @@ require_once __DIR__ . '/admin_header.php';
   <div class="bg-white rounded-3xl border border-gray-200 shadow-sm p-6 sm:p-8 space-y-6">
     <h3 class="text-base font-extrabold text-gray-900 pb-3 border-b border-gray-100 flex items-center gap-2">
       <i class="fa-solid fa-image text-blue-600"></i>
-      4. हीरो ग्राफिक छवि एवं फ्लोटिंग कार्ड्स (Hero Graphic & Cards)
+      4. Hero Graphic & Floating Cards
     </h3>
 
     <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 items-center">
       <div class="lg:col-span-7 space-y-4">
         <div>
-          <label class="block text-xs font-bold text-gray-700 mb-1">बैनर छवि URL (Banner Image URL)</label>
+          <label class="block text-xs font-bold text-gray-700 mb-1">Banner Image URL</label>
           <input type="url" name="hero_image_url" id="hero_image_url"
             value="<?= htmlspecialchars(get_h_val('hero_image_url', 'https://images.unsplash.com/photo-1504148455328-c376907d081c?auto=format&fit=crop&w=800&q=80')) ?>"
             class="w-full px-3.5 py-2.5 bg-stone-50 border border-gray-200 rounded-xl text-xs font-mono">
         </div>
 
         <div>
-          <label class="block text-xs font-bold text-gray-700 mb-1">या नई छवि सुरक्षित अपलोड करें (MIME Check)</label>
+          <label class="block text-xs font-bold text-gray-700 mb-1">Or Securely Upload New Image (MIME Verified)</label>
           <input type="file" name="hero_image_file" accept="image/jpeg,image/png,image/webp"
             class="w-full px-3.5 py-2 bg-white border border-gray-200 rounded-xl text-xs">
-          <p class="text-[11px] text-gray-400 mt-1">अधिकतम 5MB। JPG, PNG या WebP प्रारूप।</p>
+          <p class="text-[11px] text-gray-400 mt-1">Max 5MB. JPG, PNG, or WebP format.</p>
         </div>
 
         <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-2">
           <div>
-            <label class="block text-xs font-bold text-gray-700 mb-1">फ्लोटिंग कार्ड 1 (शीर्षक)</label>
+            <label class="block text-xs font-bold text-gray-700 mb-1">Floating Card 1 (Title)</label>
             <input type="text" name="hero_tag1_title" id="hero_tag1_title"
               value="<?= htmlspecialchars(get_h_val('hero_tag1_title', 'High-Carbon Tempered Steel')) ?>"
               class="w-full px-3 py-2 bg-stone-50 border border-gray-200 rounded-xl text-xs">
           </div>
           <div>
-            <label class="block text-xs font-bold text-gray-700 mb-1">फ्लोटिंग कार्ड 1 (उप-शीर्षक)</label>
+            <label class="block text-xs font-bold text-gray-700 mb-1">Floating Card 1 (Subtitle)</label>
             <input type="text" name="hero_tag1_subtitle" id="hero_tag1_subtitle"
               value="<?= htmlspecialchars(get_h_val('hero_tag1_subtitle', 'Forged Desi Hansiya')) ?>"
               class="w-full px-3 py-2 bg-stone-50 border border-gray-200 rounded-xl text-xs">
@@ -836,7 +836,7 @@ require_once __DIR__ . '/admin_header.php';
           <img id="imageDisplayPreview"
             src="<?= htmlspecialchars(get_h_val('hero_image_url', 'https://images.unsplash.com/photo-1504148455328-c376907d081c?auto=format&fit=crop&w=800&q=80')) ?>"
             alt="Hero Preview" class="w-64 h-48 object-cover rounded-xl shadow-md border border-gray-200">
-          <p class="text-[11px] text-gray-400 mt-2">वर्तमान सक्रिय हीरो ग्राफिक</p>
+          <p class="text-[11px] text-gray-400 mt-2">Current Active Hero Graphic</p>
         </div>
       </div>
     </div>
@@ -846,33 +846,33 @@ require_once __DIR__ . '/admin_header.php';
   <div class="bg-white rounded-3xl border border-gray-200 shadow-sm p-6 sm:p-8 space-y-6">
     <h3 class="text-base font-extrabold text-gray-900 pb-3 border-b border-gray-100 flex items-center gap-2">
       <i class="fa-solid fa-chart-simple text-emerald-600"></i>
-      5. आंकड़े एवं गारंटी बैज (Stats Badges)
+      5. Key Metrics & Guarantee Badges
     </h3>
 
     <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
       <div class="p-4 bg-stone-50 rounded-2xl border border-gray-200 space-y-2">
-        <label class="block text-xs font-bold text-gray-700">बैज 1 (संख्या)</label>
+        <label class="block text-xs font-bold text-gray-700">Badge 1 (Number)</label>
         <input type="text" name="hero_stat1_num" id="hero_stat1_num" value="<?= htmlspecialchars(get_h_val('hero_stat1_num', '100%')) ?>"
           class="w-full px-3 py-1.5 bg-white border border-gray-200 rounded-lg text-xs font-bold text-brand-green">
-        <label class="block text-xs font-bold text-gray-700">बैज 1 (लेबल)</label>
+        <label class="block text-xs font-bold text-gray-700">Badge 1 (Label)</label>
         <input type="text" name="hero_stat1_label" id="hero_stat1_label" value="<?= htmlspecialchars(get_h_val('hero_stat1_label', 'Forged Iron & Pure Dal')) ?>"
           class="w-full px-3 py-1.5 bg-white border border-gray-200 rounded-lg text-xs">
       </div>
 
       <div class="p-4 bg-stone-50 rounded-2xl border border-gray-200 space-y-2">
-        <label class="block text-xs font-bold text-gray-700">बैज 2 (संख्या)</label>
+        <label class="block text-xs font-bold text-gray-700">Badge 2 (Number)</label>
         <input type="text" name="hero_stat2_num" id="hero_stat2_num" value="<?= htmlspecialchars(get_h_val('hero_stat2_num', '40+')) ?>"
           class="w-full px-3 py-1.5 bg-white border border-gray-200 rounded-lg text-xs font-bold text-brand-green">
-        <label class="block text-xs font-bold text-gray-700">बैज 2 (लेबल)</label>
+        <label class="block text-xs font-bold text-gray-700">Badge 2 (Label)</label>
         <input type="text" name="hero_stat2_label" id="hero_stat2_label" value="<?= htmlspecialchars(get_h_val('hero_stat2_label', 'Village Artisan Hubs')) ?>"
           class="w-full px-3 py-1.5 bg-white border border-gray-200 rounded-lg text-xs">
       </div>
 
       <div class="p-4 bg-stone-50 rounded-2xl border border-gray-200 space-y-2">
-        <label class="block text-xs font-bold text-gray-700">बैज 3 (संख्या)</label>
+        <label class="block text-xs font-bold text-gray-700">Badge 3 (Number)</label>
         <input type="text" name="hero_stat3_num" id="hero_stat3_num" value="<?= htmlspecialchars(get_h_val('hero_stat3_num', '₹499+')) ?>"
           class="w-full px-3 py-1.5 bg-white border border-gray-200 rounded-lg text-xs font-bold text-brand-green">
-        <label class="block text-xs font-bold text-gray-700">बैज 3 (लेबल)</label>
+        <label class="block text-xs font-bold text-gray-700">Badge 3 (Label)</label>
         <input type="text" name="hero_stat3_label" id="hero_stat3_label" value="<?= htmlspecialchars(get_h_val('hero_stat3_label', 'Free India Delivery')) ?>"
           class="w-full px-3 py-1.5 bg-white border border-gray-200 rounded-lg text-xs">
       </div>
@@ -884,18 +884,18 @@ require_once __DIR__ . '/admin_header.php';
     <div class="flex items-center justify-between border-b border-gray-100 pb-3">
       <h3 class="text-base font-extrabold text-gray-900 flex items-center gap-2">
         <i class="fa-solid fa-code text-indigo-600"></i>
-        6. सुरक्षित कस्टम HTML / CSS ब्लॉक (Sandboxed Custom Campaign Code)
+        6. Sandboxed Custom Campaign Code (HTML / CSS)
       </h3>
       <div class="flex items-center gap-2">
         <input type="checkbox" name="hero_has_custom_code" id="hero_has_custom_code" value="1" 
           <?= get_h_val('hero_has_custom_code') === '1' ? 'checked' : '' ?> class="w-4 h-4 rounded text-indigo-600">
-        <label for="hero_has_custom_code" class="text-xs font-extrabold text-gray-800">कस्टम कोड हीरो सक्रिय करें</label>
+        <label for="hero_has_custom_code" class="text-xs font-extrabold text-gray-800">Enable Custom Code Hero Block</label>
       </div>
     </div>
 
     <div class="p-3.5 bg-amber-50 border border-amber-200 rounded-2xl text-xs text-amber-900 leading-relaxed flex items-center gap-2.5">
       <i class="fa-solid fa-shield-halved text-base text-amber-600 shrink-0"></i>
-      <span><strong>सुरक्षा नीति:</strong> सभी कस्टम मार्कअप सर्वर-साइड allowlist फ़िल्टर द्वारा सुरक्षित किए जाते हैं। स्क्रिप्ट्स व दुर्भावनापूर्ण इवेंट्स ब्लॉक रहेंगे।</span>
+      <span><strong>Security Policy:</strong> All custom markup is strictly sanitized using server-side allowlist filters. Scripts and malicious events are automatically blocked.</span>
     </div>
 
     <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -917,7 +917,7 @@ require_once __DIR__ . '/admin_header.php';
   <div class="flex items-center justify-end gap-3 pb-4">
     <button type="submit" class="px-8 py-3.5 bg-indigo-600 hover:bg-indigo-700 text-white font-extrabold rounded-2xl text-xs uppercase tracking-wider transition shadow-lg flex items-center gap-2 cursor-pointer">
       <i class="fa-solid fa-floppy-disk text-sm"></i>
-      <span>हीरो कैंपेन सुरक्षित एवं लाइव करें (Save & Publish Hero)</span>
+      <span>Save & Publish Hero Campaign</span>
     </button>
   </div>
 </form>
@@ -928,26 +928,26 @@ require_once __DIR__ . '/admin_header.php';
     <div>
       <h3 class="font-extrabold text-sm text-gray-900 flex items-center gap-2">
         <i class="fa-solid fa-clock-rotate-left text-indigo-600"></i>
-        अभियान संस्करण इतिहास एवं 1-क्लिक रोलबैक (Version Rollback Engine)
+        Campaign Version History & 1-Click Rollback
       </h3>
-      <p class="text-xs text-gray-500">यदि नया बैनर या अभियान सही न लगे, तो किसी भी पिछले सुरक्षित संस्करण पर तुरंत वापस लौटें।</p>
+      <p class="text-xs text-gray-500">Instantly restore any previously published hero configuration if changes need to be rolled back.</p>
     </div>
-    <span class="text-xs font-bold text-indigo-700 bg-indigo-50 px-3 py-1 rounded-xl">कुल संस्करण: <?= count($version_history) ?></span>
+    <span class="text-xs font-bold text-indigo-700 bg-indigo-50 px-3 py-1 rounded-xl">Total Versions: <?= count($version_history) ?></span>
   </div>
 
   <div class="overflow-x-auto">
     <table class="w-full text-left text-xs border-collapse">
       <thead>
         <tr class="bg-stone-50 text-gray-500 font-bold uppercase text-[10px] border-b border-gray-100">
-          <th class="py-2.5 px-4">संस्करण</th>
-          <th class="py-2.5 px-4">परिवर्तन कारण</th>
-          <th class="py-2.5 px-4">समय (Asia/Kolkata)</th>
-          <th class="py-2.5 px-4 text-right">कार्य (Rollback)</th>
+          <th class="py-2.5 px-4">Version</th>
+          <th class="py-2.5 px-4">Change Summary</th>
+          <th class="py-2.5 px-4">Timestamp (Asia/Kolkata)</th>
+          <th class="py-2.5 px-4 text-right">Rollback</th>
         </tr>
       </thead>
       <tbody class="divide-y divide-gray-100">
         <?php if (empty($version_history)): ?>
-          <tr><td colspan="4" class="py-6 text-center text-gray-400">कोई पूर्व संस्करण उपलब्ध नहीं है।</td></tr>
+          <tr><td colspan="4" class="py-6 text-center text-gray-400">No previous versions found.</td></tr>
         <?php else: ?>
           <?php foreach ($version_history as $vh): ?>
             <tr class="hover:bg-stone-50/70">
@@ -973,203 +973,203 @@ require_once __DIR__ . '/admin_header.php';
 const presets = {
   diwali: {
     theme: 'crimson',
-    badge: '🪔 शुभ दीपावली महाबचत मेला • 50% तक छूट सीधे ग्रामीण कारीगरों से',
-    title1: 'दीपावली का असली देसी स्वाद,',
-    title2: 'गाँव के हुनर हर घर तक',
-    subtitle: 'इस दीपावली पर पारंपरिक मिट्टी के दीये, पूजा-पाठ हेतु तांबे व पीतल के बर्तन, देसी गुड़, अरहर की शुद्ध दाल और बनारसी आचार सीधे गाँव से मंगाएं।',
-    btn1: 'दीपावली स्पेशल उत्पाद',
-    btn2: 'हथकरघा व कुटीर सामान',
-    stat1_num: '50% छूट',
-    stat1_label: 'दीपावली महासेल',
-    stat2_num: '100% शुद्ध',
-    stat2_label: 'देसी अवध दालें',
+    badge: '🪔 Shubh Deepawali Mega Savings Fair • Up to 50% Off Direct From Village Artisans',
+    title1: 'Authentic Desi Flavors of Diwali,',
+    title2: 'Handcrafted Village Heritage Delivered',
+    subtitle: 'Celebrate Diwali with traditional terracotta diyas, copper & brass puja utensils, pure desi jaggery, unpolished Awadh pulses, and sun-cured pickles direct from village makers.',
+    btn1: 'Diwali Specials',
+    btn2: 'Handloom & Cottage Crafts',
+    stat1_num: '50% OFF',
+    stat1_label: 'Diwali Mega Sale',
+    stat2_num: '100% Pure',
+    stat2_label: 'Organic Awadh Pulses',
     stat3_num: '₹499+',
-    stat3_label: 'मुफ़्त एक्सप्रेस डाक',
+    stat3_label: 'Free Express Shipping',
     img: 'https://images.unsplash.com/photo-1514195037031-83d60ed3b448?auto=format&fit=crop&w=800&q=80',
-    tag1_title: 'हस्तनिर्मित पूजा सामग्री',
-    tag1_sub: 'बनारसी पीतल व मिट्टी',
-    tag2_title: 'दीपावली रेटिंग',
-    tag2_sub: '★ 4.98 सत्यापित'
+    tag1_title: 'Handcrafted Puja Essentials',
+    tag1_sub: 'Pure Brass & Terracotta',
+    tag2_title: 'Diwali Rating',
+    tag2_sub: '★ 4.98 Verified'
   },
   holi: {
     theme: 'amber',
-    badge: '🎨 रंगोत्सव होली विशेष • प्राकृतिक गुलाल व ग्रामीण स्वाद की बहार',
-    title1: 'होली के रंग, खुशियों के संग,',
-    title2: 'माटी की सौंधी महक',
-    subtitle: 'प्राकृतिक फूलों से बने ऑर्गेनिक हर्बल गुलाल, होली की शुद्ध अरहर दाल, बनारसी कचौरी मसाले और घर का पारंपरिक कटहल व आम का आचार।',
-    btn1: 'होली स्पेशल व्यंजन',
-    btn2: 'प्राकृतिक हर्बल गुलाल',
-    stat1_num: '30% छूट',
-    stat1_label: 'होली स्पेशल डिस्काउंट',
-    stat2_num: 'हर्बल गुलाल',
-    stat2_label: '100% केमिकल-मुक्त',
+    badge: '🎨 Rangotsav Holi Special • Natural Gulal & Rural Delights',
+    title1: 'Vibrant Colors of Holi,',
+    title2: 'Fragrance of Native Soil',
+    subtitle: 'Organic herbal gulal made from flower extracts, pure festive arhar dal, traditional Banarasi spices, and homemade jackfruit & mango pickles.',
+    btn1: 'Holi Festive Delicacies',
+    btn2: 'Organic Herbal Gulal',
+    stat1_num: '30% OFF',
+    stat1_label: 'Holi Special Discount',
+    stat2_num: 'Herbal Gulal',
+    stat2_label: '100% Chemical-Free',
     stat3_num: '₹499+',
-    stat3_label: 'फ्री होम डिलीवरी',
+    stat3_label: 'Free Home Delivery',
     img: 'https://images.unsplash.com/photo-1579783902614-a3fb3927b675?auto=format&fit=crop&w=800&q=80',
-    tag1_title: 'पारंपरिक कटहल आचार',
-    tag1_sub: 'शुद्ध सरसों का तेल',
-    tag2_title: 'होली विशेष स्वाद',
-    tag2_sub: '★ 4.95 सत्यापित'
+    tag1_title: 'Traditional Achar',
+    tag1_sub: 'Pure Mustard Oil Cured',
+    tag2_title: 'Festive Rating',
+    tag2_sub: '★ 4.95 Verified'
   },
   navratri: {
     theme: 'crimson',
-    badge: '🔱 शक्ति आराधना नवरात्रि उत्सव • व्रत आहार एवं शुद्ध पूजा सामग्री',
-    title1: 'माता रानी की असीम कृपा,',
-    title2: 'पवित्रता एवं समर्पण',
-    subtitle: 'नौ दिनों के पावन व्रत हेतु कुट्टू-सिंघाड़े का आटा, सेंधा नमक, शुद्ध शहद, आवंला मुरब्बा और तांबे-पीतल की हस्तनिर्मित पूजा थाली।',
-    btn1: 'व्रत आहार उत्पाद',
-    btn2: 'पीतल पूजा सामग्री',
-    stat1_num: '100% शुद्ध',
-    stat1_label: 'सात्विक व्रत आहार',
-    stat2_num: 'हस्तनिर्मित',
-    stat2_label: 'पीतल धूपदानी व दीप',
+    badge: '🔱 Divine Navratri Festival • Fasting Staples & Pure Puja Utensils',
+    title1: 'Blessings of the Divine Mother,',
+    title2: 'Purity & Sacred Traditions',
+    subtitle: 'Pure buckwheat & water chestnut flour, Himalayan rock salt, raw forest honey, amla murabba, and handcrafted brass puja thalis for nine holy days.',
+    btn1: 'Fasting Essentials',
+    btn2: 'Brass Puja Utensils',
+    stat1_num: '100% Pure',
+    stat1_label: 'Saatvik Fasting Staples',
+    stat2_num: 'Handcrafted',
+    stat2_label: 'Brass Diyas & Burners',
     stat3_num: '₹499+',
-    stat3_label: 'मुफ़्त एक्सप्रेस डाक',
+    stat3_label: 'Free Express Shipping',
     img: 'https://images.unsplash.com/photo-1609137144822-44a307c0303b?auto=format&fit=crop&w=800&q=80',
-    tag1_title: 'शुद्ध सेंधा नमक व मखाना',
-    tag1_sub: 'प्राकृतिक अवध कृषि',
-    tag2_title: 'पवित्रता प्रमाणन',
-    tag2_sub: '★ 4.99 सत्यापित'
+    tag1_title: 'Pure Rock Salt & Makhana',
+    tag1_sub: 'Natural Awadh Harvest',
+    tag2_title: 'Purity Certified',
+    tag2_sub: '★ 4.99 Verified'
   },
-  harvest: {
+  makar_sankranti: {
     theme: 'amber',
-    badge: '🌾 मकर संक्रांति व पोंगल • नई फसल का अन्नदाता उत्सव',
-    title1: 'खेतों की नई ताज़ा फसल,',
-    title2: 'अन्नदाता को सीधा सम्मान',
-    subtitle: 'संक्रांति की ताज़ा कुटी दालें, देसी काला चना, गुड़ की शुद्ध भेली, पारंपरिक तिल व कारीगरों द्वारा गढ़ी गई नई फसल कटाई की हंसिया।',
-    btn1: 'नई फसल की दालें',
-    btn2: 'मजबूत कृषि औजार',
-    stat1_num: 'नई फसल',
-    stat1_label: 'ताज़ा बिना पॉलिश दाल',
-    stat2_num: 'स्प्रिंग स्टील',
-    stat2_label: 'टिकाऊ देसी हंसिया',
+    badge: '🌾 Makar Sankranti & Pongal • Harvest Celebration for Farmers',
+    title1: 'Fresh Harvest from the Fields,',
+    title2: 'Direct Respect for Cultivators',
+    subtitle: 'Fresh unpolished pulses, organic desi black gram, pure cane jaggery, traditional sesame sweets, and artisan forged farm implements.',
+    btn1: 'Fresh Harvest Pulses',
+    btn2: 'Durable Farming Tools',
+    stat1_num: 'New Harvest',
+    stat1_label: 'Unpolished Fresh Dals',
+    stat2_num: 'Spring Steel',
+    stat2_label: 'Durable Desi Sickles',
     stat3_num: '₹499+',
-    stat3_label: 'मुफ़्त इंडिया डिलीवरी',
-    img: 'https://images.unsplash.com/photo-1500937386664-56d1dfef3854?auto=format&fit=crop&w=800&q=80',
-    tag1_title: 'हाई-कार्बन स्टील हंसिया',
-    tag1_sub: 'मल्लावां लोहार शिल्प',
-    tag2_title: 'किसान रेटिंग',
-    tag2_sub: '★ 4.96 सत्यापित'
+    stat3_label: 'Free India Delivery',
+    img: 'https://images.unsplash.com/photo-1595974482597-4b8da8879bc5?auto=format&fit=crop&w=800&q=80',
+    tag1_title: 'Pure Cane Jaggery',
+    tag1_sub: 'Chemical-Free Village Bheli',
+    tag2_title: 'Sankranti Rating',
+    tag2_sub: '★ 4.96 Verified'
   },
-  raksha: {
+  rakshabandhan: {
     theme: 'crimson',
-    badge: '🎀 रक्षाबंधन स्नेह उत्सव • ग्रामीण बहनों द्वारा हस्तनिर्मित राखियां व उपहार',
-    title1: 'भाई-बहन का अटूट स्नेह,',
-    title2: 'देसी उपहारों का उपहार',
-    subtitle: 'महिला स्वयं सहायता समूहों द्वारा रेशमी धागों व बीजों से निर्मित इको-फ्रेंडली राखियां, बनारसी मीठे मुरब्बे और शुद्ध सूती वस्त्र।',
-    btn1: 'हस्तनिर्मित राखियां',
-    btn2: 'पारंपरिक उपहार',
-    stat1_num: 'महिला SHG',
-    stat1_label: '100% हस्तनिर्मित',
-    stat2_num: 'इको फ्रेंडली',
-    stat2_label: 'प्लास्टिक मुक्त राखी',
+    badge: '🎀 Sacred Raksha Bandhan • Handcrafted Rakhis & Desi Village Sweets',
+    title1: 'Sacred Bond of Siblings,',
+    title2: 'Love and Traditional Heritage',
+    subtitle: 'Eco-friendly seed rakhis by rural women SHGs, handmade brass gift sets, organic dry fruits, and pure desi cow ghee sweets delivered nationwide.',
+    btn1: 'Eco Seed Rakhis',
+    btn2: 'Brass Gift Hampers',
+    stat1_num: '100% Eco',
+    stat1_label: 'Cotton Seed Rakhis',
+    stat2_num: 'SHG Women',
+    stat2_label: 'Direct Financial Support',
     stat3_num: '₹499+',
-    stat3_label: 'मुफ़्त एक्सप्रेस डिलीवरी',
-    img: 'https://images.unsplash.com/photo-1594744803329-e58b31de8bf5?auto=format&fit=crop&w=800&q=80',
-    tag1_title: 'रेशम धागा राखी',
-    tag1_sub: 'महिला समूह संडीला',
-    tag2_title: 'स्नेह गारंटी',
-    tag2_sub: '★ 4.97 रेटिंग'
+    stat3_label: 'Guaranteed Express Courier',
+    img: 'https://images.unsplash.com/photo-1597075687490-8f673c6c17f6?auto=format&fit=crop&w=800&q=80',
+    tag1_title: 'Eco Seed Rakhi Set',
+    tag1_sub: 'Plantable Sacred Thread',
+    tag2_title: 'Customer Love',
+    tag2_sub: '★ 4.99 Verified'
   },
   eid: {
     theme: 'emerald',
-    badge: '🌙 ईद मुबारक विशेष • बनारसी खादी, हस्तशिल्प एवं पारंपरिक सौगात',
-    title1: 'बरकत और खुशहाली का पर्व,',
-    title2: 'हथकरघा की नफ़ासत',
-    subtitle: 'हाथ से बुने शुद्ध सूती कुर्ते, बनारसी हस्तकला, खुशबूदार मसाले और कुटीर उद्योग की प्रामाणिक दस्तकारी हर घर तक।',
-    btn1: 'खादी वस्त्र संग्रह',
-    btn2: 'हस्तशिल्प उपहार',
-    stat1_num: 'शुद्ध खादी',
-    stat1_label: 'हथकरघा बुनाई',
-    stat2_num: 'हस्तशिल्प',
-    stat2_label: 'प्राचीन कारीगरी',
+    badge: '🌙 Eid Mubarak Special • Traditional Attars, Pure Ghee & Handloom',
+    title1: 'Festive Light of Eid,',
+    title2: 'Rich Heritage & Sweetness',
+    subtitle: 'Pure brass sevaiyan machines, Banarasi handloom fabrics, pure desi ghee, organic dry fruits, and Kannauj natural attars.',
+    btn1: 'Eid Festive Collection',
+    btn2: 'Kannauj Pure Attars',
+    stat1_num: 'Pure Craft',
+    stat1_label: 'Banarasi Handloom',
+    stat2_num: 'Kannauj Attar',
+    stat2_label: '100% Alcohol-Free',
     stat3_num: '₹499+',
-    stat3_label: 'एक्सप्रेस डाक सेवा',
-    img: 'https://images.unsplash.com/photo-1610030469983-98e550d6193c?auto=format&fit=crop&w=800&q=80',
-    tag1_title: 'काशी बुनकर खादी',
-    tag1_sub: 'हथकरघा बुनाई',
-    tag2_title: 'कारीगर रेटिंग',
-    tag2_sub: '★ 4.95 सत्यापित'
+    stat3_label: 'Fast Courier Dispatch',
+    img: 'https://images.unsplash.com/photo-1564507592333-c60657eea523?auto=format&fit=crop&w=800&q=80',
+    tag1_title: 'Brass Sevaiyan Press',
+    tag1_sub: 'Traditional Heavy Build',
+    tag2_title: 'Eid Rating',
+    tag2_sub: '★ 4.97 Verified'
   },
   independence: {
-    theme: 'amber',
-    badge: '🇮🇳 स्वतंत्रता दिवस विशेष • स्वदेशी अपनाएं, ग्रामीण भारत को आत्मनिर्भर बनाएं',
-    title1: 'स्वदेशी का सच्चा गौरव,',
-    title2: 'हर भारतीय का अभिमान',
-    subtitle: '100% भारत में निर्मित कृषि औजार, बिना पॉलिश दालें, खादी वस्त्र और प्राकृतिक जूट बैग अपनाकर ग्रामीण कारीगरों का मान बढ़ाएं।',
-    btn1: 'स्वदेशी उत्पाद',
-    btn2: 'खादी एवं हथकरघा',
-    stat1_num: '100% स्वदेशी',
-    stat1_label: 'ग्रामीण भारत में निर्मित',
-    stat2_num: 'सीधा लाभ',
-    stat2_label: 'गांव के कारीगरों तक',
+    theme: 'indigo',
+    badge: '🇮🇳 Swadeshi Freedom Festival • Support Rural Artisans & Farmers',
+    title1: 'Power of Swadeshi Pride,',
+    title2: 'Pride of Every Indian',
+    subtitle: '100% made-in-India agricultural tools, unpolished organic pulses, handloom khadi textiles, and natural golden jute bags direct from the makers.',
+    btn1: 'Swadeshi Products',
+    btn2: 'Khadi & Handloom',
+    stat1_num: '100% Desi',
+    stat1_label: 'Crafted in Rural India',
+    stat2_num: 'Direct Benefit',
+    stat2_label: 'To Village Artisans',
     stat3_num: '₹499+',
-    stat3_label: 'मुफ़्त डाक डिलीवरी',
+    stat3_label: 'Free Postal Delivery',
     img: 'https://images.unsplash.com/photo-1532375810709-75b1da00537c?auto=format&fit=crop&w=800&q=80',
-    tag1_title: 'भारतीय इस्पात औजार',
-    tag1_sub: 'एस एस इंडस्ट्रीज हरदोई',
-    tag2_title: 'स्वदेशी रेटिंग',
-    tag2_sub: '★ 5.00 स्वाभिमान'
+    tag1_title: 'Indian Steel Implements',
+    tag1_sub: 'S S Industries Hardoi',
+    tag2_title: 'Swadeshi Rating',
+    tag2_sub: '★ 5.00 Pride'
   },
   republic: {
     theme: 'indigo',
-    badge: '🇮🇳 गणतंत्र दिवस उत्सव • ग्रामीण कौशल एवं स्वदेशी भारत की शक्ति',
-    title1: 'गणतंत्र की मूल शक्ति,',
-    title2: 'हमारे गाँव और कारीगर',
-    subtitle: 'भारत के कोने-कोने से जुड़े लोहार, बुनकर और अन्नदाता किसान। उच्च-गुणवत्ता वाले औजार व शुद्ध खाद्य पदार्थ घर बैठे पाएं।',
-    btn1: 'गणतंत्र विशेष सेल',
-    btn2: 'किसान उपयोगी औजार',
-    stat1_num: 'सशक्त भारत',
-    stat1_label: 'गाँव से सीधे घर तक',
-    stat2_num: '40+ क्लस्टर',
-    stat2_label: 'सत्यापित कार्यशालाएं',
+    badge: '🇮🇳 Republic Day Special • Rural Skills & Indigenous Strength',
+    title1: 'Foundation of the Republic,',
+    title2: 'Our Villages & Artisans',
+    subtitle: 'Connecting generational blacksmiths, weavers, and farmers across rural India. High-durability iron tools, pure pantry staples, and regional crafts.',
+    btn1: 'Republic Day Specials',
+    btn2: 'Farmer Essential Tools',
+    stat1_num: 'Self-Reliant',
+    stat1_label: 'Village to Doorstep',
+    stat2_num: '40+ Clusters',
+    stat2_label: 'Verified Workshops',
     stat3_num: '₹499+',
-    stat3_label: 'मुफ़्त एक्सप्रेस डाक',
-    img: 'https://images.unsplash.com/photo-1581092160607-ee22621dd758?auto=format&fit=crop&w=800&q=80',
-    tag1_title: 'रेल स्प्रिंग स्टील',
-    tag1_sub: 'उच्च टिकाऊपन औजार',
-    tag2_title: 'सत्यापित कारीगर',
-    tag2_sub: '★ 4.98 रेटिंग'
+    stat3_label: 'Free Express Shipping',
+    img: 'https://images.unsplash.com/photo-1566837945700-30057527ade0?auto=format&fit=crop&w=800&q=80',
+    tag1_title: 'Railway Spring Steel',
+    tag1_sub: 'Lifetime Durability',
+    tag2_title: 'Verified Artisans',
+    tag2_sub: '★ 4.98 Rating'
   },
   kisan_mela: {
     theme: 'emerald',
-    badge: '⚒️ राष्ट्रीय देसी किसान मेला • औजारों व उन्नत खेती उपकरणों पर भारी छूट',
-    title1: 'खेतों का सच्चा साथी,',
-    title2: 'मजबूत और टिकाऊ औजार',
-    subtitle: 'एस एस इंडस्ट्रीज द्वारा लीफ-स्प्रिंग स्टील से गढ़ी गई भारी हंसिया, खुरपी, फावड़ा, कुदाल व कटाई औजार न्यूनतम दरों पर सीधे कारखाने से।',
-    btn1: 'खेती व बागवानी औजार',
-    btn2: 'थोक बुकिंग पूछताछ',
-    stat1_num: 'लाइफटाइम टिकाऊ',
-    stat1_label: 'हाई-कार्बन स्टील',
-    stat2_num: 'सीधा कारखाना',
-    stat2_label: 'बिचौलियों से मुक्ति',
+    badge: '⚒️ National Desi Kisan Fair • Massive Discounts on Tools & Farming Gear',
+    title1: 'True Companion of Farmers,',
+    title2: 'Rugged and Resilient Implements',
+    subtitle: 'Heavy hand-forged sickles, khurpis, axes, spades, and pickaxes crafted from leaf-spring carbon steel by S S Industries.',
+    btn1: 'Farming & Garden Tools',
+    btn2: 'Wholesale B2B Enquiries',
+    stat1_num: 'Lifetime Durability',
+    stat1_label: 'High-Carbon Steel',
+    stat2_num: 'Direct Factory',
+    stat2_label: 'Zero Middlemen Markup',
     stat3_num: '₹499+',
-    stat3_label: 'मुफ़्त पार्सल डाक',
-    img: 'https://images.unsplash.com/photo-1589923188900-85dae523342b?auto=format&fit=crop&w=800&q=80',
-    tag1_title: 'देसी मजबूत हंसिया',
-    tag1_sub: 'शीशम लकड़ी का मुठ्ठा',
-    tag2_title: 'किसान पसंद',
-    tag2_sub: '★ 4.97 रेटिंग'
+    stat3_label: 'Free Parcel Dispatch',
+    img: 'https://images.unsplash.com/photo-1504917599217-d4dc5ebe6122?auto=format&fit=crop&w=800&q=80',
+    tag1_title: 'Heavy Forged Sickle',
+    tag1_sub: 'Solid Sheesham Handle',
+    tag2_title: 'Farmer Choice',
+    tag2_sub: '★ 4.97 Rating'
   },
   monsoon: {
     theme: 'emerald',
-    badge: '🌧️ मानसून किसान सेल • बारिश में टिकाऊपन की पक्की गारंटी',
-    title1: 'सावन की रिमझिम फुहारें,',
-    title2: 'खेतों में हरियाली की बहार',
-    subtitle: 'बरसात में जंग-रोधी उच्च कार्बन स्टील औजार, जल-रोधी प्राकृतिक जूट बैग और ताज़ा भुना अवध का सत्तू व बनारसी भरवां लाल मिर्च अचार।',
-    btn1: 'मानसून स्पेशल ऑफर',
-    btn2: 'इको जूट स्टोरेज',
-    stat1_num: 'जंग प्रतिरोधी',
-    stat1_label: 'ऑयल-टेम्पर्ड स्टील',
-    stat2_num: '100% शुद्ध',
-    stat2_label: 'बनारसी अचार व सत्तू',
+    badge: '🌧️ Monsoon Special • Rust-Resistant & Waterproof Assurances',
+    title1: 'Monsoon Showers Arrive,',
+    title2: 'Green Fields Across Bharat',
+    subtitle: 'Rust-resistant oil-tempered carbon steel farm tools, waterproof natural jute sacks, and freshly ground roasted sattu & pickles.',
+    btn1: 'Monsoon Special Offers',
+    btn2: 'Eco Jute Storage',
+    stat1_num: 'Rust-Proof',
+    stat1_label: 'Oil-Tempered Steel',
+    stat2_num: '100% Pure',
+    stat2_label: 'Banarasi Pickles & Sattu',
     stat3_num: '₹499+',
-    stat3_label: 'सुरक्षित वाटरप्रूफ पैकिंग',
-    img: 'https://images.unsplash.com/photo-1504917599217-d4dc5ebe6122?auto=format&fit=crop&w=800&q=80',
-    tag1_title: 'वाटरप्रूफ जूट बैग',
-    tag1_sub: 'महिला स्वयं सहायता समूह',
-    tag2_title: 'मानसून रेटिंग',
-    tag2_sub: '★ 4.94 रेटिंग'
+    stat3_label: 'Secure Waterproof Packing',
+    img: 'https://images.unsplash.com/photo-1515694346937-94d85e41e6f0?auto=format&fit=crop&w=800&q=80',
+    tag1_title: 'Waterproof Jute Bag',
+    tag1_sub: 'Women SHG Made',
+    tag2_title: 'Monsoon Rating',
+    tag2_sub: '★ 4.94 Rating'
   },
   general: {
     theme: 'emerald',

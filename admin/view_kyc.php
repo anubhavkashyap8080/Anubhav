@@ -5,18 +5,10 @@
  */
 
 require_once __DIR__ . '/../includes/functions.php';
+require_once __DIR__ . '/../includes/auth_check.php';
 
 // Strict Admin / Super Admin Authorization Check
-if (!is_logged_in()) {
-    http_response_code(403);
-    die("Access Denied: Please sign in to an administrator account.");
-}
-
-$current_user = get_logged_in_user();
-if (!$current_user || !in_array($current_user['role'], ['super_admin', 'admin'], true)) {
-    http_response_code(403);
-    die("Access Denied: Administrative privileges required.");
-}
+require_admin();
 
 $file = trim((string)($_GET['file'] ?? ''));
 $vendor_id = intval($_GET['vendor_id'] ?? 0);

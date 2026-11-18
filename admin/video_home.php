@@ -50,7 +50,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['reset_section'])) {
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['save_video_home'])) {
     $vals = [];
     $cat_slugs = [];
-    foreach ($pdo->query("SELECT slug FROM categories")->fetchAll() as $c) { $cat_slugs[$c['slug']] = true; }
+    try {
+        $cat_rows = $pdo->query("SELECT slug FROM categories")->fetchAll();
+        foreach ($cat_rows as $c) {
+            if (!empty($c['slug'])) {
+                $cat_slugs[$c['slug']] = true;
+            }
+        }
+    } catch (Throwable $e_cs) {
+        error_log('video_home cat_slugs: ' . $e_cs->getMessage());
+    }
 
     foreach ($defs as $n => $d) {
         $p = "s{$n}_";
@@ -186,12 +195,24 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['save_video_home'])) {
 
 // ---------- Load current values ----------
 $cur = [];
-foreach ($pdo->query("SELECT setting_key, setting_value FROM site_settings")->fetchAll() as $r) { $cur[$r['setting_key']] = $r['setting_value']; }
+try {
+    $st_rows = $pdo->query("SELECT setting_key, setting_value FROM site_settings")->fetchAll();
+    foreach ($st_rows as $r) {
+        $cur[$r['setting_key']] = $r['setting_value'];
+    }
+} catch (Throwable $e_st) {
+    error_log('video_home site_settings: ' . $e_st->getMessage());
+}
 if ($posted !== null) { $cur = array_merge($cur, $posted); }
 function v6a_val($key, $default = '') { global $cur; return $cur[$key] ?? $default; }
 function v6a_e($s) { return htmlspecialchars((string)$s, ENT_QUOTES, 'UTF-8'); }
 
-$cats = $pdo->query("SELECT id, name, slug FROM categories ORDER BY sort_order ASC")->fetchAll();
+$cats = [];
+try {
+    $cats = $pdo->query("SELECT id, name, slug FROM categories ORDER BY id ASC")->fetchAll();
+} catch (Throwable $e_cats) {
+    error_log('video_home categories: ' . $e_cats->getMessage());
+}
 $active_layout = get_setting('homepage_layout', 'layout_1');
 
 $page_title = 'Video Story Home';

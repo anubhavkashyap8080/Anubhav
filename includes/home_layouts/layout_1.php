@@ -55,10 +55,12 @@
           </div>
           <!-- Title -->
           <span class="text-[11px] sm:text-xs font-bold text-gray-800 group-hover:text-emerald-700 mt-1.5 line-clamp-1 leading-tight">
-            <?= htmlspecialchars($cat['name']) ?>
+            <span class="lang-en"><?= htmlspecialchars($cat['name']) ?></span>
+            <span class="lang-hi hidden"><?= htmlspecialchars($cat['hindi_name'] ?? $cat['name']) ?></span>
           </span>
           <span class="text-[9px] text-gray-400 group-hover:text-brand-orange font-medium line-clamp-1">
-            <span class="lang-en">Explore</span><span class="lang-hi hidden"><?= htmlspecialchars($cat["hindi_name"] ?? "देखें") ?></span>
+            <span class="lang-en">Explore Products →</span>
+            <span class="lang-hi hidden">उत्पाद देखें →</span>
           </span>
         </a>
       <?php endforeach; ?>
@@ -71,9 +73,13 @@
           </div>
         </div>
         <span class="text-[11px] sm:text-xs font-bold text-gray-800 group-hover:text-emerald-700 mt-1.5 leading-tight">
-          All Categories
+          <span class="lang-en">All Categories</span>
+          <span class="lang-hi hidden">सभी श्रेणियां</span>
         </span>
-        <span class="text-[9px] text-gray-400 font-medium">Complete Catalog</span>
+        <span class="text-[9px] text-gray-400 font-medium">
+          <span class="lang-en">Complete Catalog</span>
+          <span class="lang-hi hidden">पूरा कैटलॉग</span>
+        </span>
       </a>
 
     </div>
@@ -125,22 +131,22 @@
         $h_btn2_link = get_setting('hero_btn2_link', '/products.php?category=farming-traditional-tools');
         $h_btn2_target = get_setting('hero_btn2_target', '_self') === '_blank' ? ' target="_blank" rel="noopener noreferrer"' : '';
         ?>
-        <div class="flex flex-wrap items-center justify-center lg:justify-start gap-3 sm:gap-4 pt-1">
+        <div class="flex flex-wrap items-center justify-center lg:justify-start gap-3 sm:gap-4 pt-2">
           <?php if ($h_btn1_show && $h_btn1_text !== ''): ?>
           <a href="<?= htmlspecialchars($h_btn1_link) ?>"<?= $h_btn1_target ?>
-             class="px-5 sm:px-6 py-3 bg-brand-orange hover:bg-brand-orange-dark text-white font-bold text-xs sm:text-sm rounded-xl shadow-lg hover:shadow-orange-600/30 transition-all flex items-center gap-2 cursor-pointer active:scale-95">
+             class="px-8 sm:px-10 py-4 bg-brand-orange hover:bg-brand-orange-dark text-white font-extrabold text-xs sm:text-sm rounded-full shadow-lg hover:shadow-orange-600/30 transition-all inline-flex items-center justify-center gap-2.5 cursor-pointer active:scale-95 whitespace-nowrap min-h-[50px] box-border tracking-wide">
             <span><?= htmlspecialchars($h_btn1_text) ?></span>
-            <i data-lucide="arrow-right" class="w-4 h-4"></i>
+            <i data-lucide="arrow-right" class="w-4 h-4 shrink-0"></i>
           </a>
           <?php endif; ?>
           <?php if ($h_btn2_show && $h_btn2_text !== ''): ?>
           <a href="<?= htmlspecialchars($h_btn2_link) ?>"<?= $h_btn2_target ?>
-             class="px-5 sm:px-6 py-3 bg-white/10 hover:bg-white/20 border border-white/20 text-white font-semibold text-xs sm:text-sm rounded-xl transition-all flex items-center gap-2">
+             class="px-8 sm:px-10 py-4 bg-white/10 hover:bg-white/20 border border-white/25 text-white font-bold text-xs sm:text-sm rounded-full transition-all inline-flex items-center justify-center gap-2.5 whitespace-nowrap min-h-[50px] box-border backdrop-blur-md">
             <span><?= htmlspecialchars($h_btn2_text) ?></span>
           </a>
           <?php endif; ?>
-          <button type="button" onclick="detectGPSLocation()" class="px-5 py-3 bg-amber-400 hover:bg-amber-500 text-stone-950 font-bold text-xs sm:text-sm rounded-xl transition-all flex items-center gap-1.5 shadow-md cursor-pointer">
-            <i data-lucide="crosshair" class="w-4 h-4 text-stone-900"></i>
+          <button type="button" onclick="detectGPSLocation()" class="px-8 sm:px-10 py-4 bg-amber-400 hover:bg-amber-300 text-stone-950 font-black text-xs sm:text-sm rounded-full transition-all inline-flex items-center justify-center gap-2 shadow-md cursor-pointer whitespace-nowrap min-h-[50px] box-border">
+            <i data-lucide="crosshair" class="w-4 h-4 text-stone-900 shrink-0"></i>
             <span>Nearby Artisans Near Me</span>
           </button>
         </div>

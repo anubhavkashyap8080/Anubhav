@@ -96,29 +96,29 @@ require_once __DIR__ . '/admin_header.php';
   <div>
     <h1 class="text-2xl font-black text-gray-900 flex items-center gap-2">
       <i class="fa-solid fa-headset text-indigo-600"></i>
-      सपोर्ट टिकट्स एवं हेल्पडेस्क प्रशासन (Helpdesk & Grievance Control)
+      Support Tickets & Helpdesk Administration
     </h1>
     <p class="text-xs text-gray-500 mt-1">
-      ग्राहक आर्डर शिकायतें, कारीगर भुगतान प्रश्न एवं भारतीय डाक डिलीवरी ट्रैकिंग सहायता
+      Customer order grievances, artisan payout queries, and courier tracking assistance
     </p>
   </div>
 
   <div class="flex items-center gap-1.5 overflow-x-auto text-xs font-bold">
     <a href="/admin/tickets.php"
       class="px-3 py-1.5 rounded-lg transition <?= empty($status_filter) ? 'bg-indigo-600 text-white' : 'bg-white text-gray-600 hover:bg-stone-100 border border-gray-200' ?>">
-      सभी (<?= count($tickets) ?>)
+      All (<?= count($tickets) ?>)
     </a>
     <a href="/admin/tickets.php?status=Open"
       class="px-3 py-1.5 rounded-lg transition <?= $status_filter === 'Open' ? 'bg-indigo-600 text-white' : 'bg-white text-gray-600 hover:bg-stone-100 border border-gray-200' ?>">
-      खुले टिकट्स (Open)
+      Open
     </a>
     <a href="/admin/tickets.php?status=In+Progress"
       class="px-3 py-1.5 rounded-lg transition <?= $status_filter === 'In Progress' ? 'bg-indigo-600 text-white' : 'bg-white text-gray-600 hover:bg-stone-100 border border-gray-200' ?>">
-      प्रगति पर (In Progress)
+      In Progress
     </a>
     <a href="/admin/tickets.php?status=Resolved"
       class="px-3 py-1.5 rounded-lg transition <?= $status_filter === 'Resolved' ? 'bg-indigo-600 text-white' : 'bg-white text-gray-600 hover:bg-stone-100 border border-gray-200' ?>">
-      हल किए गए (Resolved)
+      Resolved
     </a>
   </div>
 </div>
@@ -131,13 +131,13 @@ require_once __DIR__ . '/admin_header.php';
       <table class="w-full text-left text-xs">
         <thead class="bg-stone-50 border-b border-gray-200 text-gray-500 font-bold uppercase text-[10px]">
           <tr>
-            <th class="px-4 py-3.5">टिकट ID</th>
-            <th class="px-4 py-3.5">यूजर व विषय</th>
-            <th class="px-4 py-3.5">श्रेणी</th>
-            <th class="px-4 py-3.5">प्राथमिकता</th>
-            <th class="px-4 py-3.5">स्थिति</th>
-            <th class="px-4 py-3.5">दिनांक</th>
-            <th class="px-4 py-3.5 text-right">कार्य</th>
+            <th class="px-4 py-3.5">Ticket ID</th>
+            <th class="px-4 py-3.5">User & Subject</th>
+            <th class="px-4 py-3.5">Category</th>
+            <th class="px-4 py-3.5">Priority</th>
+            <th class="px-4 py-3.5">Status</th>
+            <th class="px-4 py-3.5">Date</th>
+            <th class="px-4 py-3.5 text-right">Action</th>
           </tr>
         </thead>
         <tbody class="divide-y divide-gray-100">
@@ -177,7 +177,7 @@ require_once __DIR__ . '/admin_header.php';
               <td class="px-4 py-3.5 text-right whitespace-nowrap">
                 <a href="/admin/tickets.php?view=<?= $t['id'] ?>"
                   class="px-3 py-1 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 font-bold rounded-lg border border-indigo-200 transition inline-flex items-center gap-1">
-                  <i class="fa-regular fa-comment-dots"></i> जवाब दें
+                  <i class="fa-regular fa-comment-dots"></i> Reply
                 </a>
               </td>
             </tr>
@@ -208,7 +208,7 @@ require_once __DIR__ . '/admin_header.php';
       <!-- Initial Message -->
       <div class="p-4 rounded-2xl bg-stone-50 border border-gray-200 text-xs space-y-2">
         <div class="flex items-center justify-between text-gray-400 text-[11px]">
-          <span class="font-bold text-gray-700"><?= htmlspecialchars($active_ticket['name']) ?> (प्रारंभिक संदेश)</span>
+          <span class="font-bold text-gray-700"><?= htmlspecialchars($active_ticket['name']) ?> (Initial Message)</span>
           <span><?= date('d M Y, h:i A', strtotime($active_ticket['created_at'])) ?></span>
         </div>
         <p class="text-gray-800 leading-relaxed"><?= nl2br(htmlspecialchars($active_ticket['message'])) ?></p>
@@ -217,12 +217,12 @@ require_once __DIR__ . '/admin_header.php';
       <!-- Replies Thread -->
       <?php if (!empty($active_replies)): ?>
         <div class="space-y-3">
-          <h4 class="text-xs font-bold text-gray-500 uppercase tracking-wider">प्रतिक्रियाएं (Responses)</h4>
+          <h4 class="text-xs font-bold text-gray-500 uppercase tracking-wider">Responses</h4>
           <?php foreach ($active_replies as $rep): ?>
             <div class="p-3.5 rounded-xl border text-xs space-y-1.5 <?= $rep['sender_role'] === 'admin' ? 'bg-indigo-50 border-indigo-200 text-indigo-950 ml-4' : 'bg-stone-50 border-gray-200 mr-4' ?>">
               <div class="flex items-center justify-between text-[11px]">
                 <strong class="font-bold <?= $rep['sender_role'] === 'admin' ? 'text-indigo-700' : 'text-gray-700' ?>">
-                  <?= htmlspecialchars($rep['sender_name']) ?> <?= $rep['sender_role'] === 'admin' ? '(स्टाफ सपोर्ट)' : '' ?>
+                  <?= htmlspecialchars($rep['sender_name']) ?> <?= $rep['sender_role'] === 'admin' ? '(Staff Support)' : '' ?>
                 </strong>
                 <span class="text-gray-400"><?= date('d M, h:i A', strtotime($rep['created_at'])) ?></span>
               </div>
@@ -239,24 +239,24 @@ require_once __DIR__ . '/admin_header.php';
         <input type="hidden" name="ticket_id" value="<?= $active_ticket['id'] ?>">
 
         <div>
-          <label class="block text-xs font-bold text-gray-700 mb-1">आधिकारिक प्रतिक्रिया लिखें (Official Response)</label>
-          <textarea name="message" rows="4" required placeholder="नमस्ते, आपके आर्डर की स्थिति..."
+          <label class="block text-xs font-bold text-gray-700 mb-1">Write Official Response</label>
+          <textarea name="message" rows="4" required placeholder="Hello, regarding your order status..."
             class="w-full px-3.5 py-2.5 bg-stone-50 border border-gray-200 rounded-xl text-xs focus:bg-white focus:outline-none focus:border-indigo-600 transition"></textarea>
         </div>
 
         <div class="flex items-center justify-between gap-3">
           <div class="flex items-center gap-2">
-            <label class="text-xs font-bold text-gray-700">स्थिति बदलें:</label>
+            <label class="text-xs font-bold text-gray-700">Change Status:</label>
             <select name="status" class="px-3 py-1.5 bg-stone-50 border border-gray-200 rounded-xl text-xs font-bold">
-              <option value="In Progress" <?= $active_ticket['status'] === 'In Progress' ? 'selected' : '' ?>>In Progress (प्रगति पर)</option>
-              <option value="Resolved" <?= $active_ticket['status'] === 'Resolved' ? 'selected' : '' ?>>Resolved (समस्या हल हुई)</option>
-              <option value="Closed" <?= $active_ticket['status'] === 'Closed' ? 'selected' : '' ?>>Closed (बंद करें)</option>
+              <option value="In Progress" <?= $active_ticket['status'] === 'In Progress' ? 'selected' : '' ?>>In Progress</option>
+              <option value="Resolved" <?= $active_ticket['status'] === 'Resolved' ? 'selected' : '' ?>>Resolved</option>
+              <option value="Closed" <?= $active_ticket['status'] === 'Closed' ? 'selected' : '' ?>>Closed</option>
             </select>
           </div>
 
           <button type="submit"
             class="px-5 py-2 bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-xl text-xs transition flex items-center gap-1.5 shadow-sm">
-            <i class="fa-solid fa-paper-plane"></i> उत्तर भेजें
+            <i class="fa-solid fa-paper-plane"></i> Send Reply
           </button>
         </div>
       </form>

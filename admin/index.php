@@ -9,16 +9,18 @@ require_once __DIR__ . '/admin_header.php';
 
 // 1. Date Filter Handling (All time, Today, This Week, This Month, Custom)
 $date_filter = $_GET['range'] ?? 'all';
+$order_params = [];
 $where_orders = "1=1";
 
 if ($date_filter === 'today') {
-    $where_orders = "created_at >= '" . date('Y-m-d 00:00:00') . "'";
+    $where_orders = "created_at >= :dt_start";
+    $order_params[':dt_start'] = date('Y-m-d 00:00:00');
 } elseif ($date_filter === 'week') {
-    $time_7d = date('Y-m-d H:i:s', time() - (7 * 86400));
-    $where_orders = "created_at >= '$time_7d'";
+    $where_orders = "created_at >= :dt_start";
+    $order_params[':dt_start'] = date('Y-m-d H:i:s', time() - (7 * 86400));
 } elseif ($date_filter === 'month') {
-    $time_30d = date('Y-m-d H:i:s', time() - (30 * 86400));
-    $where_orders = "created_at >= '$time_30d'";
+    $where_orders = "created_at >= :dt_start";
+    $order_params[':dt_start'] = date('Y-m-d H:i:s', time() - (30 * 86400));
 }
 
 // 2. CSV Financial Export Handler
@@ -62,16 +64,24 @@ $total_coupons_saved = 0.0;
 
 if ($pdo) {
     try {
-        $total_gmv = (float)$pdo->query("SELECT COALESCE(SUM(total_amount), 0) FROM orders WHERE $where_orders AND (payment_status = 'completed' OR payment_method = 'cod')")->fetchColumn();
+        $st = $pdo->prepare("SELECT COALESCE(SUM(total_amount), 0) FROM orders WHERE $where_orders AND (payment_status = 'completed' OR payment_method = 'cod')");
+        $st->execute($order_params);
+        $total_gmv = (float)$st->fetchColumn();
     } catch (Throwable $e) {}
     try {
-        $total_orders = (int)$pdo->query("SELECT COUNT(*) FROM orders WHERE $where_orders")->fetchColumn();
+        $st = $pdo->prepare("SELECT COUNT(*) FROM orders WHERE $where_orders");
+        $st->execute($order_params);
+        $total_orders = (int)$st->fetchColumn();
     } catch (Throwable $e) {}
     try {
-        $total_subtotal = (float)$pdo->query("SELECT COALESCE(SUM(subtotal), 0) FROM orders WHERE $where_orders AND (payment_status = 'completed' OR payment_method = 'cod')")->fetchColumn();
+        $st = $pdo->prepare("SELECT COALESCE(SUM(subtotal), 0) FROM orders WHERE $where_orders AND (payment_status = 'completed' OR payment_method = 'cod')");
+        $st->execute($order_params);
+        $total_subtotal = (float)$st->fetchColumn();
     } catch (Throwable $e) {}
     try {
-        $total_shipping = (float)$pdo->query("SELECT COALESCE(SUM(shipping_fee), 0) FROM orders WHERE $where_orders AND (payment_status = 'completed' OR payment_method = 'cod')")->fetchColumn();
+        $st = $pdo->prepare("SELECT COALESCE(SUM(shipping_fee), 0) FROM orders WHERE $where_orders AND (payment_status = 'completed' OR payment_method = 'cod')");
+        $st->execute($order_params);
+        $total_shipping = (float)$st->fetchColumn();
     } catch (Throwable $e) {}
     try {
         $total_settled_payouts = (float)$pdo->query("SELECT COALESCE(SUM(net_amount), 0) FROM vendor_payouts WHERE status = 'Settled to Bank'")->fetchColumn();

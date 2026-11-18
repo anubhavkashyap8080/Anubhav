@@ -88,30 +88,32 @@ if (!defined('DB_NAME')) define('DB_NAME', $db_name);
 if (!defined('DB_USER')) define('DB_USER', $db_user);
 if (!defined('DB_PASS')) define('DB_PASS', $db_pass);
 
-$pdo = null;
-$db_driver = 'mysql';
-$last_mysql_error = null;
+if (!isset($pdo) || !($pdo instanceof PDO)) {
+    $pdo = null;
+    $db_driver = 'mysql';
+    $last_mysql_error = null;
 
-$options = [
-    PDO::ATTR_ERRMODE            => PDO::ERRMODE_EXCEPTION,
-    PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
-    PDO::ATTR_EMULATE_PREPARES   => false,
-    PDO::ATTR_TIMEOUT            => 3,
-];
+    $options = [
+        PDO::ATTR_ERRMODE            => PDO::ERRMODE_EXCEPTION,
+        PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
+        PDO::ATTR_EMULATE_PREPARES   => false,
+        PDO::ATTR_TIMEOUT            => 3,
+    ];
 
-// Set MySQL UTF-8 collation command if constant exists
-if (defined('PDO::MYSQL_ATTR_INIT_COMMAND')) {
-    $options[PDO::MYSQL_ATTR_INIT_COMMAND] = "SET NAMES utf8mb4 COLLATE utf8mb4_unicode_ci";
-}
+    // Set MySQL UTF-8 collation command if constant exists
+    if (defined('PDO::MYSQL_ATTR_INIT_COMMAND')) {
+        $options[PDO::MYSQL_ATTR_INIT_COMMAND] = "SET NAMES utf8mb4 COLLATE utf8mb4_unicode_ci";
+    }
 
-if (!empty($db_name) && !empty($db_user)) {
-    try {
-        $dsn = "mysql:host={$db_host};port={$db_port};dbname={$db_name};charset=utf8mb4";
-        $pdo = new PDO($dsn, $db_user, $db_pass, $options);
-        $db_driver = 'mysql';
-    } catch (Throwable $e) {
-        $last_mysql_error = $e->getMessage();
-        error_log("[GanvGaliHat DB Error] Connection failed: " . $e->getMessage());
+    if (!empty($db_name) && !empty($db_user)) {
+        try {
+            $dsn = "mysql:host={$db_host};port={$db_port};dbname={$db_name};charset=utf8mb4";
+            $pdo = new PDO($dsn, $db_user, $db_pass, $options);
+            $db_driver = 'mysql';
+        } catch (Throwable $e) {
+            $last_mysql_error = $e->getMessage();
+            error_log("[GanvGaliHat DB Error] Connection failed: " . $e->getMessage());
+        }
     }
 }
 
@@ -155,6 +157,7 @@ if ($pdo) {
                     $st_hp->execute([$c_hname, $c_code]);
                 }
                 $heal_c = [
+                    'spices' => 'मसाले एवं पारंपरिक स्वाद',
                     'farming-traditional-tools' => 'कृषि एवं खेती औजार',
                     'pulses-organic-grains' => 'दालें एवं देसी अनाज',
                     'pickles-village-murabba' => 'देसी अचार व मुरब्बा',
@@ -168,6 +171,24 @@ if ($pdo) {
                 $st_hc = $pdo->prepare("UPDATE categories SET hindi_name = ? WHERE slug = ?");
                 foreach ($heal_c as $c_slug => $c_hname) {
                     $st_hc->execute([$c_hname, $c_slug]);
+                }
+
+                // Ensure English category names are clean and default across all views
+                $heal_c_en = [
+                    'spices' => 'Spices',
+                    'farming-traditional-tools' => 'Farming & Agricultural Tools',
+                    'pulses-organic-grains' => 'Organic Pulses & Farm Grains',
+                    'pickles-village-murabba' => 'Authentic Village Pickles & Murabbas',
+                    'hardware-cottage-implements' => 'Workshop & Iron Implements',
+                    'jute-bags-cloth-jholas' => 'Eco Jute Bags & Cloth Jholas',
+                    'village-home-decor-toys' => 'Village Home Decor & Toys',
+                    'handmade-apparel-textiles' => 'Handmade Apparel & Khadi',
+                    'rural-utility-machinery' => 'Rural Utility Machinery',
+                    'handmade-by-rural-women' => 'Handmade by Rural Women'
+                ];
+                $st_ec = $pdo->prepare("UPDATE categories SET name = ? WHERE slug = ?");
+                foreach ($heal_c_en as $c_slug => $c_ename) {
+                    $st_ec->execute([$c_ename, $c_slug]);
                 }
             }
         } catch (Throwable $e_heal) {}

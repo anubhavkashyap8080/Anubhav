@@ -153,14 +153,14 @@ $s3_img       = get_setting('slider_slide3_image', 'https://images.unsplash.com/
           <?php if (($h_btn1_show && trim($s1_btn1_text) !== '') || ($h_btn2_show && trim($s1_btn2_text) !== '')): ?>
           <div class="flex flex-wrap items-center gap-3 pt-2">
             <?php if ($h_btn1_show && trim($s1_btn1_text) !== ''): ?>
-            <a href="<?= htmlspecialchars($s1_btn1_link) ?>"<?= $h_btn1_target ?> class="px-6 py-3.5 bg-amber-500 hover:bg-amber-400 text-stone-950 font-black text-xs sm:text-sm rounded-xl shadow-lg transition flex items-center gap-2">
+            <a href="<?= htmlspecialchars($s1_btn1_link) ?>"<?= $h_btn1_target ?> class="px-8 sm:px-10 py-4 bg-amber-500 hover:bg-amber-400 text-stone-950 font-black text-xs sm:text-sm rounded-full shadow-lg transition inline-flex items-center justify-center gap-2.5 whitespace-nowrap min-h-[50px] box-border">
               <span><?= htmlspecialchars($s1_btn1_text) ?></span>
               <i data-lucide="arrow-right" class="w-4 h-4"></i>
             </a>
             <?php endif; ?>
             <?php if ($h_btn2_show && trim($s1_btn2_text) !== ''): ?>
-            <a href="<?= htmlspecialchars($s1_btn2_link) ?>"<?= $h_btn2_target ?> class="px-5 py-3.5 bg-white/10 hover:bg-white/20 text-white font-bold text-xs sm:text-sm rounded-xl transition backdrop-blur-md border border-white/20">
-              <?= htmlspecialchars($s1_btn2_text) ?>
+            <a href="<?= htmlspecialchars($s1_btn2_link) ?>"<?= $h_btn2_target ?> class="px-8 sm:px-10 py-4 bg-white/10 hover:bg-white/20 text-white font-bold text-xs sm:text-sm rounded-full transition backdrop-blur-md border border-white/20 inline-flex items-center justify-center gap-2.5 whitespace-nowrap min-h-[50px] box-border">
+              <span><?= htmlspecialchars($s1_btn2_text) ?></span>
             </a>
             <?php endif; ?>
           </div>
@@ -189,14 +189,14 @@ $s3_img       = get_setting('slider_slide3_image', 'https://images.unsplash.com/
           <?php if (($h_btn1_show && trim($s2_btn1_text) !== '') || ($h_btn2_show && trim($s2_btn2_text) !== '')): ?>
           <div class="flex flex-wrap items-center gap-3 pt-2">
             <?php if ($h_btn1_show && trim($s2_btn1_text) !== ''): ?>
-            <a href="<?= htmlspecialchars($s2_btn1_link) ?>"<?= $h_btn1_target ?> class="px-6 py-3.5 bg-emerald-600 hover:bg-emerald-500 text-white font-black text-xs sm:text-sm rounded-xl shadow-lg transition flex items-center gap-2">
+            <a href="<?= htmlspecialchars($s2_btn1_link) ?>"<?= $h_btn1_target ?> class="px-8 sm:px-10 py-4 bg-emerald-600 hover:bg-emerald-500 text-white font-black text-xs sm:text-sm rounded-full shadow-lg transition inline-flex items-center justify-center gap-2.5 whitespace-nowrap min-h-[50px] box-border">
               <span><?= htmlspecialchars($s2_btn1_text) ?></span>
               <i data-lucide="arrow-right" class="w-4 h-4"></i>
             </a>
             <?php endif; ?>
             <?php if ($h_btn2_show && trim($s2_btn2_text) !== ''): ?>
-            <a href="<?= htmlspecialchars($s2_btn2_link) ?>"<?= $h_btn2_target ?> class="px-5 py-3.5 bg-white/10 hover:bg-white/20 text-white font-bold text-xs sm:text-sm rounded-xl transition backdrop-blur-md border border-white/20">
-              <?= htmlspecialchars($s2_btn2_text) ?>
+            <a href="<?= htmlspecialchars($s2_btn2_link) ?>"<?= $h_btn2_target ?> class="px-8 sm:px-10 py-4 bg-white/10 hover:bg-white/20 text-white font-bold text-xs sm:text-sm rounded-full transition backdrop-blur-md border border-white/20 inline-flex items-center justify-center gap-2.5 whitespace-nowrap min-h-[50px] box-border">
+              <span><?= htmlspecialchars($s2_btn2_text) ?></span>
             </a>
             <?php endif; ?>
           </div>

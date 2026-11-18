@@ -15,11 +15,12 @@ $static_file_path = __DIR__ . '/../feeds/google_merchant.xml';
 // Handle Manual Feed Regeneration
 $regen_msg = '';
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['regenerate_feed'])) {
+    csrf_protect();
     // Include feed generator which writes to google_merchant.xml
     ob_start();
     include __DIR__ . '/../feeds/google_merchant.php';
     ob_end_clean();
-    $regen_msg = "Google Merchant Center XML फ़ीड को सफलतापूर्वक नया (regenerated) कर दिया गया है!";
+    $regen_msg = "Google Merchant Center XML feed has been regenerated successfully!";
 }
 
 // Check last modified timestamp and size of static XML file
@@ -59,9 +60,9 @@ foreach ($feed_products as $p) {
       <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-amber-400/20 text-amber-300 text-xs font-black uppercase tracking-wider border border-amber-400/30">
         <i class="fa-brands fa-google"></i> Google Shopping & GMC Approval Engine
       </div>
-      <h1 class="text-2xl sm:text-3xl font-black tracking-tight text-white">Google Merchant Center XML फ़ीड प्रबंधन</h1>
+      <h1 class="text-2xl sm:text-3xl font-black tracking-tight text-white">Google Merchant Center XML Feed Management</h1>
       <p class="text-indigo-200 text-xs sm:text-sm max-w-2xl leading-relaxed">
-        Google Merchant Center (GMC) पालिसी के अनुरूप डायनामिक वजन-आधारित व्यक्तिगत शिपिंग दरें (<code class="bg-indigo-800/80 px-1.5 py-0.5 rounded text-amber-300 text-xs">&lt;g:shipping&gt;</code>) और बिना बारकोड वाले ग्रामीण कारीगर उत्पादों के लिए (<code class="bg-indigo-800/80 px-1.5 py-0.5 rounded text-amber-300 text-xs">identifier_exists: no</code>) 100% अनुपालित फ़ीड।
+        100% compliant XML feed supporting dynamic weight-based India Post shipping rates (<code class="bg-indigo-800/80 px-1.5 py-0.5 rounded text-amber-300 text-xs">&lt;g:shipping&gt;</code>) and custom artisanal rural products with (<code class="bg-indigo-800/80 px-1.5 py-0.5 rounded text-amber-300 text-xs">identifier_exists: no</code>).
       </p>
     </div>
 
@@ -72,12 +73,12 @@ foreach ($feed_products as $p) {
         <input type="hidden" name="regenerate_feed" value="1">
         <button type="submit" class="w-full sm:w-auto px-5 py-3 rounded-2xl bg-amber-400 hover:bg-amber-500 text-stone-950 font-black text-xs uppercase tracking-wider transition shadow-lg flex items-center justify-center gap-2">
           <i class="fa-solid fa-rotate text-sm"></i>
-          फ़ीड पुनः उत्पन्न करें
+          Regenerate Feed Now
         </button>
       </form>
       <a href="/feeds/google_merchant.php" target="_blank" class="px-5 py-3 rounded-2xl bg-white/10 hover:bg-white/20 text-white font-bold text-xs transition border border-white/20 flex items-center justify-center gap-2">
         <i class="fa-solid fa-arrow-up-right-from-square"></i>
-        लाइव XML देखें
+        View Live XML
       </a>
     </div>
   </div>
@@ -85,7 +86,7 @@ foreach ($feed_products as $p) {
   <?php if (!empty($regen_msg)): ?>
     <div class="p-4 bg-emerald-50 border border-emerald-300 rounded-2xl text-emerald-800 text-xs font-bold flex items-center gap-2 shadow-xs">
       <i class="fa-solid fa-circle-check text-base"></i>
-      <span><?= htmlspecialchars($regen_msg) ?> (फ़ाइल साइज़: <?= $file_size_kb ?> KB)</span>
+      <span><?= htmlspecialchars($regen_msg) ?> (File Size: <?= $file_size_kb ?> KB)</span>
     </div>
   <?php endif; ?>
 
@@ -94,7 +95,7 @@ foreach ($feed_products as $p) {
     <!-- Live Dynamic Feed URL -->
     <div class="space-y-2">
       <label class="text-xs font-extrabold uppercase tracking-wider text-gray-500 block">
-        1. प्राथमिक लाइव Google Merchant फ़ीड URL (Primary Dynamic URL)
+        1. Primary Live Google Merchant Feed URL (Dynamic)
       </label>
       <div class="flex items-center gap-2">
         <input type="text" id="liveFeedUrl" readonly value="<?= htmlspecialchars($feed_live_url) ?>" 
@@ -102,16 +103,16 @@ foreach ($feed_products as $p) {
         <button onclick="copyToClipboard('liveFeedUrl', 'liveBtn')" id="liveBtn" 
           class="px-4 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-xs font-bold transition flex items-center gap-1.5 shrink-0 shadow-xs">
           <i class="fa-solid fa-copy"></i>
-          <span>कॉपी करें</span>
+          <span>Copy</span>
         </button>
       </div>
-      <p class="text-[11px] text-gray-500">Google Merchant Center में "Scheduled Fetch" में यह URL दर्ज करें। हर कॉल पर डेटाबेस से लाइव रिफ्रेश होता है।</p>
+      <p class="text-[11px] text-gray-500">Enter this URL in Google Merchant Center under "Scheduled Fetch". Always pulls live inventory directly from database.</p>
     </div>
 
     <!-- Static Cached Feed URL -->
     <div class="space-y-2">
       <label class="text-xs font-extrabold uppercase tracking-wider text-gray-500 block">
-        2. स्टैटिक XML फ़ीड फ़ाइल (High-Speed Static XML)
+        2. Static XML Feed File (High-Speed Cached XML)
       </label>
       <div class="flex items-center gap-2">
         <input type="text" id="staticFeedUrl" readonly value="<?= htmlspecialchars($feed_static_url) ?>" 
@@ -119,12 +120,12 @@ foreach ($feed_products as $p) {
         <button onclick="copyToClipboard('staticFeedUrl', 'staticBtn')" id="staticBtn" 
           class="px-4 py-2.5 bg-stone-800 hover:bg-black text-white rounded-xl text-xs font-bold transition flex items-center gap-1.5 shrink-0 shadow-xs">
           <i class="fa-solid fa-copy"></i>
-          <span>कॉपी करें</span>
+          <span>Copy</span>
         </button>
       </div>
       <div class="flex items-center justify-between text-[11px] text-gray-500">
-        <span>अंतिम अपडेट: <strong><?= $file_time ?></strong></span>
-        <span>साइज़: <strong><?= $file_size_kb ?> KB</strong></span>
+        <span>Last Updated: <strong><?= $file_time ?></strong></span>
+        <span>Size: <strong><?= $file_size_kb ?> KB</strong></span>
       </div>
     </div>
   </div>
@@ -133,27 +134,27 @@ foreach ($feed_products as $p) {
   <div class="bg-stone-50 rounded-3xl p-6 border border-stone-200">
     <h3 class="text-sm font-black text-gray-900 uppercase tracking-wider mb-4 flex items-center gap-2">
       <i class="fa-solid fa-shield-halved text-emerald-600"></i>
-      Google Merchant Center नीति अनुपालन ऑडिट रिपोर्ट (100% Policy Approvals)
+      Google Merchant Center Policy Compliance Audit (100% Policy Approvals)
     </h3>
     <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
       
       <div class="bg-white p-4 rounded-2xl border border-emerald-200 shadow-2xs space-y-1.5">
         <div class="flex items-center gap-2 text-emerald-700 font-bold text-xs">
           <i class="fa-solid fa-circle-check text-sm"></i>
-          <span>व्यक्तिगत शिपिंग दरें (Variable Rates)</span>
+          <span>Variable Shipping Rates</span>
         </div>
         <p class="text-[11px] text-gray-600 leading-relaxed">
-          हर उत्पाद के लिए सटीक इंडिया पोस्ट पार्सल वजन शुल्क (&lt;g:shipping&gt;) टैग संलग्न है। कोई मिसमैच पेनल्टी नहीं।
+          Accurate India Post parcel weight tiers attached via (&lt;g:shipping&gt;) tag per product. Zero mismatch penalty.
         </p>
       </div>
 
       <div class="bg-white p-4 rounded-2xl border border-emerald-200 shadow-2xs space-y-1.5">
         <div class="flex items-center gap-2 text-emerald-700 font-bold text-xs">
           <i class="fa-solid fa-circle-check text-sm"></i>
-          <span>GTIN / Barcode छूट (Custom Goods)</span>
+          <span>GTIN / Barcode Exemption</span>
         </div>
         <p class="text-[11px] text-gray-600 leading-relaxed">
-          &lt;g:identifier_exists&gt;no&lt;/g:identifier_exists&gt; सेट है, जिससे हस्तनिर्मित कृषि व दाल उत्पाद बिना बारकोड अप्रूव होते हैं।
+          &lt;g:identifier_exists&gt;no&lt;/g:identifier_exists&gt; is set, approving handcrafted tools and pulses without barcode requirements.
         </p>
       </div>
 
@@ -163,17 +164,17 @@ foreach ($feed_products as $p) {
           <span>Google Product Taxonomy</span>
         </div>
         <p class="text-[11px] text-gray-600 leading-relaxed">
-          कृषि औजार, दालें और बनारसी अचार आधिकारिक Google Taxonomy श्रेणियों में स्वचालित मैप किए गए हैं।
+          Farming tools, pulses, and pickles automatically mapped to official Google Taxonomy categories.
         </p>
       </div>
 
       <div class="bg-white p-4 rounded-2xl border border-emerald-200 shadow-2xs space-y-1.5">
         <div class="flex items-center gap-2 text-emerald-700 font-bold text-xs">
           <i class="fa-solid fa-circle-check text-sm"></i>
-          <span>कीमत व मुद्रा (INR ISO 4217)</span>
+          <span>Price & Currency (INR ISO 4217)</span>
         </div>
         <p class="text-[11px] text-gray-600 leading-relaxed">
-          सभी उत्पादों की कीमतें दो दशमलव (2 decimals) और मानक 'INR' मुद्रा सिम्बल के साथ सिंक हैं।
+          All product prices strictly formatted with 2 decimal places and standard 'INR' currency ISO symbol.
         </p>
       </div>
 
@@ -184,12 +185,12 @@ foreach ($feed_products as $p) {
   <div class="bg-white rounded-3xl shadow-sm border border-stone-200 overflow-hidden">
     <div class="p-5 sm:p-6 border-b border-stone-200 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
       <div>
-        <h2 class="text-base font-extrabold text-gray-900">फीड उत्पाद कैटलॉग व शिपिंग ऑडिट (<?= $total_products ?> आइटम्स)</h2>
-        <p class="text-xs text-gray-500">सक्रिय उत्पाद, उनका भार, गूगल श्रेणी और निर्धारित इंडिया पोस्ट शिपिंग शुल्क</p>
+        <h2 class="text-base font-extrabold text-gray-900">Feed Product Catalog & Shipping Audit (<?= $total_products ?> items)</h2>
+        <p class="text-xs text-gray-500">Active catalog items, parcel weights, Google taxonomy category, and calculated India Post shipping fee</p>
       </div>
       <div class="flex items-center gap-2 text-xs font-bold text-indigo-700 bg-indigo-50 px-3 py-1.5 rounded-xl border border-indigo-200">
         <i class="fa-solid fa-boxes-packing"></i>
-        <span>इन-स्टॉक: <?= $in_stock_count ?> / <?= $total_products ?></span>
+        <span>In Stock: <?= $in_stock_count ?> / <?= $total_products ?></span>
       </div>
     </div>
 
@@ -198,13 +199,13 @@ foreach ($feed_products as $p) {
         <thead>
           <tr class="bg-stone-50 text-gray-600 font-black uppercase text-[10px] tracking-wider border-b border-stone-200">
             <th class="py-3 px-4">GMC SKU</th>
-            <th class="py-3 px-4">उत्पाद का नाम व कारीगर</th>
-            <th class="py-3 px-4">गूगल श्रेणी (Taxonomy)</th>
-            <th class="py-3 px-4">उत्पाद भार</th>
-            <th class="py-3 px-4">मूल्य</th>
-            <th class="py-3 px-4">GMC शिपिंग शुल्क (&lt;g:shipping&gt;)</th>
-            <th class="py-3 px-4">उपलब्धता</th>
-            <th class="py-3 px-4 text-center">पालिसी स्टेटस</th>
+            <th class="py-3 px-4">Product Name & Artisan</th>
+            <th class="py-3 px-4">Google Taxonomy Category</th>
+            <th class="py-3 px-4">Weight</th>
+            <th class="py-3 px-4">Price</th>
+            <th class="py-3 px-4">GMC Shipping Fee (&lt;g:shipping&gt;)</th>
+            <th class="py-3 px-4">Availability</th>
+            <th class="py-3 px-4 text-center">Policy Status</th>
           </tr>
         </thead>
         <tbody class="divide-y divide-stone-100 font-medium text-gray-700">
@@ -281,7 +282,7 @@ function copyToClipboard(inputId, btnId) {
   navigator.clipboard.writeText(copyText.value).then(() => {
     const btn = document.getElementById(btnId);
     const originalText = btn.innerHTML;
-    btn.innerHTML = '<i class="fa-solid fa-check text-xs"></i> <span>कॉपी हो गया!</span>';
+    btn.innerHTML = '<i class="fa-solid fa-check text-xs"></i> <span>Copied!</span>';
     btn.classList.add('bg-emerald-600');
     setTimeout(() => {
       btn.innerHTML = originalText;

@@ -120,7 +120,7 @@
       ?>
       <?php if ($h_btn1_show && $h_btn1_text !== ''): ?>
       <div>
-        <a href="<?= htmlspecialchars($h_btn1_link) ?>"<?= $h_btn1_target ?> class="inline-flex items-center gap-2 px-4 py-2.5 bg-amber-500 hover:bg-amber-400 text-stone-950 font-black text-xs rounded-xl transition shadow-md">
+        <a href="<?= htmlspecialchars($h_btn1_link) ?>"<?= $h_btn1_target ?> class="inline-flex items-center justify-center gap-2.5 px-8 sm:px-10 py-4 bg-amber-500 hover:bg-amber-400 text-stone-950 font-black text-xs sm:text-sm rounded-full transition shadow-lg whitespace-nowrap min-h-[50px] box-border">
           <span><?= htmlspecialchars($h_btn1_text) ?></span>
           <i data-lucide="arrow-right" class="w-4 h-4"></i>
         </a>

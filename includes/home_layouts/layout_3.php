@@ -134,16 +134,16 @@ $yt_embed_url = get_youtube_embed_url($yt_setting, 1, true);
         $h_btn2_target = get_setting('hero_btn2_target', '_self') === '_blank' ? ' target="_blank" rel="noopener noreferrer"' : '';
         ?>
         <?php if (($h_btn1_show && $h_btn1_text !== '') || ($h_btn2_show && $h_btn2_text !== '')): ?>
-        <div class="flex flex-wrap items-center gap-3 pt-1">
+        <div class="flex flex-wrap items-center gap-3 sm:gap-4 pt-2">
           <?php if ($h_btn1_show && $h_btn1_text !== ''): ?>
-          <a href="<?= htmlspecialchars($h_btn1_link) ?>"<?= $h_btn1_target ?> class="px-5 py-3 bg-amber-500 hover:bg-amber-400 text-stone-950 font-black text-xs sm:text-sm rounded-xl shadow-lg transition flex items-center gap-2">
+          <a href="<?= htmlspecialchars($h_btn1_link) ?>"<?= $h_btn1_target ?> class="px-8 sm:px-10 py-4 bg-amber-500 hover:bg-amber-400 text-stone-950 font-black text-xs sm:text-sm rounded-full shadow-lg transition inline-flex items-center justify-center gap-2.5 whitespace-nowrap min-h-[50px] box-border">
             <span><?= htmlspecialchars($h_btn1_text) ?></span>
-            <i data-lucide="arrow-right" class="w-4 h-4"></i>
+            <i data-lucide="arrow-right" class="w-4 h-4 shrink-0"></i>
           </a>
           <?php endif; ?>
           <?php if ($h_btn2_show && $h_btn2_text !== ''): ?>
-          <a href="<?= htmlspecialchars($h_btn2_link) ?>"<?= $h_btn2_target ?> class="px-5 py-3 bg-white/10 hover:bg-white/20 text-white font-bold text-xs sm:text-sm rounded-xl transition backdrop-blur-md border border-white/20 flex items-center gap-2">
-            <i data-lucide="users" class="w-4 h-4 text-emerald-400"></i>
+          <a href="<?= htmlspecialchars($h_btn2_link) ?>"<?= $h_btn2_target ?> class="px-8 sm:px-10 py-4 bg-emerald-700 hover:bg-emerald-600 text-white font-black text-xs sm:text-sm rounded-full transition shadow-lg border border-emerald-500/40 inline-flex items-center justify-center gap-2.5 whitespace-nowrap min-h-[50px] box-border">
+            <i data-lucide="arrow-right" class="w-4 h-4 shrink-0 text-amber-300"></i>
             <span><?= htmlspecialchars($h_btn2_text) ?></span>
           </a>
           <?php endif; ?>

@@ -112,7 +112,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $prev_enabled = is_maintenance_mode_active() ? '1' : '0';
 
         $title = trim((string)($_POST['maintenance_mode_title'] ?? "We'll Be Back Shortly!"));
-        $title_hi = trim((string)($_POST['maintenance_mode_title_hi'] ?? "हम जल्द ही वापस लौटेंगे!"));
+        $title_hi = trim((string)($_POST['maintenance_mode_title_hi'] ?? "We will be back shortly!"));
         $message = trim((string)($_POST['maintenance_mode_message'] ?? ''));
         $message_hi = trim((string)($_POST['maintenance_mode_message_hi'] ?? ''));
         $end_time = trim((string)($_POST['maintenance_mode_end_time'] ?? ''));
@@ -322,25 +322,25 @@ require_once __DIR__ . '/admin_header.php';
       <div class="space-y-4 p-5 rounded-2xl bg-stone-50 border border-gray-200">
         <div class="flex items-center gap-2 font-bold text-xs uppercase tracking-wider text-amber-800">
           <span class="px-2 py-0.5 rounded bg-amber-100 text-amber-900">HI</span>
-          <span>हिन्दी संदेश (Hindi Notice)</span>
+          <span>Hindi Notice (Regional Localization)</span>
         </div>
 
         <div>
           <label class="block text-xs font-bold text-gray-700 mb-1">
-            मुख्य शीर्षक (Headline)
+            Headline (Hindi Version)
           </label>
           <input type="text" name="maintenance_mode_title_hi" value="<?= htmlspecialchars($maint['title_hi']) ?>"
             class="w-full px-3.5 py-2.5 rounded-xl border border-gray-300 text-xs font-semibold focus:ring-2 focus:ring-indigo-500 focus:outline-none bg-white"
-            placeholder="उदा. हम जल्द ही वापस लौटेंगे!">
+            placeholder="e.g. Hindi translation headline">
         </div>
 
         <div>
           <label class="block text-xs font-bold text-gray-700 mb-1">
-            विस्तृत संदेश (Detailed Explanation)
+            Detailed Explanation (Hindi Version)
           </label>
           <textarea name="maintenance_mode_message_hi" rows="4"
             class="w-full px-3.5 py-2.5 rounded-xl border border-gray-300 text-xs leading-relaxed focus:ring-2 focus:ring-indigo-500 focus:outline-none bg-white"
-            placeholder="ग्राहकों के लिए संदेश..."><?= htmlspecialchars($maint['message_hi']) ?></textarea>
+            placeholder="Detailed notice text in Hindi for regional shoppers..."><?= htmlspecialchars($maint['message_hi']) ?></textarea>
         </div>
       </div>
 

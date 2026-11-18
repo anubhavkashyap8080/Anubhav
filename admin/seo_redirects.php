@@ -107,16 +107,16 @@ require_once __DIR__ . '/admin_header.php';
   <div>
     <h1 class="text-2xl font-black text-gray-900 flex items-center gap-2">
       <i class="fa-solid fa-route text-indigo-600"></i>
-      SEO रीडायरेक्ट्स एवं 404 एरर मॉनिटरिंग
+      SEO Redirects & 404 Error Monitoring
     </h1>
     <p class="text-xs text-gray-500 mt-1">
-      301 परमानेंट एवं 302 टेम्परेरी रीडायरेक्ट्स प्रबंधित करें तथा क्रॉलर्स द्वारा पाई गई 404 एरर्स को ठीक करें।
+      Manage 301 permanent and 302 temporary redirects and resolve 404 errors detected by search crawlers.
     </p>
   </div>
 
   <div class="flex items-center gap-2">
     <a href="/admin/seo_settings.php" class="px-3.5 py-2 bg-stone-100 hover:bg-stone-200 text-stone-700 font-bold text-xs rounded-xl border border-stone-300 transition flex items-center gap-1.5 shadow-xs">
-      <i class="fa-solid fa-magnifying-glass-chart text-indigo-600"></i> SEO सेटिंग्स
+      <i class="fa-solid fa-magnifying-glass-chart text-indigo-600"></i> SEO Settings
     </a>
     <a href="/sitemap.xml" target="_blank" class="px-3.5 py-2 bg-amber-500 hover:bg-amber-600 text-white font-bold text-xs rounded-xl transition flex items-center gap-1.5 shadow-xs">
       <i class="fa-solid fa-sitemap"></i> Sitemap.xml
@@ -129,12 +129,12 @@ require_once __DIR__ . '/admin_header.php';
   <a href="/admin/seo_redirects.php?tab=redirects"
     class="pb-3 px-1 text-sm font-bold flex items-center gap-2 border-b-2 transition <?= $active_tab === 'redirects' ? 'border-indigo-600 text-indigo-600' : 'border-transparent text-gray-500 hover:text-gray-900' ?>">
     <i class="fa-solid fa-arrows-split-up-and-left"></i>
-    एक्टिव रीडायरेक्ट्स (<?= count($redirects) ?>)
+    Active Redirects (<?= count($redirects) ?>)
   </a>
   <a href="/admin/seo_redirects.php?tab=404"
     class="pb-3 px-1 text-sm font-bold flex items-center gap-2 border-b-2 transition <?= $active_tab === '404' ? 'border-indigo-600 text-indigo-600' : 'border-transparent text-gray-500 hover:text-gray-900' ?>">
     <i class="fa-solid fa-triangle-exclamation text-amber-500"></i>
-    404 नॉट फाउंड एरर लॉग (<?= count($logs_404) ?>)
+    404 Not Found Crawl Logs (<?= count($logs_404) ?>)
   </a>
 </div>
 
@@ -144,7 +144,7 @@ require_once __DIR__ . '/admin_header.php';
     <div class="bg-white rounded-2xl border border-gray-200 shadow-sm p-6 lg:col-span-1">
       <h2 class="text-sm font-black text-gray-900 uppercase tracking-wider mb-4 flex items-center gap-2">
         <i class="fa-solid fa-plus-circle text-indigo-600"></i>
-        नया रीडायरेक्ट जोड़ें
+        Add New Redirect Rule
       </h2>
 
       <form action="/admin/seo_redirects.php" method="POST" class="space-y-4">
@@ -154,32 +154,32 @@ require_once __DIR__ . '/admin_header.php';
 
         <div>
           <label class="block text-xs font-bold text-gray-700 mb-1">
-            स्रोत पथ (Source Path) <span class="text-red-500">*</span>
+            Source Path <span class="text-red-500">*</span>
           </label>
           <input type="text" name="source_path" id="form_source_path" required placeholder="/old-category/item"
             class="w-full px-3.5 py-2.5 bg-stone-50 border border-gray-200 rounded-xl text-xs font-mono focus:bg-white focus:outline-none focus:border-indigo-600 transition">
-          <p class="text-[11px] text-gray-400 mt-1">वेबसाइट का पुराना URL जिसे रीडायरेक्ट करना है।</p>
+          <p class="text-[11px] text-gray-400 mt-1">Old URL path on the website to redirect from.</p>
         </div>
 
         <div>
           <label class="block text-xs font-bold text-gray-700 mb-1">
-            लक्ष्य URL (Target URL / Path) <span class="text-red-500">*</span>
+            Target URL / Path <span class="text-red-500">*</span>
           </label>
           <input type="text" name="target_url" id="form_target_url" required placeholder="/product.php?id=12"
             class="w-full px-3.5 py-2.5 bg-stone-50 border border-gray-200 rounded-xl text-xs font-mono focus:bg-white focus:outline-none focus:border-indigo-600 transition">
-          <p class="text-[11px] text-gray-400 mt-1">नया पेज जहाँ यूज़र को भेजना है।</p>
+          <p class="text-[11px] text-gray-400 mt-1">New page URL where the visitor should be sent.</p>
         </div>
 
         <div class="grid grid-cols-2 gap-3">
           <div>
-            <label class="block text-xs font-bold text-gray-700 mb-1">HTTP स्टेटस</label>
+            <label class="block text-xs font-bold text-gray-700 mb-1">HTTP Status Code</label>
             <select name="status_code" id="form_status_code" class="w-full px-3 py-2 bg-stone-50 border border-gray-200 rounded-xl text-xs focus:bg-white focus:outline-none focus:border-indigo-600">
               <option value="301">301 (Permanent)</option>
               <option value="302">302 (Temporary)</option>
             </select>
           </div>
           <div>
-            <label class="block text-xs font-bold text-gray-700 mb-1">स्थिति (Status)</label>
+            <label class="block text-xs font-bold text-gray-700 mb-1">Status</label>
             <select name="status" id="form_status" class="w-full px-3 py-2 bg-stone-50 border border-gray-200 rounded-xl text-xs focus:bg-white focus:outline-none focus:border-indigo-600">
               <option value="active">Active</option>
               <option value="inactive">Inactive</option>
@@ -188,7 +188,7 @@ require_once __DIR__ . '/admin_header.php';
         </div>
 
         <button type="submit" class="w-full py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs rounded-xl shadow-md transition flex items-center justify-center gap-1.5 mt-2">
-          <i class="fa-solid fa-floppy-disk"></i> नियम सहेजें (Save Rule)
+          <i class="fa-solid fa-floppy-disk"></i> Save Redirect Rule
         </button>
       </form>
     </div>
@@ -198,28 +198,28 @@ require_once __DIR__ . '/admin_header.php';
       <div class="flex items-center justify-between mb-4">
         <h2 class="text-sm font-black text-gray-900 uppercase tracking-wider flex items-center gap-2">
           <i class="fa-solid fa-list-check text-indigo-600"></i>
-          रीडायरेक्ट सूची (Active SEO Rules)
+          Active Redirect Rules
         </h2>
-        <span class="text-xs text-gray-500 font-medium">कुल: <?= count($redirects) ?> नियम</span>
+        <span class="text-xs text-gray-500 font-medium">Total: <?= count($redirects) ?> rules</span>
       </div>
 
       <?php if (empty($redirects)): ?>
         <div class="text-center py-12 text-gray-400">
           <i class="fa-solid fa-route text-4xl mb-3 text-gray-300"></i>
-          <p class="text-xs font-bold">कोई कस्टम रीडायरेक्ट नियम कॉन्फ़िगर नहीं है।</p>
-          <p class="text-[11px] mt-1 text-gray-400">पुराने लिंक्स को 301 रीडायरेक्ट देने के लिए बायीं ओर से नियम जोड़ें।</p>
+          <p class="text-xs font-bold">No custom redirect rules configured yet.</p>
+          <p class="text-[11px] mt-1 text-gray-400">Add a redirect rule from the left panel to configure 301/302 redirects.</p>
         </div>
       <?php else: ?>
         <div class="overflow-x-auto">
           <table class="w-full text-left text-xs">
             <thead class="bg-stone-50 border-b border-gray-100 text-gray-500 uppercase tracking-wider text-[11px]">
               <tr>
-                <th class="py-2.5 px-3">सोर्स पाथ</th>
-                <th class="py-2.5 px-3">टारगेट URL</th>
-                <th class="py-2.5 px-3 text-center">कोड</th>
-                <th class="py-2.5 px-3 text-center">हिट्स</th>
-                <th class="py-2.5 px-3 text-center">स्थिति</th>
-                <th class="py-2.5 px-3 text-right">कार्रवाई</th>
+                <th class="py-2.5 px-3">Source Path</th>
+                <th class="py-2.5 px-3">Target URL</th>
+                <th class="py-2.5 px-3 text-center">Status</th>
+                <th class="py-2.5 px-3 text-center">Hits</th>
+                <th class="py-2.5 px-3 text-center">Status</th>
+                <th class="py-2.5 px-3 text-right">Actions</th>
               </tr>
             </thead>
             <tbody class="divide-y divide-gray-100">
@@ -240,7 +240,7 @@ require_once __DIR__ . '/admin_header.php';
                   </td>
                   <td class="py-3 px-3 text-right">
                     <div class="flex items-center justify-end gap-1.5">
-                      <button type="button" onclick="editRedirect(<?= htmlspecialchars(json_encode($r)) ?>)" class="p-1.5 text-gray-500 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg transition" title="एडिट करें">
+                      <button type="button" onclick="editRedirect(<?= htmlspecialchars(json_encode($r)) ?>)" class="p-1.5 text-gray-500 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg transition" title="Edit">
                         <i class="fa-solid fa-pen text-xs"></i>
                       </button>
                       <form action="/admin/seo_redirects.php" method="POST" class="inline" onsubmit="return confirm('Are you sure you want to delete this redirect rule?');">
@@ -268,30 +268,30 @@ require_once __DIR__ . '/admin_header.php';
       <div>
         <h2 class="text-sm font-black text-gray-900 uppercase tracking-wider flex items-center gap-2">
           <i class="fa-solid fa-triangle-exclamation text-amber-500"></i>
-          404 नॉट फाउंड एरर लॉग (Real-time Crawl Failures)
+          404 Not Found Crawl Logs (Real-time Crawl Failures)
         </h2>
-        <p class="text-xs text-gray-500 mt-0.5">Googlebot व यूज़र्स द्वारा हिट किए गए ब्रोकन URLs। 1-क्लिक में रीडायरेक्ट बनाएं।</p>
+        <p class="text-xs text-gray-500 mt-0.5">Broken URLs encountered by Googlebot or visitors. Create a 1-click 301 redirect rule.</p>
       </div>
-      <span class="text-xs text-gray-500 font-medium">हालिया 50 घटनाएं</span>
+      <span class="text-xs text-gray-500 font-medium">Recent 50 Events</span>
     </div>
 
     <?php if (empty($logs_404)): ?>
       <div class="text-center py-12 text-emerald-600">
         <i class="fa-solid fa-circle-check text-4xl mb-3 text-emerald-500"></i>
-        <p class="text-xs font-bold text-gray-900">कोई 404 एरर दर्ज नहीं है!</p>
-        <p class="text-[11px] mt-1 text-gray-500">आपकी साइट के सभी लिंक्स सुचारु रूप से कार्य कर रहे हैं।</p>
+        <p class="text-xs font-bold text-gray-900">No 404 crawl errors recorded!</p>
+        <p class="text-[11px] mt-1 text-gray-500">All website links and internal routes are working smoothly.</p>
       </div>
     <?php else: ?>
       <div class="overflow-x-auto">
         <table class="w-full text-left text-xs">
           <thead class="bg-stone-50 border-b border-gray-100 text-gray-500 uppercase tracking-wider text-[11px]">
             <tr>
-              <th class="py-2.5 px-3">अनुरोधित पथ (Requested URL)</th>
-              <th class="py-2.5 px-3">रेफरर (Referrer)</th>
-              <th class="py-2.5 px-3 text-center">हिट काउंट</th>
-              <th class="py-2.5 px-3">अंतिम घटना</th>
-              <th class="py-2.5 px-3 text-center">स्थिति</th>
-              <th class="py-2.5 px-3 text-right">त्वरित समाधान</th>
+              <th class="py-2.5 px-3">Requested URL Path</th>
+              <th class="py-2.5 px-3">Referrer URL</th>
+              <th class="py-2.5 px-3 text-center">Hits</th>
+              <th class="py-2.5 px-3">Last Seen</th>
+              <th class="py-2.5 px-3 text-center">Status</th>
+              <th class="py-2.5 px-3 text-right">Quick Resolve</th>
             </tr>
           </thead>
           <tbody class="divide-y divide-gray-100">
@@ -304,7 +304,7 @@ require_once __DIR__ . '/admin_header.php';
                     <?= $log['hit_count'] ?>
                   </span>
                 </td>
-                <td class="py-3 px-3 text-gray-500 text-[11px]"><?= htmlspecialchars($log['last_occurred_at'] ?? 'हाल ही में') ?></td>
+                <td class="py-3 px-3 text-gray-500 text-[11px]"><?= htmlspecialchars($log['last_occurred_at'] ?? 'Just now') ?></td>
                 <td class="py-3 px-3 text-center">
                   <?php if (!empty($log['resolved'])): ?>
                     <span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-green-100 text-green-800">Resolved</span>
@@ -316,14 +316,14 @@ require_once __DIR__ . '/admin_header.php';
                   <div class="flex items-center justify-end gap-1.5">
                     <button type="button" onclick="createRedirectFrom404('<?= htmlspecialchars(addslashes($log['request_path'])) ?>')"
                       class="px-2.5 py-1 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 font-bold text-[11px] rounded-lg transition flex items-center gap-1">
-                      <i class="fa-solid fa-turn-down-right"></i> रीडायरेक्ट बनाएं
+                      <i class="fa-solid fa-turn-down-right"></i> Create Redirect
                     </button>
                     <?php if (empty($log['resolved'])): ?>
                       <form action="/admin/seo_redirects.php" method="POST" class="inline">
                         <?= csrf_field() ?>
                         <input type="hidden" name="action" value="resolve_404">
                         <input type="hidden" name="log_id" value="<?= $log['id'] ?>">
-                        <button type="submit" class="p-1.5 text-gray-400 hover:text-green-600 hover:bg-green-50 rounded-lg transition cursor-pointer" title="रिसॉल्व्ड मार्क करें">
+                        <button type="submit" class="p-1.5 text-gray-400 hover:text-green-600 hover:bg-green-50 rounded-lg transition cursor-pointer" title="Mark as Resolved">
                           <i class="fa-solid fa-check text-xs"></i>
                         </button>
                       </form>

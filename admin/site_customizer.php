@@ -91,16 +91,16 @@ require_once __DIR__ . '/admin_header.php';
   <div>
     <h1 class="text-2xl font-black text-gray-900 flex items-center gap-2">
       <i class="fa-solid fa-palette text-indigo-600"></i>
-      हेडर व फुटर कस्टमाइज़र (Theme & Brand Customizer)
+      Header & Footer Customizer (Theme & Brand Settings)
     </h1>
     <p class="text-xs text-gray-500 mt-1">
-      घोषणा पट्टी, लोगो, हेल्पलाइन नंबर, सोशल मीडिया लिंक्स एवं फुटर पते का केंद्रीय नियंत्रण
+      Centralized control for announcement ticker, logo assets, helpline contacts, social links, and footer address details
     </p>
   </div>
 
   <div class="flex items-center gap-2">
     <a href="/" target="_blank" class="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs rounded-xl shadow transition flex items-center gap-1.5">
-      <i class="fa-solid fa-arrow-up-right-from-square"></i> लाइव स्टोर पर देखें
+      <i class="fa-solid fa-arrow-up-right-from-square"></i> View Live Store
     </a>
   </div>
 </div>
@@ -112,7 +112,7 @@ require_once __DIR__ . '/admin_header.php';
   <!-- 1. Header & Top Announcement Ticker -->
   <div class="bg-white rounded-2xl border border-gray-200 shadow-sm p-6 sm:p-8">
     <h2 class="text-sm font-bold text-gray-900 uppercase tracking-wider mb-4 flex items-center gap-2">
-      <i class="fa-solid fa-bullhorn text-amber-500"></i> शीर्ष घोषणा पट्टी (Announcement Ticker)
+      <i class="fa-solid fa-bullhorn text-amber-500"></i> Top Announcement Bar (Ticker)
     </h2>
 
     <div class="space-y-4">
@@ -120,26 +120,26 @@ require_once __DIR__ . '/admin_header.php';
         <label class="flex items-center gap-2 cursor-pointer text-xs font-bold text-gray-800">
           <input type="checkbox" name="show_announcement" value="1" <?= get_cfg_val('show_announcement', '1') == '1' ? 'checked' : '' ?>
             class="rounded text-indigo-600 focus:ring-indigo-600 w-4 h-4">
-          <span>टॉप घोषणा पट्टी चालू रखें (Show Announcement Bar)</span>
+          <span>Enable Top Announcement Bar</span>
         </label>
       </div>
 
       <div>
-        <label class="block text-xs font-bold text-gray-700 mb-1">घोषणा संदेश (Announcement Text) <span class="text-red-500">*</span></label>
+        <label class="block text-xs font-bold text-gray-700 mb-1">Announcement Text <span class="text-red-500">*</span></label>
         <input type="text" name="announcement_text" required
-          value="<?= htmlspecialchars(get_cfg_val('announcement_text', 'सीधे ग्रामीण कारीगरों व कुटीर उद्योग से • ₹499+ के आर्डर पर पूरे भारत में मुफ्त डिलीवरी!')) ?>"
+          value="<?= htmlspecialchars(get_cfg_val('announcement_text', 'Direct from Rural Artisans & Cottage Forges • Free Pan-India Delivery on Orders Above ₹499!')) ?>"
           class="w-full px-3.5 py-2.5 bg-stone-50 border border-gray-200 rounded-xl text-xs focus:bg-white focus:outline-none focus:border-indigo-600 transition">
       </div>
 
       <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
         <div>
-          <label class="block text-xs font-bold text-gray-700 mb-1">हेल्पलाइन फोन नंबर</label>
+          <label class="block text-xs font-bold text-gray-700 mb-1">Helpline Phone Number</label>
           <input type="text" name="contact_phone"
             value="<?= htmlspecialchars(get_cfg_val('contact_phone', '+91 7897492100')) ?>"
             class="w-full px-3.5 py-2.5 bg-stone-50 border border-gray-200 rounded-xl text-xs focus:bg-white focus:outline-none focus:border-indigo-600 transition">
         </div>
         <div>
-          <label class="block text-xs font-bold text-gray-700 mb-1">आधिकारिक ईमेल</label>
+          <label class="block text-xs font-bold text-gray-700 mb-1">Official Email Address</label>
           <?php $site_custom_host = parse_url(defined('SITE_URL') ? SITE_URL : '', PHP_URL_HOST) ?: 'ganvgalihat.com'; ?>
           <input type="email" name="contact_email"
             value="<?= htmlspecialchars(get_cfg_val('contact_email', 'namaste@' . $site_custom_host)) ?>"
@@ -152,12 +152,12 @@ require_once __DIR__ . '/admin_header.php';
   <!-- 2. Brand Identity Assets -->
   <div class="bg-white rounded-2xl border border-gray-200 shadow-sm p-6 sm:p-8">
     <h2 class="text-sm font-bold text-gray-900 uppercase tracking-wider mb-4 flex items-center gap-2">
-      <i class="fa-solid fa-wheat-awn text-emerald-600"></i> ब्रांड पहचान व लोगो संपत्तियां
+      <i class="fa-solid fa-wheat-awn text-emerald-600"></i> Brand Identity & Logo Assets
     </h2>
 
     <div class="grid grid-cols-1 sm:grid-cols-2 gap-6">
       <div>
-        <label class="block text-xs font-bold text-gray-700 mb-1">मुख्य लोगो फ़ाइल पथ (Logo Path)</label>
+        <label class="block text-xs font-bold text-gray-700 mb-1">Primary Logo File Path (Logo Path)</label>
         <div class="flex items-center gap-3">
           <input type="text" name="logo_url"
             value="<?= htmlspecialchars(get_cfg_val('logo_url', '/logo.png')) ?>"
@@ -169,7 +169,7 @@ require_once __DIR__ . '/admin_header.php';
       </div>
 
       <div>
-        <label class="block text-xs font-bold text-gray-700 mb-1">फेविकॉन फ़ाइल पथ (Favicon Path)</label>
+        <label class="block text-xs font-bold text-gray-700 mb-1">Favicon File Path (Favicon Path)</label>
         <div class="flex items-center gap-3">
           <input type="text" name="favicon_url"
             value="<?= htmlspecialchars(get_cfg_val('favicon_url', '/favicon.png')) ?>"
@@ -181,14 +181,14 @@ require_once __DIR__ . '/admin_header.php';
       </div>
 
       <div>
-        <label class="block text-xs font-bold text-gray-700 mb-1">ब्रांड का नाम (Brand Display Name)</label>
+        <label class="block text-xs font-bold text-gray-700 mb-1">Brand Display Name</label>
         <input type="text" name="brand_name"
-          value="<?= htmlspecialchars(get_cfg_val('brand_name', 'गाँव गली हाट (GanvGaliHat)')) ?>"
+          value="<?= htmlspecialchars(get_cfg_val('brand_name', 'GanvGaliHat')) ?>"
           class="w-full px-3.5 py-2.5 bg-stone-50 border border-gray-200 rounded-xl text-xs focus:bg-white focus:outline-none focus:border-indigo-600 transition">
       </div>
 
       <div>
-        <label class="block text-xs font-bold text-gray-700 mb-1">कंपनी / मूल संस्थान (Parent Company)</label>
+        <label class="block text-xs font-bold text-gray-700 mb-1">Parent Company / Legal Entity</label>
         <input type="text" name="company_name"
           value="<?= htmlspecialchars(get_cfg_val('company_name', 'Kalyani agrofood pvt ltd')) ?>"
           class="w-full px-3.5 py-2.5 bg-stone-50 border border-gray-200 rounded-xl text-xs focus:bg-white focus:outline-none focus:border-indigo-600 transition">
@@ -199,7 +199,7 @@ require_once __DIR__ . '/admin_header.php';
   <!-- 3. Social Media Channels -->
   <div class="bg-white rounded-2xl border border-gray-200 shadow-sm p-6 sm:p-8">
     <h2 class="text-sm font-bold text-gray-900 uppercase tracking-wider mb-4 flex items-center gap-2">
-      <i class="fa-solid fa-share-nodes text-indigo-600"></i> आधिकारिक सोशल मीडिया चैनल्स
+      <i class="fa-solid fa-share-nodes text-indigo-600"></i> Official Social Media Channels
     </h2>
 
     <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -244,27 +244,27 @@ require_once __DIR__ . '/admin_header.php';
   <!-- 4. Footer Addresses & Legal Copyright -->
   <div class="bg-white rounded-2xl border border-gray-200 shadow-sm p-6 sm:p-8">
     <h2 class="text-sm font-bold text-gray-900 uppercase tracking-wider mb-4 flex items-center gap-2">
-      <i class="fa-solid fa-location-dot text-red-600"></i> फुटर पते व कॉपीराइट (Footer Details & Branding)
+      <i class="fa-solid fa-location-dot text-red-600"></i> Footer Addresses & Branding Details
     </h2>
 
     <div class="space-y-4">
       <div>
-        <label class="block text-xs font-bold text-gray-700 mb-1">लोगो के नीचे फुटर विवरण (Footer Logo Description)</label>
+        <label class="block text-xs font-bold text-gray-700 mb-1">Footer About Description (Under Logo)</label>
         <textarea name="footer_about_text" rows="3"
           class="w-full px-3.5 py-2.5 bg-stone-50 border border-gray-200 rounded-xl text-xs focus:bg-white focus:outline-none focus:border-indigo-600 transition"
-          placeholder="ब्रांड व ग्रामीण उद्यम का संक्षिप्त परिचय..."><?= htmlspecialchars(get_cfg_val('footer_about_text', get_cfg_val('company_name', 'Kalyani agrofood pvt ltd') . ' enterprise initiative dedicated to empowering rural Indian smallholders, village foundries, and women self-help groups by delivering authentic farming tools, organic pulses and farm produce straight from rural Bharat.')) ?></textarea>
+          placeholder="Brief description of the brand and rural artisan mission..."><?= htmlspecialchars(get_cfg_val('footer_about_text', get_cfg_val('company_name', 'Kalyani agrofood pvt ltd') . ' enterprise initiative dedicated to empowering rural Indian smallholders, village foundries, and women self-help groups by delivering authentic farming tools, organic pulses and farm produce straight from rural Bharat.')) ?></textarea>
       </div>
 
       <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
         <div>
-          <label class="block text-xs font-bold text-gray-700 mb-1">फ़ैक्टरी / निर्माण इकाई पता (Factory Address)</label>
+          <label class="block text-xs font-bold text-gray-700 mb-1">Factory / Manufacturing Unit Address</label>
           <input type="text" name="factory_address"
             value="<?= htmlspecialchars(get_cfg_val('factory_address', 'Madhoganj Baghauli Road, Newada, Hardoi, Uttar Pradesh - 241126')) ?>"
             class="w-full px-3.5 py-2.5 bg-stone-50 border border-gray-200 rounded-xl text-xs focus:bg-white focus:outline-none focus:border-indigo-600 transition">
         </div>
 
         <div>
-          <label class="block text-xs font-bold text-gray-700 mb-1">मुख्य प्लांट / कार्यालय (Industrial Plant Address)</label>
+          <label class="block text-xs font-bold text-gray-700 mb-1">Head Office / Industrial Plant Address</label>
           <input type="text" name="head_office_address"
             value="<?= htmlspecialchars(get_cfg_val('head_office_address', 'G145 Phase 2 Industrial Area, UPSIDA Sandila, Hardoi, UP')) ?>"
             class="w-full px-3.5 py-2.5 bg-stone-50 border border-gray-200 rounded-xl text-xs focus:bg-white focus:outline-none focus:border-indigo-600 transition">
@@ -272,7 +272,7 @@ require_once __DIR__ . '/admin_header.php';
       </div>
 
       <div>
-        <label class="block text-xs font-bold text-gray-700 mb-1">कॉपीराइट पाठ (Copyright Notice)</label>
+        <label class="block text-xs font-bold text-gray-700 mb-1">Copyright Notice Text</label>
         <input type="text" name="footer_copyright"
           value="<?= htmlspecialchars(get_cfg_val('footer_copyright', '© 2026 GanvGaliHat. A Unit of Kalyani agrofood pvt ltd. All Rights Reserved.')) ?>"
           class="w-full px-3.5 py-2.5 bg-stone-50 border border-gray-200 rounded-xl text-xs focus:bg-white focus:outline-none focus:border-indigo-600 transition">
@@ -281,28 +281,28 @@ require_once __DIR__ . '/admin_header.php';
       <!-- Legal Policy URLs -->
       <div class="pt-4 border-t border-gray-100">
         <h3 class="text-xs font-bold text-gray-800 uppercase tracking-wider mb-3 flex items-center gap-2">
-          <i class="fa-solid fa-scale-balanced text-indigo-600"></i> कानूनी व नीतिगत लिंक्स (Policy & Terms URLs)
+          <i class="fa-solid fa-scale-balanced text-indigo-600"></i> Legal & Policy Links (URLs)
         </h3>
         <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
           <div>
-            <label class="block text-xs font-semibold text-gray-700 mb-1">गोपनीयता नीति (Privacy Policy URL)</label>
+            <label class="block text-xs font-semibold text-gray-700 mb-1">Privacy Policy URL</label>
             <input type="text" name="privacy_policy_url"
               value="<?= htmlspecialchars(get_cfg_val('privacy_policy_url', '/about.php')) ?>"
-              placeholder="/privacy-policy.php या /about.php"
+              placeholder="/privacy-policy.php or /about.php"
               class="w-full px-3.5 py-2.5 bg-stone-50 border border-gray-200 rounded-xl text-xs focus:bg-white focus:outline-none focus:border-indigo-600 transition">
           </div>
           <div>
-            <label class="block text-xs font-semibold text-gray-700 mb-1">नियम व शर्तें (Terms & Conditions URL)</label>
+            <label class="block text-xs font-semibold text-gray-700 mb-1">Terms & Conditions URL</label>
             <input type="text" name="terms_conditions_url"
               value="<?= htmlspecialchars(get_cfg_val('terms_conditions_url', '/about.php')) ?>"
-              placeholder="/terms.php या /about.php"
+              placeholder="/terms.php or /about.php"
               class="w-full px-3.5 py-2.5 bg-stone-50 border border-gray-200 rounded-xl text-xs focus:bg-white focus:outline-none focus:border-indigo-600 transition">
           </div>
           <div>
-            <label class="block text-xs font-semibold text-gray-700 mb-1">शिपिंग व वापसी नीति (Shipping & Return URL)</label>
+            <label class="block text-xs font-semibold text-gray-700 mb-1">Shipping & Return Policy URL</label>
             <input type="text" name="shipping_policy_url"
               value="<?= htmlspecialchars(get_cfg_val('shipping_policy_url', '/about.php')) ?>"
-              placeholder="/shipping-policy.php या /about.php"
+              placeholder="/shipping-policy.php or /about.php"
               class="w-full px-3.5 py-2.5 bg-stone-50 border border-gray-200 rounded-xl text-xs focus:bg-white focus:outline-none focus:border-indigo-600 transition">
           </div>
         </div>
@@ -313,10 +313,10 @@ require_once __DIR__ . '/admin_header.php';
   <!-- 5. Footer Menu Links Manager -->
   <div class="bg-white rounded-2xl border border-gray-200 shadow-sm p-6 sm:p-8">
     <h2 class="text-sm font-bold text-gray-900 uppercase tracking-wider mb-2 flex items-center gap-2">
-      <i class="fa-solid fa-bars text-emerald-600"></i> फुटर मेनू लिंक्स प्रबंधक (Footer Menu Links Manager)
+      <i class="fa-solid fa-bars text-emerald-600"></i> Footer Menu Navigation Links Manager
     </h2>
     <p class="text-xs text-gray-500 mb-6">
-      फुटर के दोनों कॉलम (विलेज कैटलॉग एवं क्विक एक्सेस) की प्रत्येक लिंक का नाम व URL यहाँ से अपडेट करें:
+      Update the title and URL for links in both footer columns (Village Catalog and Quick Access):
     </p>
 
     <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
@@ -324,7 +324,7 @@ require_once __DIR__ . '/admin_header.php';
       <!-- Column 1: Village Catalog -->
       <div class="space-y-4 bg-stone-50 p-5 rounded-2xl border border-stone-200">
         <h3 class="text-xs font-bold text-gray-800 uppercase tracking-wider flex items-center gap-2 pb-2 border-b border-stone-200">
-          <i class="fa-solid fa-store text-emerald-700"></i> कॉलम 1: विलेज कैटलॉग (Village Catalog)
+          <i class="fa-solid fa-store text-emerald-700"></i> Column 1: Village Catalog Navigation
         </h3>
         
         <?php
@@ -341,15 +341,15 @@ require_once __DIR__ . '/admin_header.php';
             $d_url = $cats_default[$i]['url'];
         ?>
           <div class="p-3 bg-white rounded-xl border border-gray-200 space-y-2">
-            <span class="text-[10px] font-bold text-gray-500 uppercase">कैटलॉग लिंक <?= $i ?></span>
+            <span class="text-[10px] font-bold text-gray-500 uppercase">Catalog Link <?= $i ?></span>
             <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
               <input type="text" name="footer_cat<?= $i ?>_title"
                 value="<?= htmlspecialchars(get_cfg_val('footer_cat' . $i . '_title', $d_title)) ?>"
-                placeholder="लिंक शीर्षक (Title)"
+                placeholder="Link Title"
                 class="w-full px-3 py-1.5 bg-stone-50 border border-gray-200 rounded-lg text-xs font-semibold focus:bg-white">
               <input type="text" name="footer_cat<?= $i ?>_url"
                 value="<?= htmlspecialchars(get_cfg_val('footer_cat' . $i . '_url', $d_url)) ?>"
-                placeholder="लिंक URL (/products.php?...)"
+                placeholder="Link URL (/products.php?...)"
                 class="w-full px-3 py-1.5 bg-stone-50 border border-gray-200 rounded-lg text-xs font-mono focus:bg-white">
             </div>
           </div>
@@ -359,12 +359,12 @@ require_once __DIR__ . '/admin_header.php';
       <!-- Column 2: Quick Access Links -->
       <div class="space-y-4 bg-stone-50 p-5 rounded-2xl border border-stone-200">
         <h3 class="text-xs font-bold text-gray-800 uppercase tracking-wider flex items-center gap-2 pb-2 border-b border-stone-200">
-          <i class="fa-solid fa-link text-indigo-600"></i> कॉलम 2: क्विक एक्सेस लिंक्स (Quick Access)
+          <i class="fa-solid fa-link text-indigo-600"></i> Column 2: Quick Access Navigation
         </h3>
 
         <?php
           $links_default = [
-            1 => ['title' => 'About Us (कंपनी परिचय)', 'url' => '/about.php'],
+            1 => ['title' => 'About Us', 'url' => '/about.php'],
             2 => ['title' => 'Nearby Artisans Directory', 'url' => '/artisans.php'],
             3 => ['title' => 'Artisan & Seller Portal', 'url' => '/seller/dashboard.php'],
             4 => ['title' => 'Register Artisan Workshop', 'url' => '/seller-register.php'],
@@ -377,15 +377,15 @@ require_once __DIR__ . '/admin_header.php';
             $d_url = $links_default[$i]['url'];
         ?>
           <div class="p-3 bg-white rounded-xl border border-gray-200 space-y-2">
-            <span class="text-[10px] font-bold text-gray-500 uppercase">क्विक लिंक <?= $i ?></span>
+            <span class="text-[10px] font-bold text-gray-500 uppercase">Quick Link <?= $i ?></span>
             <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
               <input type="text" name="footer_link<?= $i ?>_title"
                 value="<?= htmlspecialchars(get_cfg_val('footer_link' . $i . '_title', $d_title)) ?>"
-                placeholder="लिंक शीर्षक (Title)"
+                placeholder="Link Title"
                 class="w-full px-3 py-1.5 bg-stone-50 border border-gray-200 rounded-lg text-xs font-semibold focus:bg-white">
               <input type="text" name="footer_link<?= $i ?>_url"
                 value="<?= htmlspecialchars(get_cfg_val('footer_link' . $i . '_url', $d_url)) ?>"
-                placeholder="लिंक URL (/page.php)"
+                placeholder="Link URL (/page.php)"
                 class="w-full px-3 py-1.5 bg-stone-50 border border-gray-200 rounded-lg text-xs font-mono focus:bg-white">
             </div>
           </div>
@@ -400,7 +400,7 @@ require_once __DIR__ . '/admin_header.php';
     <button type="submit"
       class="px-6 py-3 bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs rounded-xl shadow-lg transition flex items-center gap-2">
       <i class="fa-solid fa-floppy-disk"></i>
-      कस्टमाइज़ेशन सेटिंग्स सहेजें (Save All Theme Settings)
+      Save All Theme Settings
     </button>
   </div>
 </form>

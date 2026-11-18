@@ -290,10 +290,10 @@ require_once __DIR__ . '/admin_header.php';
 
         <div class="sm:col-span-6">
           <label class="block text-xs font-bold text-gray-700 mb-1">
-            Page Title (Hindi / हिन्दी)
+            Page Title (Hindi Localization)
           </label>
           <input type="text" id="form_hindi_title" name="hindi_title"
-                 placeholder="उदा. ग्राहक सुरक्षा एवं गुणवत्ता गारंटी"
+                 placeholder="e.g. Customer Security & Quality Guarantee (Hindi)"
                  class="w-full px-3.5 py-2.5 bg-stone-50 border border-gray-200 rounded-xl text-xs font-semibold focus:bg-white focus:outline-none focus:border-indigo-600 transition">
         </div>
 
@@ -343,7 +343,7 @@ require_once __DIR__ . '/admin_header.php';
             </button>
             <button type="button" onclick="switchEditorTab('hi')" id="tab_btn_hi"
                     class="px-4 py-2 rounded-xl text-xs font-bold transition flex items-center gap-2 bg-stone-100 text-gray-600 hover:text-gray-900 hover:bg-stone-200 cursor-pointer">
-              <span>Hindi Content (हिन्दी)</span>
+              <span>Hindi Content (Regional)</span>
             </button>
           </div>
 
@@ -404,7 +404,7 @@ require_once __DIR__ . '/admin_header.php';
           <div id="source_container_hi" class="editor-pane hidden">
             <textarea id="source_editor_hi" rows="16"
                       class="w-full p-4 bg-stone-900 text-emerald-400 font-mono text-xs rounded-2xl border border-stone-800 focus:outline-none focus:border-amber-400 leading-relaxed"
-                      placeholder="यहाँ हिंदी सामग्री का HTML कोड लिखें या पेस्ट करें..."
+                      placeholder="Write or paste raw HTML code for Hindi version here..."
                       oninput="syncSourceToVisual('hi')"></textarea>
           </div>
         </div>
@@ -445,8 +445,8 @@ function openPageModal() {
 
   document.getElementById('visual_editor_en').innerHTML = '<p>Write your English page content here...</p>';
   document.getElementById('source_editor_en').value = '<p>Write your English page content here...</p>';
-  document.getElementById('visual_editor_hi').innerHTML = '<p>यहाँ अपनी हिन्दी सामग्री लिखें...</p>';
-  document.getElementById('source_editor_hi').value = '<p>यहाँ अपनी हिन्दी सामग्री लिखें...</p>';
+  document.getElementById('visual_editor_hi').innerHTML = '<p>Write your regional Hindi content here...</p>';
+  document.getElementById('source_editor_hi').value = '<p>Write your regional Hindi content here...</p>';
 
   switchEditorTab('en');
   setSourceMode(false);

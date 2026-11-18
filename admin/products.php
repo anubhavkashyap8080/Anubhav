@@ -15,7 +15,7 @@ $q = clean_input($_GET['q'] ?? '');
 // Toggle Featured (Strictly POST + CSRF)
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['action'] === 'toggle_featured') {
     $pid = intval($_POST['product_id'] ?? 0);
-    $pdo->prepare("UPDATE products SET is_featured = NOT is_featured WHERE id = ?")->execute([$pid]);
+    $pdo->prepare("UPDATE products SET is_featured = CASE WHEN COALESCE(is_featured, 0) = 1 THEN 0 ELSE 1 END WHERE id = ?")->execute([$pid]);
     log_audit_action('product_toggle_featured', 'products', 'product', $pid, 'Toggled featured flag');
     set_flash('success', 'Product featured status updated.');
     header('Location: /admin/products.php');
@@ -145,23 +145,23 @@ require_once __DIR__ . '/admin_header.php';
   <div>
     <h1 class="text-2xl font-black text-gray-900 flex items-center gap-2">
       <i class="fa-solid fa-boxes-stacked text-indigo-600"></i>
-      केंद्रीय उत्पाद कैटलॉग (Global Catalog)
+      Global Product Catalog
     </h1>
     <p class="text-xs text-gray-500 mt-1">
-      कुल <?= count($products) ?> उत्पाद • विक्रेता मैपिंग, स्टॉक व मूल्य नियंत्रण
+      Total <?= count($products) ?> products • Vendor mapping, inventory, and pricing governance
     </p>
   </div>
 
   <div class="flex flex-wrap items-center gap-2">
-    <a href="/admin/export_products.php" class="px-3 py-2 bg-stone-100 hover:bg-stone-200 text-stone-700 font-bold text-xs rounded-xl border border-stone-300 transition flex items-center gap-1.5" title="संपूर्ण कैटलॉग CSV डाउनलोड करें">
-      <i class="fa-solid fa-file-export text-emerald-600"></i> एक्सपोर्ट कैटलॉग
+    <a href="/admin/export_products.php" class="px-3 py-2 bg-stone-100 hover:bg-stone-200 text-stone-700 font-bold text-xs rounded-xl border border-stone-300 transition flex items-center gap-1.5" title="Download complete catalog CSV">
+      <i class="fa-solid fa-file-export text-emerald-600"></i> Export Catalog
     </a>
     <button onclick="document.getElementById('importProductsModal').classList.remove('hidden')"
-      class="px-3 py-2 bg-stone-100 hover:bg-stone-200 text-stone-700 font-bold text-xs rounded-xl border border-stone-300 transition flex items-center gap-1.5" title="CSV फ़ाइल से बल्क उत्पाद अपलोड करें">
-      <i class="fa-solid fa-file-import text-blue-600"></i> बल्क इम्पोर्ट (CSV)
+      class="px-3 py-2 bg-stone-100 hover:bg-stone-200 text-stone-700 font-bold text-xs rounded-xl border border-stone-300 transition flex items-center gap-1.5" title="Bulk upload products from CSV file">
+      <i class="fa-solid fa-file-import text-blue-600"></i> Bulk Import (CSV)
     </button>
     <a href="/seller/products.php" target="_blank" class="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs rounded-xl shadow transition flex items-center gap-2">
-      <i class="fa-solid fa-plus"></i> नया उत्पाद जोड़ें
+      <i class="fa-solid fa-plus"></i> Add New Product
     </a>
   </div>
 </div>
@@ -171,7 +171,7 @@ require_once __DIR__ . '/admin_header.php';
   <form method="GET" action="/admin/products.php" class="flex flex-wrap items-center gap-2">
     <!-- Category -->
     <select name="category" onchange="this.form.submit()" class="px-3 py-1.5 bg-stone-50 border border-gray-200 rounded-lg text-xs font-semibold focus:outline-none">
-      <option value="">सभी श्रेणियां</option>
+      <option value="">All Categories</option>
       <?php foreach ($categories as $c): ?>
         <option value="<?= htmlspecialchars($c['slug']) ?>" <?= $cat_filter === $c['slug'] ? 'selected' : '' ?>>
           <?= htmlspecialchars($c['name']) ?>
@@ -181,7 +181,7 @@ require_once __DIR__ . '/admin_header.php';
 
     <!-- Vendor -->
     <select name="vendor" onchange="this.form.submit()" class="px-3 py-1.5 bg-stone-50 border border-gray-200 rounded-lg text-xs font-semibold focus:outline-none">
-      <option value="">सभी कारीगर / विक्रेता</option>
+      <option value="">All Artisans / Vendors</option>
       <?php foreach ($vendors as $v): ?>
         <option value="<?= $v['id'] ?>" <?= $vendor_filter === $v['id'] ? 'selected' : '' ?>>
           <?= htmlspecialchars($v['business_name'] ?? $v['name']) ?> (<?= htmlspecialchars($v['district']) ?>)
@@ -193,7 +193,7 @@ require_once __DIR__ . '/admin_header.php';
   <!-- Search -->
   <form method="GET" action="/admin/products.php" class="w-full sm:w-64">
     <div class="relative">
-      <input type="text" name="q" value="<?= htmlspecialchars($q) ?>" placeholder="SKU या नाम से खोजें..."
+      <input type="text" name="q" value="<?= htmlspecialchars($q) ?>" placeholder="Search by SKU or name..."
         class="w-full pl-8 pr-3 py-1.5 bg-stone-50 border border-gray-200 rounded-lg text-xs focus:bg-white focus:outline-none transition">
       <span class="absolute inset-y-0 left-0 pl-2.5 flex items-center pointer-events-none text-gray-400 text-xs">
         <i class="fa-solid fa-magnifying-glass"></i>
@@ -208,14 +208,14 @@ require_once __DIR__ . '/admin_header.php';
     <table class="w-full text-left text-xs">
       <thead class="bg-stone-50 border-b border-gray-200 text-gray-500 font-bold uppercase text-[10px]">
         <tr>
-          <th class="px-4 py-3.5">चित्र</th>
-          <th class="px-4 py-3.5">उत्पाद विवरण</th>
-          <th class="px-4 py-3.5">कारीगर / विक्रेता</th>
-          <th class="px-4 py-3.5">श्रेणी</th>
-          <th class="px-4 py-3.5">मूल्य</th>
-          <th class="px-4 py-3.5">स्टॉक</th>
-          <th class="px-4 py-3.5">फ़ीचर्ड</th>
-          <th class="px-4 py-3.5 text-right">कार्य</th>
+          <th class="px-4 py-3.5">Image</th>
+          <th class="px-4 py-3.5">Product Details</th>
+          <th class="px-4 py-3.5">Artisan / Vendor</th>
+          <th class="px-4 py-3.5">Category</th>
+          <th class="px-4 py-3.5">Price</th>
+          <th class="px-4 py-3.5">Stock</th>
+          <th class="px-4 py-3.5">Featured</th>
+          <th class="px-4 py-3.5 text-right">Actions</th>
         </tr>
       </thead>
       <tbody class="divide-y divide-gray-100">
@@ -272,7 +272,7 @@ require_once __DIR__ . '/admin_header.php';
                 <input type="hidden" name="product_id" value="<?= $p['id'] ?>">
                 <button type="submit"
                   class="p-1 rounded text-base transition cursor-pointer <?= $p['is_featured'] ? 'text-amber-500 hover:text-amber-600' : 'text-gray-300 hover:text-gray-400' ?>"
-                  title="फ़ीचर्ड स्थिति बदलें">
+                  title="Toggle featured status">
                   <i class="fa-solid fa-star"></i>
                 </button>
               </form>
@@ -305,10 +305,10 @@ require_once __DIR__ . '/admin_header.php';
                   "bulk_packaging_desc" => $p["bulk_packaging_desc"] ?? "",
                   "bulk_lead_time_days" => $p["bulk_lead_time_days"] ?? 3
               ], JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_HEX_AMP) ?>)'
-                class="p-1.5 text-stone-500 hover:text-indigo-600 rounded hover:bg-indigo-50 transition cursor-pointer" title="संपादित करें">
+                class="p-1.5 text-stone-500 hover:text-indigo-600 rounded hover:bg-indigo-50 transition cursor-pointer" title="Edit Product">
                 <i class="fa-solid fa-pen-to-square"></i>
               </button>
-              <a href="/product.php?id=<?= $p['id'] ?>" target="_blank" class="p-1.5 text-gray-400 hover:text-gray-700 rounded hover:bg-stone-100 transition" title="देखें">
+              <a href="/product.php?id=<?= $p['id'] ?>" target="_blank" class="p-1.5 text-gray-400 hover:text-gray-700 rounded hover:bg-stone-100 transition" title="View">
                 <i class="fa-solid fa-arrow-up-right-from-square"></i>
               </a>
               <form action="/admin/products.php" method="POST" class="inline" onsubmit="return confirm('Are you sure you want to delete this product? This cannot be undone.');">
@@ -333,7 +333,7 @@ require_once __DIR__ . '/admin_header.php';
     <div class="flex items-center justify-between pb-4 mb-4 border-b border-gray-100">
       <h3 class="text-base font-bold text-gray-900 flex items-center gap-2">
         <i class="fa-solid fa-file-import text-blue-600"></i>
-        बल्क उत्पाद अपलोड करें (CSV Import)
+        Bulk Product Upload (CSV Import)
       </h3>
       <button onclick="document.getElementById('importProductsModal').classList.add('hidden')" class="text-gray-400 hover:text-gray-600 text-lg">
         <i class="fa-solid fa-xmark"></i>
@@ -343,23 +343,23 @@ require_once __DIR__ . '/admin_header.php';
     <form action="/admin/import_products.php" method="POST" enctype="multipart/form-data" class="space-y-4">
       <?= csrf_field() ?>
       <div>
-        <label class="block text-xs font-bold text-gray-700 mb-1">CSV फ़ाइल चुनें (.csv) <span class="text-red-500">*</span></label>
+        <label class="block text-xs font-bold text-gray-700 mb-1">Select CSV File (.csv) <span class="text-red-500">*</span></label>
         <input type="file" name="csv_file" accept=".csv" required
           class="w-full text-xs text-stone-600 file:mr-3 file:py-2 file:px-4 file:rounded-xl file:border-0 file:text-xs file:font-bold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100 cursor-pointer border border-gray-200 rounded-xl p-2 bg-stone-50">
         <p class="text-[11px] text-gray-400 mt-1.5">
-          सुझाव: पहले <a href="/admin/export_products.php" class="text-indigo-600 font-bold hover:underline">एक्सपोर्ट कैटलॉग</a> करके प्रारूप (format) देख लें।
+          Tip: First <a href="/admin/export_products.php" class="text-indigo-600 font-bold hover:underline">Export Catalog</a> to verify the required column format.
         </p>
       </div>
 
       <div class="flex items-center justify-end gap-3 pt-3 border-t border-gray-100">
         <button type="button" onclick="document.getElementById('importProductsModal').classList.add('hidden')"
           class="px-4 py-2 bg-stone-100 text-stone-700 font-bold rounded-xl text-xs">
-          रद्द करें
+          Cancel
         </button>
         <button type="submit"
           class="px-5 py-2 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-xl text-xs transition flex items-center gap-1.5 shadow-sm">
           <i class="fa-solid fa-cloud-arrow-up"></i>
-          फ़ाइल प्रोसेस करें (Import)
+          Process CSV Import
         </button>
       </div>
     </form>
@@ -372,7 +372,7 @@ require_once __DIR__ . '/admin_header.php';
     <div class="flex items-center justify-between pb-4 mb-4 border-b border-gray-100">
       <h3 class="text-base font-bold text-gray-900 flex items-center gap-2">
         <i class="fa-solid fa-pen-to-square text-indigo-600"></i>
-        उत्पाद विवरण संपादित करें (Edit Product)
+        Edit Product Details
       </h3>
       <button type="button" onclick="document.getElementById('editProductModal').classList.add('hidden')" class="text-gray-400 hover:text-gray-600 text-lg">
         <i class="fa-solid fa-xmark"></i>
@@ -385,20 +385,20 @@ require_once __DIR__ . '/admin_header.php';
       <input type="hidden" name="edit_product_id" id="edit_pid" value="">
 
       <div>
-        <label class="block text-xs font-bold text-gray-700 mb-1">उत्पाद का नाम (English) <span class="text-red-500">*</span></label>
+        <label class="block text-xs font-bold text-gray-700 mb-1">Product Name (English) <span class="text-red-500">*</span></label>
         <input type="text" name="name" id="edit_p_name" required
           class="w-full px-3.5 py-2.5 bg-stone-50 border border-gray-200 rounded-xl text-xs focus:bg-white focus:outline-none focus:border-indigo-600 transition">
       </div>
 
       <div>
-        <label class="block text-xs font-bold text-gray-700 mb-1">हिंदी नाम (Hindi Name)</label>
+        <label class="block text-xs font-bold text-gray-700 mb-1">Hindi Name (Localization)</label>
         <input type="text" name="hindi_name" id="edit_p_hindi"
           class="w-full px-3.5 py-2.5 bg-stone-50 border border-gray-200 rounded-xl text-xs focus:bg-white focus:outline-none focus:border-indigo-600 transition">
       </div>
 
       <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
         <div>
-          <label class="block text-xs font-bold text-gray-700 mb-1">श्रेणी (Category) <span class="text-red-500">*</span></label>
+          <label class="block text-xs font-bold text-gray-700 mb-1">Category <span class="text-red-500">*</span></label>
           <select name="category_id" id="edit_p_cat" class="w-full px-3.5 py-2.5 bg-stone-50 border border-gray-200 rounded-xl text-xs font-semibold focus:bg-white focus:outline-none focus:border-indigo-600 transition">
             <?php foreach ($categories as $c): ?>
               <option value="<?= $c['id'] ?>"><?= htmlspecialchars($c['name']) ?></option>
@@ -407,7 +407,7 @@ require_once __DIR__ . '/admin_header.php';
         </div>
 
         <div>
-          <label class="block text-xs font-bold text-gray-700 mb-1">विक्रेता (Vendor) <span class="text-red-500">*</span></label>
+          <label class="block text-xs font-bold text-gray-700 mb-1">Vendor / Artisan <span class="text-red-500">*</span></label>
           <select name="vendor_id" id="edit_p_vendor" class="w-full px-3.5 py-2.5 bg-stone-50 border border-gray-200 rounded-xl text-xs font-semibold focus:bg-white focus:outline-none focus:border-indigo-600 transition">
             <?php foreach ($vendors as $v): ?>
               <option value="<?= $v['id'] ?>"><?= htmlspecialchars($v['name']) ?> (<?= htmlspecialchars($v['district']) ?>)</option>
@@ -418,19 +418,19 @@ require_once __DIR__ . '/admin_header.php';
 
       <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
         <div>
-          <label class="block text-xs font-bold text-gray-700 mb-1">विक्रय मूल्य (₹) <span class="text-red-500">*</span></label>
+          <label class="block text-xs font-bold text-gray-700 mb-1">Selling Price (₹) <span class="text-red-500">*</span></label>
           <input type="number" step="0.01" name="price" id="edit_p_price" required
             class="w-full px-3 py-2 bg-stone-50 border border-gray-200 rounded-xl text-xs font-bold focus:bg-white focus:outline-none focus:border-indigo-600 transition">
         </div>
 
         <div>
-          <label class="block text-xs font-bold text-gray-700 mb-1">MRP मूल्य (₹)</label>
+          <label class="block text-xs font-bold text-gray-700 mb-1">MRP Price (₹)</label>
           <input type="number" step="0.01" name="original_price" id="edit_p_orig_price"
             class="w-full px-3 py-2 bg-stone-50 border border-gray-200 rounded-xl text-xs focus:bg-white focus:outline-none focus:border-indigo-600 transition">
         </div>
 
         <div>
-          <label class="block text-xs font-bold text-gray-700 mb-1">वजन (kg) <span class="text-red-500">*</span></label>
+          <label class="block text-xs font-bold text-gray-700 mb-1">Weight (kg) <span class="text-red-500">*</span></label>
           <input type="number" step="0.01" name="weight_kg" id="edit_p_weight" oninput="updateAdminVolumetric()"
             class="w-full px-3 py-2 bg-stone-50 border border-gray-200 rounded-xl text-xs focus:bg-white focus:outline-none focus:border-indigo-600 transition">
         </div>
@@ -439,21 +439,21 @@ require_once __DIR__ . '/admin_header.php';
       <!-- Package Dimensions for Shipping -->
       <div class="p-3 bg-stone-50 border border-stone-200 rounded-2xl space-y-2">
         <span class="text-[11px] font-bold text-gray-700 flex items-center gap-1.5">
-          <i class="fa-solid fa-box text-indigo-600"></i> पार्सल माप (Package Dimensions - cm)
+          <i class="fa-solid fa-box text-indigo-600"></i> Package Dimensions (cm)
         </span>
         <div class="grid grid-cols-3 gap-3">
           <div>
-            <label class="block text-[10px] text-gray-500 font-bold mb-0.5">लंबाई (Length cm)</label>
+            <label class="block text-[10px] text-gray-500 font-bold mb-0.5">Length (cm)</label>
             <input type="number" step="0.1" name="length_cm" id="edit_p_length" value="10.0" oninput="updateAdminVolumetric()"
               class="w-full px-2.5 py-1.5 bg-white border border-gray-200 rounded-lg text-xs font-bold focus:border-indigo-600 outline-none">
           </div>
           <div>
-            <label class="block text-[10px] text-gray-500 font-bold mb-0.5">चौड़ाई (Width cm)</label>
+            <label class="block text-[10px] text-gray-500 font-bold mb-0.5">Width (cm)</label>
             <input type="number" step="0.1" name="width_cm" id="edit_p_width" value="10.0" oninput="updateAdminVolumetric()"
               class="w-full px-2.5 py-1.5 bg-white border border-gray-200 rounded-lg text-xs font-bold focus:border-indigo-600 outline-none">
           </div>
           <div>
-            <label class="block text-[10px] text-gray-500 font-bold mb-0.5">ऊंचाई (Height cm)</label>
+            <label class="block text-[10px] text-gray-500 font-bold mb-0.5">Height (cm)</label>
             <input type="number" step="0.1" name="height_cm" id="edit_p_height" value="10.0" oninput="updateAdminVolumetric()"
               class="w-full px-2.5 py-1.5 bg-white border border-gray-200 rounded-lg text-xs font-bold focus:border-indigo-600 outline-none">
           </div>
@@ -466,22 +466,22 @@ require_once __DIR__ . '/admin_header.php';
 
       <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
         <div>
-          <label class="block text-xs font-bold text-gray-700 mb-1">स्टॉक मात्रा (Stock)</label>
+          <label class="block text-xs font-bold text-gray-700 mb-1">Stock Quantity</label>
           <input type="number" name="stock" id="edit_p_stock" min="0" required
             class="w-full px-3.5 py-2.5 bg-stone-50 border border-gray-200 rounded-xl text-xs focus:bg-white focus:outline-none focus:border-indigo-600 transition">
         </div>
 
         <div>
-          <label class="block text-xs font-bold text-gray-700 mb-1">स्टॉक स्थिति</label>
+          <label class="block text-xs font-bold text-gray-700 mb-1">Stock Status</label>
           <select name="stock_status" id="edit_p_stock_status" class="w-full px-3.5 py-2.5 bg-stone-50 border border-gray-200 rounded-xl text-xs font-semibold focus:bg-white focus:outline-none focus:border-indigo-600 transition">
-            <option value="In Stock">In Stock (उपलब्ध)</option>
-            <option value="Out of Stock">Out of Stock (समाप्त)</option>
+            <option value="In Stock">In Stock</option>
+            <option value="Out of Stock">Out of Stock</option>
           </select>
         </div>
       </div>
 
       <div>
-        <label class="block text-xs font-bold text-gray-700 mb-1">चित्र URL (Image URL)</label>
+        <label class="block text-xs font-bold text-gray-700 mb-1">Image URL</label>
         <input type="url" name="image" id="edit_p_image" placeholder="https://..."
           class="w-full px-3.5 py-2.5 bg-stone-50 border border-gray-200 rounded-xl text-xs focus:bg-white focus:outline-none focus:border-indigo-600 transition">
       </div>
@@ -491,24 +491,24 @@ require_once __DIR__ . '/admin_header.php';
         <div class="flex items-center justify-between">
           <h4 class="text-xs font-black text-amber-900 uppercase tracking-wider flex items-center gap-1.5">
             <i class="fa-solid fa-boxes-packing text-amber-600"></i>
-            थोक व रिटेलर बल्क सेटिंग (B2B Bulk Wholesale)
+            B2B Wholesale & Retailer Settings
           </h4>
           <label class="relative inline-flex items-center cursor-pointer">
             <input type="checkbox" name="bulk_available" id="edit_bulk_available" value="1" onchange="toggleAdminBulkFields()" class="sr-only peer">
             <div class="w-9 h-5 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-amber-600"></div>
-            <span class="ml-2 text-xs font-bold text-amber-950">बल्क बिक्री चालू करें</span>
+            <span class="ml-2 text-xs font-bold text-amber-950">Enable Bulk Wholesale Pricing</span>
           </label>
         </div>
 
         <div id="admin_bulk_fields_box" class="space-y-3 pt-2 border-t border-amber-200/60">
           <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div>
-              <label class="block text-[11px] font-bold text-gray-700 mb-1">न्यूनतम थोक ऑर्डर (MOQ - Pieces) <span class="text-red-500">*</span></label>
+              <label class="block text-[11px] font-bold text-gray-700 mb-1">Minimum Order Quantity (MOQ - Pieces) <span class="text-red-500">*</span></label>
               <input type="number" name="bulk_moq" id="edit_bulk_moq" min="2" value="10"
                 class="w-full px-3 py-2 bg-white border border-amber-200 rounded-xl text-xs font-bold text-gray-900 focus:outline-none focus:border-amber-600">
             </div>
             <div>
-              <label class="block text-[11px] font-bold text-gray-700 mb-1">थोक दर प्रति पीस (Wholesale ₹/pc) <span class="text-red-500">*</span></label>
+              <label class="block text-[11px] font-bold text-gray-700 mb-1">Wholesale Rate per Piece (₹/pc) <span class="text-red-500">*</span></label>
               <input type="number" step="0.01" name="bulk_price" id="edit_bulk_price"
                 class="w-full px-3 py-2 bg-white border border-amber-200 rounded-xl text-xs font-bold text-amber-700 focus:outline-none focus:border-amber-600">
             </div>
@@ -516,12 +516,12 @@ require_once __DIR__ . '/admin_header.php';
 
           <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div>
-              <label class="block text-[11px] font-bold text-gray-700 mb-1">टियर 2 बल्क मात्रा (उदा. 50+ pcs)</label>
+              <label class="block text-[11px] font-bold text-gray-700 mb-1">Tier 2 Bulk Quantity (e.g. 50+ pcs)</label>
               <input type="number" name="bulk_tier2_qty" id="edit_bulk_tier2_qty" min="0"
                 class="w-full px-3 py-2 bg-white border border-amber-200 rounded-xl text-xs font-medium text-gray-900 focus:outline-none focus:border-amber-600">
             </div>
             <div>
-              <label class="block text-[11px] font-bold text-gray-700 mb-1">टियर 2 विशेष दर (Tier 2 ₹/pc)</label>
+              <label class="block text-[11px] font-bold text-gray-700 mb-1">Tier 2 Wholesale Rate (₹/pc)</label>
               <input type="number" step="0.01" name="bulk_tier2_price" id="edit_bulk_tier2_price"
                 class="w-full px-3 py-2 bg-white border border-amber-200 rounded-xl text-xs font-medium text-amber-700 focus:outline-none focus:border-amber-600">
             </div>
@@ -529,13 +529,13 @@ require_once __DIR__ . '/admin_header.php';
 
           <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div>
-              <label class="block text-[11px] font-bold text-gray-700 mb-1">डिस्पैच तैयारी समय (दिन)</label>
+              <label class="block text-[11px] font-bold text-gray-700 mb-1">Dispatch Lead Time (Days)</label>
               <input type="number" name="bulk_lead_time_days" id="edit_bulk_lead_time_days" min="1" value="3"
                 class="w-full px-3 py-2 bg-white border border-amber-200 rounded-xl text-xs font-medium focus:outline-none focus:border-amber-600">
             </div>
             <div>
-              <label class="block text-[11px] font-bold text-gray-700 mb-1">मास्टर कार्टन / पैकेजिंग विवरण</label>
-              <input type="text" name="bulk_packaging_desc" id="edit_bulk_packaging_desc" placeholder="उदा. 24 पीस का मजबूत कोरोगेटेड बॉक्स"
+              <label class="block text-[11px] font-bold text-gray-700 mb-1">Master Carton / Packaging Description</label>
+              <input type="text" name="bulk_packaging_desc" id="edit_bulk_packaging_desc" placeholder="e.g. Heavy-duty 24-piece corrugated carton"
                 class="w-full px-3 py-2 bg-white border border-amber-200 rounded-xl text-xs font-medium focus:outline-none focus:border-amber-600">
             </div>
           </div>
@@ -547,27 +547,27 @@ require_once __DIR__ . '/admin_header.php';
         <div class="flex items-center justify-between">
           <h4 class="text-xs font-black text-indigo-900 uppercase tracking-wider flex items-center gap-1.5">
             <i class="fa-solid fa-magnifying-glass-chart text-indigo-600"></i>
-            उत्पाद ऑन-पेज SEO (Product On-Page SEO Data)
+            Product On-Page SEO Settings
           </h4>
           <span class="text-[10px] font-bold text-indigo-700 bg-white px-2 py-0.5 rounded-full border border-indigo-200">Google SERP Ready</span>
         </div>
 
         <div>
-          <label class="block text-xs font-bold text-gray-800 mb-1">SEO Title Tag (सर्च रिजल्ट शीर्षक)</label>
-          <input type="text" name="seo_title" id="edit_p_seo_title" maxlength="70" placeholder="उदा. Buy Heavy Forged Kulhadi Online | GanvGaliHat"
+          <label class="block text-xs font-bold text-gray-800 mb-1">SEO Title Tag</label>
+          <input type="text" name="seo_title" id="edit_p_seo_title" maxlength="70" placeholder="e.g. Buy Heavy Forged Axe Online | GanvGaliHat"
             class="w-full px-3.5 py-2 bg-white border border-indigo-200 rounded-xl text-xs focus:outline-none focus:border-indigo-600 transition">
-          <p class="text-[10px] text-gray-500 mt-0.5">खाली रहने पर स्वतः '[Product Name] — GanvGaliHat' उपयोग होगा।</p>
+          <p class="text-[10px] text-gray-500 mt-0.5">Defaults to '[Product Name] — GanvGaliHat' if left blank.</p>
         </div>
 
         <div>
-          <label class="block text-xs font-bold text-gray-800 mb-1">SEO Meta Description (गूगल स्निपेट विवरण)</label>
-          <textarea name="seo_description" id="edit_p_seo_description" rows="2" maxlength="250" placeholder="गूगल सर्च रिजल्ट में दिखने वाला 140-160 अक्षरों का संक्षिप्त विवरण..."
+          <label class="block text-xs font-bold text-gray-800 mb-1">SEO Meta Description</label>
+          <textarea name="seo_description" id="edit_p_seo_description" rows="2" maxlength="250" placeholder="Concise 140-160 characters summary displayed in Google search results..."
             class="w-full px-3.5 py-2 bg-white border border-indigo-200 rounded-xl text-xs focus:outline-none focus:border-indigo-600 transition"></textarea>
         </div>
 
         <div>
-          <label class="block text-xs font-bold text-gray-800 mb-1">SEO Keywords (सर्च कीवर्ड्स, Comma Separated)</label>
-          <input type="text" name="seo_keywords" id="edit_p_seo_keywords" placeholder="उदा. sickle, desi hansiya, farm sickle, hand forged tools"
+          <label class="block text-xs font-bold text-gray-800 mb-1">SEO Keywords (Comma Separated)</label>
+          <input type="text" name="seo_keywords" id="edit_p_seo_keywords" placeholder="e.g. sickle, farm sickle, hand forged tools"
             class="w-full px-3.5 py-2 bg-white border border-indigo-200 rounded-xl text-xs focus:outline-none focus:border-indigo-600 transition">
         </div>
       </div>
@@ -575,11 +575,11 @@ require_once __DIR__ . '/admin_header.php';
       <div class="flex items-center justify-end gap-3 pt-3 border-t border-gray-100">
         <button type="button" onclick="document.getElementById('editProductModal').classList.add('hidden')"
           class="px-4 py-2 bg-stone-100 text-stone-700 font-bold rounded-xl text-xs">
-          रद्द करें
+          Cancel
         </button>
         <button type="submit"
           class="px-5 py-2 bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-xl text-xs transition">
-          अपडेट सहेजें (Save Changes)
+          Save Changes
         </button>
       </div>
     </form>

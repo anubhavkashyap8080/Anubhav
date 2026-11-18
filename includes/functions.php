@@ -1283,9 +1283,9 @@ function get_logged_in_user($force_refresh = false) {
                     }
                 }
                 // Live sync session with DB role on every request
-                $_SESSION['user_role'] = $user['role'];
-                $_SESSION['user_name'] = $user['name'];
-                $_SESSION['user_email'] = $user['email'];
+                $_SESSION['user_role'] = $user['role'] ?? 'customer';
+                $_SESSION['user_name'] = $user['name'] ?? ($user['username'] ?? 'User');
+                $_SESSION['user_email'] = $user['email'] ?? '';
                 $cached_user = $user;
                 return $user;
             } else {

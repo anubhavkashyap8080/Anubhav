@@ -52,16 +52,16 @@ require_once __DIR__ . '/admin_header.php';
   <div>
     <h1 class="text-2xl font-black text-gray-900 flex items-center gap-2">
       <i class="fa-solid fa-truck-fast text-indigo-600"></i>
-      केंद्रीय आर्डर एवं भारतीय डाक डिस्पैच (Global Logistics)
+      Central Orders & India Post Dispatch (Global Logistics)
     </h1>
     <p class="text-xs text-gray-500 mt-1">
-      अखिल भारतीय पार्सल ट्रैकिंग, COD संग्रह एवं इंडिया पोस्ट स्पीड पोस्ट मॉनिटरिंग
+      Pan-India parcel tracking, COD collections, and India Post Speed Post consignment monitoring.
     </p>
   </div>
 
   <div class="flex items-center gap-2">
     <button onclick="window.print()" class="px-3.5 py-2 bg-stone-900 text-white font-bold text-xs rounded-xl shadow hover:bg-stone-800 transition flex items-center gap-1.5">
-      <i class="fa-solid fa-print"></i> डाक मैनिफ़ेस्ट प्रिंट करें
+      <i class="fa-solid fa-print"></i> Print Postal Manifest
     </button>
   </div>
 </div>
@@ -69,7 +69,7 @@ require_once __DIR__ . '/admin_header.php';
 <!-- Filter Tabs & Search -->
 <div class="bg-white p-4 rounded-2xl border border-gray-200 shadow-sm mb-6 flex flex-wrap items-center justify-between gap-3">
   <div class="flex items-center gap-1.5 overflow-x-auto text-xs font-bold">
-    <a href="/admin/orders.php" class="px-3 py-1.5 rounded-lg transition <?= empty($status_filter) ? 'bg-indigo-600 text-white' : 'bg-stone-100 text-gray-600 hover:bg-stone-200' ?>">सभी (All)</a>
+    <a href="/admin/orders.php" class="px-3 py-1.5 rounded-lg transition <?= empty($status_filter) ? 'bg-indigo-600 text-white' : 'bg-stone-100 text-gray-600 hover:bg-stone-200' ?>">All Orders</a>
     <a href="/admin/orders.php?status=Confirmed" class="px-3 py-1.5 rounded-lg transition <?= $status_filter === 'Confirmed' ? 'bg-indigo-600 text-white' : 'bg-stone-100 text-gray-600 hover:bg-stone-200' ?>">Confirmed</a>
     <a href="/admin/orders.php?status=Dispatched" class="px-3 py-1.5 rounded-lg transition <?= $status_filter === 'Dispatched' ? 'bg-indigo-600 text-white' : 'bg-stone-100 text-gray-600 hover:bg-stone-200' ?>">Dispatched</a>
     <a href="/admin/orders.php?status=Delivered" class="px-3 py-1.5 rounded-lg transition <?= $status_filter === 'Delivered' ? 'bg-indigo-600 text-white' : 'bg-stone-100 text-gray-600 hover:bg-stone-200' ?>">Delivered</a>
@@ -77,7 +77,7 @@ require_once __DIR__ . '/admin_header.php';
 
   <form method="GET" action="/admin/orders.php" class="w-full sm:w-64">
     <div class="relative">
-      <input type="text" name="q" value="<?= htmlspecialchars($q) ?>" placeholder="आर्डर सं. या फोन खोजें..."
+      <input type="text" name="q" value="<?= htmlspecialchars($q) ?>" placeholder="Search by order # or phone..."
         class="w-full pl-8 pr-3 py-1.5 bg-stone-50 border border-gray-200 rounded-lg text-xs focus:bg-white focus:outline-none transition">
       <span class="absolute inset-y-0 left-0 pl-2.5 flex items-center pointer-events-none text-gray-400 text-xs">
         <i class="fa-solid fa-magnifying-glass"></i>
@@ -92,13 +92,13 @@ require_once __DIR__ . '/admin_header.php';
     <table class="w-full text-left text-xs">
       <thead class="bg-stone-50 border-b border-gray-200 text-gray-500 font-bold uppercase text-[10px]">
         <tr>
-          <th class="px-4 py-3.5">आर्डर सं.</th>
-          <th class="px-4 py-3.5">ग्राहक विवरण</th>
-          <th class="px-4 py-3.5">डिलीवरी पता</th>
-          <th class="px-4 py-3.5">राशि व भुगतान</th>
-          <th class="px-4 py-3.5">कंसाइनमेंट (AWB)</th>
-          <th class="px-4 py-3.5">आर्डर स्थिति</th>
-          <th class="px-4 py-3.5 text-right">कार्य</th>
+          <th class="px-4 py-3.5">Order #</th>
+          <th class="px-4 py-3.5">Customer Details</th>
+          <th class="px-4 py-3.5">Delivery Address</th>
+          <th class="px-4 py-3.5">Amount & Payment</th>
+          <th class="px-4 py-3.5">Consignment (AWB)</th>
+          <th class="px-4 py-3.5">Order Status</th>
+          <th class="px-4 py-3.5 text-right">Actions</th>
         </tr>
       </thead>
       <tbody class="divide-y divide-gray-100">
@@ -126,7 +126,7 @@ require_once __DIR__ . '/admin_header.php';
             </td>
 
             <td class="px-4 py-3.5 font-mono text-[11px] font-bold text-gray-800">
-              <?= htmlspecialchars($ord['tracking_consignment_no'] ?? 'लंबित') ?>
+              <?= htmlspecialchars($ord['tracking_consignment_no'] ?? 'Pending') ?>
             </td>
 
             <td class="px-4 py-3.5">
@@ -136,11 +136,11 @@ require_once __DIR__ . '/admin_header.php';
             </td>
 
             <td class="px-4 py-3.5 text-right whitespace-nowrap space-x-1">
-              <a href="/order-success.php?id=<?= $ord['id'] ?>" target="_blank" class="p-1.5 text-gray-400 hover:text-gray-700 rounded hover:bg-stone-100 transition" title="रसीद प्रिंट">
+              <a href="/order-success.php?id=<?= $ord['id'] ?>" target="_blank" class="p-1.5 text-gray-400 hover:text-gray-700 rounded hover:bg-stone-100 transition" title="Print Invoice">
                 <i class="fa-solid fa-receipt"></i>
               </a>
               <button onclick="openOrderModal(<?= htmlspecialchars(json_encode($ord)) ?>)" class="px-2.5 py-1 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 font-bold rounded text-[11px] transition">
-                अपडेट
+                Update
               </button>
             </td>
           </tr>
@@ -154,7 +154,7 @@ require_once __DIR__ . '/admin_header.php';
 <div id="adminOrderModal" class="hidden fixed inset-0 z-50 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4">
   <div class="bg-white rounded-3xl border border-gray-200 shadow-2xl max-w-sm w-full p-6">
     <div class="flex items-center justify-between pb-3 mb-4 border-b border-gray-100">
-      <h3 class="text-sm font-bold text-gray-900">आर्डर स्थिति व कंसाइनमेंट</h3>
+      <h3 class="text-sm font-bold text-gray-900">Update Order Status & Consignment</h3>
       <button onclick="document.getElementById('adminOrderModal').classList.add('hidden')" class="text-gray-400 hover:text-gray-600">
         <i class="fa-solid fa-xmark"></i>
       </button>
@@ -166,7 +166,7 @@ require_once __DIR__ . '/admin_header.php';
       <input type="hidden" name="order_id" id="modal_order_id">
 
       <div>
-        <label class="block text-xs font-bold text-gray-700 mb-1">आर्डर स्थिति</label>
+        <label class="block text-xs font-bold text-gray-700 mb-1">Order Status</label>
         <select name="order_status" id="modal_order_status" class="w-full px-3 py-2 bg-stone-50 border border-gray-200 rounded-xl text-xs font-bold">
           <option value="Confirmed">Confirmed</option>
           <option value="Processing">Processing</option>
@@ -177,14 +177,14 @@ require_once __DIR__ . '/admin_header.php';
       </div>
 
       <div>
-        <label class="block text-xs font-bold text-gray-700 mb-1">भारतीय डाक कंसाइनमेंट सं. (AWB)</label>
+        <label class="block text-xs font-bold text-gray-700 mb-1">India Post Consignment No. (AWB)</label>
         <input type="text" name="tracking_consignment_no" id="modal_tracking_consignment_no" required
           class="w-full px-3 py-2 bg-stone-50 border border-gray-200 rounded-xl text-xs font-mono font-bold">
       </div>
 
       <div class="flex items-center justify-end gap-2 pt-2">
-        <button type="button" onclick="document.getElementById('adminOrderModal').classList.add('hidden')" class="px-3 py-1.5 bg-stone-100 text-stone-700 font-bold rounded-lg text-xs">रद्द करें</button>
-        <button type="submit" class="px-4 py-1.5 bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-lg text-xs transition">अपडेट करें</button>
+        <button type="button" onclick="document.getElementById('adminOrderModal').classList.add('hidden')" class="px-3 py-1.5 bg-stone-100 text-stone-700 font-bold rounded-lg text-xs">Cancel</button>
+        <button type="submit" class="px-4 py-1.5 bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-lg text-xs transition">Update</button>
       </div>
     </form>
   </div>

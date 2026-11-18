@@ -27,14 +27,15 @@ if (!function_exists('v6_products')) {
                 FROM products p LEFT JOIN categories c ON p.category_id = c.id
                 WHERE p.stock > 0";
         $params = [];
-        $order = 'p.id DESC';
+        $order = 'p.is_featured DESC, p.id DESC';
         if ($source === 'featured') {
             $sql .= ' AND p.is_featured = 1';
         } elseif ($source === 'best_sellers') {
-            $order = 'p.is_best_seller DESC, p.id DESC';
+            $order = 'p.is_featured DESC, p.is_best_seller DESC, p.id DESC';
         } elseif ($source === 'category' && $cat_slug !== '') {
             $sql .= ' AND c.slug = ?';
             $params[] = $cat_slug;
+            $order = 'p.is_featured DESC, p.id DESC';
         }
         $sql .= " ORDER BY $order LIMIT " . (int)$fetch;
         try {

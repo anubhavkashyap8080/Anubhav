@@ -45,7 +45,7 @@ $bulk_cart_count = get_bulk_cart_count();
       .retailer-mobile-nav { display: flex !important; }
     }
     @media (min-width: 768px) {
-      .retailer-desktop-only { display: flex !important; }
+      .retailer-desktop-only { display: block !important; }
       .retailer-mobile-nav { display: none !important; }
     }
   </style>
@@ -176,22 +176,22 @@ $bulk_cart_count = get_bulk_cart_count();
     </div>
 
     <!-- Mobile Bottom Tab Navigation (Only visible on screens < 768px) -->
-    <div class="retailer-mobile-nav border-t border-stone-800 bg-stone-950 px-2 py-2 flex items-center justify-around text-[11px] font-bold">
-      <a href="/retailer/dashboard.php" class="flex flex-col items-center py-1 px-2 rounded-lg <?= $current_page === 'dashboard.php' ? 'text-amber-400 font-black' : 'text-stone-400' ?>">
-        <i class="fa-solid fa-chart-pie text-base mb-1"></i>
-        <span><span class="lang-en">Dashboard</span><span class="lang-hi hidden">डैशबोर्ड</span></span>
+    <div class="retailer-mobile-nav border-t border-stone-800 bg-stone-950 px-3 py-2.5 flex items-center justify-between text-xs font-bold gap-2">
+      <a href="/retailer/dashboard.php" class="flex-1 flex flex-col items-center py-2 px-1 rounded-xl transition <?= $current_page === 'dashboard.php' ? 'bg-amber-500 text-stone-950 font-black shadow-xs' : 'text-stone-400 hover:text-white' ?>">
+        <i class="fa-solid fa-chart-pie text-sm mb-1"></i>
+        <span class="text-[11px]"><span class="lang-en">Dashboard</span><span class="lang-hi hidden">डैशबोर्ड</span></span>
       </a>
-      <a href="/retailer/products.php" class="flex flex-col items-center py-1 px-2 rounded-lg <?= $current_page === 'products.php' ? 'text-amber-400 font-black' : 'text-stone-400' ?>">
-        <i class="fa-solid fa-boxes-stacked text-base mb-1"></i>
-        <span><span class="lang-en">Wholesale</span><span class="lang-hi hidden">थोक</span></span>
+      <a href="/retailer/products.php" class="flex-1 flex flex-col items-center py-2 px-1 rounded-xl transition <?= $current_page === 'products.php' ? 'bg-amber-500 text-stone-950 font-black shadow-xs' : 'text-stone-400 hover:text-white' ?>">
+        <i class="fa-solid fa-boxes-stacked text-sm mb-1"></i>
+        <span class="text-[11px]"><span class="lang-en">Catalog</span><span class="lang-hi hidden">कैटलॉग</span></span>
       </a>
-      <a href="/retailer/orders.php" class="flex flex-col items-center py-1 px-2 rounded-lg <?= $current_page === 'orders.php' ? 'text-amber-400 font-black' : 'text-stone-400' ?>">
-        <i class="fa-solid fa-truck-ramp-box text-base mb-1"></i>
-        <span><span class="lang-en">Orders</span><span class="lang-hi hidden">ऑर्डर्स</span></span>
+      <a href="/retailer/orders.php" class="flex-1 flex flex-col items-center py-2 px-1 rounded-xl transition <?= $current_page === 'orders.php' ? 'bg-amber-500 text-stone-950 font-black shadow-xs' : 'text-stone-400 hover:text-white' ?>">
+        <i class="fa-solid fa-truck-ramp-box text-sm mb-1"></i>
+        <span class="text-[11px]"><span class="lang-en">Orders</span><span class="lang-hi hidden">ऑर्डर्स</span></span>
       </a>
-      <a href="/retailer/profile.php" class="flex flex-col items-center py-1 px-2 rounded-lg <?= $current_page === 'profile.php' ? 'text-amber-400 font-black' : 'text-stone-400' ?>">
-        <i class="fa-solid fa-id-card text-base mb-1"></i>
-        <span><span class="lang-en">Profile</span><span class="lang-hi hidden">प्रोफाइल</span></span>
+      <a href="/retailer/profile.php" class="flex-1 flex flex-col items-center py-2 px-1 rounded-xl transition <?= $current_page === 'profile.php' ? 'bg-amber-500 text-stone-950 font-black shadow-xs' : 'text-stone-400 hover:text-white' ?>">
+        <i class="fa-solid fa-id-card text-sm mb-1"></i>
+        <span class="text-[11px]"><span class="lang-en">Profile</span><span class="lang-hi hidden">प्रोफाइल</span></span>
       </a>
     </div>
   </header>
