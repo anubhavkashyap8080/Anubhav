@@ -77,17 +77,34 @@ if (!function_exists('v6_buttons')) {
 
 if (!function_exists('v6_open')) {
     function v6_open(array $s, $first = false) {
-        $style = '--ov:' . ($s['overlay'] / 100) . ';';
-        echo '<section id="v6-s' . (int)$s['n'] . '" class="v6-sec v6-a-' . v6e($s['align']) . ($s['n'] >= 7 ? ' v6-compact' : '') . '" data-name="' . v6e($s['name']) . '" '
-           . 'data-src="' . ($s['yt_id'] ? 'yt' : ($s['mp4'] ? 'mp4' : '')) . '" '
-           . 'data-yt="' . v6e($s['yt_id']) . '" data-mp4="' . v6e($s['mp4']) . '" '
-           . 'data-start="' . (int)$s['start'] . '" data-end="' . (int)$s['end'] . '" style="' . $style . '">';
-        echo '<div class="v6-media" aria-hidden="true">';
-        if ($s['poster'] !== '') {
-            echo '<img class="v6-poster" src="' . v6e($s['poster']) . '" alt="" '
-               . ($first ? 'fetchpriority="high"' : 'loading="lazy"') . ' decoding="async">';
+        $n = (int)$s['n'];
+        $align = v6e($s['align']);
+        if ($n === 1) {
+            $style = '--ov:' . ($s['overlay'] / 100) . ';';
+            echo '<section id="v6-s1" class="v6-sec v6-hero-sec v6-a-' . $align . '" data-name="' . v6e($s['name']) . '" '
+               . 'data-src="' . ($s['yt_id'] ? 'yt' : ($s['mp4'] ? 'mp4' : '')) . '" '
+               . 'data-yt="' . v6e($s['yt_id']) . '" data-mp4="' . v6e($s['mp4']) . '" '
+               . 'data-start="' . (int)$s['start'] . '" data-end="' . (int)$s['end'] . '" style="' . $style . '">';
+            echo '<div class="v6-media" aria-hidden="true">';
+            if ($s['poster'] !== '') {
+                echo '<img class="v6-poster" src="' . v6e($s['poster']) . '" alt="" '
+                   . ($first ? 'fetchpriority="high"' : 'loading="lazy"') . ' decoding="async">';
+            }
+            echo '<div class="v6-player"></div></div><div class="v6-ov" aria-hidden="true"></div>';
+        } else {
+            // Sections 2 to 8: Clean plain theme-matched background
+            $bg_classes = [
+                2 => 'v6-plain-white',
+                3 => 'v6-plain-slate',
+                4 => 'v6-plain-white',
+                5 => 'v6-plain-mint',
+                6 => 'v6-plain-slate',
+                7 => 'v6-plain-white',
+                8 => 'v6-plain-forest'
+            ];
+            $theme_class = $bg_classes[$n] ?? 'v6-plain-white';
+            echo '<section id="v6-s' . $n . '" class="v6-sec v6-content-sec ' . $theme_class . ' v6-a-' . $align . '" data-name="' . v6e($s['name']) . '">';
         }
-        echo '<div class="v6-player"></div></div><div class="v6-ov" aria-hidden="true"></div>';
     }
 }
 
@@ -156,9 +173,48 @@ body.v6-active { background: #06130d; }
 <?php if ($v6g['header_transparent']): ?>
 body.v6-active header.sticky { display: none !important; }
 <?php endif; ?>
-html.v6-snap { scroll-snap-type: y proximity; }
-.v6-sec { position: relative; isolation: isolate; width: 100%; min-height: 100vh; min-height: 100svh; min-height: 100dvh; display: flex; align-items: center; color: #fff; overflow: hidden; background: #0b2a1c; }
-html.v6-snap .v6-sec { scroll-snap-align: start; }
+/* Hero section keeps full cinematic background video */
+.v6-hero-sec { position: relative; isolation: isolate; width: 100%; min-height: 85vh; min-height: 85svh; min-height: 85dvh; display: flex; align-items: center; color: #fff; overflow: hidden; background: #0b2a1c; }
+
+/* Sections 2 to 8: Normal content flow with clean theme-matched plain backgrounds */
+.v6-content-sec { position: relative; width: 100%; min-height: auto !important; display: block !important; padding: 68px 0 76px !important; overflow: visible !important; }
+.v6-content-sec .v6-wrap { padding: 0 20px !important; }
+.v6-content-sec .v6-head { text-shadow: none !important; margin-bottom: 28px !important; }
+.v6-content-sec .v6-title { color: #0f172a !important; font-size: clamp(1.8rem, 4.5vw, 3rem) !important; }
+.v6-content-sec .v6-sub { color: #475569 !important; }
+.v6-content-sec .v6-eyebrow { background: #f1f5f9 !important; color: #047857 !important; border: 1px solid #cbd5e1 !important; text-shadow: none !important; }
+
+/* Theme-matched plain backgrounds */
+.v6-plain-white { background-color: #ffffff !important; color: #0f172a !important; border-bottom: 1px solid #f1f5f9; }
+.v6-plain-slate { background-color: #f8fafc !important; color: #0f172a !important; border-top: 1px solid #e2e8f0; border-bottom: 1px solid #e2e8f0; }
+.v6-plain-mint { background-color: #f0fdf4 !important; color: #064e3b !important; border-top: 1px solid #dcfce7; border-bottom: 1px solid #dcfce7; }
+.v6-plain-forest { background-color: #064e3b !important; color: #ffffff !important; }
+.v6-plain-forest .v6-title { color: #ffffff !important; }
+.v6-plain-forest .v6-sub { color: #d1fae5 !important; }
+.v6-plain-forest .v6-eyebrow { background: rgba(255,255,255,0.12) !important; color: #fcd34d !important; border-color: rgba(252,211,77,0.4) !important; }
+
+/* Plain section cards & components */
+.v6-content-sec .v6-pc { background: #ffffff !important; border: 1px solid #e2e8f0 !important; box-shadow: 0 4px 16px rgba(0,0,0,.04) !important; color: #0f172a !important; }
+.v6-content-sec .v6-pc:hover { box-shadow: 0 12px 28px rgba(0,0,0,.08) !important; transform: translateY(-4px) !important; }
+.v6-content-sec .v6-pc-title { color: #0f172a !important; }
+.v6-content-sec .v6-price { color: #047857 !important; }
+.v6-content-sec .v6-orig { color: #94a3b8 !important; }
+.v6-content-sec .v6-tile { background: #ffffff !important; border: 1.5px solid #e2e8f0 !important; color: #0f172a !important; box-shadow: 0 2px 8px rgba(0,0,0,.03) !important; }
+.v6-content-sec .v6-tile:hover { border-color: #10b981 !important; box-shadow: 0 8px 22px rgba(16,185,129,.12) !important; transform: translateY(-3px) !important; }
+.v6-content-sec .v6-tile b { color: #0f172a !important; }
+.v6-content-sec .v6-tile small { color: #64748b !important; }
+.v6-content-sec .v6-strip-t { color: #0f172a !important; }
+.v6-content-sec .v6-btn-sec { background: #ffffff !important; color: #0f172a !important; border: 1.5px solid #cbd5e1 !important; backdrop-filter: none !important; }
+.v6-content-sec .v6-btn-sec:hover { background: #f1f5f9 !important; border-color: #94a3b8 !important; }
+.v6-content-sec .v6-artisan { background: #ffffff !important; border: 1px solid #e2e8f0 !important; box-shadow: 0 4px 14px rgba(0,0,0,.04) !important; color: #0f172a !important; }
+.v6-content-sec .v6-artisan-name { color: #0f172a !important; }
+.v6-content-sec .v6-artisan-desc { color: #475569 !important; }
+.v6-content-sec .v6-artisan-badge { background: #ecfdf5 !important; color: #065f46 !important; border: 1px solid #a7f3d0 !important; }
+.v6-content-sec .v6-blog-card { background: #ffffff !important; border: 1px solid #e2e8f0 !important; box-shadow: 0 4px 14px rgba(0,0,0,.04) !important; color: #0f172a !important; }
+.v6-content-sec .v6-blog-t { color: #0f172a !important; }
+.v6-content-sec .v6-blog-p { color: #475569 !important; }
+.v6-content-sec .v6-arrows button { background: #ffffff !important; color: #0f172a !important; border: 1px solid #cbd5e1 !important; }
+.v6-content-sec .v6-arrows button:hover { background: #f1f5f9 !important; }
 .v6-media { position: absolute; inset: 0; z-index: -2; overflow: hidden; background: linear-gradient(135deg, #0b2a1c, #14532d 55%, #7c2d12); }
 .v6-poster { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; z-index: 1; transition: opacity .8s ease; }
 .v6-player { position: absolute; inset: 0; opacity: 0; transition: opacity .8s ease; pointer-events: none; z-index: 2; overflow: hidden; }

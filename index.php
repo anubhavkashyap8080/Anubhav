@@ -8,11 +8,11 @@
 require_once __DIR__ . '/includes/functions.php';
 
 // Determine Active Homepage Layout
-$valid_layouts = ['layout_1', 'layout_2', 'layout_3', 'layout_4', 'layout_5', 'layout_6'];
+$valid_layouts = ['layout_1', 'layout_2', 'layout_3', 'layout_4', 'layout_5', 'layout_6', 'layout_7'];
 $requested_layout = $_GET['layout'] ?? $_GET['theme'] ?? null;
 
 if ($requested_layout) {
-    if (in_array((string)$requested_layout, ['1', '2', '3', '4', '5', '6'])) {
+    if (in_array((string)$requested_layout, ['1', '2', '3', '4', '5', '6', '7'])) {
         $requested_layout = 'layout_' . $requested_layout;
     }
 }

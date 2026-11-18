@@ -399,6 +399,30 @@ require_once __DIR__ . '/admin_header.php';
         </div>
       </label>
 
+      <!-- Option 7: Tools & Industrial B2B Marketplace (ToolsVilla Style) -->
+      <label class="relative flex flex-col justify-between p-4 rounded-2xl border-2 transition cursor-pointer <?= $current_layout === 'layout_7' ? 'border-indigo-600 bg-indigo-50/30 ring-2 ring-indigo-600/20' : 'border-gray-200 bg-white hover:border-gray-300' ?>">
+        <div>
+          <div class="flex items-center justify-between mb-2">
+            <span class="px-2 py-0.5 bg-teal-100 text-teal-800 font-bold text-[10px] rounded-md uppercase">Layout 7</span>
+            <input type="radio" name="homepage_layout" value="layout_7" <?= $current_layout === 'layout_7' ? 'checked' : '' ?> class="text-indigo-600 focus:ring-indigo-500">
+          </div>
+          <h4 class="font-extrabold text-sm text-gray-900 mb-1">Tools & Agri Marketplace (ToolsVilla Style)</h4>
+          <p class="text-xs text-gray-500 leading-relaxed mb-3">
+            Industrial & agricultural equipment marketplace inspired by ToolsVilla. Features persistent vertical category sidebar, high-impact machinery hero banner, 5-point value bar, pastel-accented department blocks, B2B wholesale pricing, and verified forge highlights.
+          </p>
+        </div>
+        <div class="pt-3 border-t border-gray-100 flex items-center justify-between">
+          <span class="text-[11px] font-bold text-teal-600">Industrial & Agri Hub</span>
+          <div class="flex items-center gap-2">
+            <a href="/admin/toolsvilla_home.php" class="text-xs font-bold text-emerald-700 hover:underline">Configure</a>
+            <span class="text-gray-300">•</span>
+            <a href="/?layout=layout_7" target="_blank" class="text-xs font-bold text-indigo-600 hover:underline flex items-center gap-1">
+              <span>Preview</span> <i class="fa-solid fa-arrow-up-right-from-square text-[10px]"></i>
+            </a>
+          </div>
+        </div>
+      </label>
+
     </div>
 
     <!-- YouTube Video URL Setting -->
