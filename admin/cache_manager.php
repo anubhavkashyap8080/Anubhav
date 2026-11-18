@@ -22,10 +22,10 @@ function cm_opcache_status() {
 }
 
 function cm_clear_opcache() {
-    if (!function_exists('opcache_reset')) return [false, 'OPcache: इस PHP में उपलब्ध नहीं है।'];
+    if (!function_exists('opcache_reset')) return [false, 'OPcache: Not available in this PHP build.'];
     $ok = false;
     try { $ok = @opcache_reset(); } catch (Throwable $e) {}
-    return $ok ? [true, 'OPcache: साफ़ किया गया।'] : [false, 'OPcache: होस्टिंग ने reset की अनुमति नहीं दी (cPanel > MultiPHP INI Editor से या PHP version बदलकर साफ़ करें)।'];
+    return $ok ? [true, 'OPcache: Cleared successfully.'] : [false, 'OPcache: Hosting did not allow reset (clear via cPanel > MultiPHP INI Editor or change PHP version).'];
 }
 
 function cm_purge_litespeed() {
@@ -36,8 +36,8 @@ function cm_purge_litespeed() {
         header('X-LiteSpeed-Purge: *');
     }
     return $is_ls
-        ? [true, 'LiteSpeed Cache: purge सिग्नल भेजा गया।']
-        : [true, 'LiteSpeed Cache: purge सिग्नल भेजा गया (यह सर्वर LiteSpeed नहीं दिख रहा, इसलिए असर नहीं भी हो सकता)।'];
+        ? [true, 'LiteSpeed Cache: Purge signal sent.']
+        : [true, 'LiteSpeed Cache: Purge signal sent (server is not running LiteSpeed; may have no effect).'];
 }
 
 function cm_cloudflare_cfg() {
@@ -50,7 +50,7 @@ function cm_cloudflare_cfg() {
 function cm_purge_cloudflare() {
     list($zone, $token) = cm_cloudflare_cfg();
     if ($zone === '' || $token === '') {
-        return [false, 'Cloudflare: Zone ID / API Token कॉन्फ़िगर नहीं है (नीचे सेटअप निर्देश देखें)।'];
+        return [false, 'Cloudflare: Zone ID / API Token not configured (see setup instructions below).'];
     }
     $url = 'https://api.cloudflare.com/client/v4/zones/' . rawurlencode($zone) . '/purge_cache';
     $payload = json_encode(['purge_everything' => true]);
@@ -74,9 +74,9 @@ function cm_purge_cloudflare() {
         if (isset($http_response_header[0]) && preg_match('/\s(\d{3})\s/', $http_response_header[0], $m)) $code = (int)$m[1];
     }
     $data = is_string($resp) ? json_decode($resp, true) : null;
-    if (!empty($data['success'])) return [true, 'Cloudflare: पूरा CDN cache purge किया गया।'];
+    if (!empty($data['success'])) return [true, 'Cloudflare: Entire CDN cache purged successfully.'];
     $err = $data['errors'][0]['message'] ?? ('HTTP ' . $code);
-    return [false, 'Cloudflare: purge विफल — ' . $err];
+    return [false, 'Cloudflare: Purge failed — ' . $err];
 }
 
 function cm_bump_assets() {
@@ -85,9 +85,9 @@ function cm_bump_assets() {
     try {
         $st = $pdo->prepare("INSERT INTO site_settings (setting_key, setting_value) VALUES ('asset_version', ?) ON DUPLICATE KEY UPDATE setting_value = VALUES(setting_value)");
         $st->execute([$v]);
-        return [true, "ब्राउज़र CSS/JS cache: नया version ($v) लागू — सभी विज़िटर्स को नई फ़ाइलें मिलेंगी।"];
+        return [true, "Browser CSS/JS cache: New version ($v) applied — all visitors will receive fresh assets."];
     } catch (Throwable $e) {
-        return [false, 'Asset version अपडेट नहीं हो सका।'];
+        return [false, 'Failed to update asset version.'];
     }
 }
 
@@ -98,11 +98,11 @@ function cm_clear_temp_data() {
         try { $st = $pdo->prepare($sql); $st->execute($p); $parts[] = "$label: " . $st->rowCount(); }
         catch (Throwable $e) { $parts[] = "$label: —"; }
     };
-    $run('रेट-लिमिट रिकॉर्ड', "DELETE FROM rate_limits WHERE first_hit_at < ?", [date('Y-m-d H:i:s', time() - 86400)]);
-    $run('पुराने लॉगिन प्रयास', "DELETE FROM login_attempts WHERE attempted_at < ?", [date('Y-m-d H:i:s', time() - 172800)]);
-    $run('समाप्त पासवर्ड-रीसेट टोकन', "DELETE FROM password_resets WHERE expires_at < ? OR used = 1", [date('Y-m-d H:i:s')]);
-    $run('समाप्त IP ब्लॉक', "DELETE FROM blocked_ips WHERE blocked_until IS NOT NULL AND blocked_until < ?", [date('Y-m-d H:i:s')]);
-    return [true, 'अस्थायी डेटा साफ़ — ' . implode(', ', $parts) . '।'];
+    $run('Rate limit records', "DELETE FROM rate_limits WHERE first_hit_at < ?", [date('Y-m-d H:i:s', time() - 86400)]);
+    $run('Expired login attempts', "DELETE FROM login_attempts WHERE attempted_at < ?", [date('Y-m-d H:i:s', time() - 172800)]);
+    $run('Expired password reset tokens', "DELETE FROM password_resets WHERE expires_at < ? OR used = 1", [date('Y-m-d H:i:s')]);
+    $run('Expired IP blocks', "DELETE FROM blocked_ips WHERE blocked_until IS NOT NULL AND blocked_until < ?", [date('Y-m-d H:i:s')]);
+    return [true, 'Temporary database records cleared — ' . implode(', ', $parts) . '.'];
 }
 
 function cm_clear_lockouts() {
@@ -110,9 +110,9 @@ function cm_clear_lockouts() {
     try {
         $n = $pdo->exec("DELETE FROM login_attempts WHERE success = 0");
         $pdo->exec("UPDATE users SET failed_login_attempts = 0, lockout_until = NULL");
-        return [true, "लॉगिन लॉकआउट हटाए गए ($n असफल-प्रयास रिकॉर्ड साफ़)। सभी यूज़र्स फिर से लॉगिन कर सकते हैं।"];
+        return [true, "Login lockouts reset ($n failed attempts cleared). All users can log in again."];
     } catch (Throwable $e) {
-        return [false, 'लॉकआउट साफ़ करने में त्रुटि।'];
+        return [false, 'Error clearing login lockouts.'];
     }
 }
 
@@ -178,12 +178,12 @@ $behind_cf = !empty($_SERVER['HTTP_CF_RAY']) || !empty($_SERVER['HTTP_CF_CONNECT
 list($cf_zone, $cf_token) = cm_cloudflare_cfg();
 $cf_ready = ($cf_zone !== '' && $cf_token !== '');
 $asset_v = get_site_setting('asset_version', '');
-$asset_v_txt = $asset_v !== '' ? date('d M Y, h:i A', (int)$asset_v) : 'अभी तक कभी नहीं';
+$asset_v_txt = $asset_v !== '' ? date('d M Y, h:i A', (int)$asset_v) : 'Never bumped yet';
 
 $db_counts = [];
 foreach ([
-    'rate_limits' => 'रेट-लिमिट रिकॉर्ड', 'login_attempts' => 'लॉगिन प्रयास रिकॉर्ड',
-    'password_resets' => 'पासवर्ड रीसेट टोकन', 'blocked_ips' => 'ब्लॉक किए IP'
+    'rate_limits' => 'Rate Limit Records', 'login_attempts' => 'Login Attempt Records',
+    'password_resets' => 'Password Reset Tokens', 'blocked_ips' => 'Blocked IP Records'
 ] as $tbl => $label) {
     try { $db_counts[$label] = (int)$pdo->query("SELECT COUNT(*) FROM `$tbl`")->fetchColumn(); }
     catch (Throwable $e) { $db_counts[$label] = null; }
@@ -230,68 +230,68 @@ function cm_dot($on) { return '<span style="display:inline-block;width:9px;heigh
       <h3><?= cm_dot($op_enabled) ?>PHP OPcache</h3>
       <div class="cm-meta">
         <?php if ($op_enabled): ?>
-          सक्रिय • <?= $op_scripts ?> फ़ाइलें cached • मेमोरी <?= $op_mem_mb ?> MB • hit rate <?= $op_hit ?>%
+          Active • <?= $op_scripts ?> files cached • Memory <?= $op_mem_mb ?> MB • Hit Rate <?= $op_hit ?>%
         <?php else: ?>
-          निष्क्रिय या उपलब्ध नहीं
+          Inactive or unavailable
         <?php endif; ?>
         <br>PHP <?= htmlspecialchars(PHP_VERSION) ?>
       </div>
-      <p>कोड अपडेट/अपलोड के बाद भी पुराना PHP कोड चल रहा हो तो OPcache साफ़ करें।</p>
-      <form method="POST"><?= csrf_field() ?><input type="hidden" name="action" value="opcache"><button class="cm-btn" type="submit"><i class="fa-solid fa-microchip"></i> OPcache साफ़ करें</button></form>
+      <p>Clear OPcache if older PHP scripts continue executing following a code update or file upload.</p>
+      <form method="POST"><?= csrf_field() ?><input type="hidden" name="action" value="opcache"><button class="cm-btn" type="submit"><i class="fa-solid fa-microchip"></i> Clear OPcache</button></form>
     </div>
 
     <div class="cm-card">
       <h3><?= cm_dot($is_ls) ?>LiteSpeed Cache</h3>
-      <div class="cm-meta">सर्वर: <?= htmlspecialchars($srv_sw) ?><br><?= $is_ls ? 'LiteSpeed पहचाना गया' : 'LiteSpeed नहीं दिख रहा' ?></div>
-      <p>cPanel/LiteSpeed का पेज-कैश हटाता है। यही पुराने CSRF टोकन वाले cached पेज की सबसे संभावित वजह है।</p>
+      <div class="cm-meta">Server: <?= htmlspecialchars($srv_sw) ?><br><?= $is_ls ? 'LiteSpeed Detected' : 'LiteSpeed Not Detected' ?></div>
+      <p>Purges cPanel/LiteSpeed page cache. Most common resolution for stale CSRF tokens and outdated cached responses.</p>
       <form method="POST"><?= csrf_field() ?><input type="hidden" name="action" value="litespeed"><button class="cm-btn" type="submit"><i class="fa-solid fa-gauge-high"></i> LiteSpeed Purge</button></form>
     </div>
 
     <div class="cm-card">
       <h3><?= cm_dot($cf_ready) ?>Cloudflare CDN</h3>
       <div class="cm-meta">
-        <?= $behind_cf ? 'साइट Cloudflare के पीछे है' : 'Cloudflare ट्रैफ़िक नहीं दिखा' ?><br>
-        API: <?= $cf_ready ? 'कॉन्फ़िगर है' : 'सेट नहीं' ?>
+        <?= $behind_cf ? 'Site is behind Cloudflare' : 'Cloudflare traffic not detected' ?><br>
+        API: <?= $cf_ready ? 'Configured' : 'Not Set' ?>
       </div>
-      <p>Cloudflare का पूरा edge cache purge करता है।</p>
+      <p>Purges Cloudflare full edge cache globally.</p>
       <form method="POST"><?= csrf_field() ?><input type="hidden" name="action" value="cloudflare"><button class="cm-btn" type="submit" <?= $cf_ready ? '' : 'disabled style="opacity:.5;cursor:not-allowed"' ?>><i class="fa-solid fa-cloud"></i> Cloudflare Purge</button></form>
     </div>
 
     <div class="cm-card">
-      <h3><?= cm_dot(true) ?>ब्राउज़र CSS/JS Cache</h3>
-      <div class="cm-meta">अंतिम version bump: <?= htmlspecialchars($asset_v_txt) ?></div>
-      <p>सभी विज़िटर्स के ब्राउज़र को नई main.js/CSS फ़ाइलें डाउनलोड करवाता है (URL में version बदलकर)।</p>
-      <form method="POST"><?= csrf_field() ?><input type="hidden" name="action" value="assets"><button class="cm-btn" type="submit"><i class="fa-solid fa-rotate"></i> Asset Version बदलें</button></form>
+      <h3><?= cm_dot(true) ?>Browser CSS/JS Cache</h3>
+      <div class="cm-meta">Last version bump: <?= htmlspecialchars($asset_v_txt) ?></div>
+      <p>Forces all visitor browsers to download updated main.js/CSS assets by updating URL cache-busting tokens.</p>
+      <form method="POST"><?= csrf_field() ?><input type="hidden" name="action" value="assets"><button class="cm-btn" type="submit"><i class="fa-solid fa-rotate"></i> Bump Asset Version</button></form>
     </div>
 
     <div class="cm-card">
-      <h3><?= cm_dot(true) ?>अस्थायी डेटाबेस डेटा</h3>
+      <h3><?= cm_dot(true) ?>Temporary Database Data</h3>
       <div class="cm-meta">
         <?php foreach ($db_counts as $label => $cnt): ?>
           <?= htmlspecialchars($label) ?>: <b><?= $cnt === null ? '—' : $cnt ?></b><br>
         <?php endforeach; ?>
       </div>
-      <p>पुराने रेट-लिमिट, लॉगिन प्रयास, समाप्त रीसेट-टोकन और समाप्त IP-ब्लॉक हटाता है।</p>
-      <form method="POST"><?= csrf_field() ?><input type="hidden" name="action" value="temp"><button class="cm-btn" type="submit"><i class="fa-solid fa-database"></i> अस्थायी डेटा साफ़ करें</button></form>
+      <p>Removes expired rate-limits, login attempts, expired password reset tokens, and expired temporary IP blocks.</p>
+      <form method="POST"><?= csrf_field() ?><input type="hidden" name="action" value="temp"><button class="cm-btn" type="submit"><i class="fa-solid fa-database"></i> Purge Temporary Data</button></form>
     </div>
 
     <div class="cm-card">
-      <h3><?= cm_dot(true) ?>लॉगिन लॉकआउट रीसेट</h3>
-      <div class="cm-meta">बार-बार गलत पासवर्ड से लगा अस्थायी ब्लॉक हटाता है।</div>
-      <p>अगर कोई यूज़र/सेलर "सुरक्षा अवरोध: कुछ मिनट बाद प्रयास करें" देख रहा है तो इसे चलाएं। (IP ब्लॉक सूची प्रभावित नहीं होती)</p>
+      <h3><?= cm_dot(true) ?>Login Lockout Reset</h3>
+      <div class="cm-meta">Clears temporary lockouts caused by repeated failed password attempts.</div>
+      <p>Run this if a user or seller encounters "Security lockout: please try again in a few minutes". (Permanent IP blocklists are not affected).</p>
       <form method="POST" onsubmit="return confirm('All failed login records and lockouts will be reset. Continue?');"><?= csrf_field() ?><input type="hidden" name="action" value="lockouts"><button class="cm-btn warn" type="submit"><i class="fa-solid fa-unlock"></i> Reset Lockouts</button></form>
     </div>
 
   </div>
 
   <div class="cm-card">
-    <h3><i class="fa-solid fa-cloud"></i> Cloudflare Purge सेटअप (वैकल्पिक)</h3>
-    <p>अपने कॉन्फ़िग फ़ाइल (<code>/home/&lt;cpanel-user&gt;/ganvgalihat_config.php</code>) में यह ब्लॉक जोड़ें। Token को Cloudflare में केवल <b>Zone → Cache Purge</b> अनुमति दें।</p>
+    <h3><i class="fa-solid fa-cloud"></i> Cloudflare Purge Setup (Optional)</h3>
+    <p>Add this configuration block to your config file (<code>/home/&lt;cpanel-user&gt;/ganvgalihat_config.php</code>). Grant the API token <b>Zone → Cache Purge</b> permissions in Cloudflare.</p>
     <pre class="cm-code">'cloudflare' =&gt; [
     'zone_id'   =&gt; 'YOUR_ZONE_ID',
     'api_token' =&gt; 'YOUR_API_TOKEN_WITH_CACHE_PURGE_PERMISSION',
 ],</pre>
-    <p style="margin-top:10px">हर cache क्रिया ऑडिट लॉग और सुरक्षा लॉग (<a href="/admin/security_logs.php" style="color:#4338ca;font-weight:700">Advanced Security Logs</a>) में दर्ज होती है।</p>
+    <p style="margin-top:10px">Every cache operation is permanently logged to the audit logs and security logs (<a href="/admin/security_logs.php" style="color:#4338ca;font-weight:700">Advanced Security Logs</a>).</p>
   </div>
 
 </div>

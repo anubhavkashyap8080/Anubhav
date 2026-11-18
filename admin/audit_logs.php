@@ -73,20 +73,20 @@ $total_count = (int)$pdo->query("SELECT COUNT(*) FROM admin_audit_logs")->fetchC
       <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-indigo-500/20 text-indigo-300 text-xs font-black uppercase tracking-wider border border-indigo-500/30">
         <i class="fa-solid fa-clipboard-check"></i> Accountability & Governance Layer
       </div>
-      <h1 class="text-2xl sm:text-3xl font-black tracking-tight text-white">प्रशासनिक ऑडिट ट्रेल (Admin Audit Logs)</h1>
+      <h1 class="text-2xl sm:text-3xl font-black tracking-tight text-white">Admin Audit Trail (Audit Logs)</h1>
       <p class="text-indigo-200 text-xs sm:text-sm max-w-2xl leading-relaxed">
-        सभी स्टाफ सदस्यों, सुपर एडमिन और विक्रेताओं द्वारा किए गए संवेदनशील कार्यों, लॉगिन, कूपन बदलाव, उत्पाद मॉडरेशन और बैंकिंग पे-आउट का अपरिवर्तनीय डिजिटल रिकॉर्ड।
+        Immutable digital audit trail recording sensitive administrative actions, staff logins, coupon modifications, product moderations, and vendor banking payouts.
       </p>
     </div>
 
     <div class="flex items-center gap-3">
       <a href="/admin/audit_logs.php?export=csv" class="px-5 py-3 rounded-2xl bg-amber-400 hover:bg-amber-500 text-stone-950 font-black text-xs uppercase tracking-wider transition shadow-lg flex items-center justify-center gap-2">
         <i class="fa-solid fa-file-csv text-sm"></i>
-        CSV ऑडिट निर्यात करें
+        Export CSV Audit
       </a>
       <a href="/admin/security_center.php" class="px-5 py-3 rounded-2xl bg-white/10 hover:bg-white/20 text-white font-bold text-xs transition border border-white/20 flex items-center justify-center gap-2">
         <i class="fa-solid fa-shield-halved text-emerald-400"></i>
-        सुरक्षा केंद्र
+        Security Center
       </a>
     </div>
   </div>
@@ -96,28 +96,28 @@ $total_count = (int)$pdo->query("SELECT COUNT(*) FROM admin_audit_logs")->fetchC
     <form method="GET" class="flex-1 w-full flex flex-col sm:flex-row items-center gap-2.5">
       <div class="relative flex-1 w-full">
         <i class="fa-solid fa-magnifying-glass absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400 text-xs"></i>
-        <input type="text" name="q" value="<?= htmlspecialchars($search) ?>" placeholder="स्टाफ नाम, एक्शन, विवरण या IP द्वारा खोजें..." 
+        <input type="text" name="q" value="<?= htmlspecialchars($search) ?>" placeholder="Search by staff name, action, details, or IP address..." 
           class="w-full pl-9 pr-4 py-2 bg-stone-50 border border-gray-200 rounded-xl text-xs font-medium focus:bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500">
       </div>
 
       <select name="module" class="w-full sm:w-48 px-3 py-2 bg-stone-50 border border-gray-200 rounded-xl text-xs font-semibold focus:outline-none focus:ring-2 focus:ring-indigo-500">
-        <option value="">सभी मॉड्यूल (All Modules)</option>
+        <option value="">All Modules</option>
         <?php foreach ($modules as $m): ?>
           <option value="<?= htmlspecialchars($m) ?>" <?= $filter_module === $m ? 'selected' : '' ?>><?= htmlspecialchars(ucfirst($m)) ?></option>
         <?php endforeach; ?>
       </select>
 
       <button type="submit" class="w-full sm:w-auto px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs rounded-xl transition flex items-center justify-center gap-1.5 shadow-xs">
-        <span>फ़िल्टर करें</span>
+        <span>Filter</span>
       </button>
 
       <?php if (!empty($search) || !empty($filter_module)): ?>
-        <a href="/admin/audit_logs.php" class="px-3 py-2 bg-stone-100 hover:bg-stone-200 text-gray-700 font-bold text-xs rounded-xl transition">रीसेट</a>
+        <a href="/admin/audit_logs.php" class="px-3 py-2 bg-stone-100 hover:bg-stone-200 text-gray-700 font-bold text-xs rounded-xl transition">Reset</a>
       <?php endif; ?>
     </form>
 
     <div class="text-xs font-bold text-gray-500 shrink-0">
-      कुल रिकॉर्ड्स: <strong class="text-indigo-900"><?= number_format($total_count) ?></strong>
+      Total Records: <strong class="text-indigo-900"><?= number_format($total_count) ?></strong>
     </div>
   </div>
 
@@ -127,13 +127,13 @@ $total_count = (int)$pdo->query("SELECT COUNT(*) FROM admin_audit_logs")->fetchC
       <table class="w-full text-left text-xs border-collapse">
         <thead>
           <tr class="bg-stone-50 text-gray-600 font-black uppercase text-[10px] tracking-wider border-b border-gray-200">
-            <th class="py-3.5 px-4">समय (Timestamp)</th>
-            <th class="py-3.5 px-4">स्टाफ / ऑपरेटर</th>
-            <th class="py-3.5 px-4">भूमिका (Role)</th>
-            <th class="py-3.5 px-4">मॉड्यूल</th>
-            <th class="py-3.5 px-4">गतिविधि (Action)</th>
-            <th class="py-3.5 px-4">विवरण (Details)</th>
-            <th class="py-3.5 px-4">IP पता</th>
+            <th class="py-3.5 px-4">Timestamp</th>
+            <th class="py-3.5 px-4">Staff / Operator</th>
+            <th class="py-3.5 px-4">Role</th>
+            <th class="py-3.5 px-4">Module</th>
+            <th class="py-3.5 px-4">Action</th>
+            <th class="py-3.5 px-4">Details</th>
+            <th class="py-3.5 px-4">IP Address</th>
           </tr>
         </thead>
         <tbody class="divide-y divide-gray-100 font-medium text-gray-700">
@@ -141,7 +141,7 @@ $total_count = (int)$pdo->query("SELECT COUNT(*) FROM admin_audit_logs")->fetchC
             <tr>
               <td colspan="7" class="py-12 text-center text-gray-400">
                 <i class="fa-solid fa-clipboard-question text-3xl mb-2 text-gray-300 block"></i>
-                कोई ऑडिट लॉग प्रविष्टि नहीं मिली।
+                No audit log records found.
               </td>
             </tr>
           <?php else: ?>

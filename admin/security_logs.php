@@ -254,14 +254,14 @@ require_once __DIR__ . '/admin_header.php';
         <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-rose-500/20 text-rose-300 text-xs font-black uppercase tracking-wider border border-rose-500/30">
           <i class="fa-solid fa-satellite-dish"></i> Threat Monitoring
         </div>
-        <h1 class="text-2xl sm:text-3xl font-black tracking-tight text-white" style="margin-top:8px">उन्नत सुरक्षा लॉग (Advanced Security Logs)</h1>
+        <h1 class="text-2xl sm:text-3xl font-black tracking-tight text-white" style="margin-top:8px">Advanced Security Logs</h1>
         <p class="text-rose-200 text-xs sm:text-sm" style="max-width:640px;margin-top:4px">
-          Severity ग्रेडिंग, IP/यूज़र ट्रैकिंग, संदिग्ध लॉगिन डिटेक्शन, IP ब्लॉक सूची और CSV एक्सपोर्ट। Critical घटनाओं पर मालिक को ईमेल अलर्ट जाता है।
+          Severity grading, IP/user tracking, brute-force detection, IP blocklist management, and CSV export. Email alerts dispatched on critical threats.
         </p>
       </div>
       <div style="display:flex;gap:8px;flex-wrap:wrap">
         <a class="sl-btn sl-btn-ghost" href="<?= htmlspecialchars(sl_url() . (strpos(sl_url(), '?') === false ? '?' : '&') . 'export=csv') ?>"><i class="fa-solid fa-file-csv"></i> CSV Export</a>
-        <a class="sl-btn sl-btn-ghost" href="/admin/security_center.php"><i class="fa-solid fa-shield-halved"></i> सुरक्षा केंद्र</a>
+        <a class="sl-btn sl-btn-ghost" href="/admin/security_center.php"><i class="fa-solid fa-shield-halved"></i> Security Center</a>
         <a class="sl-btn sl-btn-ghost" href="/admin/cache_manager.php"><i class="fa-solid fa-broom"></i> Cache Manager</a>
         <label class="sl-btn sl-btn-ghost" style="margin:0"><input type="checkbox" id="autoRefresh"> Auto-refresh 30s</label>
       </div>
@@ -270,28 +270,28 @@ require_once __DIR__ . '/admin_header.php';
 
   <!-- Stat cards -->
   <div class="sl-grid sl-g5">
-    <div class="sl-card sl-stat"><span>घटनाएं (24h)</span><b><?= $stat_total24 ?></b></div>
+    <div class="sl-card sl-stat"><span>Events (24h)</span><b><?= $stat_total24 ?></b></div>
     <div class="sl-card sl-stat"><span style="color:#b91c1c">Critical (24h)</span><b style="color:#b91c1c"><?= $stat_critical ?></b></div>
     <div class="sl-card sl-stat"><span style="color:#c2410c">High (24h)</span><b style="color:#c2410c"><?= $stat_high ?></b></div>
-    <div class="sl-card sl-stat"><span>असफल लॉगिन (24h)</span><b><?= $stat_failed ?></b></div>
-    <div class="sl-card sl-stat"><span>संदिग्ध IP (24h)</span><b><?= $stat_ips ?></b></div>
-    <div class="sl-card sl-stat"><span>ब्लॉक किए गए IP</span><b><?= $stat_blocked ?></b></div>
+    <div class="sl-card sl-stat"><span>Failed Logins (24h)</span><b><?= $stat_failed ?></b></div>
+    <div class="sl-card sl-stat"><span>Suspicious IPs (24h)</span><b><?= $stat_ips ?></b></div>
+    <div class="sl-card sl-stat"><span>Blocked IPs</span><b><?= $stat_blocked ?></b></div>
   </div>
 
   <!-- Chart + Top lists -->
   <div class="sl-grid sl-g2">
     <div class="sl-card">
-      <div class="sl-h"><span><i class="fa-solid fa-chart-column"></i> पिछले 7 दिन का ट्रेंड</span></div>
+      <div class="sl-h"><span><i class="fa-solid fa-chart-column"></i> Last 7 Days Trend</span></div>
       <div style="padding:14px 18px"><div style="position:relative;height:220px"><canvas id="slTrend"></canvas></div></div>
     </div>
 
     <div class="sl-card">
-      <div class="sl-h"><span><i class="fa-solid fa-bullseye"></i> टॉप संदिग्ध IP (7 दिन)</span></div>
+      <div class="sl-h"><span><i class="fa-solid fa-bullseye"></i> Top Suspicious IPs (7 Days)</span></div>
       <table class="sl-table">
-        <thead><tr><th>IP</th><th>घटनाएं</th><th>अंतिम बार</th><th></th></tr></thead>
+        <thead><tr><th>IP Address</th><th>Events</th><th>Last Seen</th><th>Action</th></tr></thead>
         <tbody>
         <?php if (empty($top_ips)): ?>
-          <tr><td colspan="4" style="text-align:center;color:#a8a29e;padding:24px">कोई संदिग्ध IP नहीं मिला ✓</td></tr>
+          <tr><td colspan="4" style="text-align:center;color:#a8a29e;padding:24px">No suspicious IPs detected ✓</td></tr>
         <?php endif; ?>
         <?php foreach ($top_ips as $t): ?>
           <tr>
@@ -320,12 +320,12 @@ require_once __DIR__ . '/admin_header.php';
   <div class="sl-grid sl-g2">
     <!-- Suspicious logins -->
     <div class="sl-card">
-      <div class="sl-h"><span><i class="fa-solid fa-user-secret"></i> ब्रूट-फोर्स संदिग्ध (पिछला 1 घंटा, 5+ असफल लॉगिन)</span></div>
+      <div class="sl-h"><span><i class="fa-solid fa-user-secret"></i> Brute-Force Detection (Last 1 Hour, 5+ Failed Logins)</span></div>
       <table class="sl-table">
-        <thead><tr><th>IP</th><th>असफल</th><th>अलग-अलग अकाउंट</th><th></th></tr></thead>
+        <thead><tr><th>IP Address</th><th>Failed Attempts</th><th>Unique Accounts</th><th>Action</th></tr></thead>
         <tbody>
         <?php if (empty($suspicious)): ?>
-          <tr><td colspan="4" style="text-align:center;color:#a8a29e;padding:24px">कोई ब्रूट-फोर्स पैटर्न नहीं मिला ✓</td></tr>
+          <tr><td colspan="4" style="text-align:center;color:#a8a29e;padding:24px">No brute-force patterns detected ✓</td></tr>
         <?php endif; ?>
         <?php foreach ($suspicious as $sp): ?>
           <tr>
@@ -352,12 +352,12 @@ require_once __DIR__ . '/admin_header.php';
 
     <!-- Top events -->
     <div class="sl-card">
-      <div class="sl-h"><span><i class="fa-solid fa-list-ol"></i> टॉप घटनाएं (7 दिन)</span></div>
+      <div class="sl-h"><span><i class="fa-solid fa-list-ol"></i> Top Events (7 Days)</span></div>
       <table class="sl-table">
-        <thead><tr><th>घटना</th><th>Severity</th><th>गिनती</th></tr></thead>
+        <thead><tr><th>Event</th><th>Severity</th><th>Count</th></tr></thead>
         <tbody>
         <?php if (empty($top_events)): ?>
-          <tr><td colspan="3" style="text-align:center;color:#a8a29e;padding:24px">अभी कोई घटना दर्ज नहीं</td></tr>
+          <tr><td colspan="3" style="text-align:center;color:#a8a29e;padding:24px">No events recorded yet</td></tr>
         <?php endif; ?>
         <?php foreach ($top_events as $te): ?>
           <tr>
@@ -373,18 +373,18 @@ require_once __DIR__ . '/admin_header.php';
 
   <!-- Filters + log table -->
   <div class="sl-card">
-    <div class="sl-h"><span><i class="fa-solid fa-filter"></i> लॉग खोजें और फ़िल्टर करें</span>
-      <span style="font-size:11px;color:#78716c;font-weight:600"><?= number_format($total_rows) ?> रिकॉर्ड</span></div>
+    <div class="sl-h"><span><i class="fa-solid fa-filter"></i> Search & Filter Security Logs</span>
+      <span style="font-size:11px;color:#78716c;font-weight:600"><?= number_format($total_rows) ?> Records</span></div>
     <form method="GET" style="padding:14px 18px;display:flex;flex-wrap:wrap;gap:8px;align-items:center">
-      <input class="sl-input" style="flex:1;min-width:160px" type="text" name="q" value="<?= htmlspecialchars($f_q) ?>" placeholder="खोजें: event, IP, user, URL, details">
+      <input class="sl-input" style="flex:1;min-width:160px" type="text" name="q" value="<?= htmlspecialchars($f_q) ?>" placeholder="Search: event, IP, user, URL, details...">
       <select class="sl-input" name="severity">
-        <option value="">सभी Severity</option>
+        <option value="">All Severities</option>
         <?php foreach (['critical', 'high', 'medium', 'info'] as $sv): ?>
           <option value="<?= $sv ?>" <?= $f_sev === $sv ? 'selected' : '' ?>><?= ucfirst($sv) ?></option>
         <?php endforeach; ?>
       </select>
       <select class="sl-input" name="event">
-        <option value="">सभी घटनाएं</option>
+        <option value="">All Events</option>
         <?php foreach ($event_types as $et): ?>
           <option value="<?= htmlspecialchars($et['event_type']) ?>" <?= $f_event === $et['event_type'] ? 'selected' : '' ?>><?= htmlspecialchars($et['event_type']) ?></option>
         <?php endforeach; ?>
@@ -392,16 +392,16 @@ require_once __DIR__ . '/admin_header.php';
       <input class="sl-input" style="width:130px" type="text" name="ip" value="<?= htmlspecialchars($f_ip) ?>" placeholder="IP">
       <input class="sl-input" type="date" name="from" value="<?= htmlspecialchars($f_from) ?>" title="From">
       <input class="sl-input" type="date" name="to" value="<?= htmlspecialchars($f_to) ?>" title="To">
-      <button class="sl-btn sl-btn-primary" type="submit"><i class="fa-solid fa-magnifying-glass"></i> खोजें</button>
+      <button class="sl-btn sl-btn-primary" type="submit"><i class="fa-solid fa-magnifying-glass"></i> Search</button>
       <a class="sl-btn sl-btn-ghost" href="/admin/security_logs.php">Reset</a>
     </form>
 
     <div style="overflow-x:auto">
       <table class="sl-table">
-        <thead><tr><th>समय</th><th>Severity</th><th>घटना</th><th>IP</th><th>यूज़र</th><th>URL</th><th>विवरण</th></tr></thead>
+        <thead><tr><th>Timestamp</th><th>Severity</th><th>Event</th><th>IP Address</th><th>User</th><th>URL</th><th>Details</th></tr></thead>
         <tbody>
         <?php if (empty($logs)): ?>
-          <tr><td colspan="7" style="text-align:center;color:#a8a29e;padding:36px">कोई लॉग नहीं मिला।</td></tr>
+          <tr><td colspan="7" style="text-align:center;color:#a8a29e;padding:36px">No security logs found.</td></tr>
         <?php endif; ?>
         <?php foreach ($logs as $l):
             $sev = ($l['severity'] ?? '') ?: security_event_severity($l['event_type']);
@@ -423,7 +423,7 @@ require_once __DIR__ . '/admin_header.php';
             <td class="sl-mono" style="max-width:200px;word-break:break-all"><?= htmlspecialchars(($l['request_method'] ?? '') . ' ' . ($l['request_uri'] ?? '')) ?></td>
             <td style="max-width:300px">
               <details>
-                <summary style="cursor:pointer;color:#4338ca;font-size:11px"><?= htmlspecialchars($short ?: 'विवरण देखें') ?></summary>
+                <summary style="cursor:pointer;color:#4338ca;font-size:11px"><?= htmlspecialchars($short ?: 'View Details') ?></summary>
                 <div class="sl-detail"><?= htmlspecialchars((string)$pretty) ?>
 <?php if (!empty($l['user_agent'])): ?>
 
@@ -448,14 +448,14 @@ require_once __DIR__ . '/admin_header.php';
     <!-- Pagination -->
     <?php if ($total_pages > 1): ?>
       <div style="padding:14px 18px;display:flex;gap:6px;flex-wrap:wrap;align-items:center">
-        <?php if ($page > 1): ?><a class="sl-pill" href="<?= htmlspecialchars(sl_url(['page' => $page - 1])) ?>">← पिछला</a><?php endif; ?>
+        <?php if ($page > 1): ?><a class="sl-pill" href="<?= htmlspecialchars(sl_url(['page' => $page - 1])) ?>">← Previous</a><?php endif; ?>
         <?php
           $start = max(1, $page - 2); $end = min($total_pages, $page + 2);
           for ($i = $start; $i <= $end; $i++): ?>
           <a class="sl-pill <?= $i === $page ? 'active' : '' ?>" href="<?= htmlspecialchars(sl_url(['page' => $i])) ?>"><?= $i ?></a>
         <?php endfor; ?>
-        <?php if ($page < $total_pages): ?><a class="sl-pill" href="<?= htmlspecialchars(sl_url(['page' => $page + 1])) ?>">अगला →</a><?php endif; ?>
-        <span style="font-size:11px;color:#78716c;margin-left:6px">पृष्ठ <?= $page ?> / <?= $total_pages ?></span>
+        <?php if ($page < $total_pages): ?><a class="sl-pill" href="<?= htmlspecialchars(sl_url(['page' => $page + 1])) ?>">Next →</a><?php endif; ?>
+        <span style="font-size:11px;color:#78716c;margin-left:6px">Page <?= $page ?> of <?= $total_pages ?></span>
       </div>
     <?php endif; ?>
   </div>
@@ -463,29 +463,29 @@ require_once __DIR__ . '/admin_header.php';
   <!-- IP block manager + retention -->
   <div class="sl-grid sl-g2">
     <div class="sl-card">
-      <div class="sl-h"><span><i class="fa-solid fa-ban"></i> IP ब्लॉक सूची</span></div>
+      <div class="sl-h"><span><i class="fa-solid fa-ban"></i> IP Blocklist Management</span></div>
       <form method="POST" style="padding:14px 18px;display:flex;flex-wrap:wrap;gap:8px">
         <?= csrf_field() ?><input type="hidden" name="action" value="block_ip">
-        <input class="sl-input" style="width:150px" type="text" name="ip_address" placeholder="IP जैसे 1.2.3.4" required>
+        <input class="sl-input" style="width:150px" type="text" name="ip_address" placeholder="IP e.g. 1.2.3.4" required>
         <select class="sl-input" name="hours">
-          <option value="1">1 घंटा</option><option value="24" selected>24 घंटे</option>
-          <option value="168">7 दिन</option><option value="720">30 दिन</option><option value="0">स्थायी</option>
+          <option value="1">1 Hour</option><option value="24" selected>24 Hours</option>
+          <option value="168">7 Days</option><option value="720">30 Days</option><option value="0">Permanent</option>
         </select>
-        <input class="sl-input" style="flex:1;min-width:120px" type="text" name="reason" placeholder="कारण (वैकल्पिक)">
+        <input class="sl-input" style="flex:1;min-width:120px" type="text" name="reason" placeholder="Reason (Optional)">
         <button class="sl-btn sl-btn-danger" type="submit">Block</button>
       </form>
-      <div style="padding:0 18px 4px;font-size:11px;color:#78716c">आपका वर्तमान IP: <span class="sl-mono"><?= htmlspecialchars($my_ip) ?></span> (सुरक्षा के लिए खुद को ब्लॉक नहीं कर सकते; सुपर एडमिन सत्र हमेशा अनुमत है)</div>
+      <div style="padding:0 18px 4px;font-size:11px;color:#78716c">Your current IP: <span class="sl-mono"><?= htmlspecialchars($my_ip) ?></span> (Self-blocking is prevented; Super Admin sessions are always allowed)</div>
       <table class="sl-table" style="margin-top:8px">
-        <thead><tr><th>IP</th><th>कारण</th><th>समाप्ति</th><th></th></tr></thead>
+        <thead><tr><th>IP Address</th><th>Reason</th><th>Expires</th><th>Action</th></tr></thead>
         <tbody>
         <?php if (empty($blocked)): ?>
-          <tr><td colspan="4" style="text-align:center;color:#a8a29e;padding:22px">कोई IP ब्लॉक नहीं है</td></tr>
+          <tr><td colspan="4" style="text-align:center;color:#a8a29e;padding:22px">No IP addresses currently blocked</td></tr>
         <?php endif; ?>
         <?php foreach ($blocked as $b): ?>
           <tr>
             <td class="sl-mono"><?= htmlspecialchars($b['ip_address']) ?></td>
             <td><?= htmlspecialchars($b['reason'] ?: '—') ?><br><span style="font-size:10px;color:#a8a29e"><?= htmlspecialchars($b['by_name'] ?: '') ?></span></td>
-            <td class="sl-mono"><?= $b['blocked_until'] ? htmlspecialchars(date('d M, h:i A', strtotime($b['blocked_until']))) : 'स्थायी' ?></td>
+            <td class="sl-mono"><?= $b['blocked_until'] ? htmlspecialchars(date('d M, h:i A', strtotime($b['blocked_until']))) : 'Permanent' ?></td>
             <td>
               <form method="POST"><?= csrf_field() ?><input type="hidden" name="action" value="unblock_ip"><input type="hidden" name="block_id" value="<?= (int)$b['id'] ?>">
                 <button class="sl-btn sl-btn-ghost sl-btn-xs" type="submit">Unblock</button></form>
