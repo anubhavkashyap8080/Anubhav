@@ -47,10 +47,12 @@ $l7_hero_stat3     = get_setting('l7_hero_stat3', "50+ Forges");
 $l7_card1_title    = get_setting('l7_card1_title', "Trusted by 10,000+ Farmers");
 $l7_card1_rating   = get_setting('l7_card1_rating', "4.9");
 $l7_card1_sub      = get_setting('l7_card1_sub', "Certified Hand-Forged Quality & Verified Artisans");
+$l7_card1_img      = get_setting('l7_card1_img', '');
 
 $l7_card2_title    = get_setting('l7_card2_title', "Easy 3-Day Returns");
 $l7_card2_sub      = get_setting('l7_card2_sub', "Hassle-free replacement for all farm tools & implements");
 $l7_card2_link     = get_setting('l7_card2_link', "/terms.php");
+$l7_card2_img      = get_setting('l7_card2_img', '');
 
 // 5 Value Propositions
 $l7_trust1_t = get_setting('l7_trust1_t', 'Free Shipping');
@@ -65,7 +67,7 @@ $l7_trust5_t = get_setting('l7_trust5_t', 'Secure Payment');
 $l7_trust5_s = get_setting('l7_trust5_s', '100% safe checkout');
 
 // Category Block 1 (Farming & Tools)
-$l7_b1_title      = get_setting('l7_b1_title', 'Farming & Agriculture');
+$l7_b1_title      = get_setting('l7_b1_title', 'Farming & Hand-Forged Tools');
 $l7_b1_spot_title = get_setting('l7_b1_spot_title', 'Your farm deserves the right equipment.');
 $l7_b1_spot_desc  = get_setting('l7_b1_spot_desc', 'Everything you need to keep your crops growing with generational steel endurance.');
 $l7_b1_spot_img   = get_setting('l7_b1_spot_img', 'https://images.unsplash.com/photo-1595974482597-4b8da8879bc5?auto=format&fit=crop&w=800&q=80');
@@ -73,37 +75,194 @@ $l7_b1_spot_btn   = get_setting('l7_b1_spot_btn', 'Browse Farming Tools');
 $l7_b1_spot_link  = get_setting('l7_b1_spot_link', '/products.php?category=farming-traditional-tools');
 
 // Category Block 2 (Food & HoReCa)
-$l7_b2_title      = get_setting('l7_b2_title', 'Food & HoReCa');
+$l7_b2_title      = get_setting('l7_b2_title', 'Authentic Village Spices, Pulses & Pickles');
 $l7_b2_spot_title = get_setting('l7_b2_spot_title', 'Everything hotels, restaurants & caterers need pack it, serve it, cook it and keep it spotless.');
 $l7_b2_spot_desc  = get_setting('l7_b2_spot_desc', 'Pure unpolished Awadh pulses, raw cold-pressed mustard oil, and authentic grandma pickles.');
 $l7_b2_spot_img   = get_setting('l7_b2_spot_img', 'https://images.unsplash.com/photo-1556910103-1c02745aae4d?auto=format&fit=crop&w=800&q=80');
 $l7_b2_spot_btn   = get_setting('l7_b2_spot_btn', 'Shop all Food & HoReCa');
 $l7_b2_spot_link  = get_setting('l7_b2_spot_link', '/products.php?category=pulses-organic-grains');
 
-// Category Block 3 (Pumps & Electrical)
-$l7_b3_title      = get_setting('l7_b3_title', 'Pumps and Electrical Component');
+// Category Block 3 (Pumps & Electrical / Workshop)
+$l7_b3_title      = get_setting('l7_b3_title', 'Handlooms, Jute & Workshop Implements');
 $l7_b3_spot_title = get_setting('l7_b3_spot_title', 'Find water pumps and electrical essentials');
 $l7_b3_spot_desc  = get_setting('l7_b3_spot_desc', 'For farms, homes and workshops. Rugged leaf-spring forges, anvil tools & heavy machinery.');
 $l7_b3_spot_img   = get_setting('l7_b3_spot_img', 'https://images.unsplash.com/photo-1504917599217-d4dc5ebe6122?auto=format&fit=crop&w=800&q=80');
 $l7_b3_spot_btn   = get_setting('l7_b3_spot_btn', 'Shop all Pump & Electrical');
 $l7_b3_spot_link  = get_setting('l7_b3_spot_link', '/products.php?category=rural-utility-machinery');
 
-// Department Menu Items
-$l7_departments = [
-    ['icon' => 'fa-solid fa-wheat-awn', 'color' => 'text-emerald-700', 'name' => 'Farming & Agriculture', 'hi' => 'कृषि एवं खेती उपकरण', 'link' => '/products.php?category=farming-traditional-tools'],
-    ['icon' => 'fa-solid fa-utensils', 'color' => 'text-amber-700', 'name' => 'Food & HoReCa', 'hi' => 'खाद्य प्रसंस्करण व दालें', 'link' => '/products.php?category=pulses-organic-grains'],
-    ['icon' => 'fa-solid fa-bolt', 'color' => 'text-blue-600', 'name' => 'Pumps and Electrical Component', 'hi' => 'पंप व मोटर उपकरण', 'link' => '/products.php?category=rural-utility-machinery'],
-    ['icon' => 'fa-solid fa-industry', 'color' => 'text-red-700', 'name' => 'Industrials & MRO', 'hi' => 'वर्कशॉप व औजार', 'link' => '/products.php?category=farming-traditional-tools'],
-    ['icon' => 'fa-solid fa-kitchen-set', 'color' => 'text-orange-600', 'name' => 'QSR & Commercial Kitchen', 'hi' => 'किचन व रेस्टोरेंट उपकरण', 'link' => '/products.php?category=village-home-decor-toys'],
-    ['icon' => 'fa-solid fa-flask-vial', 'color' => 'text-teal-600', 'name' => 'Lab & Testing Supplies', 'hi' => 'परीक्षण व सुरक्षा किट', 'link' => '/products.php'],
-    ['icon' => 'fa-solid fa-screwdriver-wrench', 'color' => 'text-indigo-700', 'name' => 'Industrial Tools & Spares', 'hi' => 'स्पेयर पार्ट्स व हार्डवेयर', 'link' => '/products.php?category=rural-utility-machinery'],
-    ['icon' => 'fa-solid fa-tractor', 'color' => 'text-purple-700', 'name' => 'Automotive & Agri EV', 'hi' => 'ट्रैक्टर व कृषि वाहन', 'link' => '/products.php'],
-    ['icon' => 'fa-solid fa-seedling', 'color' => 'text-green-700', 'name' => 'Horticulture Tools', 'hi' => 'बागवानी व खुरपी औजार', 'link' => '/products.php?category=farming-traditional-tools'],
-    ['icon' => 'fa-solid fa-box-open', 'color' => 'text-sky-700', 'name' => 'Agri- Supplies & Sacks', 'hi' => 'कृषि बोरियां व सुरक्षा जाल', 'link' => '/products.php?category=jute-bags-cloth-jholas'],
-    ['icon' => 'fa-solid fa-cow', 'color' => 'text-amber-800', 'name' => 'Animal Husbandry', 'hi' => 'पशुपालन व डेयरी उत्पाद', 'link' => '/products.php'],
-    ['icon' => 'fa-solid fa-faucet-drip', 'color' => 'text-cyan-700', 'name' => 'Plumbing & Irrigation', 'hi' => 'पाइप व जल सिंचाई', 'link' => '/products.php?category=rural-utility-machinery']
+// Dynamically Load Site's Real Categories from Database
+$l7_db_categories = [];
+if (!empty($categories) && is_array($categories)) {
+    $l7_db_categories = $categories;
+} else {
+    try {
+        $l7_db_categories = $pdo->query("SELECT * FROM categories ORDER BY sort_order ASC, name ASC")->fetchAll();
+    } catch (Throwable $e_sc) {
+        $l7_db_categories = [];
+    }
+}
+
+// Icon dictionary for GanvGaliHat categories
+$l7_icon_map = [
+    'spice' => ['icon' => 'fa-solid fa-pepper-hot', 'color' => 'text-amber-600'],
+    'farm' => ['icon' => 'fa-solid fa-wheat-awn', 'color' => 'text-emerald-700'],
+    'tool' => ['icon' => 'fa-solid fa-screwdriver-wrench', 'color' => 'text-indigo-700'],
+    'pulse' => ['icon' => 'fa-solid fa-seedling', 'color' => 'text-green-700'],
+    'grain' => ['icon' => 'fa-solid fa-bowl-rice', 'color' => 'text-amber-700'],
+    'pickle' => ['icon' => 'fa-solid fa-jar', 'color' => 'text-orange-600'],
+    'murabba' => ['icon' => 'fa-solid fa-apple-whole', 'color' => 'text-rose-600'],
+    'workshop' => ['icon' => 'fa-solid fa-industry', 'color' => 'text-red-700'],
+    'iron' => ['icon' => 'fa-solid fa-hammer', 'color' => 'text-stone-700'],
+    'jute' => ['icon' => 'fa-solid fa-bag-shopping', 'color' => 'text-yellow-700'],
+    'bag' => ['icon' => 'fa-solid fa-box-open', 'color' => 'text-sky-700'],
+    'decor' => ['icon' => 'fa-solid fa-paint-roller', 'color' => 'text-purple-600'],
+    'toy' => ['icon' => 'fa-solid fa-horse-head', 'color' => 'text-teal-600'],
+    'handloom' => ['icon' => 'fa-solid fa-rug', 'color' => 'text-pink-700'],
+    'textile' => ['icon' => 'fa-solid fa-shirt', 'color' => 'text-blue-700'],
+    'khadi' => ['icon' => 'fa-solid fa-feather-pointed', 'color' => 'text-indigo-600'],
+    'pump' => ['icon' => 'fa-solid fa-bolt', 'color' => 'text-blue-600'],
+    'electrical' => ['icon' => 'fa-solid fa-plug', 'color' => 'text-amber-500']
 ];
+
+$l7_departments = [];
+foreach ($l7_db_categories as $c) {
+    $c_slug = strtolower($c['slug'] ?? '');
+    $ico = 'fa-solid fa-tags';
+    $col = 'text-emerald-700';
+    foreach ($l7_icon_map as $key => $conf) {
+        if (strpos($c_slug, $key) !== false) {
+            $ico = $conf['icon'];
+            $col = $conf['color'];
+            break;
+        }
+    }
+    $l7_departments[] = [
+        'icon' => $ico,
+        'color' => $col,
+        'name' => $c['name'],
+        'hi' => $c['hindi_name'] ?? $c['name'],
+        'link' => '/products.php?category=' . urlencode($c['slug'])
+    ];
+}
+
+// Fallback departments if DB categories are fewer than 6
+if (count($l7_departments) < 6) {
+    $default_depts = [
+        ['icon' => 'fa-solid fa-wheat-awn', 'color' => 'text-emerald-700', 'name' => 'Farming & Agricultural Tools', 'hi' => 'कृषि एवं खेती उपकरण', 'link' => '/products.php?category=farming-traditional-tools'],
+        ['icon' => 'fa-solid fa-pepper-hot', 'color' => 'text-amber-600', 'name' => 'Authentic Village Spices', 'hi' => 'देसी मसाले व पिसाई', 'link' => '/products.php?category=spices'],
+        ['icon' => 'fa-solid fa-seedling', 'color' => 'text-green-700', 'name' => 'Organic Pulses & Grains', 'hi' => 'दालें एवं देसी अनाज', 'link' => '/products.php?category=pulses-organic-grains'],
+        ['icon' => 'fa-solid fa-jar', 'color' => 'text-orange-600', 'name' => 'Pickles & Murabbas', 'hi' => 'देसी अचार व मुरब्बा', 'link' => '/products.php?category=village-pickles-murabbas'],
+        ['icon' => 'fa-solid fa-industry', 'color' => 'text-red-700', 'name' => 'Workshop & Iron Implements', 'hi' => 'लोहार एवं वर्कशॉप औजार', 'link' => '/products.php?category=rural-utility-machinery'],
+        ['icon' => 'fa-solid fa-bag-shopping', 'color' => 'text-yellow-700', 'name' => 'Eco Jute Bags & Sacks', 'hi' => 'इको जूट बैग एवं झोले', 'link' => '/products.php?category=jute-bags-cloth-jholas'],
+        ['icon' => 'fa-solid fa-rug', 'color' => 'text-pink-700', 'name' => 'Handloom Textiles & Khadi', 'hi' => 'हथकरघा वस्त्र व खादी', 'link' => '/products.php'],
+        ['icon' => 'fa-solid fa-paint-roller', 'color' => 'text-purple-600', 'name' => 'Village Home Decor & Toys', 'hi' => 'गांव डेकोर एवं काठ खिलौने', 'link' => '/products.php?category=village-home-decor-toys']
+    ];
+    foreach ($default_depts as $dd) {
+        $exists = false;
+        foreach ($l7_departments as $existing) {
+            if (strtolower($existing['name']) === strtolower($dd['name'])) { $exists = true; break; }
+        }
+        if (!$exists) {
+            $l7_departments[] = $dd;
+        }
+    }
+}
 ?>
+
+<style>
+/* Layout 7: ToolsVilla Style Guaranteed Contrast & Compact Micro-Typography */
+.l7-wrap {
+  width: 100%;
+  max-width: 100vw;
+  overflow-x: hidden;
+  box-sizing: border-box;
+}
+
+/* Center Hero Banner: Rich Deep Forest with 100% Solid Contrast */
+.l7-hero-box {
+  background: linear-gradient(135deg, #062b1e 0%, #0a3d2b 55%, #031c13 100%) !important;
+  color: #ffffff !important;
+  border: 1px solid rgba(16, 185, 129, 0.3) !important;
+  position: relative !important;
+  overflow: hidden !important;
+}
+.l7-hero-pill-badge {
+  display: inline-flex !important;
+  align-items: center !important;
+  gap: 8px !important;
+  padding: 5px 13px !important;
+  border-radius: 9999px !important;
+  background: rgba(251, 191, 36, 0.18) !important;
+  border: 1px solid rgba(251, 191, 36, 0.45) !important;
+  color: #fde047 !important;
+  font-size: 11px !important;
+  font-weight: 900 !important;
+  text-transform: uppercase !important;
+  letter-spacing: .08em !important;
+}
+.l7-hero-h1 {
+  color: #ffffff !important;
+  font-weight: 900 !important;
+  text-shadow: 0 2px 10px rgba(0,0,0,0.5) !important;
+  font-size: clamp(1.4rem, 2.6vw, 2.1rem) !important;
+  line-height: 1.15 !important;
+  letter-spacing: -.02em !important;
+}
+.l7-hero-desc {
+  color: #d1fae5 !important;
+  font-size: clamp(11.5px, 1.3vw, 13px) !important;
+  line-height: 1.5 !important;
+  max-width: 580px !important;
+  opacity: 0.95 !important;
+}
+.l7-hero-tag {
+  display: inline-flex !important;
+  align-items: center !important;
+  padding: 4px 10px !important;
+  border-radius: 8px !important;
+  background: rgba(255, 255, 255, 0.12) !important;
+  border: 1px solid rgba(255, 255, 255, 0.25) !important;
+  color: #ffffff !important;
+  font-size: 11px !important;
+  font-weight: 700 !important;
+  backdrop-filter: blur(8px) !important;
+  transition: all 0.2s !important;
+}
+.l7-hero-tag:hover {
+  background: rgba(255, 255, 255, 0.22) !important;
+  color: #fde047 !important;
+  border-color: rgba(251, 191, 36, 0.5) !important;
+}
+
+/* B2B Wholesale Banner (Fixing Image 2 White-on-White) */
+.l7-b2b-box {
+  background: linear-gradient(135deg, #0b1f17 0%, #064e3b 60%, #032b1f 100%) !important;
+  color: #ffffff !important;
+  border: 1px solid rgba(16, 185, 129, 0.35) !important;
+  box-shadow: 0 10px 30px rgba(0,0,0,0.12) !important;
+}
+.l7-b2b-badge {
+  display: inline-flex !important;
+  align-items: center !important;
+  gap: 6px !important;
+  padding: 4px 12px !important;
+  border-radius: 9999px !important;
+  background: rgba(251, 191, 36, 0.2) !important;
+  border: 1px solid rgba(251, 191, 36, 0.45) !important;
+  color: #fde047 !important;
+  font-size: 11px !important;
+  font-weight: 900 !important;
+  text-transform: uppercase !important;
+}
+.l7-b2b-box h3 {
+  color: #ffffff !important;
+  font-weight: 900 !important;
+  text-shadow: 0 2px 8px rgba(0,0,0,0.4) !important;
+}
+.l7-b2b-box p {
+  color: #d1fae5 !important;
+}
+</style>
 
 <div class="l7-wrap bg-[#f8fafc] text-slate-800 font-sans pb-16">
 
@@ -142,7 +301,7 @@ $l7_departments = [
 
       <!-- Column 1: Persistent Department Sidebar (24% desktop) -->
       <aside class="hidden lg:block lg:col-span-3 bg-white rounded-2xl border border-slate-200/80 shadow-xs overflow-hidden flex flex-col justify-between">
-        <div class="p-3.5 bg-slate-50 border-b border-slate-100 flex items-center justify-between">
+        <div class="p-3 bg-slate-50 border-b border-slate-100 flex items-center justify-between">
           <span class="font-black text-xs text-slate-800 uppercase tracking-wider flex items-center gap-2">
             <i class="fa-solid fa-bars-staggered text-emerald-700"></i>
             <span class="lang-en">All Categories</span>
@@ -150,10 +309,10 @@ $l7_departments = [
           </span>
           <span class="text-[10px] font-bold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-full">Explore</span>
         </div>
-        <nav class="divide-y divide-slate-100 flex-1 overflow-y-auto max-h-[460px]" aria-label="Departments">
+        <nav class="divide-y divide-slate-100 flex-1 overflow-y-auto max-h-[400px]" aria-label="Departments">
           <?php foreach ($l7_departments as $dept): ?>
-            <a href="<?= l7_e($dept['link']) ?>" class="group px-3.5 py-2.5 flex items-center justify-between text-xs font-bold text-slate-700 hover:text-emerald-700 hover:bg-emerald-50/50 transition">
-              <span class="flex items-center gap-2.5 line-clamp-1">
+            <a href="<?= l7_e($dept['link']) ?>" class="group px-3 py-2 flex items-center justify-between text-xs font-bold text-slate-700 hover:text-emerald-700 hover:bg-emerald-50/50 transition">
+              <span class="flex items-center gap-2 line-clamp-1">
                 <i class="<?= $dept['icon'] ?> <?= $dept['color'] ?> text-sm w-4 text-center"></i>
                 <span class="lang-en"><?= l7_e($dept['name']) ?></span>
                 <span class="lang-hi hidden"><?= l7_e($dept['hi']) ?></span>
@@ -171,30 +330,30 @@ $l7_departments = [
       </aside>
 
       <!-- Column 2: Center Big Hero Banner (52% desktop) -->
-      <div class="lg:col-span-6 bg-gradient-to-br from-emerald-950 via-[#0a3826] to-[#042016] rounded-2xl p-6 sm:p-8 text-white relative overflow-hidden flex flex-col justify-between shadow-md border border-emerald-900/50 min-h-[440px]">
+      <div class="lg:col-span-6 l7-hero-box rounded-2xl p-5 sm:p-6 text-white relative overflow-hidden flex flex-col justify-between shadow-md min-h-[350px]">
         
         <!-- High-Contrast Background Machinery Backdrop -->
-        <div class="absolute inset-0 bg-cover bg-center opacity-30 mix-blend-luminosity pointer-events-none" style="background-image: url('<?= l7_e($l7_hero_bg_img) ?>');"></div>
-        <div class="absolute inset-0 bg-gradient-to-t from-emerald-950 via-emerald-950/70 to-transparent pointer-events-none"></div>
+        <div class="absolute inset-0 bg-cover bg-center opacity-25 mix-blend-luminosity pointer-events-none" style="background-image: url('<?= l7_e($l7_hero_bg_img) ?>');"></div>
+        <div class="absolute inset-0 bg-gradient-to-t from-[#062b1e] via-[#062b1e]/80 to-transparent pointer-events-none"></div>
 
         <!-- Top Pill Badge -->
         <div class="relative z-10">
-          <div class="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-emerald-500/20 border border-emerald-400/30 text-amber-300 text-xs font-black tracking-wide uppercase shadow-xs mb-4">
+          <div class="l7-hero-pill-badge mb-3">
             <span class="w-2 h-2 rounded-full bg-amber-400 animate-ping"></span>
             <span><?= l7_e($l7_hero_badge) ?></span>
           </div>
 
-          <h1 class="text-2xl sm:text-4xl font-black text-white leading-tight tracking-tight mb-3">
+          <h1 class="l7-hero-h1 mb-2">
             <?= l7_e($l7_hero_title) ?>
           </h1>
-          <p class="text-xs sm:text-sm text-emerald-100/90 leading-relaxed max-w-xl mb-4 font-medium">
+          <p class="l7-hero-desc mb-3 font-medium">
             <?= l7_e($l7_hero_subtitle) ?>
           </p>
 
           <!-- Floating Machinery Tags (Matching Screenshot 1) -->
-          <div class="flex flex-wrap gap-2 mb-6">
+          <div class="flex flex-wrap gap-1.5 mb-4">
             <?php foreach ([$l7_hero_tag1, $l7_hero_tag2, $l7_hero_tag3, $l7_hero_tag4, $l7_hero_tag5] as $tag): if (!empty($tag)): ?>
-              <span class="px-3 py-1 bg-white/10 hover:bg-white/20 border border-white/20 rounded-lg text-[11px] font-bold text-emerald-200 backdrop-blur-xs transition cursor-default">
+              <span class="l7-hero-tag">
                 <?= l7_e($tag) ?>
               </span>
             <?php endif; endforeach; ?>
@@ -202,14 +361,14 @@ $l7_departments = [
         </div>
 
         <!-- Hero Bottom Action & Trust Stats -->
-        <div class="relative z-10 pt-4 border-t border-emerald-800/60 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div class="relative z-10 pt-3 border-t border-emerald-800/60 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
           <a href="<?= l7_e($l7_hero_btn_link) ?>" class="px-8 sm:px-10 py-3.5 bg-amber-500 hover:bg-amber-400 text-stone-950 font-black text-xs sm:text-sm rounded-xl shadow-lg transition inline-flex items-center justify-center gap-2.5 whitespace-nowrap min-h-[50px] box-border active:scale-95 cursor-pointer">
             <span><?= l7_e($l7_hero_btn_text) ?></span>
             <i class="fa-solid fa-arrow-right text-xs"></i>
           </a>
 
           <!-- Live Trust Numbers -->
-          <div class="flex items-center gap-4 text-xs font-bold text-emerald-200/90">
+          <div class="flex items-center gap-3.5 text-xs font-bold text-emerald-200/90">
             <div>
               <div class="text-white font-black text-sm"><?= l7_e($l7_hero_stat1) ?></div>
               <div class="text-[10px] text-emerald-300">Catalog</div>
@@ -230,30 +389,35 @@ $l7_departments = [
       </div>
 
       <!-- Column 3: Stacked Right Cards (24% desktop - Matching Screenshot 1) -->
-      <div class="lg:col-span-3 flex flex-col gap-4">
+      <div class="lg:col-span-3 flex flex-col gap-3">
 
         <!-- Card 1: Trusted by 10,000+ Farmers (Google 4.9 Rating) -->
-        <div class="bg-white rounded-2xl p-5 border border-slate-200/90 shadow-xs flex-1 flex flex-col justify-between hover:border-emerald-300 transition">
-          <div>
-            <div class="flex items-center justify-between mb-3">
-              <span class="px-2.5 py-1 bg-emerald-50 text-emerald-800 font-extrabold text-[10px] rounded-md uppercase">Google Certified</span>
-              <div class="flex items-center text-amber-500 text-xs">
-                <i class="fa-solid fa-star"></i>
-                <i class="fa-solid fa-star"></i>
-                <i class="fa-solid fa-star"></i>
-                <i class="fa-solid fa-star"></i>
-                <i class="fa-solid fa-star-half-stroke"></i>
-                <span class="ml-1 font-bold text-slate-800 text-[11px]"><?= l7_e($l7_card1_rating) ?></span>
+        <div class="bg-white rounded-2xl p-4 sm:p-5 border border-slate-200/90 shadow-xs flex-1 flex flex-col justify-between hover:border-emerald-300 transition">
+          <div class="flex items-start gap-3">
+            <?php if (!empty($l7_card1_img)): ?>
+              <img src="<?= l7_e($l7_card1_img) ?>" alt="Google Rating" class="w-12 h-12 rounded-xl object-contain bg-slate-50 border border-slate-200 shrink-0 p-1">
+            <?php endif; ?>
+            <div class="flex-1">
+              <div class="flex items-center justify-between mb-2">
+                <span class="px-2 py-0.5 bg-emerald-50 text-emerald-800 font-extrabold text-[10px] rounded-md uppercase">Google Certified</span>
+                <div class="flex items-center text-amber-500 text-xs">
+                  <i class="fa-solid fa-star"></i>
+                  <i class="fa-solid fa-star"></i>
+                  <i class="fa-solid fa-star"></i>
+                  <i class="fa-solid fa-star"></i>
+                  <i class="fa-solid fa-star-half-stroke"></i>
+                  <span class="ml-1 font-bold text-slate-800 text-[11px]"><?= l7_e($l7_card1_rating) ?></span>
+                </div>
               </div>
+              <h3 class="font-black text-sm text-slate-900 leading-snug mb-1">
+                <?= l7_e($l7_card1_title) ?>
+              </h3>
+              <p class="text-xs text-slate-500 leading-relaxed">
+                <?= l7_e($l7_card1_sub) ?>
+              </p>
             </div>
-            <h3 class="font-black text-sm text-slate-900 leading-snug mb-1.5">
-              <?= l7_e($l7_card1_title) ?>
-            </h3>
-            <p class="text-xs text-slate-500 leading-relaxed">
-              <?= l7_e($l7_card1_sub) ?>
-            </p>
           </div>
-          <div class="pt-4 border-t border-slate-100 flex items-center justify-between">
+          <div class="pt-3 border-t border-slate-100 flex items-center justify-between mt-2">
             <span class="text-[11px] font-bold text-emerald-700 flex items-center gap-1">
               <i class="fa-solid fa-circle-check text-emerald-600"></i>
               <span>100% Genuine Forges</span>
@@ -265,19 +429,25 @@ $l7_departments = [
         </div>
 
         <!-- Card 2: 3-Day Easy Returns -->
-        <div class="bg-gradient-to-br from-amber-50/80 to-amber-100/50 rounded-2xl p-5 border border-amber-200 shadow-xs flex-1 flex flex-col justify-between hover:border-amber-400 transition">
-          <div>
-            <div class="w-10 h-10 rounded-xl bg-amber-500 text-slate-950 flex items-center justify-center text-lg mb-3 shadow-xs">
-              <i class="fa-solid fa-box-open"></i>
+        <div class="bg-gradient-to-br from-amber-50/80 to-amber-100/50 rounded-2xl p-4 sm:p-5 border border-amber-200 shadow-xs flex-1 flex flex-col justify-between hover:border-amber-400 transition">
+          <div class="flex items-start gap-3">
+            <?php if (!empty($l7_card2_img)): ?>
+              <img src="<?= l7_e($l7_card2_img) ?>" alt="Easy Returns" class="w-12 h-12 rounded-xl object-contain bg-amber-100 border border-amber-300 shrink-0 p-1">
+            <?php else: ?>
+              <div class="w-10 h-10 rounded-xl bg-amber-500 text-slate-950 flex items-center justify-center text-lg shrink-0 shadow-xs">
+                <i class="fa-solid fa-box-open"></i>
+              </div>
+            <?php endif; ?>
+            <div class="flex-1">
+              <h3 class="font-black text-sm text-amber-950 leading-snug mb-1">
+                <?= l7_e($l7_card2_title) ?>
+              </h3>
+              <p class="text-xs text-amber-900/80 leading-relaxed">
+                <?= l7_e($l7_card2_sub) ?>
+              </p>
             </div>
-            <h3 class="font-black text-sm text-amber-950 leading-snug mb-1.5">
-              <?= l7_e($l7_card2_title) ?>
-            </h3>
-            <p class="text-xs text-amber-900/80 leading-relaxed">
-              <?= l7_e($l7_card2_sub) ?>
-            </p>
           </div>
-          <div class="pt-3 border-t border-amber-200/60">
+          <div class="pt-3 border-t border-amber-200/60 mt-2">
             <a href="<?= l7_e($l7_card2_link) ?>" class="text-xs font-black text-amber-950 hover:underline flex items-center justify-between">
               <span>Read Return Guarantee</span>
               <i class="fa-solid fa-arrow-right text-[10px]"></i>
@@ -286,6 +456,8 @@ $l7_departments = [
         </div>
 
       </div>
+
+    </div><!-- /Hero Grid -->
 
     </div><!-- /Hero Grid -->
 
@@ -784,16 +956,16 @@ $l7_departments = [
     </section>
 
     <!-- ==================== 7. B2B WHOLESALE BANNER ==================== -->
-    <div class="mb-12 bg-gradient-to-r from-slate-900 via-stone-900 to-emerald-950 rounded-2xl p-6 sm:p-8 text-white border border-slate-800 shadow-lg flex flex-col md:flex-row items-center justify-between gap-6">
+    <div class="mb-12 l7-b2b-box rounded-2xl p-6 sm:p-8 text-white shadow-lg flex flex-col md:flex-row items-center justify-between gap-6">
       <div class="max-w-2xl">
-        <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-amber-400/20 text-amber-300 border border-amber-400/30 text-[11px] font-black uppercase tracking-wider mb-2">
+        <div class="l7-b2b-badge mb-2">
           <i class="fa-solid fa-boxes-stacked"></i>
-          <span>B2B Wholesale & Bulk Supply</span>
+          <span>B2B Wholesale &amp; Bulk Supply</span>
         </div>
         <h3 class="text-xl sm:text-2xl font-black text-white leading-tight mb-2">
           Buy in Bulk for Your Agri Store, Forge Depot or Retail Business
         </h3>
-        <p class="text-xs text-slate-300 leading-relaxed">
+        <p class="text-xs text-emerald-100/90 leading-relaxed">
           Tiered wholesale rates from 10 to 500+ units, official GST Tax Invoices for up to 18% input credit, and direct courier dispatch across India.
         </p>
       </div>

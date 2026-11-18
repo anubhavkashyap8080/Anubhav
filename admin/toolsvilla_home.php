@@ -48,9 +48,11 @@ $l7_defaults = [
     'l7_card1_title'    => "Trusted by 10,000+ Farmers",
     'l7_card1_rating'   => "4.9",
     'l7_card1_sub'      => "Certified Hand-Forged Quality & Verified Artisans",
+    'l7_card1_img'      => "",
     'l7_card2_title'    => "Easy 3-Day Returns",
     'l7_card2_sub'      => "Hassle-free replacement for all farm tools & implements",
     'l7_card2_link'     => "/terms.php",
+    'l7_card2_img'      => "",
     
     // 5 Value Proposition Points
     'l7_trust1_t'       => "Free Shipping",
@@ -281,6 +283,10 @@ require_once __DIR__ . '/admin_header.php';
               <input type="text" name="l7_card1_sub" value="<?= htmlspecialchars(l7_val('l7_card1_sub', $l7_defaults['l7_card1_sub'])) ?>" class="w-full px-3 py-2 bg-white border border-stone-200 rounded-lg text-xs">
             </div>
           </div>
+          <div>
+            <label class="block text-[11px] font-bold text-stone-700 mb-1">Card 1 Optional Badge / Proof Image URL</label>
+            <input type="url" name="l7_card1_img" value="<?= htmlspecialchars(l7_val('l7_card1_img', '')) ?>" placeholder="e.g. https://.../google-rating-stars.png" class="w-full px-3 py-2 bg-white border border-stone-200 rounded-lg text-xs font-mono">
+          </div>
         </div>
 
         <!-- Card 2 -->
@@ -303,6 +309,10 @@ require_once __DIR__ . '/admin_header.php';
               <label class="block text-[11px] font-bold text-stone-700 mb-1">Link URL</label>
               <input type="text" name="l7_card2_link" value="<?= htmlspecialchars(l7_val('l7_card2_link', $l7_defaults['l7_card2_link'])) ?>" class="w-full px-3 py-2 bg-white border border-stone-200 rounded-lg text-xs">
             </div>
+          </div>
+          <div>
+            <label class="block text-[11px] font-bold text-stone-700 mb-1">Card 2 Optional Guarantee Image URL</label>
+            <input type="url" name="l7_card2_img" value="<?= htmlspecialchars(l7_val('l7_card2_img', '')) ?>" placeholder="e.g. https://.../return-package-box.png" class="w-full px-3 py-2 bg-white border border-stone-200 rounded-lg text-xs font-mono">
           </div>
         </div>
       </div>

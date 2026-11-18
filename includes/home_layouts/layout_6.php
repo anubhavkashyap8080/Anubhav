@@ -194,16 +194,41 @@ body.v6-active header.sticky { display: none !important; }
 .v6-plain-forest .v6-eyebrow { background: rgba(255,255,255,0.12) !important; color: #fcd34d !important; border-color: rgba(252,211,77,0.4) !important; }
 
 /* Plain section cards & components */
-.v6-content-sec .v6-pc { background: #ffffff !important; border: 1px solid #e2e8f0 !important; box-shadow: 0 4px 16px rgba(0,0,0,.04) !important; color: #0f172a !important; }
-.v6-content-sec .v6-pc:hover { box-shadow: 0 12px 28px rgba(0,0,0,.08) !important; transform: translateY(-4px) !important; }
-.v6-content-sec .v6-pc-title { color: #0f172a !important; }
-.v6-content-sec .v6-price { color: #047857 !important; }
-.v6-content-sec .v6-orig { color: #94a3b8 !important; }
-.v6-content-sec .v6-tile { background: #ffffff !important; border: 1.5px solid #e2e8f0 !important; color: #0f172a !important; box-shadow: 0 2px 8px rgba(0,0,0,.03) !important; }
-.v6-content-sec .v6-tile:hover { border-color: #10b981 !important; box-shadow: 0 8px 22px rgba(16,185,129,.12) !important; transform: translateY(-3px) !important; }
-.v6-content-sec .v6-tile b { color: #0f172a !important; }
-.v6-content-sec .v6-tile small { color: #64748b !important; }
-.v6-content-sec .v6-strip-t { color: #0f172a !important; }
+.v6-content-sec .v6-pc { background: #ffffff !important; border: 1px solid #e2e8f0 !important; box-shadow: 0 4px 16px rgba(0,0,0,.06) !important; color: #0f172a !important; }
+.v6-content-sec .v6-pc:hover { box-shadow: 0 14px 32px rgba(0,0,0,.1) !important; transform: translateY(-4px) !important; }
+.v6-content-sec .v6-pc-body { background: #ffffff !important; color: #0f172a !important; }
+.v6-content-sec .v6-pc-title, .v6-content-sec .v6-pc-name { color: #0f172a !important; font-weight: 800 !important; text-decoration: none !important; }
+.v6-content-sec .v6-pc-name:hover { color: #059669 !important; }
+.v6-content-sec .v6-pc-cat { color: #059669 !important; font-weight: 800 !important; letter-spacing: .08em !important; }
+.v6-content-sec .v6-price b { color: #064e3b !important; font-weight: 900 !important; }
+.v6-content-sec .v6-price s { color: #94a3b8 !important; }
+.v6-content-sec .v6-add { background: #f59e0b !important; color: #1c1204 !important; font-weight: 900 !important; }
+.v6-content-sec .v6-add:hover { background: #fbbf24 !important; }
+
+/* Category Tiles (High Contrast on Background Images) */
+.v6-tile { position: relative; display: flex; flex-direction: column; justify-content: flex-end; min-height: 200px; aspect-ratio: 4/5; border-radius: 24px; overflow: hidden; color: #fff; text-decoration: none; background: #0b1f17; border: 1.5px solid rgba(255,255,255,.2); box-shadow: 0 10px 30px rgba(0,0,0,.12); transition: transform .35s, box-shadow .35s; }
+.v6-tile::after { content: ""; position: absolute; inset: 0; background: linear-gradient(180deg, rgba(0,0,0,0.05) 20%, rgba(15,23,42,0.45) 55%, rgba(15,23,42,0.95) 100%) !important; pointer-events: none; }
+.v6-tile div { position: relative !important; z-index: 2 !important; padding: 18px 16px !important; background: linear-gradient(180deg, transparent 0%, rgba(15,23,42,0.88) 45%, rgba(15,23,42,0.98) 100%) !important; width: 100% !important; border-radius: 0 0 24px 24px !important; box-sizing: border-box !important; }
+.v6-tile b, .v6-content-sec .v6-tile b { color: #ffffff !important; font-weight: 800 !important; text-shadow: 0 2px 8px rgba(0,0,0,0.95) !important; font-size: clamp(1rem, 2.4vw, 1.3rem) !important; }
+.v6-tile small, .v6-content-sec .v6-tile small { color: #fde047 !important; font-weight: 700 !important; text-shadow: 0 1px 4px rgba(0,0,0,0.95) !important; opacity: 1 !important; }
+.v6-content-sec .v6-tile { background: #0b1f17 !important; border: 1.5px solid #e2e8f0 !important; }
+.v6-content-sec .v6-tile:hover { border-color: #10b981 !important; box-shadow: 0 12px 28px rgba(16,185,129,.18) !important; transform: translateY(-4px) !important; }
+
+/* Rail Layout & Spacing (Prevents Last Item Cutoff) */
+.v6-rail { display: flex; gap: 20px; overflow-x: auto; scroll-snap-type: x mandatory; padding: 12px 32px 28px 8px !important; margin: 0 -20px; padding-left: 20px !important; padding-right: 36px !important; scroll-padding-left: 8px !important; scroll-padding-right: 36px !important; scrollbar-width: none; -webkit-overflow-scrolling: touch; }
+.v6-rail .v6-pc { flex: 0 0 min(72vw, 280px) !important; scroll-snap-align: start; }
+@media(min-width:900px){ .v6-rail{margin:0;padding-left:8px !important;padding-right:36px !important;} .v6-rail .v6-pc{flex-basis:280px !important;} }
+
+/* Featured Spotlight Big Card */
+.v6-content-sec .v6-pc-big { border: 2px solid #059669 !important; box-shadow: 0 12px 36px rgba(5,150,105,0.12) !important; }
+.v6-content-sec .v6-pc-big .v6-pc-name { font-size: clamp(1.2rem, 2.4vw, 1.7rem) !important; color: #0f172a !important; font-weight: 900 !important; }
+
+/* New Arrivals Strip Header */
+.v6-strip { margin-top: 48px !important; padding-top: 36px !important; border-top: 1.5px dashed #cbd5e1 !important; }
+.v6-strip-badge { display: inline-flex; align-items: center; gap: 6px; padding: 4px 12px; border-radius: 9999px; font-size: 11px; font-weight: 900; text-transform: uppercase; letter-spacing: .08em; background: #fef3c7; color: #92400e; border: 1px solid #fde68a; width: max-content; margin-bottom: 6px; }
+.v6-strip-t { margin: 0 !important; color: #0f172a !important; font-size: clamp(1.4rem, 3.2vw, 2rem) !important; font-weight: 900 !important; letter-spacing: -.02em !important; font-family: Georgia, serif !important; text-shadow: none !important; }
+.v6-strip-sub { margin: 4px 0 0 !important; color: #64748b !important; font-size: 13px !important; }
+
 .v6-content-sec .v6-btn-sec { background: #ffffff !important; color: #0f172a !important; border: 1.5px solid #cbd5e1 !important; backdrop-filter: none !important; }
 .v6-content-sec .v6-btn-sec:hover { background: #f1f5f9 !important; border-color: #94a3b8 !important; }
 .v6-content-sec .v6-artisan { background: #ffffff !important; border: 1px solid #e2e8f0 !important; box-shadow: 0 4px 14px rgba(0,0,0,.04) !important; color: #0f172a !important; }
@@ -553,11 +578,29 @@ foreach ($v6 as $n => $s):
     ?>
     <?php if ($strip): ?>
       <div class="v6-strip v6-rv">
-        <h3 class="v6-strip-t">
-          <span class="lang-en">New arrivals</span>
-          <span class="lang-hi hidden">नए आगमन</span>
-        </h3>
-        <div class="v6-rail"><?php foreach ($strip as $p) v6_card($p); ?></div>
+        <div class="v6-strip-header">
+          <div>
+            <div class="v6-strip-badge">
+              <i class="fa-solid fa-sparkles text-amber-600"></i>
+              <span class="lang-en">Freshly Handcrafted &amp; Harvested</span>
+              <span class="lang-hi hidden">नया हस्तशिल्प व ताजी फसल</span>
+            </div>
+            <h3 class="v6-strip-t">
+              <span class="lang-en">New Arrivals</span>
+              <span class="lang-hi hidden">नए आगमन</span>
+            </h3>
+            <p class="v6-strip-sub">
+              <span class="lang-en">Directly dispatched from Hardoi artisan clusters within 24–48 hours</span>
+              <span class="lang-hi hidden">हरदोई क्लस्टर से 24–48 घंटे में सीधे प्रेषित</span>
+            </p>
+          </div>
+          <a href="/products.php?sort=newest" class="px-5 py-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-800 font-bold text-xs inline-flex items-center gap-1.5 transition whitespace-nowrap shadow-xs">
+            <span class="lang-en">View All New Arrivals</span>
+            <span class="lang-hi hidden">सभी नए उत्पाद देखें</span>
+            <i class="fa-solid fa-arrow-right text-[10px]"></i>
+          </a>
+        </div>
+        <div class="v6-rail" data-hint-scroll="1"><?php foreach ($strip as $p) v6_card($p); ?></div>
       </div>
     <?php endif; ?>
     <div class="v6-rv"><?= v6_buttons($s) ?></div>
@@ -565,8 +608,28 @@ foreach ($v6 as $n => $s):
 <?php elseif ($n === 3): // ---------------- 3. BEST SELLERS RAIL ---------------- ?>
     <?php $items = v6_products($pdo, $s['prod_source'], $s['limit'], $s['prod_cat'], $v6_used); foreach ($items as $it) $v6_used[] = (int)$it['id']; ?>
     <div class="v6-rv"><?php v6_head($s); ?></div>
-    <div class="v6-arrows v6-rv" data-rail="r<?= $n ?>"><button type="button" data-d="-1" aria-label="Previous">&larr;</button><button type="button" data-d="1" aria-label="Next">&rarr;</button></div>
-    <div class="v6-rail v6-rv" id="r<?= $n ?>">
+    
+    <!-- Modern Interactive Slider Control with Visual Hints -->
+    <div class="v6-arrows v6-rv flex items-center justify-between gap-4 mb-4" data-rail="r<?= $n ?>">
+      <div class="flex items-center gap-2">
+        <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-50 text-emerald-800 text-xs font-bold border border-emerald-200">
+          <i class="fa-solid fa-fire text-amber-500"></i>
+          <span class="lang-en">Bestselling Implements &amp; Produce</span>
+          <span class="lang-hi hidden">सर्वाधिक बिकने वाले उत्पाद</span>
+        </span>
+        <span class="text-xs text-slate-400 hidden sm:inline">• Swipe or click arrows to explore</span>
+      </div>
+      <div class="flex items-center gap-2">
+        <button type="button" data-d="-1" aria-label="Previous" class="w-10 h-10 rounded-xl bg-white hover:bg-slate-100 text-slate-800 border border-slate-200 shadow-xs flex items-center justify-center transition active:scale-95 cursor-pointer">
+          <i class="fa-solid fa-chevron-left text-xs"></i>
+        </button>
+        <button type="button" data-d="1" aria-label="Next" class="w-10 h-10 rounded-xl bg-emerald-700 hover:bg-emerald-800 text-white shadow-xs flex items-center justify-center transition active:scale-95 cursor-pointer">
+          <i class="fa-solid fa-chevron-right text-xs"></i>
+        </button>
+      </div>
+    </div>
+
+    <div class="v6-rail v6-rv" id="r<?= $n ?>" data-hint-scroll="1">
       <?php foreach ($items as $p) v6_card($p); ?>
     </div>
     <div class="v6-rv"><?= v6_buttons($s) ?></div>
@@ -722,7 +785,7 @@ foreach ($v6 as $n => $s):
   }
   mirror('header-cart-count', 'v6Cart'); mirror('header-wishlist-count', 'v6Wish');
 
-  /* ---- product rail arrows ---- */
+  /* ---- product rail arrows & modern slider ---- */
   [].forEach.call(d.querySelectorAll('.v6-arrows'), function (a) {
     var rail = d.getElementById(a.getAttribute('data-rail'));
     a.addEventListener('click', function (e) {
@@ -730,6 +793,27 @@ foreach ($v6 as $n => $s):
       rail.scrollBy({ left: (+b.getAttribute('data-d')) * Math.max(280, rail.clientWidth * 0.8), behavior: 'smooth' });
     });
   });
+
+  /* ---- auto hint-scroll on viewport entry (Image 6 Feature) ---- */
+  var hintRails = [].slice.call(d.querySelectorAll('[data-hint-scroll="1"]'));
+  if ('IntersectionObserver' in window) {
+    var hintObs = new IntersectionObserver(function (entries) {
+      entries.forEach(function (e) {
+        if (!e.isIntersecting) return;
+        var r = e.target;
+        hintObs.unobserve(r);
+        setTimeout(function () {
+          if (r.scrollLeft === 0) {
+            r.scrollTo({ left: 140, behavior: 'smooth' });
+            setTimeout(function () {
+              r.scrollTo({ left: 0, behavior: 'smooth' });
+            }, 850);
+          }
+        }, 400);
+      });
+    }, { threshold: 0.18 });
+    hintRails.forEach(function (r) { hintObs.observe(r); });
+  }
 
   /* ---- newsletter form ---- */
   var nl = d.getElementById('v6NlForm'), nlMsg = d.getElementById('v6NlMsg');
