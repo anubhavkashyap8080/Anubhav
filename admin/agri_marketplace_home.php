@@ -1,7 +1,7 @@
 <?php
 /**
  * GanvGaliHat - Admin: Tools & Agri Marketplace (Layout 7) Customizer
- * Customizes all sections of the ToolsVilla-style homepage layout:
+ * Customizes all sections of the Tools & Agri Marketplace (Layout 7) homepage:
  * Hero banner, machinery badges, metrics, trust cards, 5-point value proposition bar,
  * and modular category spotlights for Farming, HoReCa, and Pumps & Electrical.
  */
@@ -15,7 +15,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 }
 
 $page_title = "Tools & Agri Marketplace (Layout 7) Customizer";
-$current_page = "toolsvilla_home.php";
+$current_page = "agri_marketplace_home.php";
 
 $is_sqlite = ($pdo->getAttribute(PDO::ATTR_DRIVER_NAME) === 'sqlite');
 $upsert = $is_sqlite
@@ -97,9 +97,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['reset_defaults'])) {
     foreach (array_keys($l7_defaults) as $k) {
         $del->execute([$k]);
     }
-    log_audit_action('toolsvilla_home_reset', 'content', 'site_settings', null, 'Reset Layout 7 Tools & Agri Marketplace settings to defaults');
+    log_audit_action('agri_marketplace_home_reset', 'content', 'site_settings', null, 'Reset Layout 7 Tools & Agri Marketplace settings to defaults');
     set_flash('success', 'Layout 7 settings have been reset to factory defaults.');
-    header('Location: /admin/toolsvilla_home.php');
+    header('Location: /admin/agri_marketplace_home.php');
     exit;
 }
 
@@ -117,9 +117,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['save_l7_settings'])) 
         $upsert->execute(['homepage_layout', 'layout_7']);
     }
     
-    log_audit_action('toolsvilla_home_update', 'content', 'site_settings', null, 'Updated Layout 7 Tools & Agri Marketplace settings');
+    log_audit_action('agri_marketplace_home_update', 'content', 'site_settings', null, 'Updated Layout 7 Tools & Agri Marketplace settings');
     set_flash('success', 'Layout 7 settings updated successfully.');
-    header('Location: /admin/toolsvilla_home.php');
+    header('Location: /admin/agri_marketplace_home.php');
     exit;
 }
 
@@ -156,7 +156,7 @@ require_once __DIR__ . '/admin_header.php';
         <span>Tools & Agri Marketplace Layout</span>
       </h1>
       <p class="text-stone-300 text-sm mt-1 max-w-2xl">
-        Configure the ToolsVilla-style homepage: persistent 12-department navigation, high-impact equipment hero, verified trust badges, 5-point value bar, and modular department showcase blocks.
+        Configure the Tools & Agri Marketplace homepage: persistent 12-department navigation, high-impact equipment hero, verified trust badges, 5-point value bar, and modular department showcase blocks.
       </p>
     </div>
     
@@ -175,7 +175,7 @@ require_once __DIR__ . '/admin_header.php';
     </div>
   </div>
 
-  <form method="POST" action="/admin/toolsvilla_home.php" class="space-y-6">
+  <form method="POST" action="/admin/agri_marketplace_home.php" class="space-y-6">
     <?= csrf_field() ?>
 
     <!-- Section 1: Hero Banner & Machinery Tags (Center 50% Column) -->

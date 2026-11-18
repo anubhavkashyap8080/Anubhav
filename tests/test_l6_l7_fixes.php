@@ -3,7 +3,7 @@
  * Test Suite: Layout 6 & Layout 7 Enhanced Fixes
  * Verifies color contrast, card text visibility, category tiles on photos,
  * new arrivals header styling, modern slider controls, auto-hint scroll,
- * and ToolsVilla B2B contrast & trust card image options.
+ * and Layout 7 B2B contrast & trust card image options.
  */
 
 $test_count = 0;
@@ -59,12 +59,12 @@ assert_fix("L7: Right column Card 2 supports image alongside text", strpos($l7_c
 // 7. Layout 7 Site Categories Integration
 assert_fix("L7: Sidebar dynamically integrates real database categories", strpos($l7_content, '$l7_db_categories') !== false && strpos($l7_content, 'l7_icon_map') !== false);
 
-// 8. Admin Customizer (toolsvilla_home.php)
-$admin_content = file_get_contents($base_dir . '/admin/toolsvilla_home.php');
-assert_fix("Admin: toolsvilla_home.php has l7_card1_img setting", strpos($admin_content, "'l7_card1_img'") !== false);
-assert_fix("Admin: toolsvilla_home.php has l7_card2_img setting", strpos($admin_content, "'l7_card2_img'") !== false);
+// 8. Admin Customizer (agri_marketplace_home.php)
+$admin_content = file_get_contents($base_dir . '/admin/agri_marketplace_home.php');
+assert_fix("Admin: agri_marketplace_home.php has l7_card1_img setting", strpos($admin_content, "'l7_card1_img'") !== false);
+assert_fix("Admin: agri_marketplace_home.php has l7_card2_img setting", strpos($admin_content, "'l7_card2_img'") !== false);
 preg_match_all('/[\x{0900}-\x{097F}]/u', $admin_content, $dev_matches);
-assert_fix("Admin: toolsvilla_home.php is 100% English (0 Devanagari)", count($dev_matches[0]) === 0);
+assert_fix("Admin: agri_marketplace_home.php is 100% English (0 Devanagari)", count($dev_matches[0]) === 0);
 
 echo "\nSummary: $pass_count / $test_count tests passed.\n";
 if ($pass_count === $test_count) {

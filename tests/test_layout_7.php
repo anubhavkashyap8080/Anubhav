@@ -1,6 +1,6 @@
 <?php
 /**
- * Test Suite: Layout 7 (ToolsVilla-Style Rural & Agri Marketplace)
+ * Test Suite: Layout 7 (Tools & Agri Rural B2B Marketplace)
  * Verifies syntax, admin customizer integration, rendering, and English default language.
  */
 
@@ -70,7 +70,7 @@ function assert_test($description, $condition) {
     }
 }
 
-echo "=== Running Layout 7 & ToolsVilla Marketplace Test Suite ===\n\n";
+echo "=== Running Layout 7 & Tools Marketplace Test Suite ===\n\n";
 
 // Test 1: layout_7.php file existence & syntax lint
 $l7_file = $base_dir . '/includes/home_layouts/layout_7.php';
@@ -78,17 +78,17 @@ assert_test("layout_7.php exists", file_exists($l7_file));
 $lint_out = shell_exec("php -l " . escapeshellarg($l7_file));
 assert_test("layout_7.php passes php -l syntax check", strpos($lint_out, 'No syntax errors detected') !== false);
 
-// Test 2: admin/toolsvilla_home.php existence, syntax & English policy
-$admin_l7_file = $base_dir . '/admin/toolsvilla_home.php';
-assert_test("admin/toolsvilla_home.php exists", file_exists($admin_l7_file));
+// Test 2: admin/agri_marketplace_home.php existence, syntax & English policy
+$admin_l7_file = $base_dir . '/admin/agri_marketplace_home.php';
+assert_test("admin/agri_marketplace_home.php exists", file_exists($admin_l7_file));
 $admin_lint = shell_exec("php -l " . escapeshellarg($admin_l7_file));
-assert_test("admin/toolsvilla_home.php passes php -l syntax check", strpos($admin_lint, 'No syntax errors detected') !== false);
+assert_test("admin/agri_marketplace_home.php passes php -l syntax check", strpos($admin_lint, 'No syntax errors detected') !== false);
 
 $admin_content = file_get_contents($admin_l7_file);
 preg_match_all('/[\x{0900}-\x{097F}]/u', $admin_content, $matches);
-assert_test("admin/toolsvilla_home.php contains 0 Devanagari characters (100% English)", count($matches[0]) === 0);
-assert_test("admin/toolsvilla_home.php requires admin auth", strpos($admin_content, 'require_admin()') !== false);
-assert_test("admin/toolsvilla_home.php enforces CSRF protection", strpos($admin_content, 'csrf_protect()') !== false);
+assert_test("admin/agri_marketplace_home.php contains 0 Devanagari characters (100% English)", count($matches[0]) === 0);
+assert_test("admin/agri_marketplace_home.php requires admin auth", strpos($admin_content, 'require_admin()') !== false);
+assert_test("admin/agri_marketplace_home.php enforces CSRF protection", strpos($admin_content, 'csrf_protect()') !== false);
 
 // Test 3: index.php includes layout_7 in valid layouts
 $index_content = file_get_contents($base_dir . '/index.php');
@@ -98,11 +98,11 @@ assert_test("index.php supports numeric shorthand '7'", strpos($index_content, "
 // Test 4: admin/hero_customizer.php includes Layout 7 radio option
 $hero_cust = file_get_contents($base_dir . '/admin/hero_customizer.php');
 assert_test("admin/hero_customizer.php has Layout 7 radio option", strpos($hero_cust, 'value="layout_7"') !== false);
-assert_test("admin/hero_customizer.php links to /admin/toolsvilla_home.php", strpos($hero_cust, '/admin/toolsvilla_home.php') !== false);
+assert_test("admin/hero_customizer.php links to /admin/agri_marketplace_home.php", strpos($hero_cust, '/admin/agri_marketplace_home.php') !== false);
 
 // Test 5: admin/admin_header.php includes navigation link
 $admin_hdr = file_get_contents($base_dir . '/admin/admin_header.php');
-assert_test("admin/admin_header.php links to toolsvilla_home.php", strpos($admin_hdr, 'toolsvilla_home.php') !== false);
+assert_test("admin/admin_header.php links to agri_marketplace_home.php", strpos($admin_hdr, 'agri_marketplace_home.php') !== false);
 
 // Test 6: Mock execution and layout 7 rendering
 ob_start();

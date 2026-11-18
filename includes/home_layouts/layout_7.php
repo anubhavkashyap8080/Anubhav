@@ -1,7 +1,6 @@
 <?php
 /**
- * GanvGaliHat - Layout 7: "ToolsVilla Style B2B & Agri Marketplace"
- * Inspired by ToolsVilla.com
+ * GanvGaliHat - Layout 7: "Tools & Agri B2B Marketplace"
  * Features:
  *  - Persistent Department / Vertical Category Navigation Sidebar
  *  - High-Impact Central Hero Banner with Floating Machinery Tags & Key Metrics
@@ -9,12 +8,12 @@
  *  - 5-Point Value Proposition Strip (Free Shipping, 3-Day Returns, 100% Genuine, GST Invoice, Secure Payment)
  *  - Shop by Category Carousel
  *  - 3 Category Showcase Blocks (Farming & Agriculture, Food & HoReCa, Pumps & Electrical)
- *    matching Toolsvilla screenshots with soft pastel accents and spotlight cards
+ *    with soft pastel accents and spotlight cards
  *  - B2B Bulk Wholesale Banner with GST Input Credit Highlight
  *  - Featured Live Products Rail with is_featured DESC sorting
  *  - Artisan Haversine Workshop Finder
  * 
- * Customizable via /admin/toolsvilla_home.php
+ * Customizable via /admin/agri_marketplace_home.php
  */
 
 if (!defined('APP_NAME')) {
@@ -170,7 +169,7 @@ if (count($l7_departments) < 6) {
 ?>
 
 <style>
-/* Layout 7: ToolsVilla Style Guaranteed Contrast & Compact Micro-Typography */
+/* Layout 7: Tools & Agri Marketplace Guaranteed Contrast & Compact Micro-Typography */
 .l7-wrap {
   width: 100%;
   max-width: 100vw;

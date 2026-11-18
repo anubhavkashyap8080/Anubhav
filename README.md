@@ -3,7 +3,7 @@
 > **Tagline:** *Deshi ki mitti ka swad • Ganv se ghar tak*  
 > **Brand Identity:** Preserves the authentic thatched-hut logo design, rustic forest green (`#0c5a34`), earthen warm cream (`#fdfbf7`), and terracotta orange (`#e65c00`).
 
-GanvGaliHut is a modern, responsive, multi-vendor e-commerce marketplace prototype inspired by Toolsvilla's discovery-first product experience. It connects conscious urban households directly with rural Indian women Self-Help Groups (SHGs), generational ironsmiths, tribal spice cultivators, cottage industries, and smallholder organic farmers.
+GanvGaliHut is a modern, responsive, multi-vendor e-commerce marketplace prototype engineered for an authentic rural & agricultural discovery-first product experience. It connects conscious urban households directly with rural Indian women Self-Help Groups (SHGs), generational ironsmiths, tribal spice cultivators, cottage industries, and smallholder organic farmers.
 
 ---
 
