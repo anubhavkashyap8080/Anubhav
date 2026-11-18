@@ -169,14 +169,15 @@ $sorted_prods = $test_stmt->fetchAll();
 assert_test($sorted_prods[0]['id'] == 2, "Featured product (ID 2) appears at the very top (index 0)");
 assert_test($sorted_prods[0]['is_featured'] == 1, "Top product has is_featured = 1");
 
-echo "\n=== 4. Testing Layout 6 Scope (Hero YouTube Only & Clean Below Sections) ===\n";
+echo "\n=== 4. Testing Layout 6 Scope (8-Section Video Story Home & Full Feature Set) ===\n";
 $layout6_src = file_get_contents(__DIR__ . '/../includes/home_layouts/layout_6.php');
-assert_test(strpos($layout6_src, 'vh-hero-section') !== false, "layout_6.php contains vh-hero-section for Hero");
-assert_test(strpos($layout6_src, 'vh-hero-player-wrap') !== false, "Hero player wrap present in Section 1");
-assert_test(strpos($layout6_src, 'toggleHeroAudio') !== false, "Hero audio sound toggle function present");
-assert_test(strpos($layout6_src, 'bg-stone-50 border-b') !== false, "Section 2 below hero uses clean e-commerce background");
-assert_test(strpos($layout6_src, 'Trending Village Bestsellers') !== false || strpos($layout6_src, 'BESTSELLERS') !== false, "Section 3 Bestsellers uses clean product grid");
-assert_test(strpos($layout6_src, '100% Village Authentic') !== false, "Section 6 Trust badges present on clean layout");
+assert_test(strpos($layout6_src, 'HERO SECTION') !== false, "layout_6.php contains Section 1 (Hero)");
+assert_test(strpos($layout6_src, 'v6-player') !== false, "Video player wrap present in sections");
+assert_test(strpos($layout6_src, 'toggleHeroAudio') === false, "Hero audio sound toggle button is strictly removed");
+assert_test(strpos($layout6_src, 'padding: 16px 36px !important') !== false, "Spacious pill buttons with generous background padding present");
+assert_test(strpos($layout6_src, 'lang-en') !== false && strpos($layout6_src, 'lang-hi') !== false, "Bilingual tags (lang-en / lang-hi) present throughout layout");
+assert_test(strpos($layout6_src, '7. BLOG') !== false, "Section 7 (Blog) present");
+assert_test(strpos($layout6_src, '8. NEWSLETTER') !== false && strpos($layout6_src, 'v6NlForm') !== false, "Section 8 (Newsletter) with v6NlForm present");
 
 echo "\n=== 5. Testing Admin Video Home Rendering & Require Admin ===\n";
 exec('php ' . escapeshellarg(__DIR__ . '/test_video_home_render.php'), $admin_out, $admin_ret);

@@ -180,6 +180,11 @@ $flash = get_flash();
           <i class="fa-solid fa-paper-plane text-emerald-300"></i> Email Campaigns
         </a>
 
+        <a href="/admin/newsletter.php"
+          class="px-3 py-2 rounded-lg transition whitespace-nowrap flex items-center gap-1.5 <?= $current_page === 'newsletter.php' ? 'bg-indigo-600 text-white' : 'text-indigo-200 hover:text-white hover:bg-indigo-800' ?>">
+          <i class="fa-solid fa-envelope-open-text text-amber-300"></i> Newsletter Subscribers
+        </a>
+
         <a href="/admin/live_chat.php"
           class="px-3 py-2 rounded-lg transition whitespace-nowrap flex items-center gap-1.5 <?= $current_page === 'live_chat.php' ? 'bg-indigo-600 text-white' : 'text-indigo-200 hover:text-white hover:bg-indigo-800' ?>">
           <i class="fa-solid fa-comments"></i> Live Chat Console

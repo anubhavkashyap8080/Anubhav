@@ -35,6 +35,12 @@ $sqlite->exec("
         role VARCHAR(20),
         status VARCHAR(20)
     );
+    CREATE TABLE IF NOT EXISTS categories (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        name VARCHAR(100),
+        slug VARCHAR(100),
+        sort_order INTEGER DEFAULT 0
+    );
     INSERT INTO users (id, username, role, status) VALUES (1, 'superadmin', 'super_admin', 'active');
 ");
 $GLOBALS['pdo'] = $sqlite;

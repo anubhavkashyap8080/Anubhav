@@ -1,293 +1,394 @@
 <?php
 /**
- * Video Story Home (Layout 6) Helper Utilities
- * GanvGaliHat v3 - YouTube Background Video Engine
+ * GanvGaliHat - Video Story Home (layout_6) helpers
+ * Validation + settings access for the YouTube / MP4 video background home page.
+ * Required by includes/home_layouts/layout_6.php, admin/video_home.php, admin/hero_customizer.php.
  */
 
-if (!defined('GGH_VIDEO_HELPERS_LOADED')) {
-    define('GGH_VIDEO_HELPERS_LOADED', true);
-
+if (!function_exists('ggh_yt_id')) {
     /**
-     * Extracts and validates an 11-character YouTube video ID.
-     * Rejects playlists, channels, and malicious payloads.
-     *
-     * @param string $input URL or bare ID
-     * @return string Validated 11-character ID or empty string
+     * Return a validated 11-character YouTube video ID from a URL or bare ID.
+     * Returns '' when the input is not a recognised single-video reference.
      */
-    function ggh_youtube_id($input): string {
-        if (!is_string($input)) {
+    function ggh_yt_id($input) {
+        $raw = trim((string)$input);
+        if ($raw === '') {
             return '';
         }
-        $input = trim($input);
-        if ($input === '') {
+        if (preg_match('/^[A-Za-z0-9_-]{11}$/', $raw)) {
+            return $raw;
+        }
+        $parts = @parse_url($raw);
+        if (!$parts || empty($parts['host'])) {
             return '';
         }
-
-        // 1. Bare 11-char ID
-        if (preg_match('/^[A-Za-z0-9_-]{11}$/', $input)) {
-            return $input;
-        }
-
-        // 2. Standard YouTube URL formats
-        // Supports: watch?v=, youtu.be/, /embed/, /shorts/, /live/
-        $pattern = '/(?:youtube(?:-nocookie)?\.com\/(?:[^\/]+\/.+\/|(?:v|e(?:mbed)?|shorts|live)\/|.*[?&]v=)|youtu\.be\/)([A-Za-z0-9_-]{11})/i';
-        if (preg_match($pattern, $input, $matches)) {
-            $id = $matches[1];
-            if (preg_match('/^[A-Za-z0-9_-]{11}$/', $id)) {
-                return $id;
+        $host = strtolower(preg_replace('/^www\./i', '', $parts['host']));
+        $path = $parts['path'] ?? '';
+        $id = '';
+        if ($host === 'youtu.be') {
+            $id = trim($path, '/');
+        } elseif (in_array($host, ['youtube.com', 'm.youtube.com', 'music.youtube.com', 'youtube-nocookie.com'], true)) {
+            if (preg_match('#^/(?:embed|shorts|live|v)/([A-Za-z0-9_-]{11})#', $path, $m)) {
+                $id = $m[1];
+            } elseif (!empty($parts['query'])) {
+                parse_str($parts['query'], $q);
+                $id = isset($q['v']) ? (string)$q['v'] : '';
             }
         }
+        return preg_match('/^[A-Za-z0-9_-]{11}$/', $id) ? $id : '';
+    }
+}
 
+if (!function_exists('ggh_youtube_id')) {
+    /** Alias for backward compatibility */
+    function ggh_youtube_id($input) {
+        return ggh_yt_id($input);
+    }
+}
+
+if (!function_exists('ggh_is_valid_media_url')) {
+    /** Alias for backward compatibility */
+    function ggh_is_valid_media_url($url, $type = 'any') {
+        if ($type === 'youtube') {
+            return ggh_yt_id($url) !== '';
+        }
+        if ($type === 'mp4' || $type === 'video') {
+            $url = trim((string)$url);
+            if ($url === '' || strlen($url) > 500 || preg_match('/[\x00-\x1F\x7F\\\\\s"\'<>]/', $url)) {
+                return false;
+            }
+            if (stripos($url, 'javascript:') === 0 || stripos($url, '//') === 0 || stripos($url, 'http://') === 0) {
+                return false;
+            }
+            $path = parse_url($url, PHP_URL_PATH) ?: '';
+            if (!preg_match('/\.(mp4|webm)$/i', $path)) {
+                return false;
+            }
+            return (stripos($url, 'https://') === 0 || ($url[0] === '/' && (!isset($url[1]) || $url[1] !== '/')));
+        }
+        return ggh_safe_media_url($url) !== '';
+    }
+}
+
+if (!function_exists('ggh_is_valid_btn_url')) {
+    /** Alias for backward compatibility */
+    function ggh_is_valid_btn_url($url) {
+        return ggh_safe_link($url) !== '';
+    }
+}
+
+if (!function_exists('ggh_v6_get_section_defaults')) {
+    /** Helper for section defaults lookup */
+    function ggh_v6_get_section_defaults($s = null) {
+        $defs = ggh_v6_section_defaults();
+        if ($s === null) return $defs;
+        $d = $defs[$s] ?? [];
+        if (!isset($d['source'])) $d['source'] = 'youtube';
+        if (empty($d['poster'])) $d['poster'] = 'https://images.unsplash.com/photo-1504148455328-c376907d081c?auto=format&fit=crop&w=1600&q=70';
+        return $d;
+    }
+}
+
+if (!function_exists('ggh_safe_link')) {
+    /**
+     * Accept only same-site relative paths, #anchors and https:// links.
+     * Rejects javascript:, data:, protocol-relative (//host) and backslash tricks.
+     */
+    function ggh_safe_link($url) {
+        $url = trim((string)$url);
+        if ($url === '' || strlen($url) > 500) {
+            return '';
+        }
+        if (preg_match('/[\x00-\x1F\x7F\\\\]/', $url)) {
+            return '';
+        }
+        if ($url[0] === '#') {
+            return $url;
+        }
+        if ($url[0] === '/') {
+            return (isset($url[1]) && $url[1] === '/') ? '' : $url;
+        }
+        if (preg_match('#^https://[A-Za-z0-9.-]+(?::\d+)?(?:[/?\#].*)?$#', $url)) {
+            return $url;
+        }
         return '';
     }
+}
 
+if (!function_exists('ggh_safe_media_url')) {
     /**
-     * Validates media/video URLs (YouTube or MP4/WebM)
-     *
-     * @param string $url
-     * @param string $source 'youtube' or 'mp4'
-     * @return bool
+     * Image / MP4 URLs: local /uploads/... path, or https:// URL.
+     * $video_only = true additionally requires a .mp4/.webm extension and
+     * only allows local paths or the site's own host (CSP media-src is 'self').
      */
-    function ggh_is_valid_media_url(string $url, string $source = 'youtube'): bool {
-        $url = trim($url);
-        if ($url === '') {
-            return true; // Optional/empty is allowed
+    function ggh_safe_media_url($url, $video_only = false) {
+        $url = trim((string)$url);
+        if ($url === '' || strlen($url) > 500 || preg_match('/[\x00-\x1F\x7F\\\\\s"\'<>]/', $url)) {
+            return '';
         }
-
-        if ($source === 'youtube') {
-            return ggh_youtube_id($url) !== '';
-        }
-
-        if ($source === 'mp4') {
-            // Must start with https:// or /uploads/
-            if (!preg_match('/^(https:\/\/|\/uploads\/)/i', $url)) {
-                return false;
+        if ($video_only) {
+            $path = parse_url($url, PHP_URL_PATH) ?: '';
+            if (!preg_match('/\.(mp4|webm)$/i', $path)) {
+                return '';
             }
-            // Reject protocol-relative //, backslashes, or control characters
-            if (preg_match('/^(\/\/|\\\\|javascript:|data:)/i', $url)) {
-                return false;
+            if ($url[0] === '/' && (!isset($url[1]) || $url[1] !== '/')) {
+                return $url;
             }
-            // Must end with .mp4 or .webm (ignoring query strings)
-            $clean_path = parse_url($url, PHP_URL_PATH) ?? '';
-            return (bool)preg_match('/\.(mp4|webm)$/i', $clean_path);
+            $host = parse_url($url, PHP_URL_HOST);
+            $self = strtolower(preg_replace('/^www\./i', '', $_SERVER['HTTP_HOST'] ?? ''));
+            if ($host && $self && strtolower(preg_replace('/^www\./i', '', $host)) === $self && stripos($url, 'https://') === 0) {
+                return $url;
+            }
+            return '';
         }
-
-        return false;
+        if ($url[0] === '/' && (!isset($url[1]) || $url[1] !== '/')) {
+            return $url;
+        }
+        return preg_match('#^https://[A-Za-z0-9.-]+(?::\d+)?/.*$#', $url) ? $url : '';
     }
+}
 
-    /**
-     * Validates button link URL: relative starting with '/' or full 'https://'
-     */
-    function ggh_is_valid_btn_url(string $url): bool {
-        $url = trim($url);
-        if ($url === '') {
-            return true;
-        }
-        if (preg_match('/^(\/\/|\\\\|javascript:|data:)/i', $url)) {
-            return false;
-        }
-        return (bool)preg_match('/^(\/|https:\/\/)/i', $url);
-    }
-
-    /**
-     * Returns curated default settings for Section N (1..6)
-     */
-    function ggh_v6_get_section_defaults(int $n): array {
-        $defaults = [
+if (!function_exists('ggh_v6_section_defaults')) {
+    /** Default content for the 8 sections of the Video Story Home. */
+    function ggh_v6_section_defaults() {
+        $company = function_exists('get_company_name') ? get_company_name() : 'GanvGaliHat';
+        return [
             1 => [
-                'enabled'   => '1',
-                'source'    => 'youtube',
-                'video'     => 'k4m3y1eH5Ww', // Village Forge & Traditional Blacksmithing
-                'start'     => 0,
-                'end'       => 0,
-                'poster'    => 'https://images.unsplash.com/photo-1504148455328-c376907d081c?auto=format&fit=crop&w=1920&q=80',
-                'overlay'   => 50,
-                'align'     => 'left',
-                'eyebrow'   => 'Generational Heritage • Direct From Village Forges',
-                'title'     => 'Pure Handcrafted Craft & Farm Harvest',
-                'subtitle'  => 'Every implement and food staple is crafted by master blacksmiths, weavers, and cold-press farmers across rural Bharat. High carbon steel, unpolished grains, 100% authentic.',
+                'name' => 'Hero',
+                'enabled' => '1',
+                'eyebrow' => $company,
+                'title' => 'Gaon ke hunar, ab har ghar tak',
+                'subtitle' => 'Hand-forged tools, pure pulses, village pickles and handcrafted goods - straight from the artisans of rural India.',
                 'btn1_text' => 'Explore Marketplace',
                 'btn1_link' => '/products.php',
                 'btn1_show' => '1',
-                'btn1_target' => '_self',
-                'btn2_text' => 'Meet Verified Artisans',
+                'btn2_text' => 'Meet the Artisans',
                 'btn2_link' => '/artisans.php',
                 'btn2_show' => '1',
-                'btn2_target' => '_self',
+                'overlay' => '45',
+                'align' => 'left',
+                'poster' => 'https://images.unsplash.com/photo-1504148455328-c376907d081c?auto=format&fit=crop&w=1600&q=70',
+                'default_video' => 'https://www.youtube.com/watch?v=ScMzIvxBSi4'
             ],
             2 => [
-                'enabled'   => '1',
-                'source'    => 'youtube',
-                'video'     => 'tgbNymZ7vqY', // Rural crafts & farming
-                'start'     => 0,
-                'end'       => 0,
-                'poster'    => 'https://images.unsplash.com/photo-1544717305-2782549b5136?auto=format&fit=crop&w=1920&q=80',
-                'overlay'   => 55,
-                'align'     => 'center',
-                'eyebrow'   => 'Authentic Rural Guilds',
-                'title'     => 'Explore Artisanal Categories',
-                'subtitle'  => 'From heavy leaf-spring forged agricultural tools to wood-pressed oils and handloom cotton.',
-                'btn1_text' => 'View All Categories',
+                'name' => 'Categories',
+                'enabled' => '1',
+                'eyebrow' => 'Shop by category',
+                'title' => 'Everything the village makes',
+                'subtitle' => 'Pick a category and discover products made by real hands.',
+                'btn1_text' => 'View all products',
                 'btn1_link' => '/products.php',
                 'btn1_show' => '1',
-                'btn1_target' => '_self',
                 'btn2_text' => '',
                 'btn2_link' => '',
                 'btn2_show' => '0',
-                'btn2_target' => '_self',
-                'cat_source'=> 'all',
-                'cat_limit' => 6,
+                'overlay' => '55',
+                'align' => 'center',
+                'poster' => '',
+                'limit' => '8',
+                'cat_source' => 'all',
+                'cat_ids' => '',
+                'show_products' => '1',
+                'prod_limit' => '4'
             ],
             3 => [
-                'enabled'   => '1',
-                'source'    => 'youtube',
-                'video'     => '9No-FiEInLA', // Harvest & oil extraction
-                'start'     => 0,
-                'end'       => 0,
-                'poster'    => 'https://images.unsplash.com/photo-1607604276583-eef5d076aa5f?auto=format&fit=crop&w=1920&q=80',
-                'overlay'   => 50,
-                'align'     => 'left',
-                'eyebrow'   => 'Most Loved By Indian Farmers',
-                'title'     => 'Bestsellers Rail',
-                'subtitle'  => 'Field-tested tools and farm-fresh harvest dispatched within 24 hours directly from village hubs.',
-                'btn1_text' => 'Shop All Bestsellers',
-                'btn1_link' => '/products.php?sort=popular',
+                'name' => 'Best sellers',
+                'enabled' => '1',
+                'eyebrow' => 'Most loved',
+                'title' => 'Best sellers this week',
+                'subtitle' => 'What customers are adding to their carts right now.',
+                'btn1_text' => 'See all best sellers',
+                'btn1_link' => '/products.php',
                 'btn1_show' => '1',
-                'btn1_target' => '_self',
                 'btn2_text' => '',
                 'btn2_link' => '',
                 'btn2_show' => '0',
-                'btn2_target' => '_self',
+                'overlay' => '55',
+                'align' => 'left',
+                'poster' => '',
+                'limit' => '8',
                 'prod_source' => 'best_sellers',
-                'prod_limit'  => 8,
+                'prod_cat' => ''
             ],
             4 => [
-                'enabled'   => '1',
-                'source'    => 'youtube',
-                'video'     => 'M7lc1UVf-VE', // Craft spotlight
-                'start'     => 0,
-                'end'       => 0,
-                'poster'    => 'https://images.unsplash.com/photo-1590736969955-71cc94801759?auto=format&fit=crop&w=1920&q=80',
-                'overlay'   => 55,
-                'align'     => 'left',
-                'eyebrow'   => 'Curated Artisan Spotlight',
-                'title'     => 'Featured Creations',
-                'subtitle'  => 'Handcrafted with generational skill and modern quality control. Transparent village pricing.',
-                'btn1_text' => 'Explore Full Catalog',
+                'name' => 'Featured',
+                'enabled' => '1',
+                'eyebrow' => 'Fresh picks',
+                'title' => 'Handpicked for you',
+                'subtitle' => 'New and featured products from our verified artisans.',
+                'btn1_text' => 'Browse the catalog',
                 'btn1_link' => '/products.php',
                 'btn1_show' => '1',
-                'btn1_target' => '_self',
                 'btn2_text' => '',
                 'btn2_link' => '',
                 'btn2_show' => '0',
-                'btn2_target' => '_self',
+                'overlay' => '50',
+                'align' => 'right',
+                'poster' => '',
+                'limit' => '5',
                 'prod_source' => 'featured',
-                'prod_limit'  => 5,
+                'prod_cat' => ''
             ],
             5 => [
-                'enabled'   => '1',
-                'source'    => 'youtube',
-                'video'     => 'sBws8MSXN7A', // Blacksmith forge fire
-                'start'     => 0,
-                'end'       => 0,
-                'poster'    => 'https://images.unsplash.com/photo-1534447677768-be436bb09401?auto=format&fit=crop&w=1920&q=80',
-                'overlay'   => 60,
-                'align'     => 'center',
-                'eyebrow'   => 'Makers Behind The Craft',
-                'title'     => 'Generational Village Masters',
-                'subtitle'  => 'Meet the blacksmiths of Hardoi, handloom weavers of Mallawan, and cold-press oil makers of Sandila.',
-                'btn1_text' => 'Meet All Verified Artisans',
+                'name' => 'Artisans',
+                'enabled' => '1',
+                'eyebrow' => 'Meet the makers',
+                'title' => 'Behind every product, a village story',
+                'subtitle' => 'Verified artisans and producers who ship straight from their workshops.',
+                'btn1_text' => 'All artisans',
                 'btn1_link' => '/artisans.php',
                 'btn1_show' => '1',
-                'btn1_target' => '_self',
-                'btn2_text' => 'Join as Rural Seller',
-                'btn2_link' => '/seller-register.php',
-                'btn2_show' => '1',
-                'btn2_target' => '_self',
-                'artisan_limit' => 4,
+                'btn2_text' => '',
+                'btn2_link' => '',
+                'btn2_show' => '0',
+                'overlay' => '55',
+                'align' => 'center',
+                'poster' => '',
+                'limit' => '4'
             ],
             6 => [
-                'enabled'   => '1',
-                'source'    => 'youtube',
-                'video'     => 'ScMzIvxBSi4', // Rural landscape celebration
-                'start'     => 0,
-                'end'       => 0,
-                'poster'    => 'https://images.unsplash.com/photo-1500382017468-9049fed747ef?auto=format&fit=crop&w=1920&q=80',
-                'overlay'   => 55,
-                'align'     => 'center',
-                'eyebrow'   => 'Atmanirbhar Bharat • Direct Livelihood',
-                'title'     => 'Bring Bharat\'s Craft Home Today',
-                'subtitle'  => 'Every purchase directly sustains traditional Indian rural families, guarantees fair pricing, and protects centuries of craft heritage.',
-                'btn1_text' => 'Shop Village Products',
+                'name' => 'Trust + CTA',
+                'enabled' => '1',
+                'eyebrow' => 'Why GanvGaliHat',
+                'title' => 'Authentic. Direct. Delivered.',
+                'subtitle' => 'No middlemen. Honest prices. Doorstep delivery across India.',
+                'btn1_text' => 'Start shopping',
                 'btn1_link' => '/products.php',
                 'btn1_show' => '1',
-                'btn1_target' => '_self',
-                'btn2_text' => 'WhatsApp Support',
-                'btn2_link' => 'https://wa.me/919935105282',
+                'btn2_text' => 'Become a seller',
+                'btn2_link' => '/seller-register.php',
                 'btn2_show' => '1',
-                'btn2_target' => '_blank',
+                'overlay' => '55',
+                'align' => 'center',
+                'poster' => ''
+            ],
+            7 => [
+                'name' => 'Blog',
+                'enabled' => '1',
+                'eyebrow' => 'From our journal',
+                'title' => 'Stories, tips and village know-how',
+                'subtitle' => 'Read how our artisans work and how to get the best from their products.',
+                'btn1_text' => 'Read all articles',
+                'btn1_link' => '/blogs.php',
+                'btn1_show' => '1',
+                'btn2_text' => '',
+                'btn2_link' => '',
+                'btn2_show' => '0',
+                'overlay' => '62',
+                'align' => 'left',
+                'poster' => '',
+                'limit' => '3'
+            ],
+            8 => [
+                'name' => 'Newsletter',
+                'enabled' => '1',
+                'eyebrow' => 'Stay in the loop',
+                'title' => 'Festival offers and new arrivals, first',
+                'subtitle' => 'Join our newsletter. No spam, only good news from the villages.',
+                'btn1_text' => 'Subscribe',
+                'btn1_link' => '/',
+                'btn1_show' => '1',
+                'btn2_text' => '',
+                'btn2_link' => '',
+                'btn2_show' => '0',
+                'overlay' => '62',
+                'align' => 'center',
+                'poster' => ''
             ],
         ];
-
-        return $defaults[$n] ?? $defaults[1];
     }
+}
 
-    /**
-     * Resolves configuration for section N (combining saved site_settings with defaults)
-     */
-    function ggh_v6_get_section_config(int $n): array {
-        $d = ggh_v6_get_section_defaults($n);
-        $prefix = "v6_sec{$n}_";
-
-        $res = [
-            'enabled'   => get_setting($prefix . 'enabled', $d['enabled']),
-            'source'    => get_setting($prefix . 'source', $d['source']),
-            'video'     => get_setting($prefix . 'video', $d['video']),
-            'start'     => (int)get_setting($prefix . 'start', (string)$d['start']),
-            'end'       => (int)get_setting($prefix . 'end', (string)$d['end']),
-            'poster'    => get_setting($prefix . 'poster', $d['poster']),
-            'overlay'   => (int)get_setting($prefix . 'overlay', (string)$d['overlay']),
-            'align'     => get_setting($prefix . 'align', $d['align']),
-            'eyebrow'   => get_setting($prefix . 'eyebrow', $d['eyebrow']),
-            'title'     => get_setting($prefix . 'title', $d['title']),
-            'subtitle'  => get_setting($prefix . 'subtitle', $d['subtitle']),
-            'btn1_text' => get_setting($prefix . 'btn1_text', $d['btn1_text']),
-            'btn1_link' => get_setting($prefix . 'btn1_link', $d['btn1_link']),
-            'btn1_show' => get_setting($prefix . 'btn1_show', $d['btn1_show']),
-            'btn1_target' => get_setting($prefix . 'btn1_target', $d['btn1_target'] ?? '_self'),
-            'btn2_text' => get_setting($prefix . 'btn2_text', $d['btn2_text']),
-            'btn2_link' => get_setting($prefix . 'btn2_link', $d['btn2_link']),
-            'btn2_show' => get_setting($prefix . 'btn2_show', $d['btn2_show']),
-            'btn2_target' => get_setting($prefix . 'btn2_target', $d['btn2_target'] ?? '_self'),
+if (!function_exists('ggh_v6_global')) {
+    /** Global options for the video home (header, dots, snap). Values '1' / '0'. */
+    function ggh_v6_global() {
+        return [
+            'header_transparent' => get_setting('v6_header_transparent', '1') !== '0',
+            'dots'               => get_setting('v6_dots', '1') !== '0',
+            'snap'               => get_setting('v6_snap', '0') === '1',
         ];
+    }
+}
 
-        if (isset($d['cat_source'])) {
-            $res['cat_source'] = get_setting($prefix . 'cat_source', $d['cat_source']);
-            $res['cat_limit']  = (int)get_setting($prefix . 'cat_limit', (string)$d['cat_limit']);
+if (!function_exists('ggh_v6_sections')) {
+    /**
+     * Load all 8 sections from site_settings, validate and sanitise every field.
+     * Output is safe to print with htmlspecialchars().
+     */
+    function ggh_v6_sections() {
+        $defs = ggh_v6_section_defaults();
+        $out = [];
+        foreach ($defs as $n => $d) {
+            $s = [];
+            foreach ($d as $k => $def) {
+                $s[$k] = ($k === 'name') ? $def : (string)get_setting("v6_sec{$n}_{$k}", $def);
+            }
+            $s['n']        = $n;
+            $s['enabled']  = $s['enabled'] !== '0';
+            $s['source']   = get_setting("v6_sec{$n}_source", 'youtube') === 'mp4' ? 'mp4' : 'youtube';
+            $video_raw     = (string)get_setting("v6_sec{$n}_video", '');
+            // Section 1 fallback default video if none configured
+            if ($n === 1 && $video_raw === '' && !empty($d['default_video'])) {
+                $video_raw = $d['default_video'];
+            }
+            $s['yt_id']    = $s['source'] === 'youtube' ? ggh_yt_id($video_raw) : '';
+            $s['mp4']      = $s['source'] === 'mp4' ? ggh_safe_media_url($video_raw, true) : '';
+            $s['video_raw'] = $video_raw;
+            $s['start']    = max(0, (int)get_setting("v6_sec{$n}_start", '0'));
+            $end           = (string)get_setting("v6_sec{$n}_end", '');
+            $s['end']      = ($end !== '' && (int)$end > $s['start']) ? (int)$end : 0;
+            $s['overlay']  = max(0, min(90, (int)$s['overlay']));
+            $s['align']    = in_array($s['align'], ['left', 'center', 'right'], true) ? $s['align'] : 'center';
+            $s['poster']   = ggh_safe_media_url($s['poster']);
+            if ($s['poster'] === '' && $s['yt_id'] !== '') {
+                // YouTube thumbnail as automatic poster
+                $s['poster'] = 'https://i.ytimg.com/vi/' . $s['yt_id'] . '/hqdefault.jpg';
+            }
+            foreach (['btn1', 'btn2'] as $b) {
+                $s[$b . '_link'] = ggh_safe_link($s[$b . '_link']);
+                $s[$b . '_text'] = trim($s[$b . '_text']);
+                $s[$b . '_show'] = ($s[$b . '_show'] !== '0' && $s[$b . '_text'] !== '' && $s[$b . '_link'] !== '');
+            }
+            if (isset($s['limit'])) {
+                $s['limit'] = max(1, min(12, (int)$s['limit']));
+            }
+            $out[$n] = $s;
         }
-        if (isset($d['prod_source'])) {
-            $res['prod_source'] = get_setting($prefix . 'prod_source', $d['prod_source']);
-            $res['prod_limit']  = (int)get_setting($prefix . 'prod_limit', (string)$d['prod_limit']);
-        }
-        if (isset($d['artisan_limit'])) {
-            $res['artisan_limit'] = (int)get_setting($prefix . 'artisan_limit', (string)$d['artisan_limit']);
-        }
+        return $out;
+    }
+}
 
-        // Validate video ID if YouTube
-        if ($res['source'] === 'youtube') {
-            $res['yt_id'] = ggh_youtube_id($res['video']);
+if (!function_exists('ggh_ensure_newsletter_table')) {
+    /** Create the subscribers table on first use (called only by the subscribe endpoint and its admin page). */
+    function ggh_ensure_newsletter_table($pdo) {
+        $sqlite = ($pdo->getAttribute(PDO::ATTR_DRIVER_NAME) === 'sqlite');
+        if ($sqlite) {
+            $pdo->exec("CREATE TABLE IF NOT EXISTS newsletter_subscribers (
+                id INTEGER PRIMARY KEY AUTOINCREMENT, email TEXT NOT NULL UNIQUE,
+                status TEXT DEFAULT 'subscribed', ip_address TEXT, created_at DATETIME DEFAULT CURRENT_TIMESTAMP)");
         } else {
-            $res['yt_id'] = '';
+            $pdo->exec("CREATE TABLE IF NOT EXISTS `newsletter_subscribers` (
+                `id` INT AUTO_INCREMENT PRIMARY KEY, `email` VARCHAR(190) NOT NULL UNIQUE,
+                `status` VARCHAR(20) DEFAULT 'subscribed', `ip_address` VARCHAR(64) DEFAULT NULL,
+                `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci");
         }
+    }
+}
 
-        // Validate poster URL
-        if (!preg_match('/^(https:\/\/|\/uploads\/)/i', $res['poster'])) {
-            $res['poster'] = $d['poster'];
+if (!function_exists('ggh_newsletter_subscribe')) {
+    /** Returns 'ok' (new or already subscribed - the caller must not reveal which) or 'invalid'. */
+    function ggh_newsletter_subscribe($pdo, $email, $ip = '') {
+        $email = strtolower(trim((string)$email));
+        if ($email === '' || strlen($email) > 190 || !filter_var($email, FILTER_VALIDATE_EMAIL)) {
+            return 'invalid';
         }
-
-        // Clamp overlay between 0 and 90
-        $res['overlay'] = max(0, min(90, $res['overlay']));
-
-        return $res;
+        ggh_ensure_newsletter_table($pdo);
+        $sqlite = ($pdo->getAttribute(PDO::ATTR_DRIVER_NAME) === 'sqlite');
+        $sql = $sqlite
+            ? "INSERT OR IGNORE INTO newsletter_subscribers (email, ip_address) VALUES (?, ?)"
+            : "INSERT IGNORE INTO newsletter_subscribers (email, ip_address) VALUES (?, ?)";
+        $pdo->prepare($sql)->execute([$email, substr((string)$ip, 0, 64)]);
+        return 'ok';
     }
 }

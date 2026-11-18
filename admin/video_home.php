@@ -1,540 +1,442 @@
 <?php
 /**
- * Video Story Home (Layout 6) Management & Customizer
- * Super Admin Control Panel for Full-Screen Edge-to-Edge Video Sections
+ * GanvGaliHat - Admin: Video Story Home (layout_6) settings
+ * Controls the YouTube / MP4 background video, text, buttons (show/hide) and data
+ * sources for every section of the video home page.
  */
 
 require_once __DIR__ . '/../includes/functions.php';
 require_once __DIR__ . '/../includes/auth_check.php';
 require_once __DIR__ . '/../includes/video_helpers.php';
-
 require_admin();
 
-// Item 6: CSRF protection placed before any POST processing
+// CSRF is verified BEFORE any POST handling.
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     csrf_protect();
+}
 
-    // 1. Handle Reset to Defaults
-    if (isset($_POST['reset_defaults'])) {
+$is_sqlite = ($pdo->getAttribute(PDO::ATTR_DRIVER_NAME) === 'sqlite');
+$upsert = $is_sqlite
+    ? $pdo->prepare("INSERT OR REPLACE INTO site_settings (setting_key, setting_value) VALUES (?, ?)")
+    : $pdo->prepare("INSERT INTO site_settings (setting_key, setting_value) VALUES (?, ?) ON DUPLICATE KEY UPDATE setting_value = VALUES(setting_value)");
+
+$defs = ggh_v6_section_defaults();
+
+/** Short plain text: strip tags, trim, limit length. */
+function v6a_text($v, $max) {
+    $v = trim(strip_tags((string)$v));
+    return function_exists('mb_substr') ? mb_substr($v, 0, $max) : substr($v, 0, $max);
+}
+
+$errors = [];
+$posted = null;
+
+// ---------- Reset one section to defaults ----------
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['reset_section'])) {
+    $n = (int)$_POST['reset_section'];
+    if (isset($defs[$n])) {
+        $del = $pdo->prepare("DELETE FROM site_settings WHERE setting_key = ?");
+        foreach (array_merge(array_keys($defs[$n]), ['source', 'video', 'start', 'end', 'poster']) as $suffix) {
+            if ($suffix !== 'name') { $del->execute(['v6_sec' . $n . '_' . $suffix]); }
+        }
+        log_audit_action('video_home_reset', 'content', 'site_settings', null, "Reset video home section $n to defaults");
+        set_flash('success', 'Section ' . $n . ' was reset to its default settings.');
+    }
+    header('Location: /admin/video_home.php');
+    exit;
+}
+
+// ---------- Save ----------
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['save_video_home'])) {
+    $vals = [];
+    $cat_slugs = [];
+    foreach ($pdo->query("SELECT slug FROM categories")->fetchAll() as $c) { $cat_slugs[$c['slug']] = true; }
+
+    foreach ($defs as $n => $d) {
+        $p = "s{$n}_";
+        $k = "v6_sec{$n}_";
+        $vals[$k . 'enabled'] = isset($_POST[$p . 'enabled']) ? '1' : '0';
+
+        // Video source
+        $source = (($_POST[$p . 'source'] ?? 'youtube') === 'mp4') ? 'mp4' : 'youtube';
+        $vals[$k . 'source'] = $source;
+        $raw = trim((string)($_POST[$p . 'video'] ?? ''));
+
+        // Handle MP4 file upload if provided
+        $vfile = $p . 'video_file';
+        if (isset($_FILES[$vfile]) && $_FILES[$vfile]['error'] === UPLOAD_ERR_OK) {
+            $vname = $_FILES[$vfile]['name'] ?? '';
+            $vext = strtolower(pathinfo($vname, PATHINFO_EXTENSION));
+            if (in_array($vext, ['mp4', 'webm'], true) && $_FILES[$vfile]['size'] <= 35 * 1024 * 1024) {
+                $dest_dir = __DIR__ . '/../uploads/videos/';
+                if (!is_dir($dest_dir)) { @mkdir($dest_dir, 0755, true); }
+                $vtarget = 'v6_sec' . $n . '_' . time() . '_' . bin2hex(random_bytes(4)) . '.' . $vext;
+                if (move_uploaded_file($_FILES[$vfile]['tmp_name'], $dest_dir . $vtarget)) {
+                    $raw = '/uploads/videos/' . $vtarget;
+                    $source = 'mp4';
+                    $vals[$k . 'source'] = 'mp4';
+                } else {
+                    $errors[] = "Section $n: video upload failed.";
+                }
+            } else {
+                $errors[] = "Section $n: video must be .mp4 or .webm under 35MB.";
+            }
+        }
+
+        if ($raw === '') {
+            $vals[$k . 'video'] = '';
+        } elseif ($source === 'youtube') {
+            $id = ggh_yt_id($raw);
+            if ($id === '') {
+                $errors[] = "Section $n: that is not a valid YouTube video link or ID.";
+                $vals[$k . 'video'] = '';
+            } else {
+                $vals[$k . 'video'] = 'https://www.youtube.com/watch?v=' . $id;
+            }
+        } else {
+            $mp4 = ggh_safe_media_url($raw, true);
+            if ($mp4 === '') {
+                $errors[] = "Section $n: MP4 must be a .mp4/.webm file under /uploads/ or on this website (https).";
+                $vals[$k . 'video'] = '';
+            } else {
+                $vals[$k . 'video'] = $mp4;
+            }
+        }
+        $vals[$k . 'start'] = (string)max(0, (int)($_POST[$p . 'start'] ?? 0));
+        $end = trim((string)($_POST[$p . 'end'] ?? ''));
+        $vals[$k . 'end'] = ($end === '') ? '' : (string)max(0, (int)$end);
+
+        // Poster image: upload wins, otherwise URL
+        $poster = trim((string)($_POST[$p . 'poster'] ?? ''));
+        $field = $p . 'poster_file';
+        if (isset($_FILES[$field]) && $_FILES[$field]['error'] === UPLOAD_ERR_OK) {
+            $up = secure_upload_image($field, 'uploads/banners/');
+            if (!empty($up['success'])) {
+                $poster = $up['path'];
+            } else {
+                $errors[] = "Section $n: poster upload failed" . (!empty($up['error']) ? ' (' . $up['error'] . ')' : '') . '.';
+            }
+        }
+        if ($poster !== '' && ggh_safe_media_url($poster) === '') {
+            $errors[] = "Section $n: poster must be an https:// image URL or an uploaded image.";
+            $poster = '';
+        }
+        $vals[$k . 'poster'] = $poster;
+
+        $vals[$k . 'overlay'] = (string)max(0, min(90, (int)($_POST[$p . 'overlay'] ?? $d['overlay'])));
+        $al = $_POST[$p . 'align'] ?? 'center';
+        $vals[$k . 'align'] = in_array($al, ['left', 'center', 'right'], true) ? $al : 'center';
+        $vals[$k . 'eyebrow']  = v6a_text($_POST[$p . 'eyebrow'] ?? '', 80);
+        $vals[$k . 'title']    = v6a_text($_POST[$p . 'title'] ?? '', 140);
+        $vals[$k . 'subtitle'] = v6a_text($_POST[$p . 'subtitle'] ?? '', 300);
+
+        foreach (['btn1', 'btn2'] as $b) {
+            $vals[$k . $b . '_text'] = v6a_text($_POST[$p . $b . '_text'] ?? '', 40);
+            $link = trim((string)($_POST[$p . $b . '_link'] ?? ''));
+            if ($link !== '' && ggh_safe_link($link) === '') {
+                $errors[] = "Section $n, button " . substr($b, 3) . ": use a path like /products.php or a full https:// link.";
+                $link = '';
+            }
+            $vals[$k . $b . '_link'] = $link;
+            $vals[$k . $b . '_show'] = (($_POST[$p . $b . '_show'] ?? '0') === '1') ? '1' : '0';
+        }
+
+        if (isset($d['limit'])) {
+            $vals[$k . 'limit'] = (string)max(1, min(12, (int)($_POST[$p . 'limit'] ?? $d['limit'])));
+        }
+        if ($n === 2) {
+            $vals[$k . 'show_products'] = isset($_POST[$p . 'show_products']) ? '1' : '0';
+            $vals[$k . 'prod_limit'] = (string)max(1, min(12, (int)($_POST[$p . 'prod_limit'] ?? 4)));
+            $vals[$k . 'cat_source'] = (($_POST[$p . 'cat_source'] ?? 'all') === 'selected') ? 'selected' : 'all';
+            $ids = array_filter(array_map('intval', (array)($_POST[$p . 'cat_ids'] ?? [])));
+            $vals[$k . 'cat_ids'] = implode(',', $ids);
+        }
+        if ($n === 3 || $n === 4) {
+            $ps = $_POST[$p . 'prod_source'] ?? $d['prod_source'];
+            $vals[$k . 'prod_source'] = in_array($ps, ['best_sellers', 'featured', 'newest', 'category'], true) ? $ps : $d['prod_source'];
+            $pc = trim((string)($_POST[$p . 'prod_cat'] ?? ''));
+            $vals[$k . 'prod_cat'] = isset($cat_slugs[$pc]) ? $pc : '';
+        }
+    }
+
+    $vals['v6_header_transparent'] = isset($_POST['g_header_transparent']) ? '1' : '0';
+    $vals['v6_dots'] = isset($_POST['g_dots']) ? '1' : '0';
+    $vals['v6_snap'] = isset($_POST['g_snap']) ? '1' : '0';
+
+    if ($errors) {
+        $posted = $vals;
+        set_flash('error', 'Nothing was saved. Please fix the highlighted problems and try again.');
+    } else {
         try {
-            $is_sqlite = ($pdo->getAttribute(PDO::ATTR_DRIVER_NAME) === 'sqlite');
-            $del_stmt = $pdo->prepare("DELETE FROM site_settings WHERE setting_key LIKE 'v6_%'");
-            $del_stmt->execute();
-
-            log_audit_action('v6_reset_defaults', 'customizer', 'site_settings', 0, 'Reset Video Story Home (Layout 6) to factory defaults');
-            set_flash('success', 'Video Story Home settings have been reset to factory defaults.');
+            $pdo->beginTransaction();
+            foreach ($vals as $key => $val) { $upsert->execute([$key, $val]); }
+            if (isset($_POST['activate_layout'])) { $upsert->execute(['homepage_layout', 'layout_6']); }
+            $pdo->commit();
+            log_audit_action('video_home_saved', 'content', 'site_settings', null, 'Video Story Home settings updated');
+            set_flash('success', 'Video home settings saved' . (isset($_POST['activate_layout']) ? ' and the layout is now active.' : '.'));
             header('Location: /admin/video_home.php');
             exit;
-        } catch (Exception $e) {
-            error_log("Error resetting v6 settings: " . $e->getMessage());
-            set_flash('error', 'Could not reset settings. Please try again.');
-        }
-    }
-
-    // 2. Handle Save Settings
-    if (isset($_POST['save_video_home'])) {
-        $errors = [];
-        $saved_settings = [];
-
-        // Global settings
-        $saved_settings['v6_header_transparent'] = isset($_POST['v6_header_transparent']) ? '1' : '0';
-        $saved_settings['v6_dot_nav']           = isset($_POST['v6_dot_nav']) ? '1' : '0';
-        $saved_settings['v6_scroll_snap']       = isset($_POST['v6_scroll_snap']) ? '1' : '0';
-        $saved_settings['v6_save_data_pause']   = isset($_POST['v6_save_data_pause']) ? '1' : '0';
-
-        for ($n = 1; $n <= 6; $n++) {
-            $prefix = "v6_sec{$n}_";
-
-            // Enabled toggle
-            $saved_settings[$prefix . 'enabled'] = isset($_POST[$prefix . 'enabled']) ? '1' : '0';
-
-            // Source
-            $source = in_array($_POST[$prefix . 'source'] ?? '', ['youtube', 'mp4'], true) ? $_POST[$prefix . 'source'] : 'youtube';
-            $saved_settings[$prefix . 'source'] = $source;
-
-            // Video input (Validate)
-            $video_raw = trim((string)($_POST[$prefix . 'video'] ?? ''));
-            if ($video_raw !== '') {
-                if ($source === 'youtube') {
-                    $yt_id = ggh_youtube_id($video_raw);
-                    if ($yt_id === '') {
-                        $errors[] = "Section $n: Invalid YouTube URL or video ID. Please enter an 11-character video ID or valid YouTube watch/share link.";
-                    } else {
-                        $saved_settings[$prefix . 'video'] = $yt_id;
-                    }
-                } else { // mp4
-                    if (!ggh_is_valid_media_url($video_raw, 'mp4')) {
-                        $errors[] = "Section $n: Invalid MP4 URL. Must start with 'https://' or internal '/uploads/' and end with .mp4 or .webm.";
-                    } else {
-                        $saved_settings[$prefix . 'video'] = $video_raw;
-                    }
-                }
-            } else {
-                $saved_settings[$prefix . 'video'] = '';
-            }
-
-            // Start & End times
-            $saved_settings[$prefix . 'start'] = max(0, (int)($_POST[$prefix . 'start'] ?? 0));
-            $saved_settings[$prefix . 'end']   = max(0, (int)($_POST[$prefix . 'end'] ?? 0));
-
-            // Poster file upload or URL
-            $poster_val = trim((string)($_POST[$prefix . 'poster'] ?? ''));
-            $file_field = $prefix . 'poster_file';
-            if (isset($_FILES[$file_field]) && $_FILES[$file_field]['error'] === UPLOAD_ERR_OK) {
-                $up = secure_upload_image($file_field, 'uploads/banners/');
-                if ($up['success']) {
-                    $poster_val = $up['path'];
-                } else {
-                    $errors[] = "Section $n Poster Upload Error: " . ($up['error'] ?? 'Upload failed');
-                }
-            }
-            if ($poster_val !== '' && !preg_match('/^(https:\/\/|\/uploads\/)/i', $poster_val)) {
-                $errors[] = "Section $n: Poster image must be an https:// URL or an uploaded image.";
-            } else {
-                $saved_settings[$prefix . 'poster'] = $poster_val;
-            }
-
-            // Overlay strength (0 to 90)
-            $overlay = (int)($_POST[$prefix . 'overlay'] ?? 50);
-            $saved_settings[$prefix . 'overlay'] = max(0, min(90, $overlay));
-
-            // Text alignment
-            $align = in_array($_POST[$prefix . 'align'] ?? '', ['left', 'center', 'right'], true) ? $_POST[$prefix . 'align'] : 'left';
-            $saved_settings[$prefix . 'align'] = $align;
-
-            // Text content
-            $saved_settings[$prefix . 'eyebrow']  = clean_input($_POST[$prefix . 'eyebrow'] ?? '');
-            $saved_settings[$prefix . 'title']    = clean_input($_POST[$prefix . 'title'] ?? '');
-            $saved_settings[$prefix . 'subtitle'] = clean_input($_POST[$prefix . 'subtitle'] ?? '');
-
-            // Button 1
-            $b1_text = clean_input($_POST[$prefix . 'btn1_text'] ?? '');
-            $b1_link = trim((string)($_POST[$prefix . 'btn1_link'] ?? ''));
-            if ($b1_link !== '' && !ggh_is_valid_btn_url($b1_link)) {
-                $errors[] = "Section $n: Button 1 URL must start with '/' or 'https://'.";
-            }
-            $saved_settings[$prefix . 'btn1_text']   = $b1_text;
-            $saved_settings[$prefix . 'btn1_link']   = $b1_link;
-            $saved_settings[$prefix . 'btn1_show']   = isset($_POST[$prefix . 'btn1_show']) ? '1' : '0';
-            $saved_settings[$prefix . 'btn1_target'] = !empty($_POST[$prefix . 'btn1_target']) ? '_blank' : '_self';
-
-            // Button 2
-            $b2_text = clean_input($_POST[$prefix . 'btn2_text'] ?? '');
-            $b2_link = trim((string)($_POST[$prefix . 'btn2_link'] ?? ''));
-            if ($b2_link !== '' && !ggh_is_valid_btn_url($b2_link)) {
-                $errors[] = "Section $n: Button 2 URL must start with '/' or 'https://'.";
-            }
-            $saved_settings[$prefix . 'btn2_text']   = $b2_text;
-            $saved_settings[$prefix . 'btn2_link']   = $b2_link;
-            $saved_settings[$prefix . 'btn2_show']   = isset($_POST[$prefix . 'btn2_show']) ? '1' : '0';
-            $saved_settings[$prefix . 'btn2_target'] = !empty($_POST[$prefix . 'btn2_target']) ? '_blank' : '_self';
-
-            // Section-specific
-            if ($n === 2) {
-                $saved_settings[$prefix . 'cat_source'] = in_array($_POST[$prefix . 'cat_source'] ?? '', ['all', 'selected'], true) ? $_POST[$prefix . 'cat_source'] : 'all';
-                $saved_settings[$prefix . 'cat_limit']  = max(4, min(12, (int)($_POST[$prefix . 'cat_limit'] ?? 6)));
-            }
-            if ($n === 3 || $n === 4) {
-                $saved_settings[$prefix . 'prod_source'] = in_array($_POST[$prefix . 'prod_source'] ?? '', ['best_sellers', 'newest', 'featured'], true) ? $_POST[$prefix . 'prod_source'] : 'best_sellers';
-                $saved_settings[$prefix . 'prod_limit']  = max(4, min(12, (int)($_POST[$prefix . 'prod_limit'] ?? ($n === 3 ? 8 : 5))));
-            }
-            if ($n === 5) {
-                $saved_settings[$prefix . 'artisan_limit'] = max(3, min(8, (int)($_POST[$prefix . 'artisan_limit'] ?? 4)));
-            }
-        }
-
-        if (!empty($errors)) {
-            set_flash('error', implode('<br>', $errors));
-        } else {
-            try {
-                $is_sqlite = ($pdo->getAttribute(PDO::ATTR_DRIVER_NAME) === 'sqlite');
-                if ($is_sqlite) {
-                    $stmt = $pdo->prepare("INSERT OR REPLACE INTO site_settings (setting_key, setting_value) VALUES (?, ?)");
-                } else {
-                    $stmt = $pdo->prepare("INSERT INTO site_settings (setting_key, setting_value) VALUES (?, ?) ON DUPLICATE KEY UPDATE setting_value = VALUES(setting_value)");
-                }
-
-                foreach ($saved_settings as $k => $v) {
-                    $stmt->execute([$k, (string)$v]);
-                }
-
-                log_audit_action('v6_save_settings', 'customizer', 'site_settings', 0, 'Saved Video Story Home (Layout 6) configuration');
-                set_flash('success', 'Video Story Home settings saved successfully. Preview changes live.');
-                header('Location: /admin/video_home.php');
-                exit;
-            } catch (Exception $e) {
-                error_log("Error saving v6 settings: " . $e->getMessage());
-                set_flash('error', 'Database error while saving settings. Please try again.');
-            }
+        } catch (Throwable $e) {
+            if ($pdo->inTransaction()) { $pdo->rollBack(); }
+            error_log('video_home save: ' . $e->getMessage());
+            set_flash('error', 'Could not save the settings. Please try again.');
         }
     }
 }
 
-// Fetch current configurations (Default to crisp white header)
-$global_header_trans = get_setting('v6_header_transparent', '0') === '1';
-$global_dot_nav      = get_setting('v6_dot_nav', '1') === '1';
-$global_scroll_snap  = get_setting('v6_scroll_snap', '1') === '1';
-$global_data_saver   = get_setting('v6_save_data_pause', '1') === '1';
+// ---------- Load current values ----------
+$cur = [];
+foreach ($pdo->query("SELECT setting_key, setting_value FROM site_settings")->fetchAll() as $r) { $cur[$r['setting_key']] = $r['setting_value']; }
+if ($posted !== null) { $cur = array_merge($cur, $posted); }
+function v6a_val($key, $default = '') { global $cur; return $cur[$key] ?? $default; }
+function v6a_e($s) { return htmlspecialchars((string)$s, ENT_QUOTES, 'UTF-8'); }
 
-$sec_configs = [];
-for ($i = 1; $i <= 6; $i++) {
-    $sec_configs[$i] = ggh_v6_get_section_config($i);
-}
+$cats = $pdo->query("SELECT id, name, slug FROM categories ORDER BY sort_order ASC")->fetchAll();
+$active_layout = get_setting('homepage_layout', 'layout_1');
 
-$page_title = 'Video Story Home (Layout 6) Customizer — Super Admin';
+$page_title = 'Video Story Home';
 require_once __DIR__ . '/admin_header.php';
-?>
 
-<!-- Title & Action Bar -->
+$inp = 'w-full px-3.5 py-2.5 bg-stone-50 border border-gray-200 rounded-xl text-xs font-bold';
+$lbl = 'block text-xs font-bold text-gray-700 mb-1';
+?>
+<style>
+.vh-card{background:#fff;border:1px solid #e5e7eb;border-radius:20px;padding:20px;margin-bottom:18px}
+.vh-grid{display:grid;gap:14px;grid-template-columns:1fr}
+@media(min-width:700px){.vh-grid{grid-template-columns:repeat(2,1fr)}}
+@media(min-width:1100px){.vh-grid.c3{grid-template-columns:repeat(3,1fr)}}
+.vh-h{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-bottom:14px}
+.vh-num{display:inline-flex;width:30px;height:30px;border-radius:50%;background:#14532d;color:#fff;font-weight:900;align-items:center;justify-content:center;margin-right:8px;font-size:13px}
+.vh-sw{display:inline-flex;align-items:center;gap:8px;font-size:12px;font-weight:700;color:#374151;cursor:pointer}
+.vh-sw input{width:18px;height:18px}
+.vh-hint{font-size:11px;color:#6b7280;margin-top:4px;line-height:1.4}
+.vh-box{background:#f9fafb;border:1px dashed #d1d5db;border-radius:14px;padding:12px}
+.vh-err{background:#fef2f2;border:1px solid #fecaca;color:#991b1b;border-radius:14px;padding:12px 16px;margin-bottom:16px;font-size:13px}
+.vh-btn{padding:10px 18px;border-radius:12px;font-weight:800;font-size:13px;border:0;cursor:pointer}
+</style>
+
 <div class="mb-6 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
   <div>
-    <h1 class="text-2xl font-black text-gray-900 font-display flex items-center gap-2.5">
-      <span class="w-10 h-10 rounded-2xl bg-rose-100 text-rose-700 flex items-center justify-center shrink-0">
-        <i class="fa-solid fa-film text-lg"></i>
-      </span>
-      <span>Video Story Home (Layout 6) Customizer</span>
-    </h1>
-    <p class="text-xs text-gray-500 mt-1">
-      Cinematic full-screen edge-to-edge background videos for all 6 homepage sections with zero visible controls, smart IntersectionObserver lazy loading, and mobile data saver support.
-    </p>
+    <h1 class="text-2xl sm:text-3xl font-black text-gray-900">Video Story Home (Layout 6) Customizer</h1>
+    <p class="text-xs sm:text-sm text-gray-500 mt-1">Layout 6 &mdash; every section plays a muted, looping video in the background. Videos play smoothly without controls or sound.</p>
   </div>
-
-  <div class="flex items-center gap-2.5 flex-wrap">
-    <a href="/?layout=layout_6" target="_blank" class="px-4 py-2.5 bg-rose-600 hover:bg-rose-500 text-white font-bold text-xs rounded-xl transition shadow-md flex items-center gap-2 cursor-pointer">
-      <i class="fa-solid fa-play text-xs"></i>
-      <span>Preview Layout 6 Live</span>
-    </a>
-    <a href="/admin/hero_customizer.php" class="px-4 py-2.5 bg-stone-100 hover:bg-stone-200 text-stone-800 font-bold text-xs rounded-xl border border-gray-200 transition flex items-center gap-2">
-      <i class="fa-solid fa-layer-group text-xs text-indigo-600"></i>
-      <span>Layout Chooser</span>
-    </a>
+  <div class="flex items-center gap-2.5">
+    <span class="px-3 py-1.5 rounded-full text-[11px] font-black <?= $active_layout === 'layout_6' ? 'bg-emerald-100 text-emerald-800' : 'bg-amber-100 text-amber-800' ?>">
+      <?= $active_layout === 'layout_6' ? 'Currently ACTIVE on the home page' : 'Not active yet' ?>
+    </span>
+    <a href="/?layout=6" target="_blank" rel="noopener" class="vh-btn bg-stone-900 text-white">Preview</a>
   </div>
 </div>
 
-<form method="POST" action="/admin/video_home.php" enctype="multipart/form-data" class="space-y-8">
+<?php if ($errors): ?>
+  <div class="vh-err"><b>Please fix:</b><ul style="margin:6px 0 0 18px;list-style:disc"><?php foreach ($errors as $er): ?><li><?= v6a_e($er) ?></li><?php endforeach; ?></ul></div>
+<?php endif; ?>
+
+<div class="vh-card" style="background:#fffbeb;border-color:#fde68a">
+  <b class="text-sm">Tips for smooth, buffer-free videos</b>
+  <ul class="vh-hint" style="margin:6px 0 0 18px;list-style:disc;font-size:12px">
+    <li>Use <b>short looping clips (10&ndash;30 seconds)</b>, 720p, no intro, no logos, slow camera movement.</li>
+    <li>Paste a normal YouTube link (watch, youtu.be, shorts or embed). Use <b>Start / End seconds</b> to loop only the best part.</li>
+    <li>The poster image shows instantly while the video loads. Visitors with data-saver or reduced-motion settings only see the poster.</li>
+    <li>For the smoothest result use <b>MP4</b>: upload a video file or paste its path under <code>/uploads/videos/</code>.</li>
+    <li>Only the section being viewed (plus the next one) plays, keeping your store lightning fast.</li>
+  </ul>
+</div>
+
+<form method="POST" enctype="multipart/form-data" autocomplete="off">
   <?= csrf_field() ?>
 
-  <!-- Global Video Home Settings Card -->
-  <div class="bg-white rounded-3xl border border-gray-200 shadow-sm p-6 sm:p-8 space-y-5">
-    <div class="flex items-center justify-between pb-3 border-b border-gray-100">
-      <h3 class="text-base font-extrabold text-gray-900 flex items-center gap-2">
-        <i class="fa-solid fa-sliders text-rose-600"></i>
-        <span>Global Playback & Navigation Controls</span>
-      </h3>
-      <span class="px-2.5 py-1 bg-rose-50 text-rose-800 text-[11px] font-bold rounded-lg uppercase">Global Options</span>
-    </div>
-
-    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-      <label class="p-4 rounded-2xl border border-gray-200 bg-stone-50 hover:bg-white transition cursor-pointer flex items-start gap-3">
-        <input type="checkbox" name="v6_header_transparent" value="1" <?= $global_header_trans ? 'checked' : '' ?> class="mt-1 w-4 h-4 text-rose-600 rounded border-gray-300 focus:ring-rose-500">
-        <div>
-          <span class="block text-xs font-bold text-gray-900">Transparent Overlay Header</span>
-          <span class="text-[11px] text-gray-500 leading-tight block mt-0.5">Turns solid white on scrolling past 80px.</span>
-        </div>
-      </label>
-
-      <label class="p-4 rounded-2xl border border-gray-200 bg-stone-50 hover:bg-white transition cursor-pointer flex items-start gap-3">
-        <input type="checkbox" name="v6_dot_nav" value="1" <?= $global_dot_nav ? 'checked' : '' ?> class="mt-1 w-4 h-4 text-rose-600 rounded border-gray-300 focus:ring-rose-500">
-        <div>
-          <span class="block text-xs font-bold text-gray-900">Right-Side Dot Navigation</span>
-          <span class="text-[11px] text-gray-500 leading-tight block mt-0.5">Floating dots to jump smoothly to any of the 6 sections.</span>
-        </div>
-      </label>
-
-      <label class="p-4 rounded-2xl border border-gray-200 bg-stone-50 hover:bg-white transition cursor-pointer flex items-start gap-3">
-        <input type="checkbox" name="v6_scroll_snap" value="1" <?= $global_scroll_snap ? 'checked' : '' ?> class="mt-1 w-4 h-4 text-rose-600 rounded border-gray-300 focus:ring-rose-500">
-        <div>
-          <span class="block text-xs font-bold text-gray-900">Scroll Snap Proximity</span>
-          <span class="text-[11px] text-gray-500 leading-tight block mt-0.5">Gentle snap to section boundaries without locking scrolling.</span>
-        </div>
-      </label>
-
-      <label class="p-4 rounded-2xl border border-gray-200 bg-stone-50 hover:bg-white transition cursor-pointer flex items-start gap-3">
-        <input type="checkbox" name="v6_save_data_pause" value="1" <?= $global_data_saver ? 'checked' : '' ?> class="mt-1 w-4 h-4 text-rose-600 rounded border-gray-300 focus:ring-rose-500">
-        <div>
-          <span class="block text-xs font-bold text-gray-900">Data-Saver Fallback</span>
-          <span class="text-[11px] text-gray-500 leading-tight block mt-0.5">Pause video and show poster on slow 2G or Save-Data mode.</span>
-        </div>
-      </label>
+  <div class="vh-card">
+    <h2 class="text-sm font-black mb-3">Global options</h2>
+    <div class="vh-grid c3">
+      <label class="vh-sw"><input type="checkbox" name="g_header_transparent" value="1" <?= v6a_val('v6_header_transparent', '1') !== '0' ? 'checked' : '' ?>> Transparent header over the video (turns solid on scroll)</label>
+      <label class="vh-sw"><input type="checkbox" name="g_dots" value="1" <?= v6a_val('v6_dots', '1') !== '0' ? 'checked' : '' ?>> Show section dots on the right (desktop)</label>
+      <label class="vh-sw"><input type="checkbox" name="g_snap" value="1" <?= v6a_val('v6_snap', '0') === '1' ? 'checked' : '' ?>> Soft snap-scrolling between sections</label>
     </div>
   </div>
 
-  <!-- 6 Sections Accordion / Cards -->
-  <?php
-  $sec_names = [
-      1 => ['Hero Banner (Edge-to-Edge YouTube Video Background)', 'fa-award', 'Full-width & full-height YouTube background video, H1 Title, CTA buttons, and sound toggle'],
-      2 => ['Artisanal Categories (Clean Catalog Grid)', 'fa-shapes', 'Category tiles on clean background directly beneath the Hero'],
-      3 => ['Trending Bestsellers (Clean Product Grid)', 'fa-fire', 'High-contrast product cards with instant Add to Cart and featured sorting'],
-      4 => ['Curated Spotlight (Artisan Showcase)', 'fa-sparkles', 'Master craftsman spotlight card and featured product grid'],
-      5 => ['Village Artisans Story (Artisan Profiles)', 'fa-hammer', 'Master blacksmiths, weavers, and potter profiles on clean layout'],
-      6 => ['Trust & Final CTA (Sourcing Guarantee)', 'fa-shield-heart', '100% genuine promise, fair livelihood, WhatsApp & shop CTA'],
-  ];
-  ?>
-
-  <?php for ($n = 1; $n <= 6; $n++): 
-    $cfg = $sec_configs[$n];
-    $info = $sec_names[$n];
-    $prefix = "v6_sec{$n}_";
-  ?>
-  <div class="bg-white rounded-3xl border border-gray-200 shadow-sm p-6 sm:p-8 space-y-6">
-    <!-- Section Title & Status -->
-    <div class="flex flex-col sm:flex-row sm:items-center justify-between pb-4 border-b border-gray-100 gap-3">
-      <div>
-        <div class="flex items-center gap-2.5">
-          <span class="px-2.5 py-1 bg-stone-900 text-white font-mono font-bold text-xs rounded-lg uppercase">Section <?= $n ?></span>
-          <h3 class="text-base font-extrabold text-gray-900 flex items-center gap-2">
-            <i class="fa-solid <?= $info[1] ?> text-rose-600"></i>
-            <span><?= $info[0] ?></span>
-          </h3>
-        </div>
-        <p class="text-xs text-gray-500 mt-1"><?= $info[2] ?></p>
-      </div>
-
-      <div class="flex items-center gap-3">
-        <label class="inline-flex items-center gap-2 cursor-pointer px-3.5 py-1.5 bg-stone-50 border border-gray-200 rounded-xl">
-          <input type="checkbox" name="<?= $prefix ?>enabled" value="1" <?= $cfg['enabled'] === '1' ? 'checked' : '' ?> class="w-4 h-4 text-emerald-600 rounded border-gray-300 focus:ring-emerald-500">
-          <span class="text-xs font-bold text-gray-700">Section Active</span>
-        </label>
+<?php foreach ($defs as $n => $d):
+    $k = "v6_sec{$n}_"; $p = "s{$n}_";
+    $src = v6a_val($k . 'source', 'youtube');
+    $sel_cats = array_filter(array_map('intval', explode(',', (string)v6a_val($k . 'cat_ids', ''))));
+?>
+  <div class="vh-card" id="sec<?= $n ?>">
+    <div class="vh-h">
+      <h2 class="text-base font-black"><span class="vh-num"><?= $n ?></span><?= v6a_e($d['name']) ?> section</h2>
+      <div class="flex items-center gap-4 flex-wrap">
+        <label class="vh-sw"><input type="checkbox" name="<?= $p ?>enabled" value="1" <?= v6a_val($k . 'enabled', '1') !== '0' ? 'checked' : '' ?>> Show this section</label>
+        <button type="submit" name="reset_section" value="<?= $n ?>" class="vh-btn bg-gray-100 text-gray-700" formnovalidate
+                onclick="return confirm('Reset section <?= $n ?> to its default settings? Your videos and text for this section will be cleared.')">Reset to defaults</button>
       </div>
     </div>
 
-    <!-- Media Controls: Video & Poster -->
-    <div class="p-5 bg-stone-50 rounded-2xl border border-gray-200 space-y-4">
-      <div class="flex items-center justify-between">
-        <span class="text-xs font-bold text-gray-800 flex items-center gap-2">
-          <i class="fa-solid fa-video text-rose-600"></i> Video Background & Visual Media
-        </span>
-        <div class="flex items-center gap-3 text-xs">
-          <label class="inline-flex items-center gap-1.5 cursor-pointer">
-            <input type="radio" name="<?= $prefix ?>source" value="youtube" <?= $cfg['source'] === 'youtube' ? 'checked' : '' ?> class="text-rose-600">
-            <span class="font-bold text-gray-700">YouTube</span>
-          </label>
-          <label class="inline-flex items-center gap-1.5 cursor-pointer">
-            <input type="radio" name="<?= $prefix ?>source" value="mp4" <?= $cfg['source'] === 'mp4' ? 'checked' : '' ?> class="text-rose-600">
-            <span class="font-bold text-gray-700">Self-Hosted MP4</span>
-          </label>
-        </div>
-      </div>
-
-      <div class="grid grid-cols-1 lg:grid-cols-12 gap-4">
-        <div class="lg:col-span-6">
-          <label class="block text-xs font-bold text-gray-700 mb-1">YouTube URL / Video ID or MP4 Link</label>
-          <input type="text" name="<?= $prefix ?>video" value="<?= htmlspecialchars($cfg['video']) ?>"
-            placeholder="e.g. k4m3y1eH5Ww or https://www.youtube.com/watch?v=..."
-            class="w-full px-3.5 py-2.5 bg-white border border-gray-200 rounded-xl text-xs font-mono">
-          <p class="text-[11px] text-gray-500 mt-1">
-            Use a short looping clip (720p, 10-30 seconds, no logos). Video plays muted without player controls.
-          </p>
-        </div>
-
-        <div class="lg:col-span-3">
-          <label class="block text-xs font-bold text-gray-700 mb-1">Start Second (Optional)</label>
-          <input type="number" name="<?= $prefix ?>start" min="0" value="<?= $cfg['start'] ?>"
-            class="w-full px-3.5 py-2.5 bg-white border border-gray-200 rounded-xl text-xs font-mono">
-        </div>
-
-        <div class="lg:col-span-3">
-          <label class="block text-xs font-bold text-gray-700 mb-1">End Second (0 = Loop end)</label>
-          <input type="number" name="<?= $prefix ?>end" min="0" value="<?= $cfg['end'] ?>"
-            class="w-full px-3.5 py-2.5 bg-white border border-gray-200 rounded-xl text-xs font-mono">
-        </div>
-
-        <div class="lg:col-span-6">
-          <label class="block text-xs font-bold text-gray-700 mb-1">Poster / Fallback Image URL</label>
-          <input type="text" name="<?= $prefix ?>poster" value="<?= htmlspecialchars($cfg['poster']) ?>"
-            class="w-full px-3.5 py-2.5 bg-white border border-gray-200 rounded-xl text-xs font-mono">
-          <p class="text-[11px] text-gray-500 mt-1">Shown before video starts and on Save-Data mode.</p>
-        </div>
-
-        <div class="lg:col-span-3">
-          <label class="block text-xs font-bold text-gray-700 mb-1">Upload New Poster Image</label>
-          <input type="file" name="<?= $prefix ?>poster_file" accept="image/jpeg,image/png,image/webp"
-            class="w-full text-xs text-gray-500 file:mr-2 file:py-2 file:px-3 file:rounded-xl file:border-0 file:text-xs file:font-bold file:bg-rose-100 file:text-rose-800 hover:file:bg-rose-200">
-        </div>
-
-        <div class="lg:col-span-3">
-          <label class="block text-xs font-bold text-gray-700 mb-1">Dark Overlay Strength (0-90%)</label>
-          <div class="flex items-center gap-2">
-            <input type="range" name="<?= $prefix ?>overlay" min="0" max="90" value="<?= $cfg['overlay'] ?>"
-              class="w-full accent-rose-600" oninput="document.getElementById('<?= $prefix ?>overlay_val').textContent = this.value + '%'">
-            <span id="<?= $prefix ?>overlay_val" class="text-xs font-mono font-bold text-gray-700 w-10 text-right"><?= $cfg['overlay'] ?>%</span>
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <!-- Typography & Content -->
-    <div class="space-y-4">
-      <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
-        <div class="sm:col-span-2">
-          <label class="block text-xs font-bold text-gray-700 mb-1">Top Eyebrow Badge Text</label>
-          <input type="text" name="<?= $prefix ?>eyebrow" value="<?= htmlspecialchars($cfg['eyebrow']) ?>"
-            class="w-full px-3.5 py-2.5 bg-stone-50 border border-gray-200 rounded-xl text-xs">
-        </div>
-
+    <div class="vh-box" style="margin-bottom:14px">
+      <div class="vh-grid c3">
         <div>
-          <label class="block text-xs font-bold text-gray-700 mb-1">Text Alignment</label>
-          <select name="<?= $prefix ?>align" class="w-full px-3.5 py-2.5 bg-stone-50 border border-gray-200 rounded-xl text-xs font-bold">
-            <option value="left" <?= $cfg['align'] === 'left' ? 'selected' : '' ?>>Left Aligned</option>
-            <option value="center" <?= $cfg['align'] === 'center' ? 'selected' : '' ?>>Center Aligned</option>
-            <option value="right" <?= $cfg['align'] === 'right' ? 'selected' : '' ?>>Right Aligned</option>
+          <label class="<?= $lbl ?>">Video source</label>
+          <select name="<?= $p ?>source" class="<?= $inp ?>">
+            <option value="youtube" <?= $src === 'youtube' ? 'selected' : '' ?>>YouTube link</option>
+            <option value="mp4" <?= $src === 'mp4' ? 'selected' : '' ?>>MP4 / WebM file</option>
           </select>
         </div>
+        <div style="grid-column:span 2">
+          <label class="<?= $lbl ?>">Video link or file path</label>
+          <input type="text" name="<?= $p ?>video" value="<?= v6a_e(v6a_val($k . 'video', '')) ?>" class="<?= $inp ?> font-mono" placeholder="https://www.youtube.com/watch?v=...  or  /uploads/videos/hero.mp4">
+          <p class="vh-hint">Leave empty to show only the poster / gradient. Muted, looping, no controls.</p>
+        </div>
+        <div>
+          <label class="<?= $lbl ?>">Upload MP4/WebM video (optional)</label>
+          <input type="file" name="<?= $p ?>video_file" accept="video/mp4,video/webm" class="text-xs">
+        </div>
+        <div>
+          <label class="<?= $lbl ?>">Start at (seconds)</label>
+          <input type="number" min="0" name="<?= $p ?>start" value="<?= v6a_e(v6a_val($k . 'start', '0')) ?>" class="<?= $inp ?>">
+        </div>
+        <div>
+          <label class="<?= $lbl ?>">End at (seconds, optional)</label>
+          <input type="number" min="0" name="<?= $p ?>end" value="<?= v6a_e(v6a_val($k . 'end', '')) ?>" class="<?= $inp ?>" placeholder="until the end">
+        </div>
+        <div>
+          <label class="<?= $lbl ?>">Dark overlay: <b><?= (int)v6a_val($k . 'overlay', $d['overlay']) ?>%</b></label>
+          <input type="range" min="0" max="90" name="<?= $p ?>overlay" value="<?= (int)v6a_val($k . 'overlay', $d['overlay']) ?>" style="width:100%" oninput="this.previousElementSibling.querySelector('b').textContent=this.value+'%'">
+        </div>
+        <div>
+          <label class="<?= $lbl ?>">Poster image URL (shown while loading)</label>
+          <input type="text" name="<?= $p ?>poster" value="<?= v6a_e(v6a_val($k . 'poster', '')) ?>" class="<?= $inp ?> font-mono" placeholder="https://... or /uploads/banners/...  (empty = YouTube thumbnail)">
+        </div>
+        <div>
+          <label class="<?= $lbl ?>">&hellip;or upload a poster</label>
+          <input type="file" name="<?= $p ?>poster_file" accept="image/jpeg,image/png,image/webp" class="text-xs">
+        </div>
       </div>
+    </div>
 
+    <div class="vh-grid">
       <div>
-        <label class="block text-xs font-bold text-gray-700 mb-1"><?= $n === 1 ? 'Main Heading (H1)' : 'Section Heading' ?></label>
-        <input type="text" name="<?= $prefix ?>title" value="<?= htmlspecialchars($cfg['title']) ?>"
-          class="w-full px-3.5 py-2.5 bg-stone-50 border border-gray-200 rounded-xl text-sm font-bold text-gray-900">
+        <label class="<?= $lbl ?>">Small label above the title</label>
+        <input type="text" name="<?= $p ?>eyebrow" maxlength="80" value="<?= v6a_e(v6a_val($k . 'eyebrow', $d['eyebrow'])) ?>" class="<?= $inp ?>">
       </div>
-
       <div>
-        <label class="block text-xs font-bold text-gray-700 mb-1">Subheadline / Narrative Description</label>
-        <textarea name="<?= $prefix ?>subtitle" rows="2"
-          class="w-full px-3.5 py-2.5 bg-stone-50 border border-gray-200 rounded-xl text-xs leading-relaxed"><?= htmlspecialchars($cfg['subtitle']) ?></textarea>
+        <label class="<?= $lbl ?>">Text alignment</label>
+        <select name="<?= $p ?>align" class="<?= $inp ?>">
+          <?php foreach (['left' => 'Left', 'center' => 'Center', 'right' => 'Right'] as $av => $al): ?>
+            <option value="<?= $av ?>" <?= v6a_val($k . 'align', $d['align']) === $av ? 'selected' : '' ?>><?= $al ?></option>
+          <?php endforeach; ?>
+        </select>
+      </div>
+      <div style="grid-column:1/-1">
+        <label class="<?= $lbl ?>">Title<?= $n === 1 ? ' (main page heading)' : '' ?></label>
+        <input type="text" name="<?= $p ?>title" maxlength="140" value="<?= v6a_e(v6a_val($k . 'title', $d['title'])) ?>" class="<?= $inp ?>">
+      </div>
+      <div style="grid-column:1/-1">
+        <label class="<?= $lbl ?>">Subtitle</label>
+        <textarea name="<?= $p ?>subtitle" rows="2" maxlength="300" class="<?= $inp ?>"><?= v6a_e(v6a_val($k . 'subtitle', $d['subtitle'])) ?></textarea>
       </div>
     </div>
 
-    <!-- Section-Specific Controls -->
-    <?php if ($n === 2): ?>
-    <div class="p-4 bg-amber-50/50 rounded-2xl border border-amber-200/80 space-y-3">
-      <h4 class="text-xs font-bold text-amber-900 flex items-center gap-1.5">
-        <i class="fa-solid fa-sliders text-amber-700"></i> Category Tiles Configuration
-      </h4>
-      <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs">
-        <div>
-          <label class="block font-bold text-gray-700 mb-1">Category Source</label>
-          <select name="<?= $prefix ?>cat_source" class="w-full px-3 py-2 bg-white border border-gray-200 rounded-xl text-xs">
-            <option value="all" <?= ($cfg['cat_source'] ?? 'all') === 'all' ? 'selected' : '' ?>>All Active Categories (by sort order)</option>
-          </select>
-        </div>
-        <div>
-          <label class="block font-bold text-gray-700 mb-1">Display Limit (4 to 12 tiles)</label>
-          <input type="number" name="<?= $prefix ?>cat_limit" min="4" max="12" value="<?= $cfg['cat_limit'] ?? 6 ?>"
-            class="w-full px-3 py-2 bg-white border border-gray-200 rounded-xl text-xs font-mono">
-        </div>
-      </div>
+<?php if ($n === 8): ?>
+    <h3 class="text-xs font-black mt-4 mb-2 uppercase tracking-wide text-gray-500">Subscribe form</h3>
+    <div style="max-width:320px">
+      <label class="<?= $lbl ?>">Subscribe button text</label>
+      <input type="text" name="<?= $p ?>btn1_text" maxlength="40" value="<?= v6a_e(v6a_val($k . 'btn1_text', $d['btn1_text'])) ?>" class="<?= $inp ?>">
+      <p class="vh-hint">Emails are saved and can be viewed or downloaded in Admin &gt; Newsletter.</p>
     </div>
-    <?php elseif ($n === 3 || $n === 4): ?>
-    <div class="p-4 bg-emerald-50/50 rounded-2xl border border-emerald-200/80 space-y-3">
-      <h4 class="text-xs font-bold text-emerald-900 flex items-center gap-1.5">
-        <i class="fa-solid fa-box text-emerald-700"></i> Product Source Configuration
-      </h4>
-      <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs">
-        <div>
-          <label class="block font-bold text-gray-700 mb-1">Product Stream</label>
-          <select name="<?= $prefix ?>prod_source" class="w-full px-3 py-2 bg-white border border-gray-200 rounded-xl text-xs">
-            <option value="best_sellers" <?= ($cfg['prod_source'] ?? '') === 'best_sellers' ? 'selected' : '' ?>>Best Sellers (Popular)</option>
-            <option value="featured" <?= ($cfg['prod_source'] ?? '') === 'featured' ? 'selected' : '' ?>>Featured Products</option>
-            <option value="newest" <?= ($cfg['prod_source'] ?? '') === 'newest' ? 'selected' : '' ?>>New Arrivals</option>
-          </select>
+<?php else: ?>
+    <h3 class="text-xs font-black mt-4 mb-2 uppercase tracking-wide text-gray-500">Buttons</h3>
+    <div class="vh-grid">
+      <?php foreach (['btn1' => 'Button 1 (main)', 'btn2' => 'Button 2 (secondary)'] as $b => $bl): ?>
+        <div class="vh-box">
+          <div class="vh-h" style="margin-bottom:8px">
+            <b class="text-xs"><?= $bl ?></b>
+            <label class="vh-sw">
+              <input type="hidden" name="<?= $p . $b ?>_show" value="0">
+              <input type="checkbox" name="<?= $p . $b ?>_show" value="1" <?= v6a_val($k . $b . '_show', $d[$b . '_show']) !== '0' ? 'checked' : '' ?>> Show button
+            </label>
+          </div>
+          <label class="<?= $lbl ?>">Button text</label>
+          <input type="text" name="<?= $p . $b ?>_text" maxlength="40" value="<?= v6a_e(v6a_val($k . $b . '_text', $d[$b . '_text'])) ?>" class="<?= $inp ?>" style="margin-bottom:8px">
+          <label class="<?= $lbl ?>">Link</label>
+          <input type="text" name="<?= $p . $b ?>_link" value="<?= v6a_e(v6a_val($k . $b . '_link', $d[$b . '_link'])) ?>" class="<?= $inp ?> font-mono" placeholder="/products.php or https://...">
         </div>
-        <div>
-          <label class="block font-bold text-gray-700 mb-1">Item Limit (4 to 12 items)</label>
-          <input type="number" name="<?= $prefix ?>prod_limit" min="4" max="12" value="<?= $cfg['prod_limit'] ?? ($n === 3 ? 8 : 5) ?>"
-            class="w-full px-3 py-2 bg-white border border-gray-200 rounded-xl text-xs font-mono">
-        </div>
-      </div>
+      <?php endforeach; ?>
     </div>
-    <?php elseif ($n === 5): ?>
-    <div class="p-4 bg-purple-50/50 rounded-2xl border border-purple-200/80 space-y-3">
-      <h4 class="text-xs font-bold text-purple-900 flex items-center gap-1.5">
-        <i class="fa-solid fa-users text-purple-700"></i> Artisan Showcase Configuration
-      </h4>
-      <div class="text-xs max-w-xs">
-        <label class="block font-bold text-gray-700 mb-1">Number of Artisans to Feature (3 to 8)</label>
-        <input type="number" name="<?= $prefix ?>artisan_limit" min="3" max="8" value="<?= $cfg['artisan_limit'] ?? 4 ?>"
-          class="w-full px-3 py-2 bg-white border border-gray-200 rounded-xl text-xs font-mono">
-      </div>
-    </div>
-    <?php endif; ?>
+<?php endif; ?>
 
-    <!-- Action Buttons for Section N (TASK B Behaviour) -->
-    <div class="grid grid-cols-1 lg:grid-cols-2 gap-4 pt-2">
-      <!-- Button 1 Box -->
-      <div class="p-4 bg-stone-50 rounded-2xl border border-gray-200 space-y-3">
-        <div class="flex items-center justify-between pb-2 border-b border-gray-200">
-          <span class="text-xs font-bold text-gray-800">Button 1 (Primary)</span>
-          <label class="inline-flex items-center gap-1.5 cursor-pointer">
-            <input type="checkbox" name="<?= $prefix ?>btn1_show" value="1" <?= $cfg['btn1_show'] === '1' ? 'checked' : '' ?> class="w-4 h-4 text-rose-600 rounded">
-            <span class="text-xs font-bold text-gray-700">Show button</span>
-          </label>
-        </div>
-        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
-          <div>
-            <label class="block text-gray-600 mb-1 font-medium">Button Text</label>
-            <input type="text" name="<?= $prefix ?>btn1_text" value="<?= htmlspecialchars($cfg['btn1_text']) ?>"
-              class="w-full px-3 py-2 bg-white border border-gray-200 rounded-xl text-xs font-bold">
-          </div>
-          <div>
-            <label class="block text-gray-600 mb-1 font-medium">Link URL</label>
-            <input type="text" name="<?= $prefix ?>btn1_link" value="<?= htmlspecialchars($cfg['btn1_link']) ?>"
-              class="w-full px-3 py-2 bg-white border border-gray-200 rounded-xl text-xs font-mono">
-          </div>
-        </div>
-        <div class="pt-1">
-          <label class="inline-flex items-center gap-2 cursor-pointer">
-            <input type="checkbox" name="<?= $prefix ?>btn1_target" value="_blank" <?= ($cfg['btn1_target'] ?? '_self') === '_blank' ? 'checked' : '' ?> class="w-3.5 h-3.5 text-indigo-600 rounded">
-            <span class="text-[11px] text-gray-600">Open link in new tab (<code class="text-[10px]">_blank</code>)</span>
-          </label>
-        </div>
+<?php if ($n === 2): ?>
+    <h3 class="text-xs font-black mt-4 mb-2 uppercase tracking-wide text-gray-500">Categories shown</h3>
+    <div class="vh-grid c3">
+      <div>
+        <label class="<?= $lbl ?>">Which categories</label>
+        <select name="<?= $p ?>cat_source" class="<?= $inp ?>">
+          <option value="all" <?= v6a_val($k . 'cat_source', 'all') === 'all' ? 'selected' : '' ?>>All categories (in your sort order)</option>
+          <option value="selected" <?= v6a_val($k . 'cat_source', 'all') === 'selected' ? 'selected' : '' ?>>Only the ones I tick below</option>
+        </select>
       </div>
-
-      <!-- Button 2 Box -->
-      <div class="p-4 bg-stone-50 rounded-2xl border border-gray-200 space-y-3">
-        <div class="flex items-center justify-between pb-2 border-b border-gray-200">
-          <span class="text-xs font-bold text-gray-800">Button 2 (Secondary)</span>
-          <label class="inline-flex items-center gap-1.5 cursor-pointer">
-            <input type="checkbox" name="<?= $prefix ?>btn2_show" value="1" <?= $cfg['btn2_show'] === '1' ? 'checked' : '' ?> class="w-4 h-4 text-rose-600 rounded">
-            <span class="text-xs font-bold text-gray-700">Show button</span>
-          </label>
-        </div>
-        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
-          <div>
-            <label class="block text-gray-600 mb-1 font-medium">Button Text</label>
-            <input type="text" name="<?= $prefix ?>btn2_text" value="<?= htmlspecialchars($cfg['btn2_text']) ?>"
-              class="w-full px-3 py-2 bg-white border border-gray-200 rounded-xl text-xs font-bold">
-          </div>
-          <div>
-            <label class="block text-gray-600 mb-1 font-medium">Link URL</label>
-            <input type="text" name="<?= $prefix ?>btn2_link" value="<?= htmlspecialchars($cfg['btn2_link']) ?>"
-              class="w-full px-3 py-2 bg-white border border-gray-200 rounded-xl text-xs font-mono">
-          </div>
-        </div>
-        <div class="pt-1">
-          <label class="inline-flex items-center gap-2 cursor-pointer">
-            <input type="checkbox" name="<?= $prefix ?>btn2_target" value="_blank" <?= ($cfg['btn2_target'] ?? '_self') === '_blank' ? 'checked' : '' ?> class="w-3.5 h-3.5 text-indigo-600 rounded">
-            <span class="text-[11px] text-gray-600">Open link in new tab (<code class="text-[10px]">_blank</code>)</span>
-          </label>
-        </div>
+      <div>
+        <label class="<?= $lbl ?>">Maximum tiles (1&ndash;12)</label>
+        <input type="number" min="1" max="12" name="<?= $p ?>limit" value="<?= (int)v6a_val($k . 'limit', $d['limit']) ?>" class="<?= $inp ?>">
+      </div>
+      <div class="vh-box" style="grid-column:1/-1;display:flex;flex-wrap:wrap;gap:10px 18px">
+        <?php foreach ($cats as $c): ?>
+          <label class="vh-sw"><input type="checkbox" name="<?= $p ?>cat_ids[]" value="<?= (int)$c['id'] ?>" <?= in_array((int)$c['id'], $sel_cats, true) ? 'checked' : '' ?>> <?= v6a_e($c['name']) ?></label>
+        <?php endforeach; ?>
       </div>
     </div>
-
+    <div class="vh-grid" style="margin-top:12px">
+      <label class="vh-sw"><input type="checkbox" name="<?= $p ?>show_products" value="1" <?= v6a_val($k . 'show_products', '1') !== '0' ? 'checked' : '' ?>> Also show a &ldquo;New arrivals&rdquo; product row under the categories</label>
+      <div>
+        <label class="<?= $lbl ?>">Products in that row (1&ndash;12)</label>
+        <input type="number" min="1" max="12" name="<?= $p ?>prod_limit" value="<?= (int)v6a_val($k . 'prod_limit', '4') ?>" class="<?= $inp ?>">
+      </div>
+    </div>
+<?php elseif ($n === 3 || $n === 4): ?>
+    <h3 class="text-xs font-black mt-4 mb-2 uppercase tracking-wide text-gray-500">Products shown</h3>
+    <div class="vh-grid c3">
+      <div>
+        <label class="<?= $lbl ?>">Product source</label>
+        <select name="<?= $p ?>prod_source" class="<?= $inp ?>">
+          <?php foreach (['best_sellers' => 'Best sellers', 'featured' => 'Featured (starred in Products)', 'newest' => 'Newest first', 'category' => 'One category (choose below)'] as $sv => $sl): ?>
+            <option value="<?= $sv ?>" <?= v6a_val($k . 'prod_source', $d['prod_source']) === $sv ? 'selected' : '' ?>><?= $sl ?></option>
+          <?php endforeach; ?>
+        </select>
+      </div>
+      <div>
+        <label class="<?= $lbl ?>">Category (only for &ldquo;One category&rdquo;)</label>
+        <select name="<?= $p ?>prod_cat" class="<?= $inp ?>">
+          <option value="">&mdash;</option>
+          <?php foreach ($cats as $c): ?><option value="<?= v6a_e($c['slug']) ?>" <?= v6a_val($k . 'prod_cat', '') === $c['slug'] ? 'selected' : '' ?>><?= v6a_e($c['name']) ?></option><?php endforeach; ?>
+        </select>
+      </div>
+      <div>
+        <label class="<?= $lbl ?>">How many products (1&ndash;12)</label>
+        <input type="number" min="1" max="12" name="<?= $p ?>limit" value="<?= (int)v6a_val($k . 'limit', $d['limit']) ?>" class="<?= $inp ?>">
+        <?php if ($n === 4): ?><p class="vh-hint">First product is shown large. Products already shown in section 3 are skipped.</p><?php endif; ?>
+      </div>
+    </div>
+<?php elseif ($n === 7): ?>
+    <h3 class="text-xs font-black mt-4 mb-2 uppercase tracking-wide text-gray-500">Articles shown</h3>
+    <div style="max-width:260px">
+      <label class="<?= $lbl ?>">How many articles (1&ndash;12)</label>
+      <input type="number" min="1" max="12" name="<?= $p ?>limit" value="<?= (int)v6a_val($k . 'limit', $d['limit']) ?>" class="<?= $inp ?>">
+      <p class="vh-hint">The latest published posts from Admin &gt; Blogs are shown automatically.</p>
+    </div>
+<?php elseif ($n === 5): ?>
+    <h3 class="text-xs font-black mt-4 mb-2 uppercase tracking-wide text-gray-500">Artisans shown</h3>
+    <div style="max-width:260px">
+      <label class="<?= $lbl ?>">How many artisans (1&ndash;12)</label>
+      <input type="number" min="1" max="12" name="<?= $p ?>limit" value="<?= (int)v6a_val($k . 'limit', $d['limit']) ?>" class="<?= $inp ?>">
+      <p class="vh-hint">Verified vendors from the Vendors list are used.</p>
+    </div>
+<?php endif; ?>
   </div>
-  <?php endfor; ?>
+<?php endforeach; ?>
 
-  <!-- Sticky Bottom Save Bar -->
-  <div class="sticky bottom-4 z-40 bg-stone-900/95 backdrop-blur-md rounded-2xl p-4 shadow-2xl border border-stone-700 flex items-center justify-between gap-4">
-    <div class="flex items-center gap-2">
-      <button type="submit" name="reset_defaults" value="1" onclick="return confirm('Reset all Video Story Home settings to factory defaults?');"
-        class="px-4 py-2 bg-stone-800 hover:bg-stone-700 text-stone-300 font-bold text-xs rounded-xl border border-stone-600 transition cursor-pointer">
-        Reset to Defaults
-      </button>
-    </div>
-
-    <div class="flex items-center gap-3">
-      <a href="/?layout=layout_6" target="_blank" class="px-4 py-2.5 bg-stone-800 hover:bg-stone-700 text-white font-bold text-xs rounded-xl border border-stone-600 transition flex items-center gap-1.5">
-        <i class="fa-solid fa-arrow-up-right-from-square text-[11px]"></i>
-        <span>Preview Live</span>
-      </a>
-      <button type="submit" name="save_video_home" value="1"
-        class="px-6 py-2.5 bg-rose-600 hover:bg-rose-500 text-white font-black text-xs sm:text-sm rounded-xl transition shadow-lg flex items-center gap-2 cursor-pointer active:scale-95">
-        <i class="fa-solid fa-floppy-disk"></i>
-        <span>Save Video Home Settings</span>
-      </button>
+  <div class="vh-card" style="position:sticky;bottom:12px;z-index:10;box-shadow:0 10px 30px rgba(0,0,0,.15)">
+    <div class="flex flex-wrap items-center justify-between gap-3">
+      <label class="vh-sw"><input type="checkbox" name="activate_layout" value="1" <?= $active_layout === 'layout_6' ? '' : 'checked' ?>> Make Layout 6 the live home page when I save</label>
+      <button type="submit" name="save_video_home" value="1" class="vh-btn bg-emerald-700 text-white">Save video home settings</button>
     </div>
   </div>
-
 </form>
 
 <?php require_once __DIR__ . '/admin_footer.php'; ?>

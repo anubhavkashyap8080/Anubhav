@@ -7,6 +7,7 @@
 
 require_once __DIR__ . '/../includes/functions.php';
 require_once __DIR__ . '/../includes/auth_check.php';
+require_once __DIR__ . '/../includes/video_helpers.php';
 require_admin();
 
 date_default_timezone_set('Asia/Kolkata');
@@ -204,7 +205,7 @@ require_once __DIR__ . '/admin_header.php';
   <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-4 mb-3">
     <div>
       <h3 class="font-extrabold text-sm sm:text-base flex items-center gap-2">
-        <i class="fa-solid fa-bolt text-yellow-200"></i> 1-क्लिक भारतीय त्योहार व शॉपिंग उत्सव प्रीसेट (Instant Festival Presets):
+        <i class="fa-solid fa-bolt text-yellow-200"></i> 1-क्लिक भारतीय त्योहार व शॉपिंग उत्सव Preset (Instant Festival Presets):
       </h3>
       <p class="text-xs text-amber-100 mt-0.5">किसी भी त्योहार पर क्लिक करते ही रंग, घोषणा पट्टी, शीर्षक, और आंकड़े स्वतः लोड हो जाएंगे।</p>
     </div>
